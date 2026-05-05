@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Pencil, Globe } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
@@ -117,6 +118,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
       <AccordionContent className="space-y-4 pt-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {fields.map((field, index) => {
+            if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;
             return (
             <div key={field.id} className={`flex flex-col gap-1 relative group ${field.type === 'textarea' ? 'col-span-1 sm:col-span-2' : ''}`}>
@@ -156,6 +158,26 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                       </SelectContent>
                     </Select>
                   )}}
+                />
+              ) : field.type === "company" ? (
+                <Controller
+                  name={`${name}.${index}.value` as const}
+                  control={control}
+                  render={({ field: compField }) => (
+                    <CompanyAutocomplete 
+                      value={compField.value} 
+                      onChange={(val, logo) => {
+                         compField.onChange(val);
+                         const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                         if (logoIndex !== -1) {
+                            // Update the hidden companyLogo field value properly
+                            // @ts-ignore
+                            setValue(`${name}.${logoIndex}.value`, logo || "");
+                         }
+                      }} 
+                      placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
+                    />
+                  )}
                 />
               ) : field.type === "textarea" ? (
                 <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />

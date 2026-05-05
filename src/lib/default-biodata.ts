@@ -30,7 +30,8 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "college", label: "College/University", value: "", type: "text", isDefault: true },
     { id: "occupation", label: "Occupation/Job", value: "", type: "select", options: ["Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", "Defense / Police", "Private Job", "Not Working", "Other"], isDefault: true },
     { id: "annualIncome", label: "Annual Income", value: "", type: "select", options: ["0-5 LPA", "5-10 LPA", "10-15 LPA", "15-20 LPA", "20-25 LPA", "25-30 LPA", "30-35 LPA", "35-40 LPA", "40-45 LPA", "45-50 LPA", "50+ LPA"], isDefault: true },
-    { id: "companyName", label: "Company Name", value: "", type: "text", isDefault: true },
+    { id: "companyName", label: "Company Name", value: "", type: "company", isDefault: true },
+    { id: "companyLogo", label: "Company Logo", value: "", type: "hidden", isDefault: false },
   ],
   familyDetails: [
     { id: "fatherName", label: "Father's Name", value: "", type: "text", isDefault: true },

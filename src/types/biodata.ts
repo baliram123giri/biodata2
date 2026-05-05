@@ -4,7 +4,7 @@ export const FieldSchema = z.object({
   id: z.string(),
   label: z.string(),
   value: z.string(),
-  type: z.enum(["text", "date", "time", "select", "textarea", "number"]),
+  type: z.enum(["text", "date", "time", "select", "textarea", "number", "company", "hidden"]),
   options: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
 });

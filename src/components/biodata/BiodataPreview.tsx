@@ -43,9 +43,14 @@ export function BiodataPreview({ data }: { data: BiodataFormValues }) {
               {t.educationSec || "Education & Career"}
             </h2>
             <div className="flex flex-col gap-y-2 text-[12.5px]">
-              {data.educationDetails.map(field => (
-                <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} />
-              ))}
+              {data.educationDetails.map(field => {
+                if (field.type === "hidden") return null;
+                let logoUrl;
+                if (field.type === "company" || field.id === "companyName") {
+                  logoUrl = data.educationDetails.find(f => f.id === "companyLogo")?.value;
+                }
+                return <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} logoUrl={logoUrl} />;
+              })}
             </div>
           </section>
         )}
@@ -57,9 +62,10 @@ export function BiodataPreview({ data }: { data: BiodataFormValues }) {
               {t.family || "Family Background"}
             </h2>
             <div className="flex flex-col gap-y-2 text-[12.5px]">
-              {data.familyDetails.map(field => (
-                <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} />
-              ))}
+              {data.familyDetails.map(field => {
+                if (field.type === "hidden") return null;
+                return <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} />
+              })}
             </div>
           </section>
         )}
@@ -71,9 +77,10 @@ export function BiodataPreview({ data }: { data: BiodataFormValues }) {
               {t.contact || "Contact Details"}
             </h2>
             <div className="flex flex-col gap-y-2 text-[12.5px]">
-              {data.contactDetails.map(field => (
-                <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} />
-              ))}
+              {data.contactDetails.map(field => {
+                if (field.type === "hidden") return null;
+                return <PreviewRow key={field.id} label={field.label} value={field.value} type={field.type} t={t} />
+              })}
             </div>
           </section>
         )}
@@ -83,7 +90,7 @@ export function BiodataPreview({ data }: { data: BiodataFormValues }) {
   );
 }
 
-function PreviewRow({ label, value, type, t }: { label: string; value: string; type?: string; t: Record<string, string> }) {
+function PreviewRow({ label, value, type, t, logoUrl }: { label: string; value: string; type?: string; t: Record<string, string>; logoUrl?: string }) {
   if (!value) return null;
   const isFullWidth = type === 'textarea';
 
@@ -91,7 +98,10 @@ function PreviewRow({ label, value, type, t }: { label: string; value: string; t
     <div className={`flex gap-2 items-start ${isFullWidth ? 'flex-col' : 'flex-row'}`}>
       <span className={`font-semibold text-primary shrink-0 ${isFullWidth ? 'w-full' : 'w-24 sm:w-28'}`}>{label}</span>
       {!isFullWidth && <span className="font-semibold text-primary shrink-0">:</span>}
-      <span className="font-medium break-words text-gray-800 flex-1">{translateDynamicOption(value, t)}</span>
+      <span className="font-medium break-words text-gray-800 flex-1 flex items-center">
+        {logoUrl && <img src={logoUrl} alt="Logo" className="h-4 w-4 mr-1.5 object-contain" />}
+        {logoUrl ? `(${translateDynamicOption(value, t)})` : translateDynamicOption(value, t)}
+      </span>
     </div>
   );
 }
