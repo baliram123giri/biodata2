@@ -179,6 +179,63 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                     />
                   )}
                 />
+              ) : field.type === "time12" ? (
+                <Controller
+                  name={`${name}.${index}.value` as const}
+                  control={control}
+                  render={({ field: timeField }) => {
+                    // Extract HH, MM, and Period from current value
+                    // Expected format: "10:30 (Morning)"
+                    const parts = timeField.value.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
+                    const hhPart = parts?.[1] || "10";
+                    const mmPart = parts?.[2] || "00";
+                    const periodPart = parts?.[3] || "Morning";
+
+                    const updateValue = (h: string, m: string, p: string) => {
+                      timeField.onChange(`${h}:${m} (${p})`);
+                    };
+
+                    const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+                    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+                    return (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Select value={hhPart} onValueChange={(val) => updateValue(val, mmPart, periodPart)}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="HH" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val, periodPart)}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="MM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val)}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder={t.select || "Select Period"}>
+                              {periodPart ? (t[periodPart] || periodPart) : undefined}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Early Morning">{t["Early Morning"] || "Early Morning"}</SelectItem>
+                            <SelectItem value="Morning">{t.Morning || "Morning"}</SelectItem>
+                            <SelectItem value="Afternoon">{t.Afternoon || "Afternoon"}</SelectItem>
+                            <SelectItem value="Evening">{t.Evening || "Evening"}</SelectItem>
+                            <SelectItem value="Night">{t.Night || "Night"}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  }}
+                />
               ) : field.type === "textarea" ? (
                 <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
               ) : (

@@ -17,6 +17,27 @@ export function translateDynamicOption(opt: string, t: Record<string, string>): 
   if (translated.includes("LPA")) {
     translated = translated.replace(/\bLPA\b/g, t.lpa || "LPA");
   }
+  if (translated.includes("Morning")) {
+    translated = translated.replace(/\bMorning\b/g, t.Morning || "Morning");
+  }
+  if (translated.includes("Afternoon")) {
+    translated = translated.replace(/\bAfternoon\b/g, t.Afternoon || "Afternoon");
+  }
+  if (translated.includes("Evening")) {
+    translated = translated.replace(/\bEvening\b/g, t.Evening || "Evening");
+  }
+  if (translated.includes("Night")) {
+    translated = translated.replace(/\bNight\b/g, t.Night || "Night");
+  }
+  if (translated.includes("Early Morning")) {
+    translated = translated.replace(/\bEarly Morning\b/g, t["Early Morning"] || "Early Morning");
+  }
+  if (translated.includes("AM")) {
+    translated = translated.replace(/\bAM\b/g, t.AM || "AM");
+  }
+  if (translated.includes("PM")) {
+    translated = translated.replace(/\bPM\b/g, t.PM || "PM");
+  }
   return translated;
 }
 
@@ -157,7 +178,14 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "ft",
     "inches": "in",
     "cm": "cm",
-    "lpa": "LPA"
+    "lpa": "LPA",
+    "Morning": "Morning",
+    "Afternoon": "Afternoon",
+    "Evening": "Evening",
+    "Night": "Night",
+    "Early Morning": "Early Morning",
+    "AM": "AM",
+    "PM": "PM"
   },
   "हिंदी": {
     "Software Engineer": "सॉफ्टवेयर इंजीनियर",
@@ -295,7 +323,14 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "फीट",
     "inches": "इंच",
     "cm": "सेमी",
-    "lpa": "लाख/वर्ष"
+    "lpa": "लाख/वर्ष",
+    "Morning": "सुबह",
+    "Afternoon": "दोपहर",
+    "Evening": "शाम",
+    "Night": "रात",
+    "Early Morning": "तड़के",
+    "AM": "AM",
+    "PM": "PM"
   },
   "मराठी": {
     "Software Engineer": "सॉफ्टवेअर इंजिनिअर",
@@ -433,7 +468,14 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "फूट",
     "inches": "इंच",
     "cm": "सेमी",
-    "lpa": "लाख/वर्ष"
+    "lpa": "लाख/वर्ष",
+    "Morning": "सकाळी",
+    "Afternoon": "दुपारी",
+    "Evening": "संध्याकाळी",
+    "Night": "रात्री",
+    "Early Morning": "पहाटे",
+    "AM": "AM",
+    "PM": "PM"
   },
   "ગુજરાતી": {
     "Software Engineer": "સોફ્ટવેર એન્જિનિયર",

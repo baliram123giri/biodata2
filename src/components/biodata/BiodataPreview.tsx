@@ -94,13 +94,22 @@ function PreviewRow({ label, value, type, t, logoUrl }: { label: string; value: 
   if (!value) return null;
   const isFullWidth = type === 'textarea';
 
+  let displayValue = translateDynamicOption(value, t);
+  
+  if (type === "date" && value) {
+    const [year, month, day] = value.split("-");
+    if (year && month && day) {
+      displayValue = `${day}/${month}/${year}`;
+    }
+  }
+
   return (
     <div className={`flex gap-2 items-start ${isFullWidth ? 'flex-col' : 'flex-row'}`}>
       <span className={`font-semibold text-primary shrink-0 ${isFullWidth ? 'w-full' : 'w-24 sm:w-28'}`}>{label}</span>
       {!isFullWidth && <span className="font-semibold text-primary shrink-0">:</span>}
       <span className="font-medium break-words text-gray-800 flex-1 flex items-center">
         {logoUrl && <img src={logoUrl} alt="Logo" className="h-4 w-4 mr-1.5 object-contain" />}
-        {logoUrl ? `(${translateDynamicOption(value, t)})` : translateDynamicOption(value, t)}
+        {logoUrl ? `(${displayValue})` : displayValue}
       </span>
     </div>
   );

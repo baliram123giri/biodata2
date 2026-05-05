@@ -11,8 +11,56 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "Free Online Biodata Maker for Marriage",
-  description: "Create FREE marriage biodata online in 2 minutes. 50+ professional templates, 10+ Indian languages.",
+  title: {
+    default: "Free Online Biodata Maker for Marriage | 50+ Premium Templates",
+    template: "%s | Biodata Maker"
+  },
+  description: "Create professional marriage biodata online for FREE in 2 minutes. Choose from 50+ premium templates, supports 10+ Indian languages (Hindi, Marathi, Gujarati, etc.). Instant PDF download.",
+  keywords: ["marriage biodata maker", "online biodata builder", "matrimonial biodata format", "free biodata maker", "marriage resume maker", "shadi biodata creator"],
+  authors: [{ name: "Biodata Maker Team" }],
+  creator: "Biodata Maker",
+  publisher: "Biodata Maker",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://biodatamaker.online",
+    siteName: "Biodata Maker",
+    title: "Free Online Biodata Maker for Marriage | 50+ Premium Templates",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates, 10+ Indian languages.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Biodata Maker - Create Marriage Biodata Online",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free Online Biodata Maker for Marriage",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: "https://biodatamaker.online",
+  },
 };
 
 export default function RootLayout({
@@ -24,8 +72,35 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Biodata Maker",
+              "url": "https://biodatamaker.online",
+              "description": "Create professional marriage biodata online for FREE. 50+ templates, 10+ languages.",
+              "applicationCategory": "MultimediaApplication",
+              "operatingSystem": "All",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "INR"
+              },
+              "featureList": [
+                "50+ Premium Templates",
+                "10+ Indian Languages",
+                "No Login Required",
+                "Instant PDF Download",
+                "100% Private"
+              ]
+            })
+          }}
+        />
         <Header />
         <main className="flex-1">
           {children}

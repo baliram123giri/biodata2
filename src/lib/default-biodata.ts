@@ -7,7 +7,7 @@ export const defaultBiodataValues: BiodataFormValues = {
   personalDetails: [
     { id: "fullName", label: "Full Name", value: "", type: "text", isDefault: true },
     { id: "dateOfBirth", label: "Date of Birth", value: "", type: "date", isDefault: true },
-    { id: "timeOfBirth", label: "Time of Birth", value: "", type: "time", isDefault: true },
+    { id: "timeOfBirth", label: "Time of Birth", value: "", type: "time12", isDefault: true },
     { id: "placeOfBirth", label: "Place of Birth", value: "", type: "text", isDefault: true },
     { id: "height", label: "Height", value: "", type: "select", options: [
       "4 ft (122 cm)", "4 ft 1 in (124 cm)", "4 ft 2 in (127 cm)", "4 ft 3 in (129 cm)", "4 ft 4 in (132 cm)", "4 ft 5 in (134 cm)", "4 ft 6 in (137 cm)", "4 ft 7 in (139 cm)", "4 ft 8 in (142 cm)", "4 ft 9 in (144 cm)", "4 ft 10 in (147 cm)", "4 ft 11 in (149 cm)",
