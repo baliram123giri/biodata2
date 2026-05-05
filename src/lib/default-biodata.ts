@@ -20,7 +20,9 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "complexion", label: "Complexion", value: "", type: "select", options: ["Fair", "Very Fair", "Wheatish", "Wheatish Brown", "Dark"], isDefault: true },
     { id: "religion", label: "Religion", value: "", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
     { id: "caste", label: "Caste", value: "", type: "text", isDefault: true },
-    { id: "gotra", label: "Gotra", value: "", type: "text", isDefault: true },
+    { id: "gotra", label: "Gotra", value: "", type: "select", options: [
+      "Agastya", "Angirasa", "Atri", "Bharadwaja", "Bhrigu", "Gautama", "Jamadagni", "Kashyapa", "Shandilya", "Vashishta", "Vishvamitra", "Gargya", "Kaushika", "Vatsa", "Mudgala", "Parashara", "Upamanyu", "Harita", "Other"
+    ], isDefault: true },
     { id: "rashi", label: "Rashi (Zodiac)", value: "", type: "select", options: ["Mesh (Aries)", "Vrishabh (Taurus)", "Mithun (Gemini)", "Kark (Cancer)", "Singh (Leo)", "Kanya (Virgo)", "Tula (Libra)", "Vrishchik (Scorpio)", "Dhanu (Sagittarius)", "Makar (Capricorn)", "Kumbh (Aquarius)", "Meen (Pisces)", "Other"], isDefault: true },
     { id: "nakshatra", label: "Nakshatra", value: "", type: "select", options: ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati", "Other"], isDefault: true },
     { id: "manglik", label: "Manglik", value: "", type: "select", options: ["No", "Yes", "Partial (Anshik)", "Don't Know", "Other"], isDefault: true },
