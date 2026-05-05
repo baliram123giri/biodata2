@@ -1,27 +1,27 @@
 "use client";
- 
+
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { BiodataPreview } from "@/components/biodata/BiodataPreview";
 import { defaultBiodataValues } from "@/lib/default-biodata";
- 
+
 import { Button } from "@/components/ui/button";
 import { Download, RotateCcw, Printer } from "lucide-react";
- 
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { useState } from "react";
- 
+
 import { translations } from "@/lib/translations";
- 
+
 export function CreateClient() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const methods = useForm<BiodataFormValues>({
@@ -29,10 +29,20 @@ export function CreateClient() {
     defaultValues: defaultBiodataValues,
     mode: "onChange",
   });
- 
+
   const formData = methods.watch();
   const currentLang = formData.language || "English";
   const t = translations[currentLang] || translations["English"];
+
+  const [selectedTemplate, setSelectedTemplate] = useState("classic1");
+
+  const templates = [
+    { id: "classic1", name: "Classic 1", color: "bg-primary" },
+    { id: "classic2", name: "Classic 2", color: "bg-[#D4AF37]" },
+    { id: "modern1", name: "Modern 1", color: "bg-gray-800" },
+    { id: "marathi1", name: "Marathi 1", color: "bg-[#800000]" },
+    { id: "hindu_gold", name: "Hindu Gold", color: "bg-secondary" },
+  ];
 
   const handleReset = () => {
     methods.reset(defaultBiodataValues);
@@ -42,40 +52,65 @@ export function CreateClient() {
   const handleDownload = () => {
     window.print();
   };
- 
+
   return (
     <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
- 
+      <div className="container mx-auto px-4 py-6 max-w-[1400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+
           {/* Form Side - Natural Scrolling */}
-          <div className="lg:col-span-7 flex flex-col">
+          <div className="lg:col-span-6 flex flex-col">
             <div className="mb-4">
               <h1 className="text-2xl font-bold text-primary">{t.title || "Create Your Biodata"}</h1>
               <p className="text-sm text-muted-foreground">Fill in your details below. The preview updates instantly.</p>
             </div>
- 
+
             <FormProvider {...methods}>
               <BiodataForm />
             </FormProvider>
           </div>
- 
-          {/* Preview Side - Sticky */}
-          <div className="lg:col-span-5 sticky top-24 hidden lg:block">
-            <div className="flex flex-col gap-6 items-center">
-              <BiodataPreview data={formData} />
-              
-              <div className="flex w-full gap-4">
-                <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)}>
-                  <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
-                </Button>
-                <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload}>
-                  <Download className="w-4 h-4 mr-2" /> {t.downloadPdf || "Download PDF"}
-                </Button>
+
+          {/* Preview Side - Sticky with Vertical Template Slider */}
+          <div className="lg:col-span-6 sticky top-24 hidden lg:block">
+            <div className="flex gap-4 items-start">
+              {/* Main Preview */}
+              <div className="flex-1 flex flex-col gap-6 items-center">
+                <BiodataPreview data={formData} templateId={selectedTemplate} />
+
+                <div className="flex w-full gap-4">
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)}>
+                    <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+                  </Button>
+                  <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload}>
+                    <Download className="w-4 h-4 mr-2" /> {t.downloadPdf || "Download PDF"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Vertical Template Slider */}
+              <div className="w-20 shrink-0 flex flex-col gap-4 max-h-[600px] overflow-y-auto no-scrollbar py-2 pr-2 border-l border-primary/10 pl-4">
+                <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground text-center">Frames</span>
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => setSelectedTemplate(tpl.id)}
+                    className={`group relative flex flex-col items-center gap-2 transition-all ${selectedTemplate === tpl.id ? "scale-105" : "opacity-60 hover:opacity-100 hover:scale-105"
+                      }`}
+                  >
+                    <div className={`w-12 h-16 rounded-md shadow-md border-2 ${selectedTemplate === tpl.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                      } ${tpl.color} flex items-center justify-center`}>
+                      <span className="text-[10px] font-bold text-white uppercase transform -rotate-45">{tpl.id.split('')[0]}</span>
+                    </div>
+                    <span className={`text-[9px] font-bold text-center ${selectedTemplate === tpl.id ? "text-primary" : "text-muted-foreground"
+                      }`}>
+                      {tpl.name}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
- 
+
         </div>
       </div>
 
