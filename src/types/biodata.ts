@@ -1,0 +1,23 @@
+import { z } from "zod";
+
+export const FieldSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  value: z.string(),
+  type: z.enum(["text", "date", "time", "select", "textarea", "number"]),
+  options: z.array(z.string()).optional(),
+  isDefault: z.boolean().optional(),
+});
+
+export const biodataSchema = z.object({
+  language: z.string().optional(),
+  mantra: z.string().default("॥ श्री गणेशाय नमः ॥"),
+  title: z.string().default("Biodata"),
+  personalDetails: z.array(FieldSchema),
+  educationDetails: z.array(FieldSchema),
+  familyDetails: z.array(FieldSchema),
+  contactDetails: z.array(FieldSchema),
+});
+
+export type BiodataFormValues = z.infer<typeof biodataSchema>;
+export type BiodataField = z.infer<typeof FieldSchema>;
