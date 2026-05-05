@@ -5,7 +5,7 @@ export function Modern1({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-full max-w-[500px] bg-white text-[#333] shadow-xl rounded-none p-0 mx-auto overflow-hidden border border-gray-200 h-auto flex flex-col">
+    <div className="w-[210mm] min-h-[297mm] bg-white text-[#333] shadow-xl rounded-none p-0 mx-auto overflow-hidden border border-gray-200 flex flex-col">
       
       {/* Modern Header */}
       <div className="bg-primary p-8 text-white text-center space-y-2">

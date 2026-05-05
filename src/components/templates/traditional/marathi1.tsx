@@ -5,7 +5,7 @@ export function Marathi1({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-full max-w-[500px] bg-[#FEF9E7] text-[#2A1F1F] shadow-2xl rounded-sm p-6 sm:p-10 mx-auto relative border-[12px] border-double border-[#800000] h-auto flex flex-col gap-6">
+    <div className="w-[210mm] min-h-[297mm] bg-[#FEF9E7] text-[#2A1F1F] shadow-2xl rounded-sm p-6 sm:p-10 mx-auto relative border-[12px] border-double border-[#800000] flex flex-col gap-6">
       
       {/* Traditional Header */}
       <div className="text-center space-y-3">

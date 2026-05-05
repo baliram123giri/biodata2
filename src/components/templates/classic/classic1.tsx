@@ -5,7 +5,7 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-full  bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative h-auto flex flex-col overflow-hidden">
+    <div className="w-[210mm] min-h-[297mm] bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative flex flex-col overflow-hidden">
       {/* SVG Frame */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <img
@@ -15,7 +15,7 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
         />
       </div>
 
-      <div className="relative z-10 p-12 mt-4 sm:p-14 flex flex-col gap-6">
+      <div className="relative z-10 px-20 py-16 flex flex-col gap-6">
         {/* Header */}
         <div className="text-center space-y-2">
           {data.mantra && (
@@ -29,8 +29,8 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
             </h1>
           )}
         </div>
-
-        <div className="space-y-6 ms-16">
+ 
+        <div className="space-y-6">
           {/* Sections */}
           <TemplateSection title={t.personal || "Personal Details"} fields={data.personalDetails} t={t} data={data} />
           <TemplateSection title={t.educationSec || "Education & Career"} fields={data.educationDetails} t={t} data={data} />

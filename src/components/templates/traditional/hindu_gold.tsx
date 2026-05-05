@@ -5,7 +5,7 @@ export function HinduGold({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-full max-w-[500px] bg-white text-[#2A1F1F] shadow-2xl rounded-none p-0 mx-auto relative border-[16px] border-[#D4AF37] h-auto flex flex-col">
+    <div className="w-[210mm] min-h-[297mm] bg-white text-[#2A1F1F] shadow-2xl rounded-none p-0 mx-auto relative border-[16px] border-[#D4AF37] flex flex-col">
       {/* Ornate Gold Border Inner */}
       <div className="border-[2px] border-primary m-1 flex-1 flex flex-col p-6 sm:p-8">
         

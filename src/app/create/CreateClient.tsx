@@ -21,9 +21,11 @@ import {
 import { useState } from "react";
 
 import { translations } from "@/lib/translations";
+import { generatePDF } from "@/lib/pdf-utils";
 
 export function CreateClient() {
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
@@ -49,8 +51,16 @@ export function CreateClient() {
     setShowResetDialog(false);
   };
 
-  const handleDownload = () => {
-    window.print();
+  const handleDownload = async () => {
+    setIsGenerating(true);
+    try {
+      const nameField = formData.personalDetails.find(f => f.id === "fullName")?.value || "biodata";
+      await generatePDF("biodata-preview", `${nameField}.pdf`);
+    } catch (err) {
+      console.error("PDF Export Error:", err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -75,18 +85,21 @@ export function CreateClient() {
             <div className="flex gap-4 items-start">
               {/* Main Preview */}
               <div className="flex-1 flex flex-col gap-6 items-center">
-                <BiodataPreview data={formData} templateId={selectedTemplate} />
-
+                <div id="biodata-preview" className="bg-transparent overflow-hidden w-fit">
+                  <BiodataPreview data={formData} templateId={selectedTemplate} />
+                </div>
+ 
                 <div className="flex w-full gap-4">
-                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)}>
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
                     <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
                   </Button>
-                  <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload}>
-                    <Download className="w-4 h-4 mr-2" /> {t.downloadPdf || "Download PDF"}
+                  <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
+                    <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} /> 
+                    {isGenerating ? 'Generating...' : (t.downloadPdf || "Download PDF")}
                   </Button>
                 </div>
               </div>
-
+ 
               {/* Vertical Template Slider */}
               <div className="w-20 shrink-0 flex flex-col gap-4 max-h-[600px] overflow-y-auto no-scrollbar py-2 pr-2 border-l border-primary/10 pl-4">
                 <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground text-center">Frames</span>
@@ -110,17 +123,18 @@ export function CreateClient() {
               </div>
             </div>
           </div>
-
+ 
         </div>
       </div>
-
+ 
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-4 flex gap-4 z-50">
-        <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)}>
+        <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
           <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
         </Button>
-        <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload}>
-          <Download className="w-4 h-4 mr-2" /> {t.download || "Download"}
+        <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
+          <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} /> 
+          {isGenerating ? 'Generating...' : (t.download || "Download")}
         </Button>
       </div>
 
