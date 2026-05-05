@@ -7,17 +7,24 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
   return (
     <div className="w-full min-h-[297mm] border border-2 bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative flex flex-col">
       {/* SVG Frame */}
-      <div className="absolute scale-[1.3] inset-0 z-0 pointer-events-none">
+      <div className="absolute  inset-0 z-0 pointer-events-none">
         <img
-          src="/templates/classic/classic2.svg"
+          src="/templates/classic/class1.svg"
           alt="Frame"
           className="w-full h-full object-fill"
         />
       </div>
 
-      <div className="relative z-10 px-20 py-16 flex flex-col gap-6">
+      <div className="relative z-10 px-20 py-16 flex flex-col gap-6 ms-16">
+        {/* Profile Photo */}
+        {data.photo && (
+          <div className="absolute top-38 right-34 w-32 h-40 border-4 border-white shadow-xl rounded-md rotate-0 overflow-hidden z-20">
+            <img src={data.photo} alt="Profile" className="w-full h-full object-cover" />
+          </div>
+        )}
+
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 me-18 mt-2">
           {data.mantra && (
             <div className="text-primary font-bold text-[15px]">
               {data.mantra}
@@ -48,17 +55,36 @@ function TemplateSection({ title, fields, t, data }: { title: string; fields: an
 
   return (
     <section>
-      <h2 className="text-[17px] font-bold text-primary mb-3 border-b border-primary/20 pb-1.5 flex items-center gap-2">
+      <h2 className="text-[17px] font-bold text-primary mb-3 border-b-2 border-primary/20 pb-1.5 flex items-center gap-2 w-48">
         {title}
       </h2>
       <div className="flex flex-col gap-y-2 text-[14px]">
         {fields.map(field => {
           if (field.type === "hidden") return null;
+
+          // Skip occupation fields as they will be merged with names
+          if (field.id === "fatherOccupation" || field.id === "motherOccupation") return null;
+
+          let displayValue = field.value;
           let logoUrl;
+
+          // Merge Father's Name and Occupation
+          if (field.id === "fatherName") {
+            const occupation = fields.find(f => f.id === "fatherOccupation")?.value;
+            if (occupation) displayValue = `${field.value} (${occupation})`;
+          }
+
+          // Merge Mother's Name and Occupation
+          if (field.id === "motherName") {
+            const occupation = fields.find(f => f.id === "motherOccupation")?.value;
+            if (occupation) displayValue = `${field.value} (${occupation})`;
+          }
+
           if (field.type === "company" || field.id === "companyName") {
             logoUrl = data.educationDetails.find(f => f.id === "companyLogo")?.value;
           }
-          return <TemplateField key={field.id} label={field.label} value={field.value} type={field.type} t={t} logoUrl={logoUrl} />;
+
+          return <TemplateField key={field.id} label={field.label} value={displayValue} type={field.type} t={t} logoUrl={logoUrl} />;
         })}
       </div>
     </section>

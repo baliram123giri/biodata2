@@ -5,54 +5,85 @@ export function Classic2({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-[210mm] min-h-[297mm] bg-[#FFFBF0] text-[#2A1F1F] shadow-lg rounded-lg p-6 sm:p-8 mx-auto relative border-[3px] border-[#D4AF37] flex flex-col gap-6">
-      {/* Decorative Corners */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-t-[4px] border-l-[4px] border-primary rounded-tl-lg" />
-      <div className="absolute top-0 right-0 w-8 h-8 border-t-[4px] border-r-[4px] border-primary rounded-tr-lg" />
-      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[4px] border-l-[4px] border-primary rounded-bl-lg" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[4px] border-r-[4px] border-primary rounded-br-lg" />
+    <div className="w-full min-h-[297mm] border border-2 bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative flex flex-col">
+      {/* SVG Frame */}
+      <div className="absolute scale-[1.3] inset-0 z-0 pointer-events-none">
+        <img
+          src="/templates/classic/classic2.svg"
+          alt="Frame"
+          className="w-full h-full object-fill"
+        />
+      </div>
 
-      {/* Header */}
-      <div className="text-center space-y-2 relative">
-        {data.mantra && (
-          <div className="text-primary font-bold text-[13px] italic">
-            {data.mantra}
+      <div className="relative z-10 px-20 py-16 flex flex-col gap-6 ms-10">
+        {/* Profile Photo */}
+        {data.photo && (
+          <div className="absolute top-16 right-16 w-32 h-40 border-4 border-white shadow-xl rounded-md rotate-0 overflow-hidden z-20">
+            <img src={data.photo} alt="Profile" className="w-full h-full object-cover" />
           </div>
         )}
-        {data.title && (
-          <h1 className="text-[20px] font-extrabold uppercase tracking-[0.2em] text-primary border-y-2 border-primary/30 py-2 inline-block px-8">
-            {data.title}
-          </h1>
-        )}
-      </div>
 
-      <div className="space-y-6 relative">
-        <TemplateSection title={t.personal || "Personal Details"} fields={data.personalDetails} t={t} data={data} />
-        <TemplateSection title={t.educationSec || "Education & Career"} fields={data.educationDetails} t={t} data={data} />
-        <TemplateSection title={t.family || "Family Background"} fields={data.familyDetails} t={t} data={data} />
-        <TemplateSection title={t.contact || "Contact Details"} fields={data.contactDetails} t={t} data={data} />
-      </div>
+        {/* Header */}
+        <div className="text-center space-y-2">
+          {data.mantra && (
+            <div className="text-primary font-bold text-[15px]">
+              {data.mantra}
+            </div>
+          )}
+          {data.title && (
+            <h1 className="text-[22px] font-extrabold uppercase tracking-wider text-primary border-b-2 border-secondary/50 pb-2 inline-block px-4">
+              {data.title}
+            </h1>
+          )}
+        </div>
 
+        <div className="space-y-6 ms-10">
+          {/* Sections */}
+          <TemplateSection title={t.personal || "Personal Details"} fields={data.personalDetails} t={t} data={data} />
+          <TemplateSection title={t.educationSec || "Education & Career"} fields={data.educationDetails} t={t} data={data} />
+          <TemplateSection title={t.family || "Family Background"} fields={data.familyDetails} t={t} data={data} />
+          <TemplateSection title={t.contact || "Contact Details"} fields={data.contactDetails} t={t} data={data} />
+        </div>
+      </div>
     </div>
   );
 }
 
 function TemplateSection({ title, fields, t, data }: { title: string; fields: any[]; t: Record<string, string>; data: BiodataFormValues }) {
   if (!fields || fields.length === 0) return null;
-  
+
   return (
     <section>
-      <h2 className="text-[14px] font-bold text-white bg-primary py-1 px-3 mb-3 rounded-sm inline-block">
+      <h2 className="text-[17px] font-bold text-primary mb-3 border-b-2 border-primary/20 pb-1.5 flex items-center gap-2 w-48">
         {title}
       </h2>
-      <div className="flex flex-col gap-y-2 text-[12.5px] border-l-2 border-primary/10 pl-4">
+      <div className="flex flex-col gap-y-2 text-[14px]">
         {fields.map(field => {
           if (field.type === "hidden") return null;
+          
+          // Skip occupation fields as they will be merged with names
+          if (field.id === "fatherOccupation" || field.id === "motherOccupation") return null;
+
+          let displayValue = field.value;
           let logoUrl;
+
+          // Merge Father's Name and Occupation
+          if (field.id === "fatherName") {
+            const occupation = fields.find(f => f.id === "fatherOccupation")?.value;
+            if (occupation) displayValue = `${field.value} (${occupation})`;
+          }
+
+          // Merge Mother's Name and Occupation
+          if (field.id === "motherName") {
+            const occupation = fields.find(f => f.id === "motherOccupation")?.value;
+            if (occupation) displayValue = `${field.value} (${occupation})`;
+          }
+
           if (field.type === "company" || field.id === "companyName") {
             logoUrl = data.educationDetails.find(f => f.id === "companyLogo")?.value;
           }
-          return <TemplateField key={field.id} label={field.label} value={field.value} type={field.type} t={t} logoUrl={logoUrl} />;
+          
+          return <TemplateField key={field.id} label={field.label} value={displayValue} type={field.type} t={t} logoUrl={logoUrl} />;
         })}
       </div>
     </section>
@@ -64,7 +95,7 @@ function TemplateField({ label, value, type, t, logoUrl }: { label: string; valu
   const isFullWidth = type === 'textarea';
 
   let displayValue = translateDynamicOption(value, t);
-  
+
   if (type === "date" && value) {
     const [year, month, day] = value.split("-");
     if (year && month && day) {
@@ -74,9 +105,9 @@ function TemplateField({ label, value, type, t, logoUrl }: { label: string; valu
 
   return (
     <div className={`flex gap-2 items-start ${isFullWidth ? 'flex-col' : 'flex-row'}`}>
-      <span className={`font-bold text-[#5C4033] shrink-0 ${isFullWidth ? 'w-full' : 'w-24 sm:w-28'}`}>{label}</span>
-      {!isFullWidth && <span className="font-bold text-primary shrink-0">▸</span>}
-      <span className="font-medium break-words text-gray-800 flex-1 flex items-center">
+      <span className={`font-semibold text-primary shrink-0 ${isFullWidth ? 'w-full' : 'w-28 sm:w-32'}`}>{label}</span>
+      {!isFullWidth && <span className="font-semibold text-primary shrink-0">:</span>}
+      <span className="font-bold break-words text-gray-900 flex-1 flex items-center">
         {logoUrl && <img src={logoUrl} alt="Logo" className="h-4 w-4 mr-1.5 object-contain" />}
         {logoUrl ? `(${displayValue})` : displayValue}
       </span>

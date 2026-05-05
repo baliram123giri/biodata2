@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/ImageUpload";
 import { Plus, Trash2, Pencil, Globe } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 
 export function BiodataForm() {
-  const { register, setValue, getValues } = useFormContext<BiodataFormValues>();
+  const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const [currentLang, setCurrentLang] = useState("English");
 
   const handleLanguageChange = (newLang: string | null) => {
@@ -79,14 +80,31 @@ export function BiodataForm() {
         {/* CUSTOMIZATION */}
         <AccordionItem value="customization" className="bg-card px-4 rounded-lg border">
           <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{t.photoCustom || "Photo & Customization"}</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="mantra">Mantra / Heading</Label>
-              <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
+          <AccordionContent className="space-y-6 pt-2">
+            <div className="space-y-4">
+               <Label className="text-base font-semibold">Profile Photo</Label>
+               <Controller
+                 name="photo"
+                 control={control}
+                 render={({ field }) => (
+                   <ImageUpload 
+                     value={field.value} 
+                     onChange={field.onChange} 
+                     aspect={3 / 4} 
+                   />
+                 )}
+               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="title">Biodata Title</Label>
-              <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mantra">Mantra / Heading</Label>
+                <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="title">Biodata Title</Label>
+                <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} />
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
