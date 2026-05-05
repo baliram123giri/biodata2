@@ -5,11 +5,11 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
   const t = translations[data.language || "English"] || translations["English"];
 
   return (
-    <div className="w-[210mm] min-h-[297mm] bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative flex flex-col overflow-hidden">
+    <div className="w-full min-h-[297mm] border border-2 bg-white text-[#2A1F1F] shadow-lg rounded-none mx-auto relative flex flex-col">
       {/* SVG Frame */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute scale-[1.3] inset-0 z-0 pointer-events-none">
         <img
-          src="/templates/classic/classic1.svg"
+          src="/templates/classic/classic2.svg"
           alt="Frame"
           className="w-full h-full object-fill"
         />
@@ -19,18 +19,18 @@ export function Classic1({ data }: { data: BiodataFormValues }) {
         {/* Header */}
         <div className="text-center space-y-2">
           {data.mantra && (
-            <div className="text-primary font-bold text-[13px]">
+            <div className="text-primary font-bold text-[15px]">
               {data.mantra}
             </div>
           )}
           {data.title && (
-            <h1 className="text-[18px] font-extrabold uppercase tracking-wider text-primary border-b-2 border-secondary/50 pb-2 inline-block px-4">
+            <h1 className="text-[22px] font-extrabold uppercase tracking-wider text-primary border-b-2 border-secondary/50 pb-2 inline-block px-4">
               {data.title}
             </h1>
           )}
         </div>
- 
-        <div className="space-y-6">
+
+        <div className="space-y-6 ms-10">
           {/* Sections */}
           <TemplateSection title={t.personal || "Personal Details"} fields={data.personalDetails} t={t} data={data} />
           <TemplateSection title={t.educationSec || "Education & Career"} fields={data.educationDetails} t={t} data={data} />
@@ -48,10 +48,10 @@ function TemplateSection({ title, fields, t, data }: { title: string; fields: an
 
   return (
     <section>
-      <h2 className="text-[15px] font-bold text-primary mb-3 border-b border-primary/20 pb-1.5 flex items-center gap-2">
+      <h2 className="text-[17px] font-bold text-primary mb-3 border-b border-primary/20 pb-1.5 flex items-center gap-2">
         {title}
       </h2>
-      <div className="flex flex-col gap-y-2 text-[12.5px]">
+      <div className="flex flex-col gap-y-2 text-[14px]">
         {fields.map(field => {
           if (field.type === "hidden") return null;
           let logoUrl;
@@ -80,9 +80,9 @@ function TemplateField({ label, value, type, t, logoUrl }: { label: string; valu
 
   return (
     <div className={`flex gap-2 items-start ${isFullWidth ? 'flex-col' : 'flex-row'}`}>
-      <span className={`font-semibold text-primary shrink-0 ${isFullWidth ? 'w-full' : 'w-24 sm:w-28'}`}>{label}</span>
+      <span className={`font-semibold text-primary shrink-0 ${isFullWidth ? 'w-full' : 'w-28 sm:w-32'}`}>{label}</span>
       {!isFullWidth && <span className="font-semibold text-primary shrink-0">:</span>}
-      <span className="font-medium break-words text-gray-800 flex-1 flex items-center">
+      <span className="font-bold break-words text-gray-900 flex-1 flex items-center">
         {logoUrl && <img src={logoUrl} alt="Logo" className="h-4 w-4 mr-1.5 object-contain" />}
         {logoUrl ? `(${displayValue})` : displayValue}
       </span>

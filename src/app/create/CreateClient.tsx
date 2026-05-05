@@ -18,14 +18,25 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { translations } from "@/lib/translations";
 import { generatePDF } from "@/lib/pdf-utils";
+import { useBiodataStore } from "@/store/useBiodataStore";
 
 export function CreateClient() {
+  const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore } = useBiodataStore();
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Handle hydration and initial load
+  useEffect(() => {
+    setIsHydrated(true);
+    // Initialize form with stored data ONCE after mount
+    methods.reset(storedData);
+  }, []); // Run only once
+
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
@@ -33,10 +44,18 @@ export function CreateClient() {
   });
 
   const formData = methods.watch();
+
+  // Update store when form changes
+  useEffect(() => {
+    const subscription = methods.watch((value) => {
+      // Sync form state to Zustand store
+      if (value) setFormData(value as BiodataFormValues);
+    });
+    return () => subscription.unsubscribe();
+  }, [methods, setFormData]);
+
   const currentLang = formData.language || "English";
   const t = translations[currentLang] || translations["English"];
-
-  const [selectedTemplate, setSelectedTemplate] = useState("classic1");
 
   const templates = [
     { id: "classic1", name: "Classic 1", color: "bg-primary" },
@@ -47,15 +66,18 @@ export function CreateClient() {
   ];
 
   const handleReset = () => {
+    resetStore();
     methods.reset(defaultBiodataValues);
     setShowResetDialog(false);
   };
+
 
   const handleDownload = async () => {
     setIsGenerating(true);
     try {
       const nameField = formData.personalDetails.find(f => f.id === "fullName")?.value || "biodata";
-      await generatePDF("biodata-preview", `${nameField}.pdf`);
+      // We use a hidden fixed-width element for export to ensure perfect A4 ratio regardless of UI preview size
+      await generatePDF("pdf-export-element", `${nameField}.pdf`);
     } catch (err) {
       console.error("PDF Export Error:", err);
     } finally {
@@ -65,11 +87,18 @@ export function CreateClient() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
+      {/* Hidden Export Container - Fixed A4 width for perfect PDF generation */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '210mm' }}>
+        <div id="pdf-export-element" className="bg-white">
+          <BiodataPreview data={formData} templateId={storedTemplate} />
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-6 max-w-[1400px]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
           {/* Form Side - Natural Scrolling */}
-          <div className="lg:col-span-6 flex flex-col">
+          <div className="lg:col-span-4 flex flex-col print:hidden">
             <div className="mb-4">
               <h1 className="text-2xl font-bold text-primary">{t.title || "Create Your Biodata"}</h1>
               <p className="text-sm text-muted-foreground">Fill in your details below. The preview updates instantly.</p>
@@ -81,40 +110,40 @@ export function CreateClient() {
           </div>
 
           {/* Preview Side - Sticky with Vertical Template Slider */}
-          <div className="lg:col-span-6 sticky top-24 hidden lg:block">
+          <div className="lg:col-span-8 sticky top-24 hidden lg:block print:block print:static print:w-full">
             <div className="flex gap-4 items-start">
               {/* Main Preview */}
-              <div className="flex-1 flex flex-col gap-6 items-center">
-                <div id="biodata-preview" className="bg-transparent overflow-hidden w-fit">
-                  <BiodataPreview data={formData} templateId={selectedTemplate} />
+              <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
+                <div id="biodata-preview" className="bg-transparent overflow-hidden w-full print:shadow-none">
+                  <BiodataPreview data={formData} templateId={storedTemplate} />
                 </div>
- 
-                <div className="flex w-full gap-4">
+
+                <div className="flex w-full gap-4 print:hidden">
                   <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
                     <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
                   </Button>
                   <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
-                    <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} /> 
+                    <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
                     {isGenerating ? 'Generating...' : (t.downloadPdf || "Download PDF")}
                   </Button>
                 </div>
               </div>
- 
+
               {/* Vertical Template Slider */}
-              <div className="w-20 shrink-0 flex flex-col gap-4 max-h-[600px] overflow-y-auto no-scrollbar py-2 pr-2 border-l border-primary/10 pl-4">
+              <div className="w-20 shrink-0 flex flex-col gap-4 max-h-[600px] overflow-y-auto no-scrollbar py-2 pr-2 border-l border-primary/10 pl-4 print:hidden">
                 <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground text-center">Frames</span>
                 {templates.map((tpl) => (
                   <button
                     key={tpl.id}
                     onClick={() => setSelectedTemplate(tpl.id)}
-                    className={`group relative flex flex-col items-center gap-2 transition-all ${selectedTemplate === tpl.id ? "scale-105" : "opacity-60 hover:opacity-100 hover:scale-105"
+                    className={`group relative flex flex-col items-center gap-2 transition-all ${storedTemplate === tpl.id ? "scale-105" : "opacity-60 hover:opacity-100 hover:scale-105"
                       }`}
                   >
-                    <div className={`w-12 h-16 rounded-md shadow-md border-2 ${selectedTemplate === tpl.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"
+                    <div className={`w-12 h-16 rounded-md shadow-md border-2 ${storedTemplate === tpl.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"
                       } ${tpl.color} flex items-center justify-center`}>
                       <span className="text-[10px] font-bold text-white uppercase transform -rotate-45">{tpl.id.split('')[0]}</span>
                     </div>
-                    <span className={`text-[9px] font-bold text-center ${selectedTemplate === tpl.id ? "text-primary" : "text-muted-foreground"
+                    <span className={`text-[9px] font-bold text-center ${storedTemplate === tpl.id ? "text-primary" : "text-muted-foreground"
                       }`}>
                       {tpl.name}
                     </span>
@@ -123,17 +152,17 @@ export function CreateClient() {
               </div>
             </div>
           </div>
- 
+
         </div>
       </div>
- 
+
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-4 flex gap-4 z-50">
         <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
           <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
         </Button>
         <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
-          <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} /> 
+          <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
           {isGenerating ? 'Generating...' : (t.download || "Download")}
         </Button>
       </div>

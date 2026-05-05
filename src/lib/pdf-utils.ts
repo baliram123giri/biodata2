@@ -1,5 +1,5 @@
-import { toPng } from "html-to-image";
-import jsPDF from "jspdf";
+import { toCanvas } from "html-to-image";
+import { jsPDF } from "jspdf";
 
 export async function generatePDF(elementId: string, filename: string = "biodata.pdf") {
   const element = document.getElementById(elementId);
@@ -9,55 +9,70 @@ export async function generatePDF(elementId: string, filename: string = "biodata
   }
 
   try {
-    // Use html-to-image which has better support for modern CSS (oklch, oklab)
-    // and captures higher quality output via SVG rendering
-    const imgData = await toPng(element, {
-      quality: 1.0,
-      pixelRatio: 7, // High quality scale
-      backgroundColor: "#ffffff",
-      cacheBust: true,
+    // 1. Get the HTML and ensure all images have absolute URLs
+    const origin = window.location.origin;
+    let htmlContent = element.innerHTML;
+    
+    // Convert relative image paths to absolute for Puppeteer
+    htmlContent = htmlContent.replace(/src="\//g, `src="${origin}/`);
+
+    // 2. Wrap in a full HTML document with Tailwind and Fonts
+    // Using Tailwind v4 CDN for the rendering phase
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style type="text/tailwindcss">
+            @theme {
+              --color-primary: #800000;
+              --color-secondary: #D4AF37;
+              --color-accent: #FFD700;
+            }
+            html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; overflow: hidden; }
+            body { font-family: 'Inter', sans-serif; background: white; }
+            @page { size: A4; margin: 0; }
+            .print-container { width: 210mm; height: 297mm; position: relative; overflow: hidden; }
+            /* Force the template itself to fill the container in PDF */
+            .print-container > div { height: 100% !important; min-height: 100% !important; overflow: hidden !important; }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${htmlContent}
+          </div>
+        </body>
+      </html>
+    `;
+
+    // 3. Send to the Server-Side Puppeteer API
+    const response = await fetch("/api/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: fullHtml, filename }),
     });
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    // Create a temporary image to get dimensions
-    const img = new Image();
-    img.src = imgData;
-
-    await new Promise((resolve) => {
-      img.onload = resolve;
-    });
-
-    const imgWidth = img.width;
-    const imgHeight = img.height;
-    const ratio = imgWidth / imgHeight;
-
-    let finalWidth = pageWidth;
-    let finalHeight = finalWidth / ratio;
-
-    // If the calculated height is more than the page height, scale down
-    if (finalHeight > pageHeight) {
-      finalHeight = pageHeight;
-      finalWidth = finalHeight * ratio;
+    if (!response.ok) {
+      throw new Error("Failed to generate PDF on server");
     }
 
-    // Center the image on the page
-    const x = (pageWidth - finalWidth) / 2;
-    const y = (pageHeight - finalHeight) / 2;
+    // 4. Download the result
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-    // Add image to PDF
-    pdf.addImage(imgData, "PNG", 0, 0, finalWidth, finalHeight);
-
-    // Save the PDF
-    pdf.save(filename);
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    console.error("Puppeteer PDF Error:", error);
+    throw error;
   }
 }
