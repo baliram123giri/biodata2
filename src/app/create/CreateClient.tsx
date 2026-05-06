@@ -25,6 +25,9 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { pdf } from "@react-pdf/renderer";
 import { BiodataPDF } from "@/components/biodata/BiodataPDF";
 import dynamic from "next/dynamic";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Loader2 } from "lucide-react";
+import { useMemo } from "react";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -51,6 +54,25 @@ export function CreateClient() {
   });
 
   const formData = methods.watch();
+  const [debouncedFormData, isFormDataUpdating] = useDebounce(formData, 800);
+  const [debouncedTemplate, isTemplateUpdating] = useDebounce(storedTemplate, 500);
+
+  const isDataUpdating = isFormDataUpdating || isTemplateUpdating;
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Sync isUpdating with a small extra delay to cover the PDF engine's internal render time
+  useEffect(() => {
+    if (isDataUpdating) {
+      setIsUpdating(true);
+    } else {
+      const timer = setTimeout(() => setIsUpdating(false), 500); // 500ms settle time
+      return () => clearTimeout(timer);
+    }
+  }, [isDataUpdating]);
+
+  const pdfDocument = useMemo(() => (
+    <BiodataPDF data={debouncedFormData} templateId={debouncedTemplate} />
+  ), [debouncedFormData, debouncedTemplate]);
 
   // Update store when form changes
   useEffect(() => {
@@ -124,22 +146,36 @@ export function CreateClient() {
               {/* Main Preview */}
               <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
                 <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative rounded-xl shadow-2xl border border-primary/5 mx-auto ">
-                  <PDFViewer
-                    key={storedTemplate}
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 'none',
-                      overflow: 'hidden',
-
-                      backgroundColor: "white",
-                      //@ts-ignore
-                      pointerEvents: 'none',
-                    }}
-                    showToolbar={false}
-                  >
-                    <BiodataPDF data={formData} templateId={storedTemplate} />
-                  </PDFViewer>
+                  {/* Premium Opaque Loader to hide flickering */}
+                  {isUpdating && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-white transition-all duration-500 animate-in fade-in">
+                      <div className="flex flex-col items-center gap-3 p-8 rounded-3xl">
+                        <div className="relative">
+                          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                          <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
+                        </div>
+                        <span className="text-[10px] font-bold text-primary/60 uppercase tracking-[0.2em] mt-2">Refreshing Preview</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* PDF Container with smooth opacity transition */}
+                  <div className={`w-full h-full transition-opacity duration-700 ease-in-out ${isUpdating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                    <PDFViewer
+                      width="100%"
+                      height="100%"
+                      style={{
+                        border: 'none',
+                        overflow: 'hidden',
+                        backgroundColor: "white",
+                        //@ts-ignore
+                        pointerEvents: 'none',
+                      }}
+                      showToolbar={false}
+                    >
+                      {pdfDocument}
+                    </PDFViewer>
+                  </div>
                 </div>
 
                 <div className="flex w-full gap-4 print:hidden">
