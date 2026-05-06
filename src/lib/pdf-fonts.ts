@@ -2,43 +2,41 @@ import { Font } from '@react-pdf/renderer';
 
 const FONT_BASE_URL = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf';
 
+let fontsRegistered = false;
+
 export const registerPDFFonts = () => {
+  if (fontsRegistered) return;
+
+  // Register Inter (with fallback to multiple weights)
   Font.register({
     family: 'Inter',
-    src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf',
+    fonts: [
+      { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf', fontWeight: 400 },
+      { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fMZhrib2Bg-4.ttf', fontWeight: 700 },
+    ]
   });
-  Font.register({
-    family: 'Noto Sans Devanagari',
-    src: `${FONT_BASE_URL}/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Gujarati',
-    src: `${FONT_BASE_URL}/NotoSansGujarati/NotoSansGujarati-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Bengali',
-    src: `${FONT_BASE_URL}/NotoSansBengali/NotoSansBengali-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Tamil',
-    src: `${FONT_BASE_URL}/NotoSansTamil/NotoSansTamil-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Telugu',
-    src: `${FONT_BASE_URL}/NotoSansTelugu/NotoSansTelugu-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Kannada',
-    src: `${FONT_BASE_URL}/NotoSansKannada/NotoSansKannada-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Gurmukhi',
-    src: `${FONT_BASE_URL}/NotoSansGurmukhi/NotoSansGurmukhi-Regular.ttf`,
-  });
-  Font.register({
-    family: 'Noto Sans Arabic',
-    src: `${FONT_BASE_URL}/NotoSansArabic/NotoSansArabic-Regular.ttf`,
-  });
+
+  // Helper for Noto Sans registration
+  const registerNoto = (name: string) => {
+    Font.register({
+      family: `Noto Sans ${name}`,
+      fonts: [
+        { src: `${FONT_BASE_URL}/NotoSans${name}/NotoSans${name}-Regular.ttf`, fontWeight: 400 },
+        { src: `${FONT_BASE_URL}/NotoSans${name}/NotoSans${name}-Bold.ttf`, fontWeight: 700 },
+      ]
+    });
+  };
+
+  registerNoto('Devanagari');
+  registerNoto('Gujarati');
+  registerNoto('Bengali');
+  registerNoto('Tamil');
+  registerNoto('Telugu');
+  registerNoto('Kannada');
+  registerNoto('Gurmukhi');
+  registerNoto('Arabic');
+
+  fontsRegistered = true;
 };
 
 export const getPDFFontFamily = (lang: string) => {

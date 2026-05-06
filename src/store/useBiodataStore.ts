@@ -15,10 +15,10 @@ export const useBiodataStore = create<BiodataState>()(
   persist(
     (set) => ({
       formData: defaultBiodataValues,
-      selectedTemplate: "classic1",
+      selectedTemplate: "royal",
       setFormData: (data) => set({ formData: data }),
       setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
-      resetStore: () => set({ formData: defaultBiodataValues, selectedTemplate: "classic1" }),
+      resetStore: () => set({ formData: defaultBiodataValues, selectedTemplate: "royal" }),
     }),
     {
       name: "biodata-storage",

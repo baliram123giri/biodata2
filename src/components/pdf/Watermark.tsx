@@ -31,6 +31,7 @@ export const Watermark = () => {
                 color: '#800000',
                 opacity: 0.09,
                 transform: 'rotate(-30deg)',
+                fontFamily: 'Inter',
                 fontWeight: 'bold',
               }}
             >

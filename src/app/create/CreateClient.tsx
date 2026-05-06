@@ -65,7 +65,8 @@ export function CreateClient() {
   const t = translations[currentLang] || translations["English"];
 
   const templates = [
-    { id: "classic1", name: "Classic 1", color: "bg-primary" },
+    { id: "royal", name: "Royal Gold", color: "bg-[#800000]" },
+    { id: "ivory-elegance", name: "Ivory Elegance", color: "bg-[#7A5C2F]" },
   ];
 
   const handleReset = () => {
@@ -93,7 +94,6 @@ export function CreateClient() {
       setIsGenerating(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Hidden Export Container - Fixed A4 width for perfect PDF generation */}
