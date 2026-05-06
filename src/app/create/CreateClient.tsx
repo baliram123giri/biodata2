@@ -23,8 +23,14 @@ import { useState, useEffect } from "react";
 import { translations } from "@/lib/translations";
 import { generatePDF } from "@/lib/pdf-utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
-import { PDFViewer, pdf } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { BiodataPDF } from "@/components/biodata/BiodataPDF";
+import dynamic from "next/dynamic";
+
+const PDFViewer = dynamic(
+  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
+  { ssr: false }
+);
 
 export function CreateClient() {
   const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore } = useBiodataStore();
@@ -118,8 +124,21 @@ export function CreateClient() {
             <div className="flex gap-4 items-start">
               {/* Main Preview */}
               <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
-                <div id="biodata-preview" className="bg-white overflow-hidden w-full print:shadow-none h-[842px] relative">
-                  <PDFViewer key={storedTemplate} width="100%" height="100%" style={{ border: 'none' }} showToolbar={false}>
+                <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative rounded-xl shadow-2xl border border-primary/5 mx-auto ">
+                  <PDFViewer
+                    key={storedTemplate}
+                    width="100%"
+                    height="100%"
+                    style={{
+                      border: 'none',
+                      overflow: 'hidden',
+
+                      backgroundColor: "white",
+                      //@ts-ignore
+                      pointerEvents: 'none',
+                    }}
+                    showToolbar={false}
+                  >
                     <BiodataPDF data={formData} templateId={storedTemplate} />
                   </PDFViewer>
                 </div>

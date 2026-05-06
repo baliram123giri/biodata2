@@ -1,5 +1,5 @@
 import type { BiodataFormValues } from "@/types/biodata";
-import Classic1PDF from "../templates/classic/Classic1PDF";
+import RoyalPDF from "../templates/classic/Royal/RoyalPDF";
 
 interface BiodataPDFProps {
   data: BiodataFormValues;
@@ -9,7 +9,7 @@ interface BiodataPDFProps {
 export const BiodataPDF = ({ data, templateId }: BiodataPDFProps) => {
   /**
    * PDF Generation Switcher
-   * Currently focusing on Classic 1 as the primary professional template.
+   * Currently focusing on the 'Royal' professional template.
    */
-  return <Classic1PDF data={data} />;
+  return <RoyalPDF data={data} />;
 };
