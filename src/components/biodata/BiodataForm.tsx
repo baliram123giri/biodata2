@@ -202,12 +202,11 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                   name={`${name}.${index}.value` as const}
                   control={control}
                   render={({ field: timeField }) => {
-                    // Extract HH, MM, and Period from current value
-                    // Expected format: "10:30 (Morning)"
-                    const parts = timeField.value.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
-                    const hhPart = parts?.[1] || "10";
-                    const mmPart = parts?.[2] || "00";
-                    const periodPart = parts?.[3] || "Morning";
+                    const timeValue = timeField.value || "10:00 (Morning)";
+                    const parts = timeValue.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
+                    const hhPart: string = (parts?.[1] ?? "10");
+                    const mmPart: string = (parts?.[2] ?? "00");
+                    const periodPart: string = (parts?.[3] ?? "Morning");
 
                     const updateValue = (h: string, m: string, p: string) => {
                       timeField.onChange(`${h}:${m} (${p})`);
@@ -219,7 +218,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                     return (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Select value={hhPart} onValueChange={(val) => updateValue(val, mmPart, periodPart)}>
+                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
@@ -227,7 +226,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                               {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val, periodPart)}>
+                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
@@ -236,7 +235,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                             </SelectContent>
                           </Select>
                         </div>
-                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val)}>
+                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={t.select || "Select Period"}>
                               {periodPart ? (t[periodPart] || periodPart) : undefined}

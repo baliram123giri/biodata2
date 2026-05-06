@@ -4,7 +4,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
-import { BiodataPreview } from "@/components/biodata/BiodataPreview";
+
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import { useState, useEffect } from "react";
 import { translations } from "@/lib/translations";
 import { generatePDF } from "@/lib/pdf-utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
+import { PDFViewer, pdf } from "@react-pdf/renderer";
+import { BiodataPDF } from "@/components/biodata/BiodataPDF";
 
 export function CreateClient() {
   const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore } = useBiodataStore();
@@ -59,10 +61,6 @@ export function CreateClient() {
 
   const templates = [
     { id: "classic1", name: "Classic 1", color: "bg-primary" },
-    { id: "classic2", name: "Classic 2", color: "bg-[#D4AF37]" },
-    { id: "modern1", name: "Modern 1", color: "bg-gray-800" },
-    { id: "marathi1", name: "Marathi 1", color: "bg-[#800000]" },
-    { id: "hindu_gold", name: "Hindu Gold", color: "bg-secondary" },
   ];
 
   const handleReset = () => {
@@ -76,8 +74,14 @@ export function CreateClient() {
     setIsGenerating(true);
     try {
       const nameField = formData.personalDetails.find(f => f.id === "fullName")?.value || "biodata";
-      // We use a hidden fixed-width element for export to ensure perfect A4 ratio regardless of UI preview size
-      await generatePDF("pdf-export-element", `${nameField}.pdf`);
+      const doc = <BiodataPDF data={formData} templateId={storedTemplate} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${nameField}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF Export Error:", err);
     } finally {
@@ -88,11 +92,11 @@ export function CreateClient() {
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Hidden Export Container - Fixed A4 width for perfect PDF generation */}
-      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '210mm' }}>
+      {/* <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '210mm' }}>
         <div id="pdf-export-element" className="bg-white">
-          <BiodataPreview data={formData} templateId={storedTemplate} />
+          <BiodataPDF data={formData} templateId={storedTemplate} />
         </div>
-      </div>
+      </div> */}
 
       <div className="container mx-auto px-4 py-6 max-w-[1400px]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -114,8 +118,10 @@ export function CreateClient() {
             <div className="flex gap-4 items-start">
               {/* Main Preview */}
               <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
-                <div id="biodata-preview" className="bg-transparent overflow-hidden w-full print:shadow-none">
-                  <BiodataPreview data={formData} templateId={storedTemplate} />
+                <div id="biodata-preview" className="bg-white overflow-hidden w-full print:shadow-none h-[842px] relative">
+                  <PDFViewer key={storedTemplate} width="100%" height="100%" style={{ border: 'none' }} showToolbar={false}>
+                    <BiodataPDF data={formData} templateId={storedTemplate} />
+                  </PDFViewer>
                 </div>
 
                 <div className="flex w-full gap-4 print:hidden">
