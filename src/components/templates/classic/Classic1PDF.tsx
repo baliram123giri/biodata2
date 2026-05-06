@@ -203,7 +203,20 @@ export const Classic1PDF = ({ data }: { data: BiodataFormValues }) => {
             if (field.id === "fatherOccupation" || field.id === "motherOccupation") return null;
 
             let displayValue = field.value;
+            let displayLabel = field.label;
             let logoUrl;
+
+            // Translate Label if possible
+            if (t[field.label]) {
+              displayLabel = t[field.label];
+            } else {
+              // Try to find the key by matching the English value
+              const englishT = translations["English"];
+              const key = Object.keys(englishT).find(k => englishT[k] === field.label);
+              if (key && t[key]) {
+                displayLabel = t[key];
+              }
+            }
 
             // Merge Occupations
             if (field.id === "fatherName") {
@@ -231,7 +244,7 @@ export const Classic1PDF = ({ data }: { data: BiodataFormValues }) => {
 
             return (
               <View key={field.id} style={styles.fieldRow}>
-                <Text style={styles.label}>{field.label}</Text>
+                <Text style={styles.label}>{displayLabel}</Text>
                 <Text style={styles.colon}>:</Text>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                   {logoUrl && <Image src={logoUrl} style={styles.logo} />}
