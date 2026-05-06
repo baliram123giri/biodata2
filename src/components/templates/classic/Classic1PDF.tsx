@@ -9,16 +9,74 @@ import frame from "./class1.svg"
  * This ensures 100% reliability and instant PDF rendering without network dependency.
  */
 
-// Register Devanagari font for regional support
+// Register Fonts for Regional Support
+const FONT_BASE_URL = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf';
+
+Font.register({
+  family: 'Inter',
+  src: 'https://cdn.jsdelivr.net/gh/googlefonts/inter@master/docs/font-files/Inter-Regular.ttf',
+});
 Font.register({
   family: 'Noto Sans Devanagari',
-  src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf',
+  src: `${FONT_BASE_URL}/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Gujarati',
+  src: `${FONT_BASE_URL}/NotoSansGujarati/NotoSansGujarati-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Bengali',
+  src: `${FONT_BASE_URL}/NotoSansBengali/NotoSansBengali-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Tamil',
+  src: `${FONT_BASE_URL}/NotoSansTamil/NotoSansTamil-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Telugu',
+  src: `${FONT_BASE_URL}/NotoSansTelugu/NotoSansTelugu-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Kannada',
+  src: `${FONT_BASE_URL}/NotoSansKannada/NotoSansKannada-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Gurmukhi',
+  src: `${FONT_BASE_URL}/NotoSansGurmukhi/NotoSansGurmukhi-Regular.ttf`,
+});
+Font.register({
+  family: 'Noto Sans Arabic',
+  src: `${FONT_BASE_URL}/NotoSansArabic/NotoSansArabic-Regular.ttf`,
 });
 
-const styles = StyleSheet.create({
+const getFontFamily = (lang: string) => {
+  switch (lang) {
+    case "हिंदी":
+    case "मराठी":
+      return 'Noto Sans Devanagari';
+    case "ગુજરાતી":
+      return 'Noto Sans Gujarati';
+    case "বাংলা":
+      return 'Noto Sans Bengali';
+    case "தமிழ்":
+      return 'Noto Sans Tamil';
+    case "తెలుగు":
+      return 'Noto Sans Telugu';
+    case "ಕನ್ನಡ":
+      return 'Noto Sans Kannada';
+    case "ਪੰਜਾਬੀ":
+      return 'Noto Sans Gurmukhi';
+    case "اردو":
+      return 'Noto Sans Arabic';
+    default:
+      return 'Inter';
+  }
+};
+
+const createStyles = (fontFamily: string) => StyleSheet.create({
   page: {
     padding: 0,
-    fontFamily: 'Helvetica',
+    fontFamily: fontFamily,
     backgroundColor: '#FFFFFF',
     height: "100%"
   },
@@ -26,7 +84,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    // width: 595.28,
     height: "100%",
     zIndex: -1,
     objectFit: 'cover',
@@ -44,14 +101,13 @@ const styles = StyleSheet.create({
   header: {
     textAlign: 'center',
     marginBottom: 35,
-
   },
   mantra: {
     fontSize: 14,
     color: '#800000',
     fontWeight: 'bold',
     marginBottom: 10,
-    fontFamily: 'Noto Sans Devanagari',
+    fontFamily: 'Noto Sans Devanagari', // Always Devanagari for Mantra
   },
   title: {
     fontSize: 28,
@@ -62,7 +118,7 @@ const styles = StyleSheet.create({
     borderBottom: '2.5pt solid #D4AF37',
     paddingBottom: 6,
     alignSelf: 'center',
-    fontFamily: 'Noto Sans Devanagari',
+    fontFamily: fontFamily,
   },
   photoContainer: {
     position: 'absolute',
@@ -90,7 +146,7 @@ const styles = StyleSheet.create({
     width: 200,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    fontFamily: 'Noto Sans Devanagari',
+    fontFamily: fontFamily,
   },
   fieldRow: {
     display: 'flex',
@@ -103,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     color: '#800000',
-    fontFamily: 'Noto Sans Devanagari',
+    fontFamily: fontFamily,
   },
   colon: {
     width: 12,
@@ -116,7 +172,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#1A1A1A',
     fontWeight: 'bold',
-    fontFamily: 'Noto Sans Devanagari',
+    fontFamily: fontFamily,
     lineHeight: 1.4,
   },
   logo: {
@@ -127,7 +183,10 @@ const styles = StyleSheet.create({
 });
 
 export const Classic1PDF = ({ data }: { data: BiodataFormValues }) => {
-  const t = translations[data.language || "English"] || translations["English"];
+  const currentLang = data.language || "English";
+  const t = translations[currentLang] || translations["English"];
+  const currentFont = getFontFamily(currentLang);
+  const styles = createStyles(currentFont);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   const renderSection = (title: string, fields: any[]) => {
