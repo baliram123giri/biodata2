@@ -21,7 +21,6 @@ import {
 import { useState, useEffect } from "react";
 
 import { translations } from "@/lib/translations";
-import { generatePDF } from "@/lib/pdf-utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { pdf } from "@react-pdf/renderer";
 import { BiodataPDF } from "@/components/biodata/BiodataPDF";
@@ -108,7 +107,7 @@ export function CreateClient() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
           {/* Form Side - Natural Scrolling */}
-          <div className="lg:col-span-4 flex flex-col print:hidden">
+          <div className="lg:col-span-5 flex flex-col print:hidden">
             <div className="mb-4">
               <h1 className="text-2xl font-bold text-primary">{t.title || "Create Your Biodata"}</h1>
               <p className="text-sm text-muted-foreground">Fill in your details below. The preview updates instantly.</p>
@@ -120,7 +119,7 @@ export function CreateClient() {
           </div>
 
           {/* Preview Side - Sticky with Vertical Template Slider */}
-          <div className="lg:col-span-8 sticky top-24 hidden lg:block print:block print:static print:w-full">
+          <div className="lg:col-span-7 sticky top-24 hidden lg:block print:block print:static print:w-full">
             <div className="flex gap-4 items-start">
               {/* Main Preview */}
               <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
