@@ -30,7 +30,7 @@ export function Modern1({ data }: { data: BiodataFormValues }) {
           )}
           {/* Main Name from personalDetails if available */}
           <div className="pt-2">
-             <p className="text-[14px] text-white/90 italic">Professional Matrimonial Biodata</p>
+            <p className="text-[14px] text-white/90 italic">Professional Matrimonial Biodata</p>
           </div>
         </div>
 
@@ -44,7 +44,7 @@ export function Modern1({ data }: { data: BiodataFormValues }) {
       <div className="relative z-10 p-10 space-y-10">
         <TemplateSection title={t.personal || "Personal Details"} fields={data.personalDetails} t={t} data={data} />
         <TemplateSection title={t.educationSec || "Education & Career"} fields={data.educationDetails} t={t} data={data} />
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
           <TemplateSection title={t.family || "Family Details"} fields={data.familyDetails} t={t} data={data} />
           <TemplateSection title={t.contact || "Contact Details"} fields={data.contactDetails} t={t} data={data} />
@@ -59,7 +59,7 @@ export function Modern1({ data }: { data: BiodataFormValues }) {
 
 function TemplateSection({ title, fields, t, data }: { title: string; fields: any[]; t: Record<string, string>; data: BiodataFormValues }) {
   if (!fields || fields.length === 0) return null;
-  
+
   return (
     <section>
       <h2 className="text-[12px] font-bold text-primary uppercase tracking-[0.2em] mb-5 flex items-center gap-4">
@@ -91,7 +91,7 @@ function TemplateSection({ title, fields, t, data }: { title: string; fields: an
           if (field.type === "company" || field.id === "companyName") {
             logoUrl = data.educationDetails.find(f => f.id === "companyLogo")?.value;
           }
-          
+
           return <TemplateField key={field.id} label={field.label} value={displayValue} type={field.type} t={t} logoUrl={logoUrl} />;
         })}
       </div>
@@ -104,7 +104,7 @@ function TemplateField({ label, value, type, t, logoUrl }: { label: string; valu
   const isFullWidth = type === 'textarea';
 
   let displayValue = translateDynamicOption(value, t);
-  
+
   if (type === "date" && value) {
     const [year, month, day] = value.split("-");
     if (year && month && day) {

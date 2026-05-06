@@ -96,7 +96,7 @@ export function BiodataForm() {
                />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="mantra">Mantra / Heading</Label>
                 <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
@@ -134,12 +134,12 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
     <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4">
       <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{title}</AccordionTrigger>
       <AccordionContent className="space-y-4 pt-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;
             return (
-            <div key={field.id} className={`flex flex-col gap-1 relative group ${field.type === 'textarea' ? 'col-span-1 sm:col-span-2' : ''}`}>
+            <div key={field.id} className={`flex flex-col gap-1 relative group`}>
               <div className="flex items-center justify-between mb-1">
                 <EditableLabel name={`${name}.${index}.label`} />
                 
