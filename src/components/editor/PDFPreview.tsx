@@ -92,7 +92,10 @@ export function PDFPreview() {
         {slotA && (
           <PDFViewer
             key={`A-${keyA}`}
-            config={{ src: slotA }}
+            config={{
+              src: slotA,
+              disabledCategories: ['annotation', "document-open", "document", "selection", 'pointer', "panel", "page", 'print', 'export', 'form', 'redaction', 'shapes', 'insert', 'search', 'annotation-markup', 'annotation-highlight', 'open', 'close', 'security', 'screenshot', 'fullscreen', 'save', 'download', 'menu', 'file', 'navigation', 'thumbnails', 'bookmarks', 'sidebar', 'spread', 'page-layout', 'outline', 'layers', 'attachments']
+            }}
             style={{ width: '100%', height: '100%' }}
             onReady={frontSlot !== "A" ? handleBackReady : undefined}
           />
@@ -107,7 +110,10 @@ export function PDFPreview() {
         {slotB && (
           <PDFViewer
             key={`B-${keyB}`}
-            config={{ src: slotB }}
+            config={{
+              src: slotB,
+              disabledCategories: ['annotation', 'print', "page", "panel", 'export', 'form', 'redaction', 'shapes', 'insert', 'search', 'annotation-markup', 'annotation-highlight', 'open', 'close', 'security', 'screenshot', 'fullscreen', 'save', 'download', 'menu', 'file', 'navigation', 'thumbnails', 'bookmarks', 'sidebar', 'spread', 'page-layout', 'outline', 'layers', 'attachments']
+            }}
             style={{ width: '100%', height: '100%' }}
             onReady={frontSlot !== "B" ? handleBackReady : undefined}
           />
