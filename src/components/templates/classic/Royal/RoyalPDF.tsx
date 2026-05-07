@@ -11,11 +11,15 @@ import { processPDFField } from "@/lib/pdf-data-utils";
 // Initialize fonts
 registerPDFFonts();
 
-const RoyalPDF = ({ data }: { data: BiodataFormValues }) => {
+const RoyalPDF = ({ data, theme }: { data: BiodataFormValues, theme?: any }) => {
   const currentLang = data.language || "English";
   const t = translations[currentLang] || translations["English"];
-  const currentFont = getFontFamily(currentLang);
-  const styles = createRoyalStyles(currentFont);
+  
+  // Prioritize theme font, fallback to language default
+  const themeFont = theme?.fontFamily === 'inter' ? 'Inter' : theme?.fontFamily === 'playfair' ? 'Playfair' : 'Noto Serif';
+  const currentFont = currentLang === "English" ? themeFont : getFontFamily(currentLang);
+  
+  const styles = createRoyalStyles(currentFont, theme);
 
   const renderSection = (title: string, fields: any[]) => {
     if (!fields || fields.length === 0) return null;
@@ -52,7 +56,7 @@ const RoyalPDF = ({ data }: { data: BiodataFormValues }) => {
     <Document>
       <Page size="A4" style={styles.page} wrap={false}>
         <View style={styles.container} >
-          <RoyalFrame style={styles.background} hasPhoto={!!data.photo} />
+          <RoyalFrame style={styles.background} hasPhoto={!!data.photo} theme={theme} />
           <Watermark />
           <View style={styles.header}>
             {data.mantra && <Text style={styles.mantra}>{data.mantra}</Text>}

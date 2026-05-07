@@ -8,7 +8,8 @@ import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Printer } from "lucide-react";
+import { Download, RotateCcw, Printer, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
   Dialog,
@@ -39,6 +40,7 @@ export function CreateClient() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const router = useRouter();
 
   // Handle hydration and initial load
   useEffect(() => {
@@ -127,14 +129,23 @@ export function CreateClient() {
                 <div className="flex-1 flex flex-col gap-6 items-center print:w-full">
                   <PreviewSection storedTemplate={storedTemplate} />
 
-                  <div className="flex w-full gap-4 print:hidden">
-                    <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
-                      <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+                  <div className="flex flex-col w-full gap-3 print:hidden">
+                    <Button 
+                      onClick={() => router.push("/edit")}
+                      className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-xl hover:shadow-stitch-primary/20 transition-all flex gap-2 h-11 text-sm font-bold"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Edit in Designer
                     </Button>
-                    <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
-                      <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
-                      {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
-                    </Button>
+                    <div className="flex gap-4 w-full">
+                      <Button variant="outline" size="sm" className="flex-1 rounded-full h-10" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
+                        <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+                      </Button>
+                      <Button size="sm" className="flex-1 rounded-full shadow-lg text-white h-10" onClick={handleDownload} disabled={isGenerating}>
+                        <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
+                        {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -166,14 +177,23 @@ export function CreateClient() {
         </div>
 
         {/* Mobile Sticky Bottom Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-4 flex gap-4 z-50">
-          <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
-            <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-4 flex flex-col gap-3 z-50">
+          <Button 
+            onClick={() => router.push("/edit")}
+            className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-lg h-12 font-bold"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Edit in Designer
           </Button>
-          <Button size="sm" className="flex-1 rounded-full shadow-lg text-white" onClick={handleDownload} disabled={isGenerating}>
-            <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
-            {isGenerating ? (t.generating || 'Generating...') : (t.download || "Download")}
-          </Button>
+          <div className="flex gap-4 w-full">
+            <Button variant="outline" size="sm" className="flex-1 rounded-full h-10" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
+              <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+            </Button>
+            <Button size="sm" className="flex-1 rounded-full shadow-lg text-white h-10" onClick={handleDownload} disabled={isGenerating}>
+              <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
+              {isGenerating ? (t.generating || 'Generating...') : (t.download || "Download")}
+            </Button>
+          </div>
         </div>
 
         {/* Reset Confirmation Dialog */}

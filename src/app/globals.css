@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -46,6 +47,20 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Stitch Project Colors */
+  --color-stitch-primary: #735c00;
+  --color-stitch-primary-container: #d4af37;
+  --color-stitch-on-primary-container: #554300;
+  --color-stitch-surface: #fff8f5;
+  --color-stitch-on-surface: #1e1b18;
+  --color-stitch-surface-variant: #e9e1dc;
+  --color-stitch-on-surface-variant: #4d4635;
+  --color-stitch-outline: #7f7663;
+  --color-stitch-outline-variant: #d0c5af;
+  --color-stitch-tertiary: #70585b;
+  --color-stitch-tertiary-container: #c9acaf;
+  --font-noto-serif: var(--font-noto-serif);
 }
 
 :root {

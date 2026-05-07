@@ -1,6 +1,12 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
-export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
+export const createRoyalStyles = (fontFamily: string, theme?: any) => {
+  const primaryColor = theme?.primaryColor || '#800000';
+  const secondaryColor = theme?.secondaryColor || '#333333';
+  const baseFontSize = theme?.fontSize || 11;
+  const padding = theme?.padding !== undefined ? theme.padding : 45;
+
+  return StyleSheet.create({
   page: {
     padding: 0,
     fontFamily: fontFamily,
@@ -19,7 +25,7 @@ export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
     position: 'relative',
     height: '100%',
     width: '100%',
-    padding: 45,
+    padding: padding,
   },
   header: {
     marginBottom: 30,
@@ -29,14 +35,14 @@ export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
   },
   mantra: {
     fontSize: 14,
-    color: '#800000',
+    color: primaryColor,
     marginBottom: 5,
     fontWeight: 'bold',
     fontFamily: 'Noto Sans Devanagari', // Keep Devanagari for Mantra
   },
   title: {
-    fontSize: 24,
-    color: '#800000',
+    fontSize: baseFontSize * 2.2,
+    color: primaryColor,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -45,13 +51,13 @@ export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 16,
-    color: '#800000',
+    fontSize: baseFontSize * 1.4,
+    color: primaryColor,
     fontWeight: 'bold',
     padding: '4 10',
     marginBottom: 10,
     borderRadius: 4,
-    borderLeft: '4pt solid #800000',
+    borderLeft: `4pt solid ${primaryColor}`,
   },
   fieldRow: {
     flexDirection: 'row',
@@ -61,18 +67,18 @@ export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
   },
   label: {
     width: 130,
-    fontSize: 11,
-    color: '#555',
+    fontSize: baseFontSize,
+    color: secondaryColor,
     fontWeight: 'bold',
   },
   colon: {
     width: 15,
-    fontSize: 11,
-    color: '#555',
+    fontSize: baseFontSize,
+    color: secondaryColor,
   },
   value: {
     flex: 1,
-    fontSize: 11,
+    fontSize: baseFontSize,
     color: '#000',
   },
   logo: {
@@ -81,3 +87,4 @@ export const createRoyalStyles = (fontFamily: string) => StyleSheet.create({
     marginRight: 5,
   }
 });
+};

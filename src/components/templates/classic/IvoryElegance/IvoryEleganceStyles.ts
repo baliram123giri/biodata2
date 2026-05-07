@@ -1,6 +1,12 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
-export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.create({
+export const createIvoryEleganceStyles = (fontFamily: string, theme?: any) => {
+  const primaryColor = theme?.primaryColor || '#7A5C2F';
+  const secondaryColor = theme?.secondaryColor || '#333333';
+  const baseFontSize = theme?.fontSize || 11;
+  const padding = theme?.padding !== undefined ? theme.padding : 50;
+
+  return StyleSheet.create({
   page: {
     padding: 0,
     fontFamily: fontFamily,
@@ -19,7 +25,7 @@ export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.crea
     position: 'relative',
     height: '100%',
     width: '100%',
-    padding: 50, // Slightly more padding for Ivory Elegance
+    padding: padding,
   },
   header: {
     marginBottom: 30,
@@ -29,14 +35,14 @@ export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.crea
   },
   mantra: {
     fontSize: 14,
-    color: '#7A5C2F',
+    color: primaryColor,
     marginBottom: 5,
     fontWeight: 'bold',
     fontFamily: 'Noto Sans Devanagari',
   },
   title: {
-    fontSize: 24,
-    color: '#7A5C2F',
+    fontSize: baseFontSize * 2.2,
+    color: primaryColor,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -45,13 +51,13 @@ export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.crea
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 16,
-    color: '#7A5C2F',
+    fontSize: baseFontSize * 1.4,
+    color: primaryColor,
     fontWeight: 'bold',
     padding: '4 10',
     marginBottom: 10,
     borderRadius: 4,
-    borderLeft: '4pt solid #7A5C2F',
+    borderLeft: `4pt solid ${primaryColor}`,
   },
   fieldRow: {
     flexDirection: 'row',
@@ -61,18 +67,18 @@ export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.crea
   },
   label: {
     width: 130,
-    fontSize: 11,
-    color: '#555',
+    fontSize: baseFontSize,
+    color: secondaryColor,
     fontWeight: 'bold',
   },
   colon: {
     width: 15,
-    fontSize: 11,
-    color: '#555',
+    fontSize: baseFontSize,
+    color: secondaryColor,
   },
   value: {
     flex: 1,
-    fontSize: 11,
+    fontSize: baseFontSize,
     color: '#000',
   },
   logo: {
@@ -81,3 +87,4 @@ export const createIvoryEleganceStyles = (fontFamily: string) => StyleSheet.crea
     marginRight: 5,
   }
 });
+};

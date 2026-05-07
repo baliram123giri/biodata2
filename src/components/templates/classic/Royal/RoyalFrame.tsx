@@ -8,7 +8,16 @@ interface RoyalFrameProps {
   hasPhoto?: boolean;
 }
 
-export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: RoyalFrameProps) => {
+export const RoyalFrame = ({ 
+  width = 595, 
+  height = 842, 
+  style, 
+  hasPhoto,
+  theme 
+}: RoyalFrameProps & { theme?: any }) => {
+  const primaryColor = theme?.primaryColor || '#800000';
+  const accentColor = theme?.accentColor || '#D4AF37';
+
   return (
     <Svg width={width} height={height} style={style}>
       {/* Background */}
@@ -26,7 +35,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
         y="15"
         width={width - 30}
         height={height - 30}
-        stroke="#8B5E3C"
+        stroke={primaryColor}
         strokeWidth="3"
         fill="none"
         rx="12"
@@ -38,7 +47,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
         y="28"
         width={width - 56}
         height={height - 56}
-        stroke="#D2B48C"
+        stroke={accentColor}
         strokeWidth="1.5"
         fill="none"
         rx="8"
@@ -48,7 +57,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
       {/* Top Left */}
       <Path
         d="M35 90 Q35 35 90 35"
-        stroke="#C08B5C"
+        stroke={primaryColor}
         strokeWidth="4"
         fill="none"
       />
@@ -56,7 +65,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
       {/* Top Right */}
       <Path
         d="M560 90 Q560 35 505 35"
-        stroke="#C08B5C"
+        stroke={primaryColor}
         strokeWidth="4"
         fill="none"
       />
@@ -64,7 +73,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
       {/* Bottom Left */}
       <Path
         d="M35 752 Q35 807 90 807"
-        stroke="#C08B5C"
+        stroke={primaryColor}
         strokeWidth="4"
         fill="none"
       />
@@ -72,7 +81,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
       {/* Bottom Right */}
       <Path
         d="M560 752 Q560 807 505 807"
-        stroke="#C08B5C"
+        stroke={primaryColor}
         strokeWidth="4"
         fill="none"
       />
@@ -84,7 +93,7 @@ export const RoyalFrame = ({ width = 595, height = 842, style, hasPhoto }: Royal
           y="110"
           width="120"
           height="150"
-          stroke="#8B5E3C"
+          stroke={primaryColor}
           strokeWidth="2"
           fill="#fff"
           rx="10"
