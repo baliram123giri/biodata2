@@ -16,7 +16,7 @@ export function PDFPreview() {
   const pdfTheme = theme.selectedPaletteName === null
     ? { ...theme, primaryColor: undefined, secondaryColor: undefined, accentColor: undefined }
     : theme;
-
+  const disabledCategories: string[] = ['annotation', "document-open", "document", "selection", 'pointer', "panel", "page", 'print', 'export', 'form', 'redaction', 'shapes', 'insert', 'search', 'annotation-markup', 'annotation-highlight', 'open', 'close', 'security', 'screenshot', 'fullscreen', 'save', 'download', 'menu', 'file', 'navigation', 'thumbnails', 'bookmarks', 'sidebar', 'spread', 'page-layout', 'outline', 'layers', 'attachments']
   // Two permanent slots with separate stable keys
   const [slotA, setSlotA] = React.useState<string | null>(null);
   const [slotB, setSlotB] = React.useState<string | null>(null);
@@ -94,7 +94,7 @@ export function PDFPreview() {
             key={`A-${keyA}`}
             config={{
               src: slotA,
-              disabledCategories: ['annotation', "document-open", "document", "selection", 'pointer', "panel", "page", 'print', 'export', 'form', 'redaction', 'shapes', 'insert', 'search', 'annotation-markup', 'annotation-highlight', 'open', 'close', 'security', 'screenshot', 'fullscreen', 'save', 'download', 'menu', 'file', 'navigation', 'thumbnails', 'bookmarks', 'sidebar', 'spread', 'page-layout', 'outline', 'layers', 'attachments']
+              disabledCategories
             }}
             style={{ width: '100%', height: '100%' }}
             onReady={frontSlot !== "A" ? handleBackReady : undefined}
@@ -112,7 +112,7 @@ export function PDFPreview() {
             key={`B-${keyB}`}
             config={{
               src: slotB,
-              disabledCategories: ['annotation', 'print', "page", "panel", 'export', 'form', 'redaction', 'shapes', 'insert', 'search', 'annotation-markup', 'annotation-highlight', 'open', 'close', 'security', 'screenshot', 'fullscreen', 'save', 'download', 'menu', 'file', 'navigation', 'thumbnails', 'bookmarks', 'sidebar', 'spread', 'page-layout', 'outline', 'layers', 'attachments']
+              disabledCategories
             }}
             style={{ width: '100%', height: '100%' }}
             onReady={frontSlot !== "B" ? handleBackReady : undefined}
