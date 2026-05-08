@@ -4,46 +4,21 @@ import React, { useEffect, useState } from "react";
 import {
   Undo2,
   Redo2,
-  ZoomOut,
-  ZoomIn,
   Share2,
   Download,
-  Save,
   LayoutDashboard,
   Palette,
-  Type,
   Frame,
   Image as ImageIcon,
   Sparkles,
-  Heart,
-  School,
-  Users2,
-  Sparkle,
-  Edit2,
-  Trash2,
-  ChevronDown,
-  Plus,
   Type as TypeIcon,
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  Maximize2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import dynamic from "next/dynamic";
-const HTMLPreview = dynamic(() => import("../../components/editor/HTMLPreview").then(mod => mod.HTMLPreview), { ssr: false });
-const PDFPreview = dynamic(() => import("../../components/editor/PDFPreview").then(mod => mod.PDFPreview), { ssr: false });
+const KonvaPreview = dynamic(() => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview), { ssr: false });
 
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useBiodataStore } from "@/store/useBiodataStore";
@@ -202,8 +177,10 @@ export default function EditPage() {
         </nav>
 
         {/* Canvas Area */}
-        <main className="flex-1 bg-white overflow-hidden relative">
-          <PDFPreview />
+        <main className="flex-1 overflow-auto relative flex items-start justify-center bg-[#e8e0d8] py-8 px-6">
+          <div className="w-full max-w-[600px] rounded-xl shadow-2xl overflow-hidden border border-black/5">
+            <KonvaPreview />
+          </div>
         </main>
 
         {/* Right Properties Panel */}

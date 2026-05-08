@@ -8,7 +8,7 @@ import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Printer, Sparkles } from "lucide-react";
+import { Download, RotateCcw, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -26,12 +26,10 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { pdf } from "@react-pdf/renderer";
 import { BiodataPDF } from "@/components/biodata/BiodataPDF";
 import dynamic from "next/dynamic";
-import { useDebounce } from "@/hooks/use-debounce";
-import { Loader2 } from "lucide-react";
-import { useMemo } from "react";
 
-const PDFViewer = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
+// Konva uses canvas — must be client-only
+const KonvaPreview = dynamic(
+  () => import("@/components/editor/KonvaPreview").then((mod) => mod.KonvaPreview),
   { ssr: false }
 );
 
@@ -218,61 +216,16 @@ export function CreateClient() {
 }
 
 /**
- * Isolated Preview Section to prevent re-rendering the whole form on every keystroke
+ * Isolated Preview Section — uses Konva canvas for instant, zero-flicker live preview.
+ * Passes live form data via useWatch() for truly real-time rendering.
  */
 function PreviewSection({ storedTemplate }: { storedTemplate: string }) {
   const formData = useWatch();
-  const [debouncedFormData, isFormDataUpdating] = useDebounce(formData, 1000);
-  const [debouncedTemplate, isTemplateUpdating] = useDebounce(storedTemplate, 500);
-
-  const isDataUpdating = isFormDataUpdating || isTemplateUpdating;
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  useEffect(() => {
-    if (isDataUpdating) {
-      setIsUpdating(true);
-    } else {
-      const timer = setTimeout(() => setIsUpdating(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isDataUpdating]);
-
-  const pdfDocument = useMemo(() => (
-    <BiodataPDF data={debouncedFormData as BiodataFormValues} templateId={debouncedTemplate} />
-  ), [debouncedFormData, debouncedTemplate]);
 
   return (
-    <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative rounded-xl shadow-2xl border border-primary/5 mx-auto ">
-      {/* Premium Opaque Loader to hide flickering */}
-      {isUpdating && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white transition-all duration-500 animate-in fade-in">
-          <div className="flex flex-col items-center gap-3 p-8 rounded-3xl">
-            <div className="relative">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
-            </div>
-            <span className="text-[10px] font-bold text-primary/60 uppercase tracking-[0.2em] mt-2">Refreshing Preview</span>
-          </div>
-        </div>
-      )}
-
-      {/* PDF Container with smooth opacity transition */}
-      <div className={`w-full h-full transition-opacity duration-700 ease-in-out ${isUpdating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-        <PDFViewer
-          width="100%"
-          height="100%"
-          style={{
-            border: 'none',
-            overflow: 'hidden',
-            backgroundColor: "white",
-            //@ts-ignore
-            pointerEvents: 'none',
-          }}
-          showToolbar={false}
-        >
-          {pdfDocument}
-        </PDFViewer>
-      </div>
+    <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative rounded-xl shadow-2xl border border-primary/5 mx-auto">
+      <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
     </div>
   );
 }
+
