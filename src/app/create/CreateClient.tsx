@@ -8,7 +8,7 @@ import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles } from "lucide-react";
+import { Download, RotateCcw, Sparkles, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -23,8 +23,7 @@ import { useState, useEffect } from "react";
 
 import { translations } from "@/lib/translations";
 import { useBiodataStore } from "@/store/useBiodataStore";
-import { pdf } from "@react-pdf/renderer";
-import { BiodataPDF } from "@/components/biodata/BiodataPDF";
+import { useThemeStore } from "@/store/useThemeStore";
 import dynamic from "next/dynamic";
 
 // Konva uses canvas — must be client-only
@@ -35,6 +34,7 @@ const KonvaPreview = dynamic(
 
 export function CreateClient() {
   const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore } = useBiodataStore();
+  const theme = useThemeStore();
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -88,8 +88,32 @@ export function CreateClient() {
     try {
       const currentData = methods.getValues();
       const nameField = currentData.personalDetails.find(f => f.id === "fullName")?.value || "biodata";
-      const doc = <BiodataPDF data={currentData} templateId={storedTemplate} />;
-      const blob = await pdf(doc).toBlob();
+
+      const res = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData: currentData,
+          templateId: storedTemplate,
+          theme: {
+            fontFamily: theme.fontFamily,
+            primaryColor: theme.primaryColor,
+            secondaryColor: theme.secondaryColor,
+            accentColor: theme.accentColor,
+            fontSize: theme.fontSize,
+            padding: theme.padding,
+            selectedPaletteName: theme.selectedPaletteName,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("PDF Generation failed:", errorData);
+        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || "Unknown"}`);
+      }
+
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -105,23 +129,54 @@ export function CreateClient() {
   return (
     <FormProvider {...methods}>
       <div className="min-h-screen bg-background pb-32">
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b flex items-center px-6 h-16 shrink-0 justify-between">
+           <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full hover:bg-primary/10 text-primary shrink-0"
+                onClick={() => router.push("/")}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold text-primary leading-tight">{t.title || "Create Your Biodata"}</h1>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Step 1: Fill Your Details</p>
+              </div>
+           </div>
+           
+           <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full hidden sm:flex"
+                onClick={() => setShowResetDialog(true)}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
+              </Button>
+              <Button 
+                size="sm" 
+                className="rounded-full shadow-lg text-white" 
+                onClick={handleDownload} 
+                disabled={isGenerating}
+              >
+                <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
+                {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
+              </Button>
+           </div>
+        </header>
 
-
-        <div className="container mx-auto px-4 py-6 max-w-[1400px]">
+        <div className="container mx-auto px-4 py-8 max-w-[1400px]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
             {/* Form Side - Natural Scrolling */}
             <div className="lg:col-span-5 flex flex-col print:hidden">
-              <div className="mb-4">
-                <h1 className="text-2xl font-bold text-primary">{t.title || "Create Your Biodata"}</h1>
-                <p className="text-sm text-muted-foreground">Fill in your details below. The preview updates instantly.</p>
-              </div>
-
               <BiodataForm />
             </div>
 
             {/* Preview Side - Sticky with Vertical Template Slider */}
-            <div className="lg:col-span-7 sticky top-24 hidden lg:block print:block print:static print:w-full">
+            <div className="lg:col-span-7 sticky top-24 print:block print:static print:w-full">
               <div className="flex gap-4 items-start">
                 {/* Main Preview */}
                 <div className="flex-1 flex flex-col gap-6 items-center print:w-full">

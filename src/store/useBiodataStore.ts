@@ -17,14 +17,27 @@ interface Layout {
   [key: string]: LayoutPosition | undefined;
 }
 
+export interface Sticker {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  scale: number;
+  rotation?: number;
+}
+
 interface BiodataState {
   formData: BiodataFormValues & {
     layout: Layout;
+    stickers: Sticker[];
   };
   selectedTemplate: string;
   setFormData: (data: any) => void;
   updateField: (section: keyof BiodataFormValues, id: string, value: string) => void;
   updateLayout: (id: string, x: number, y: number) => void;
+  addSticker: (sticker: Omit<Sticker, 'id'>) => void;
+  updateSticker: (id: string, updates: Partial<Sticker>) => void;
+  removeSticker: (id: string) => void;
   setSelectedTemplate: (templateId: string) => void;
   resetStore: () => void;
 }
@@ -40,7 +53,8 @@ export const useBiodataStore = create<BiodataState>()(
             personalDetails: { x: 60, y: 280 },
             education: { x: 320, y: 280 },
             footer: { x: 0, y: 1023 },
-          }
+          },
+          stickers: []
         },
         selectedTemplate: "royal",
         setFormData: (data) => set({ formData: data }),
@@ -67,6 +81,27 @@ export const useBiodataStore = create<BiodataState>()(
             }
           }
         })),
+        addSticker: (sticker) => set((state) => ({
+          formData: {
+            ...state.formData,
+            stickers: [
+              ...(state.formData.stickers || []),
+              { ...sticker, id: `sticker-${Date.now()}` }
+            ]
+          }
+        })),
+        updateSticker: (id, updates) => set((state) => ({
+          formData: {
+            ...state.formData,
+            stickers: (state.formData.stickers || []).map(s => s.id === id ? { ...s, ...updates } : s)
+          }
+        })),
+        removeSticker: (id) => set((state) => ({
+          formData: {
+            ...state.formData,
+            stickers: (state.formData.stickers || []).filter(s => s.id !== id)
+          }
+        })),
         setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
         resetStore: () => set({ 
           formData: {
@@ -76,7 +111,8 @@ export const useBiodataStore = create<BiodataState>()(
               personalDetails: { x: 60, y: 280 },
               education: { x: 320, y: 280 },
               footer: { x: 0, y: 1023 },
-            }
+            },
+            stickers: []
           }, 
           selectedTemplate: "royal" 
         }),

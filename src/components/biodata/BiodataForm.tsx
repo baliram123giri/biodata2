@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -114,7 +114,7 @@ export function BiodataForm() {
   );
 }
 
-function FieldSection({ name, title, currentLang }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string }) {
+const FieldSection = memo(function FieldSection({ name, title, currentLang }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string }) {
   const { control, register } = useFormContext<BiodataFormValues>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -329,10 +329,10 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
         </DialogContent>
       </Dialog>
     </AccordionItem>
-  )
-}
+  );
+});
 
-function EditableLabel({ name }: { name: string }) {
+const EditableLabel = memo(function EditableLabel({ name }: { name: string }) {
   const { register, watch } = useFormContext();
   const value = watch(name);
   const [isEditing, setIsEditing] = useState(false);
@@ -379,4 +379,4 @@ function EditableLabel({ name }: { name: string }) {
       <Pencil className="w-3 h-3 text-muted-foreground/50 group-hover/label:text-primary transition-colors shrink-0" />
     </div>
   );
-}
+});

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group } from "react-konva";
-import { useBiodataStore } from "@/store/useBiodataStore";
+import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path } from "react-konva";
+import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
+import { STICKER_ASSETS } from "@/lib/sticker-assets";
 import { translations } from "@/lib/translations";
 import { processPDFField } from "@/lib/pdf-data-utils";
 import { loadKonvaFonts, getKonvaFontFamily } from "@/lib/konva-fonts";
@@ -16,584 +17,376 @@ import {
 } from "@/lib/frame-config";
 import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
+import Konva from "konva";
 
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
-  /** Live form data from useWatch() — when provided, overrides the store */
   liveFormData?: BiodataFormValues;
-  /** Template ID — when provided, overrides the store */
   templateId?: string;
+  scale?: number;
+  isDesigner?: boolean;
 }
 
-// ── A4 at 72 DPI (matches @react-pdf/renderer) ────────────────────
 const A4_W = 595;
 const A4_H = 842;
 
 // ════════════════════════════════════════════════════════════════════
-// HELPER: measure text for wrapping estimation
-// ════════════════════════════════════════════════════════════════════
-function measureText(
-  text: string,
-  fontSize: number,
-  fontFamily: string,
-  fontStyle: string = "normal"
-): number {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return text.length * fontSize * 0.6;
-  ctx.font = `${fontStyle} ${fontSize}px "${fontFamily}"`;
-  return ctx.measureText(text).width;
-}
-
-// ════════════════════════════════════════════════════════════════════
-// SUB-COMPONENTS: images
+// SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-function PhotoImage({
-  src, x, y, width, height, cornerRadius,
-}: {
-  src: string; x: number; y: number; width: number; height: number; cornerRadius: number;
-}) {
+function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; }) {
   const [image] = useImage(src, "anonymous");
-  if (!image) return null;
-  return (
-    <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} />
-  );
+  return image ? <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} /> : null;
 }
 
 function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
   const [image] = useImage(src, "anonymous");
-  if (!image) return null;
-  return <KonvaImage image={image} x={x} y={y} width={size} height={size} />;
+  return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 }
 
-// ════════════════════════════════════════════════════════════════════
-// DYNAMIC FRAME: image-based (Cloudinary with color tinting)
-// ════════════════════════════════════════════════════════════════════
-
-function ImageFrame({
-  config,
-  primaryColor,
-  hasPhoto,
-  photoConfig,
-}: {
-  config: FrameImageConfig;
-  primaryColor: string;
-  hasPhoto: boolean;
-  photoConfig: TemplateConfig["photo"];
-}) {
-  const url = getFrameImageUrl(config, primaryColor);
-  const [image] = useImage(url, "anonymous");
-
+function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
+  const frameUrl = getFrameImageUrl(config, primaryColor);
+  const [image] = useImage(frameUrl, "anonymous");
   return (
     <Group>
-      {/* Background behind image (for transparent PNGs) */}
-      <Rect x={0} y={0} width={A4_W} height={A4_H} fill={config.bgColor} />
-
-      {/* Frame image — fills full A4 */}
-      {image && (
-        <KonvaImage image={image} x={0} y={0} width={A4_W} height={A4_H} />
-      )}
-
-      {/* Photo frame placeholder */}
-      {hasPhoto && (
-        <Rect
-          x={photoConfig.x}
-          y={photoConfig.y}
-          width={photoConfig.width + 1}
-          height={photoConfig.height + 1}
-          stroke={primaryColor}
-          strokeWidth={2}
-          fill="#fff"
-          cornerRadius={photoConfig.cornerRadius}
-        />
+      <Rect width={A4_W} height={A4_H} fill={config.bgColor || "#ffffff"} />
+      {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
+      {hasPhoto && photoConfig && (
+        <Rect x={photoConfig.x - 2} y={photoConfig.y - 2} width={photoConfig.width + 4} height={photoConfig.height + 4} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
       )}
     </Group>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
-// DYNAMIC FRAME: SVG-drawn (Konva shapes)
-// ════════════════════════════════════════════════════════════════════
-
-function SvgFrame({
-  config,
-  primaryColor,
-  accentColor,
-  hasPhoto,
-  photoConfig,
-}: {
-  config: FrameSvgConfig;
-  primaryColor: string;
-  accentColor: string;
-  hasPhoto: boolean;
-  photoConfig: TemplateConfig["photo"];
+function StickerItem({ 
+  sticker, 
+  color, 
+  isDesigner, 
+  isSelected, 
+  onClick 
+}: { 
+  sticker: Sticker; 
+  color: string; 
+  isDesigner: boolean; 
+  isSelected: boolean;
+  onClick: () => void;
 }) {
-  const oi = config.outerInset;
-  const ii = config.innerInset;
+  const { updateSticker } = useBiodataStore();
+  const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  if (!asset) return null;
 
   return (
-    <Group>
-      {/* Background */}
-      <Rect x={0} y={0} width={A4_W} height={A4_H} fill={config.bgColor} />
-
-      {/* Outer Border */}
-      <Rect
-        x={oi}
-        y={oi}
-        width={A4_W - oi * 2}
-        height={A4_H - oi * 2}
-        stroke={primaryColor}
-        strokeWidth={config.outerStrokeWidth}
-        cornerRadius={config.outerCornerRadius}
-      />
-
-      {/* Inner Border */}
-      <Rect
-        x={ii}
-        y={ii}
-        width={A4_W - ii * 2}
-        height={A4_H - ii * 2}
-        stroke={accentColor}
-        strokeWidth={config.innerStrokeWidth}
-        cornerRadius={config.innerCornerRadius}
-      />
-
-      {/* Decorative corner curves */}
-      {config.hasCornerCurves && (
-        <>
-          {/* Top Left */}
-          <Line
-            points={[oi + 20, oi + 75, oi + 20, oi + 40, oi + 40, oi + 20, oi + 75, oi + 20]}
-            stroke={primaryColor}
-            strokeWidth={4}
-            tension={0.5}
-            lineCap="round"
-          />
-          {/* Top Right */}
-          <Line
-            points={[
-              A4_W - oi - 20, oi + 75,
-              A4_W - oi - 20, oi + 40,
-              A4_W - oi - 40, oi + 20,
-              A4_W - oi - 75, oi + 20,
-            ]}
-            stroke={primaryColor}
-            strokeWidth={4}
-            tension={0.5}
-            lineCap="round"
-          />
-          {/* Bottom Left */}
-          <Line
-            points={[
-              oi + 20, A4_H - oi - 75,
-              oi + 20, A4_H - oi - 40,
-              oi + 40, A4_H - oi - 20,
-              oi + 75, A4_H - oi - 20,
-            ]}
-            stroke={primaryColor}
-            strokeWidth={4}
-            tension={0.5}
-            lineCap="round"
-          />
-          {/* Bottom Right */}
-          <Line
-            points={[
-              A4_W - oi - 20, A4_H - oi - 75,
-              A4_W - oi - 20, A4_H - oi - 40,
-              A4_W - oi - 40, A4_H - oi - 20,
-              A4_W - oi - 75, A4_H - oi - 20,
-            ]}
-            stroke={primaryColor}
-            strokeWidth={4}
-            tension={0.5}
-            lineCap="round"
-          />
-        </>
-      )}
-
-      {/* Photo frame placeholder */}
-      {hasPhoto && (
+    <Group 
+      x={sticker.x} 
+      y={sticker.y} 
+      draggable={isDesigner}
+      onDragEnd={(e) => {
+        updateSticker(sticker.id, { x: e.target.x(), y: e.target.y() });
+      }}
+      onClick={onClick}
+      onTap={onClick}
+    >
+      {isSelected && (
         <Rect
-          x={photoConfig.x}
-          y={photoConfig.y}
-          width={photoConfig.width + 1}
-          height={photoConfig.height + 1}
-          stroke={primaryColor}
+          width={100 * sticker.scale}
+          height={100 * sticker.scale}
+          stroke="#D4AF37"
           strokeWidth={2}
-          fill="#fff"
-          cornerRadius={photoConfig.cornerRadius}
+          dash={[5, 5]}
         />
       )}
+      <Path
+        data={asset.path}
+        scaleX={sticker.scale}
+        scaleY={sticker.scale}
+        fill={color}
+        onMouseEnter={(e) => {
+          if (isDesigner) {
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = 'move';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (isDesigner) {
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = 'grab';
+          }
+        }}
+      />
     </Group>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
-// DYNAMIC FRAME DISPATCHER
-// ════════════════════════════════════════════════════════════════════
-
-function DynamicFrame({
-  templateConfig,
-  primaryColor,
-  accentColor,
-  hasPhoto,
-}: {
-  templateConfig: TemplateConfig;
-  primaryColor: string;
-  accentColor: string;
-  hasPhoto: boolean;
-}) {
-  const { frame, photo } = templateConfig;
-
-  if (frame.type === "image") {
-    return (
-      <ImageFrame
-        config={frame}
-        primaryColor={primaryColor}
-        hasPhoto={hasPhoto}
-        photoConfig={photo}
-      />
-    );
-  }
-
+function SvgFrame({ config, primaryColor }: { config: FrameSvgConfig; primaryColor: string; }) {
   return (
-    <SvgFrame
-      config={frame}
-      primaryColor={primaryColor}
-      accentColor={accentColor}
-      hasPhoto={hasPhoto}
-      photoConfig={photo}
-    />
+    <Group>
+      <Rect width={A4_W} height={A4_H} fill={config.bgColor || "#ffffff"} />
+      <Rect x={config.outerInset} y={config.outerInset} width={A4_W - config.outerInset * 2} height={A4_H - config.outerInset * 2} stroke={primaryColor} strokeWidth={config.outerStrokeWidth} cornerRadius={config.outerCornerRadius} />
+      <Rect x={config.innerInset} y={config.innerInset} width={A4_W - config.innerInset * 2} height={A4_H - config.innerInset * 2} stroke={primaryColor} strokeWidth={config.innerStrokeWidth} cornerRadius={config.innerCornerRadius} opacity={0.6} />
+    </Group>
   );
 }
 
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
-
-export function KonvaPreview({ liveFormData, templateId }: KonvaPreviewProps) {
-  const { formData: storeFormData, selectedTemplate: storeTemplate } = useBiodataStore();
+export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false }: KonvaPreviewProps) {
+  const { formData: storeFormData, selectedTemplate: storeTemplate, removeSticker } = useBiodataStore();
   const theme = useThemeStore();
-
-  // Prefer live props over store data for instant updates
-  const formData = (liveFormData || storeFormData) as BiodataFormValues;
+  const formData = liveFormData || storeFormData;
   const selectedTemplate = templateId || storeTemplate;
-
-  // ── Resolve template config ─────────────────────────────────────
   const templateConfig = getTemplateConfig(selectedTemplate);
 
+  const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  
+  const [stageSize, setStageSize] = useState({ width: A4_W, height: A4_H });
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(propScale || 1);
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
 
-  // ── Design tokens (palette-aware with template defaults) ────────
-  const primaryColor =
-    theme.selectedPaletteName === null
-      ? templateConfig.defaultPrimary
-      : theme.primaryColor;
-  const secondaryColor =
-    theme.selectedPaletteName === null
-      ? templateConfig.defaultSecondary
-      : theme.secondaryColor;
-  const accentColor =
-    theme.selectedPaletteName === null
-      ? templateConfig.defaultAccent
-      : theme.accentColor;
-  const baseFontSize = theme.fontSize || 11;
-  const padding =
-    theme.padding !== undefined
-      ? theme.padding
-      : templateConfig.defaultPadding;
-
-  const fontFamily = getKonvaFontFamily(theme.fontFamily);
-
-  // ── Load fonts ───────────────────────────────────────────────────
   useEffect(() => {
-    const families = [fontFamily, "Noto Sans Devanagari"];
-    loadKonvaFonts(families).then(() => {
-      setFontsReady(true);
-      setFontTick((t) => t + 1);
-    });
-  }, [fontFamily]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedSticker) {
+        removeSticker(selectedSticker);
+        setSelectedSticker(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedSticker, removeSticker]);
 
-  // ── Responsive scaling ──────────────────────────────────────────
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width } = entry.contentRect;
-        setScale(width / A4_W);
+    const updateSize = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setStageSize({ width, height });
+      if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
+        const initialScale = Math.min(width / (A4_W + 40), height / (A4_H + 40));
+        if (!propScale) setScale(initialScale);
+        setStagePos({ x: (width - A4_W * (propScale || initialScale)) / 2, y: (height - A4_H * (propScale || initialScale)) / 2 });
       }
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, [isDesigner, propScale, stagePos.x, stagePos.y]);
+
+  useEffect(() => { if (propScale !== undefined) setScale(propScale); }, [propScale]);
+
+  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    if (!isDesigner) return;
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    if (!stage) return;
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const mousePointTo = { x: (pointer.x - stage.x()) / oldScale, y: (pointer.y - stage.y()) / oldScale };
+    const speed = 0.05;
+    const newScale = e.evt.deltaY > 0 ? oldScale * (1 - speed) : oldScale * (1 + speed);
+    const clampedScale = Math.min(Math.max(newScale, 0.2), 3);
+    setScale(clampedScale);
+    setStagePos({ x: pointer.x - mousePointTo.x * clampedScale, y: pointer.y - mousePointTo.y * clampedScale });
+  };
+
+  const primaryColor = theme.selectedPaletteName === null ? templateConfig.defaultPrimary : theme.primaryColor;
+  const secondaryColor = theme.selectedPaletteName === null ? templateConfig.defaultSecondary : theme.secondaryColor;
+  const accentColor = theme.selectedPaletteName === null ? templateConfig.defaultAccent : theme.accentColor;
+  const baseFontSize = theme.fontSize || 11;
+  const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
+  const fontFamily = getKonvaFontFamily(theme.fontFamily);
+
+  useEffect(() => {
+    loadKonvaFonts([fontFamily, "Noto Sans Devanagari"]).then(() => {
+      setFontsReady(true);
+      setFontTick(t => t + 1);
     });
+  }, [fontFamily]);
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  // ── Translation ─────────────────────────────────────────────────
   const currentLang = formData.language || "English";
   const t = translations[currentLang] || translations["English"];
 
-  // ── Build field rows ────────────────────────────────────────────
-  const renderSectionData = useCallback(
-    (title: string, fields: any[]) => {
-      if (!fields || fields.length === 0) return null;
-      const hasValues = fields.some((f: any) => f.value && f.type !== "hidden");
-      if (!hasValues) return null;
+  const renderSectionData = useCallback((title: string, fields: any[]) => {
+    if (!fields || fields.length === 0) return null;
+    const hasValues = fields.some((f: any) => f.value && f.type !== "hidden");
+    if (!hasValues) return null;
+    const processedFields = fields.map(f => processPDFField(f, fields, formData, t)).filter(f => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified");
+    return { title, fields: processedFields };
+  }, [formData, t]);
 
-      const processedFields = fields
-        .map((field: any) => {
-          const { displayLabel, displayValue, logoUrl, shouldSkip } =
-            processPDFField(field, fields, formData, t);
-          if (shouldSkip) return null;
-          return { id: field.id, displayLabel, displayValue, logoUrl };
-        })
-        .filter(Boolean);
+  const sections = useMemo(() => [
+    renderSectionData(t.personal || "Personal Details", formData.personalDetails),
+    renderSectionData(t.family || "Family Details", formData.familyDetails),
+    renderSectionData(t.education || "Education & Work", formData.educationDetails),
+    renderSectionData(t.contact || "Contact Details", formData.contactDetails),
+  ].filter(Boolean), [renderSectionData, formData, t]);
 
-      if (processedFields.length === 0) return null;
-      return { title, fields: processedFields };
-    },
-    [formData, t]
-  );
-
-  const sections = useMemo(() => {
-    return [
-      renderSectionData(t.personal || "Personal Details", formData.personalDetails),
-      renderSectionData(t.educationSec || "Education & Career", formData.educationDetails),
-      renderSectionData(t.family || "Family Background", formData.familyDetails),
-      renderSectionData(t.contact || "Contact Details", formData.contactDetails),
-    ].filter(Boolean) as {
-      title: string;
-      fields: {
-        id: string;
-        displayLabel: string;
-        displayValue: string;
-        logoUrl?: string;
-      }[];
-    }[];
-  }, [renderSectionData, formData, t]);
-
-  // ── Compute Y positions (layout engine) ─────────────────────────
   const layout = useMemo(() => {
-    let cursorY = padding;
+    const calculateForSize = (fSize: number) => {
+      let cursorY = padding + 20; // Extra room for Mantra
+      
+      // 1. Calculate Mantra & Title Height
+      if (formData.mantra) cursorY += fSize * 2;
+      if (formData.title) cursorY += fSize * 2.5;
 
-    // Header: mantra + title
-    const headerItems: {
-      type: "mantra" | "title";
-      text: string;
-      y: number;
-      fontSize: number;
-      fontFamily: string;
-    }[] = [];
+      const LABEL_WIDTH = 130;
+      const COLON_WIDTH = 20;
+      const LINE_SPACING = fSize * 0.5;
+      const contentWidth = A4_W - padding * 2 - 10;
+      const valueWidth = contentWidth - LABEL_WIDTH - COLON_WIDTH;
+      const sectionLayouts: any[] = [];
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const measure = (text: string, size: number) => {
+        if (!ctx) return text.length * size * 0.6;
+        ctx.font = `bold ${size}px "${fontFamily}"`;
+        return ctx.measureText(text).width;
+      };
 
-    if (formData.mantra) {
-      headerItems.push({
-        type: "mantra",
-        text: formData.mantra,
-        y: cursorY,
-        fontSize: 14,
-        fontFamily: "Noto Sans Devanagari",
-      });
-      cursorY += 22;
-    }
-    if (formData.title) {
-      headerItems.push({
-        type: "title",
-        text: formData.title.toUpperCase(),
-        y: cursorY,
-        fontSize: Math.round(baseFontSize * 2.2),
-        fontFamily: fontFamily,
-      });
-      cursorY += Math.round(baseFontSize * 2.2) + 14;
-    }
-    cursorY += 20; // header bottom margin
-
-    // Sections
-    const LABEL_WIDTH = 130;
-    const COLON_WIDTH = 15;
-    const contentWidth = A4_W - padding * 2 - 10;
-    const valueWidth = contentWidth - LABEL_WIDTH - COLON_WIDTH;
-
-    type SectionLayout = {
-      titleText: string;
-      titleY: number;
-      fields: {
-        id: string;
-        label: string;
-        value: string;
-        logoUrl?: string;
-        y: number;
-      }[];
-    };
-
-    const sectionLayouts: SectionLayout[] = [];
-
-    for (const sec of sections) {
-      const titleY = cursorY;
-      cursorY += Math.round(baseFontSize * 1.4) + 14;
-
-      const fieldLayouts: SectionLayout["fields"] = [];
-
-      for (const field of sec.fields) {
-        const fieldY = cursorY;
-        const valueTextWidth = fontsReady
-          ? measureText(field.displayValue, baseFontSize, fontFamily)
-          : field.displayValue.length * baseFontSize * 0.55;
-        const lineCount = Math.max(1, Math.ceil(valueTextWidth / valueWidth));
-        const rowHeight = Math.max(baseFontSize * 1.5 * lineCount, baseFontSize * 1.5);
-
-        fieldLayouts.push({
-          id: field.id,
-          label: field.displayLabel,
-          value: field.displayValue,
-          logoUrl: field.logoUrl,
-          y: fieldY,
-        });
-
-        cursorY += rowHeight + 4;
+      for (const sec of sections as any[]) {
+        const titleY = cursorY;
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING;
+        const fieldLayouts: any[] = [];
+        for (const field of sec.fields) {
+          const valText = String(field.displayValue);
+          const valW = measure(valText, fSize);
+          const lines = Math.ceil(valW / valueWidth) || 1;
+          const rowHeight = Math.max(fSize, lines * fSize * 1.1);
+          fieldLayouts.push({ id: field.id, label: field.displayLabel, value: valText, logoUrl: field.logoUrl, y: cursorY });
+          cursorY += rowHeight + LINE_SPACING;
+        }
+        sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
+        cursorY += fSize * 1.5;
       }
-
-      sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
-      cursorY += 10;
+      return { sectionLayouts, totalHeight: cursorY };
+    };
+    const MAX_H = A4_H - padding;
+    let bestSize = baseFontSize;
+    let finalLayout = calculateForSize(bestSize);
+    if (finalLayout.totalHeight > MAX_H) {
+      for (let s = baseFontSize - 0.5; s >= 7; s -= 0.5) {
+        const test = calculateForSize(s);
+        if (test.totalHeight <= MAX_H) { bestSize = s; finalLayout = test; break; }
+        bestSize = s; finalLayout = test;
+      }
     }
+    return { ...finalLayout, fSize: bestSize };
+  }, [sections, padding, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title]);
 
-    return { headerItems, sectionLayouts };
-  }, [sections, formData, baseFontSize, fontFamily, padding, fontsReady, fontTick]);
-
-  // ── Photo config from template ──────────────────────────────────
+  const hasPhoto = !!formData.photo;
   const photoConfig = templateConfig.photo;
 
-  // ── Render ──────────────────────────────────────────────────────
-  const scaledHeight = A4_H * scale;
-
   return (
-    <div
-      ref={containerRef}
-      className="w-full relative bg-white"
-      style={{ aspectRatio: `${A4_W} / ${A4_H}` }}
-    >
+    <div ref={containerRef} className="w-full h-full bg-[#f5f0eb] relative overflow-hidden">
       <Stage
-        width={A4_W * scale}
-        height={scaledHeight}
+        ref={stageRef}
+        width={stageSize.width}
+        height={stageSize.height}
         scaleX={scale}
         scaleY={scale}
-        style={{ transformOrigin: "top left" }}
-        listening={false}
+        x={stagePos.x}
+        y={stagePos.y}
+        draggable={isDesigner}
+        onWheel={handleWheel}
+        onDragStart={e => {
+          if (e.target === e.currentTarget) {
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = 'grabbing';
+          }
+        }}
+        onDragEnd={e => {
+          if (e.target === e.currentTarget) {
+            setStagePos({ x: e.target.x(), y: e.target.y() });
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = 'grab';
+          }
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setSelectedSticker(null);
+          }
+        }}
+        style={{ cursor: isDesigner ? 'grab' : 'default' }}
       >
-        <Layer>
-          {/* ── Dynamic Frame ─────────────────────────────── */}
-          <DynamicFrame
-            templateConfig={templateConfig}
-            primaryColor={primaryColor}
-            accentColor={accentColor}
-            hasPhoto={!!formData.photo}
-          />
-
-          {/* ── Header ────────────────────────────────────── */}
-          {layout.headerItems.map((item) => (
-            <Text
-              key={item.type}
-              x={padding + 40}
-              y={item.y}
-              width={A4_W - padding * 2 - 80}
-              align="center"
-              text={item.text}
-              fontSize={item.fontSize}
-              fontFamily={item.fontFamily}
-              fontStyle="bold"
-              fill={primaryColor}
-              letterSpacing={item.type === "title" ? 2 : 0}
-            />
-          ))}
-
-          {/* ── Photo ─────────────────────────────────────── */}
-          {formData.photo && (
-            <PhotoImage
-              src={formData.photo}
-              x={photoConfig.x}
-              y={photoConfig.y}
-              width={photoConfig.width}
-              height={photoConfig.height}
-              cornerRadius={photoConfig.cornerRadius}
-            />
+        <Layer listening={false}>
+          <Rect x={4} y={4} width={A4_W} height={A4_H} fill="#000000" opacity={0.1} cornerRadius={2} />
+          {templateConfig.frame.type === "image" ? (
+            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
+          ) : (
+            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
+          <Text x={A4_W / 2} y={A4_H - 30} text="www.biodatamaker.online" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" offsetX={50} />
+        </Layer>
+        <Layer>
+          {fontsReady && (
+            <Group>
+              {/* Mantra Rendering */}
+              {formData.mantra && (
+                <Text
+                  x={A4_W / 2}
+                  y={padding + 10}
+                  text={formData.mantra}
+                  fontSize={layout.fSize * 1.2}
+                  fontFamily={fontFamily}
+                  fontStyle="bold"
+                  fill={primaryColor}
+                  align="center"
+                  width={A4_W}
+                  offsetX={A4_W / 2}
+                />
+              )}
 
-          {/* ── Sections ──────────────────────────────────── */}
-          {layout.sectionLayouts.map((sec, si) => (
-            <Group key={si}>
-              {/* Section title left border */}
-              <Line
-                points={[
-                  padding,
-                  sec.titleY,
-                  padding,
-                  sec.titleY + Math.round(baseFontSize * 1.4) + 4,
-                ]}
-                stroke={primaryColor}
-                strokeWidth={4}
-                lineCap="round"
-              />
-              {/* Section title text */}
-              <Text
-                x={padding + 10}
-                y={sec.titleY + 2}
-                text={sec.titleText}
-                fontSize={Math.round(baseFontSize * 1.4)}
-                fontFamily={fontFamily}
-                fontStyle="bold"
-                fill={primaryColor}
-              />
+              {/* Title Rendering */}
+              {formData.title && (
+                <Text
+                  x={A4_W / 2}
+                  y={padding + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
+                  text={formData.title}
+                  fontSize={layout.fSize * 2}
+                  fontFamily={fontFamily}
+                  fontStyle="bold"
+                  fill={primaryColor}
+                  align="center"
+                  width={A4_W}
+                  offsetX={A4_W / 2}
+                />
+              )}
 
-              {/* Field rows */}
-              {sec.fields.map((field) => (
-                <Group key={field.id}>
-                  {/* Label */}
-                  <Text
-                    x={padding + 10}
-                    y={field.y}
-                    width={130}
-                    text={field.label}
-                    fontSize={baseFontSize}
-                    fontFamily={fontFamily}
-                    fontStyle="bold"
-                    fill={secondaryColor}
-                  />
-                  {/* Colon */}
-                  <Text
-                    x={padding + 140}
-                    y={field.y}
-                    text=":"
-                    fontSize={baseFontSize}
-                    fontFamily={fontFamily}
-                    fill={secondaryColor}
-                  />
-                  {/* Logo (if any) */}
-                  {field.logoUrl && (
-                    <LogoImage
-                      src={field.logoUrl}
-                      x={padding + 158}
-                      y={field.y}
-                      size={14}
-                    />
-                  )}
-                  {/* Value */}
-                  <Text
-                    x={padding + (field.logoUrl ? 176 : 158)}
-                    y={field.y}
-                    width={A4_W - padding * 2 - (field.logoUrl ? 186 : 168)}
-                    text={field.logoUrl ? `(${field.value})` : field.value}
-                    fontSize={baseFontSize}
-                    fontFamily={fontFamily}
-                    fill="#000"
-                    wrap="word"
-                  />
+              {layout.sectionLayouts.map((sec: any) => (
+                <Group key={sec.titleText}>
+                  <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
+                  <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
+                  {sec.fields.map((field: any) => (
+                    <Group key={field.id}>
+                      <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
+                      <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
+                      <Text x={padding + 155} y={field.y} width={A4_W - padding * 2 - 165} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
+                      {field.logoUrl && <LogoImage src={field.logoUrl} x={padding - 5} y={field.y} size={layout.fSize} />}
+                    </Group>
+                  ))}
                 </Group>
               ))}
             </Group>
+          )}
+
+          {hasPhoto && photoConfig && (
+            <PhotoImage src={formData.photo!} x={photoConfig.x} y={photoConfig.y} width={photoConfig.width} height={photoConfig.height} cornerRadius={photoConfig.cornerRadius} />
+          )}
+
+          {/* Stickers Rendering */}
+          {formData.stickers?.map((sticker) => (
+            <StickerItem 
+              key={sticker.id} 
+              sticker={sticker} 
+              color={primaryColor} 
+              isDesigner={isDesigner} 
+              isSelected={selectedSticker === sticker.id}
+              onClick={() => setSelectedSticker(sticker.id)}
+            />
           ))}
         </Layer>
       </Stage>

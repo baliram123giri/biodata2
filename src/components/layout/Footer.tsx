@@ -1,6 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Footer() {
+  const pathname = usePathname();
+  const isEditorPage = pathname === "/create" || pathname === "/edit";
+
+  if (isEditorPage) return null;
+
   return (
     <footer className="w-full border-t bg-muted py-12">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -92,7 +92,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     frame: {
       type: "image",
       urlTemplate:
-        "https://res.cloudinary.com/dhlyinfwd/image/upload/e_tint:100:rgb:{color}/v1778071856/biodata/templetes/classic/qeas9gkg1bdzxg4vjztg.png",
+        "https://res.cloudinary.com/dhlyinfwd/image/upload/f_auto,q_auto,e_tint:100:rgb:{color}/v1778071856/biodata/templetes/classic/qeas9gkg1bdzxg4vjztg.png",
       bgColor: "#FFFFF5",
     },
   },

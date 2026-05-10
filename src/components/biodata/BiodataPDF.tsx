@@ -5,9 +5,10 @@ import IvoryElegancePDF from "../templates/classic/IvoryElegance/IvoryElegancePD
 interface BiodataPDFProps {
   data: BiodataFormValues;
   templateId?: string;
+  theme?: any;
 }
 
-export const BiodataPDF = ({ data, templateId }: BiodataPDFProps) => {
+export const BiodataPDF = ({ data, templateId, theme }: BiodataPDFProps) => {
   if (templateId === "ivory-elegance") {
     return <IvoryElegancePDF data={data} />;
   }

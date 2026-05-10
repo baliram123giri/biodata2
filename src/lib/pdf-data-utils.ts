@@ -2,6 +2,7 @@ import { translations, translateDynamicOption } from "./translations";
 import type { BiodataFormValues } from "@/types/biodata";
 
 export interface ProcessedField {
+  id: string;
   displayLabel: string;
   displayValue: string;
   logoUrl?: string;
@@ -16,12 +17,12 @@ export const processPDFField = (
 ): ProcessedField => {
   // 1. Check if field should be skipped
   if (field.type === "hidden" || !field.value) {
-    return { displayLabel: "", displayValue: "", shouldSkip: true };
+    return { id: field.id, displayLabel: "", displayValue: "", shouldSkip: true };
   }
 
   // Skip individual occupations as they are merged into names
   if (field.id === "fatherOccupation" || field.id === "motherOccupation") {
-    return { displayLabel: "", displayValue: "", shouldSkip: true };
+    return { id: field.id, displayLabel: "", displayValue: "", shouldSkip: true };
   }
 
   let displayValue = field.value;
@@ -64,6 +65,7 @@ export const processPDFField = (
   displayValue = translateDynamicOption(displayValue, t);
 
   return {
+    id: field.id,
     displayLabel,
     displayValue,
     logoUrl,

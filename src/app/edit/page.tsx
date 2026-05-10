@@ -12,15 +12,23 @@ import {
   Image as ImageIcon,
   Sparkles,
   Type as TypeIcon,
+  ArrowLeft,
+  Maximize2,
+  Minimize2,
+  RefreshCcw,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import dynamic from "next/dynamic";
+import { ImageUpload } from "@/components/ImageUpload";
 const KonvaPreview = dynamic(() => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview), { ssr: false });
 
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { TemplateSelector } from "@/components/editor/TemplateSelector";
+import { StickerSelector } from "@/components/editor/StickerSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
 import { useStore } from "zustand";
@@ -63,6 +71,12 @@ export default function EditPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [biodataHistory, themeHistory]);
   const [isMounted, setIsMounted] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [activeTab, setActiveTab] = useState<"templates" | "theme" | "typography" | "frames" | "photo" | "stickers">("theme");
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
 
   // Fix hydration issues
   useEffect(() => {
@@ -71,8 +85,43 @@ export default function EditPage() {
 
   if (!isMounted) return null;
 
-  const handleDownload = () => {
-    window.print();
+  const handleDownload = async () => {
+    setIsGenerating(true);
+    try {
+      const nameField = formData.personalDetails?.find((f: any) => f.id === "fullName")?.value || "biodata";
+
+      const res = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData,
+          templateId: useBiodataStore.getState().selectedTemplate,
+          theme: {
+            fontFamily: theme.fontFamily,
+            primaryColor: theme.primaryColor,
+            secondaryColor: theme.secondaryColor,
+            accentColor: theme.accentColor,
+            fontSize: theme.fontSize,
+            padding: theme.padding,
+            selectedPaletteName: theme.selectedPaletteName,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${nameField}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF Export Error:", err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
 
@@ -110,12 +159,21 @@ export default function EditPage() {
     textAlign: getAlignment(theme.alignment) as any,
   };
 
+
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col bg-stitch-surface font-sans selection:bg-stitch-primary-container selection:text-stitch-on-primary-container">
       {/* Top Navigation Bar */}
       <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-6 h-16">
         <div className="flex items-center gap-4">
-          <span className="font-noto-serif text-2xl text-stitch-primary font-bold tracking-tight">EternalUnion Editor</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full hover:bg-stitch-primary/10 text-stitch-primary"
+            onClick={() => window.location.href = "/create"}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <span className="font-noto-serif text-2xl text-stitch-primary font-bold tracking-tight">Design Studio</span>
         </div>
 
         <div className="flex items-center gap-4 border-x border-stitch-outline/10 px-6 h-full">
@@ -144,10 +202,35 @@ export default function EditPage() {
             </button>
           </div>
 
+          <Separator orientation="vertical" className="h-8 mx-2 bg-stitch-outline/10" />
 
+          <div className="flex items-center gap-1">
+            <ToolbarItem icon={<RefreshCcw />} label="Reset" onClick={() => {
+              if (confirm("Reset layout positions?")) {
+                 useBiodataStore.getState().resetStore();
+              }
+            }} />
+            <ToolbarItem 
+              icon={<Maximize2 />} 
+              label="Zoom In" 
+              onClick={handleZoomIn}
+            />
+            <ToolbarItem 
+              icon={<Minimize2 />} 
+              label="Zoom Out" 
+              onClick={handleZoomOut}
+            />
+            <div className="text-[10px] font-bold text-stitch-on-surface-variant w-10 text-center">
+              {Math.round(zoom * 100)}%
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="hidden xl:flex px-3 py-1.5 rounded-full bg-green-50 border border-green-100 items-center gap-2 mr-2">
+             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+             <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
+          </div>
           <button className="p-2 text-stitch-on-surface-variant hover:text-stitch-primary transition-all active:scale-90">
             <Share2 className="w-5 h-5" />
           </button>
@@ -156,10 +239,23 @@ export default function EditPage() {
           </Button>
           <Button
             onClick={handleDownload}
-            className="bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-6 flex gap-2 shadow-sm"
+            disabled={isGenerating}
+            className="bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-6 flex gap-2 shadow-sm disabled:opacity-50"
           >
-            Download
-            <Download className="w-4 h-4" />
+            {isGenerating ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Generating...
+              </>
+            ) : (
+              <>
+                Download
+                <Download className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </div>
       </header>
@@ -168,31 +264,67 @@ export default function EditPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar (Tools) */}
         <nav className="w-24 bg-stitch-surface/40 backdrop-blur-2xl border-r border-stitch-outline/10 flex flex-col items-center py-6 gap-4 z-40 overflow-y-auto">
-          <ToolButton icon={<LayoutDashboard />} label="Templates" />
-          <ToolButton icon={<Palette />} label="Theme" active />
-          <ToolButton icon={<TypeIcon />} label="Typography" />
-          <ToolButton icon={<Frame />} label="Frames" />
-          <ToolButton icon={<ImageIcon />} label="Photo" />
-          <ToolButton icon={<Sparkles />} label="Icons" />
+          <ToolButton 
+            icon={<LayoutDashboard />} 
+            label="Templates" 
+            active={activeTab === "templates"}
+            onClick={() => setActiveTab("templates")}
+          />
+          <ToolButton 
+            icon={<Palette />} 
+            label="Theme" 
+            active={activeTab === "theme"}
+            onClick={() => setActiveTab("theme")}
+          />
+          <ToolButton 
+            icon={<TypeIcon />} 
+            label="Typography" 
+            active={activeTab === "typography"}
+            onClick={() => setActiveTab("typography")}
+          />
+          <ToolButton 
+            icon={<Frame />} 
+            label="Frames" 
+            active={activeTab === "frames"}
+            onClick={() => setActiveTab("frames")}
+          />
+          <ToolButton 
+            icon={<ImageIcon />} 
+            label="Photo" 
+            active={activeTab === "photo"}
+            onClick={() => setActiveTab("photo")}
+          />
+          <ToolButton 
+            icon={<Sparkles />} 
+            label="Stickers" 
+            active={activeTab === "stickers"}
+            onClick={() => setActiveTab("stickers")}
+          />
         </nav>
 
         {/* Canvas Area */}
-        <main className="flex-1 overflow-auto relative flex items-start justify-center bg-[#e8e0d8] py-8 px-6">
-          <div className="w-full max-w-[600px] rounded-xl shadow-2xl overflow-hidden border border-black/5">
-            <KonvaPreview />
-          </div>
+        <main className="flex-1 overflow-hidden relative bg-[#f5f0eb]">
+          <KonvaPreview scale={zoom} isDesigner={true} />
         </main>
 
         {/* Right Properties Panel */}
         <aside className="w-80 h-full bg-stitch-surface/60 backdrop-blur-lg border-l border-stitch-outline/10 flex flex-col z-40 shadow-2xl overflow-hidden">
-
+          <div className="p-6 pb-4">
+            <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
+              {activeTab}
+            </h2>
+            <p className="text-[11px] text-stitch-on-surface-variant/60 font-bold uppercase tracking-widest mt-1">
+              Customize Design Properties
+            </p>
+          </div>
 
           <div className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
             <div className="flex flex-col gap-8 pb-10">
-
-
-              {/* Color Section */}
-              <div className="flex flex-col gap-6">
+              {activeTab === "templates" && <TemplateSelector />}
+              
+              {activeTab === "theme" && (
+                <div className="flex flex-col gap-8">
+                  <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-3">
                   <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
                   <div className="grid grid-cols-1 gap-3">
@@ -294,16 +426,47 @@ export default function EditPage() {
                     <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Padding</Label>
                     <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
                   </div>
-                  <Slider
-                    value={[theme.padding]}
-                    onValueChange={([v]) => theme.setPadding(v)}
-                    min={40}
-                    max={100}
-                    step={4}
-                  />
+                      <Slider
+                        value={[theme.padding]}
+                        onValueChange={([v]) => theme.setPadding(v)}
+                        min={40}
+                        max={100}
+                        step={4}
+                      />
+                    </div>
+                  </div>
                 </div>
+              )}
 
-              </div>
+              {activeTab === "typography" && (
+                <div className="flex flex-col gap-6">
+                  <p className="text-xs text-stitch-on-surface-variant italic">Typography settings coming soon...</p>
+                </div>
+              )}
+
+              {activeTab === "frames" && (
+                <div className="flex flex-col gap-6">
+                  <p className="text-xs text-stitch-on-surface-variant italic">Frame customization coming soon...</p>
+                </div>
+              )}
+
+              {activeTab === "photo" && (
+                <div className="flex flex-col gap-6">
+                  <div className="space-y-4">
+                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
+                    <ImageUpload 
+                      value={formData.photo} 
+                      onChange={(url) => setFormData({ ...formData, photo: url })} 
+                      aspect={3 / 4} 
+                    />
+                    <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed italic">
+                      Tip: A clear portrait with a simple background looks best in matrimonial biodata.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "stickers" && <StickerSelector />}
             </div>
           </div>
         </aside>
@@ -312,16 +475,32 @@ export default function EditPage() {
   );
 }
 
-function ToolButton({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
+function ToolButton({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button className={cn(
-      "w-16 h-16 flex flex-col items-center justify-center gap-1.5 transition-all rounded-2xl",
-      active
-        ? "bg-stitch-primary-container text-white shadow-lg shadow-stitch-primary/10 -translate-y-0.5"
-        : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
-    )}>
+    <button 
+      onClick={onClick}
+      className={cn(
+        "w-16 h-16 flex flex-col items-center justify-center gap-1.5 transition-all rounded-2xl",
+        active
+          ? "bg-stitch-primary text-white shadow-lg shadow-stitch-primary/20 -translate-y-0.5"
+          : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
+      )}
+    >
       {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-5 h-5" })}
       <span className="text-[9px] uppercase tracking-wider font-bold">{label}</span>
+    </button>
+  );
+}
+
+function ToolbarItem({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick?: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 py-2 rounded-xl text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-stitch-primary/5 transition-all group"
+      title={label}
+    >
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 h-4" })}
+      <span className="text-[10px] font-bold uppercase tracking-tight hidden sm:inline">{label}</span>
     </button>
   );
 }
