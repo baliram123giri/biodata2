@@ -261,19 +261,29 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         (data.stickers || []).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
           if (!asset) return null;
+          
+          const stickerSize = 100 * sticker.scale;
+          
           return React.createElement(View, {
             key: `sticker-${i}`,
             style: {
               position: 'absolute',
               left: sticker.x,
               top: sticker.y,
-              width: 100 * sticker.scale,
-              height: 100 * sticker.scale,
+              width: stickerSize,
+              height: stickerSize,
+              transform: sticker.rotation ? `rotate(${sticker.rotation}deg)` : undefined,
             } as any
           },
-            React.createElement(Svg, { viewBox: asset.viewBox },
-              React.createElement(Path, { d: asset.path, fill: primary })
-            )
+            asset.type === 'image' ? 
+              React.createElement(Image, { 
+                src: asset.url, 
+                style: { width: '100%', height: '100%' } 
+              })
+            : 
+              React.createElement(Svg, { viewBox: asset.viewBox, width: '100%', height: '100%' },
+                React.createElement(Path, { d: asset.path, fill: primary })
+              )
           );
         })
       )

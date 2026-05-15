@@ -18,11 +18,11 @@ import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translati
 
 export function BiodataForm() {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
-  const [currentLang, setCurrentLang] = useState("English");
+  const watchLang = useWatch({ control, name: "language" });
+  const currentLang = watchLang || "English";
 
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
-    setCurrentLang(newLang);
     setValue("language", newLang);
     const t = translations[newLang];
     if (!t) return;

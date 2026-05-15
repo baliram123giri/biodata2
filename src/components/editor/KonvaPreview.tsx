@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path } from "react-konva";
+import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer } from "react-konva";
 import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
@@ -44,6 +44,11 @@ function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; siz
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 }
 
+function StickerImage({ src }: { src: string }) {
+  const [image] = useImage(src, "anonymous");
+  return image ? <KonvaImage image={image} width={100} height={100} /> : null;
+}
+
 function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
@@ -69,50 +74,74 @@ function StickerItem({
   color: string; 
   isDesigner: boolean; 
   isSelected: boolean;
-  onClick: () => void;
+  onClick: (e: any) => void;
 }) {
   const { updateSticker } = useBiodataStore();
   const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  const groupRef = useRef<Konva.Group>(null);
+
   if (!asset) return null;
+
+  const size = 100 * sticker.scale;
 
   return (
     <Group 
+      ref={groupRef}
+      name={sticker.id}
       x={sticker.x} 
       y={sticker.y} 
+      scaleX={sticker.scale}
+      scaleY={sticker.scale}
+      rotation={sticker.rotation || 0}
+      width={100}
+      height={100}
       draggable={isDesigner}
+      onDragStart={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'grabbing';
+        }
+      }}
       onDragEnd={(e) => {
         updateSticker(sticker.id, { x: e.target.x(), y: e.target.y() });
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'move';
+        }
+      }}
+      onMouseEnter={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'move';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'grab';
+        }
+      }}
+      onTransformEnd={() => {
+        const node = groupRef.current;
+        if (!node) return;
+        updateSticker(sticker.id, {
+          x: node.x(),
+          y: node.y(),
+          scale: node.scaleX(),
+          rotation: node.rotation(),
+        });
       }}
       onClick={onClick}
       onTap={onClick}
     >
-      {isSelected && (
-        <Rect
-          width={100 * sticker.scale}
-          height={100 * sticker.scale}
-          stroke="#D4AF37"
-          strokeWidth={2}
-          dash={[5, 5]}
+      {asset.type === 'image' ? (
+        <StickerImage src={asset.url!} />
+      ) : (
+        <Path
+          data={asset.path!}
+          fill={color}
         />
       )}
-      <Path
-        data={asset.path}
-        scaleX={sticker.scale}
-        scaleY={sticker.scale}
-        fill={color}
-        onMouseEnter={(e) => {
-          if (isDesigner) {
-            const stage = e.target.getStage();
-            if (stage) stage.container().style.cursor = 'move';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (isDesigner) {
-            const stage = e.target.getStage();
-            if (stage) stage.container().style.cursor = 'grab';
-          }
-        }}
-      />
     </Group>
   );
 }
@@ -146,6 +175,20 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const transformerRef = useRef<Konva.Transformer>(null);
+
+  useEffect(() => {
+    if (selectedSticker && transformerRef.current && isDesigner) {
+      const stage = transformerRef.current.getStage();
+      const node = stage?.findOne('.' + selectedSticker);
+      if (node) {
+        transformerRef.current.nodes([node]);
+        transformerRef.current.getLayer()?.batchDraw();
+      }
+    } else {
+      transformerRef.current?.nodes([]);
+    }
+  }, [selectedSticker, isDesigner]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -322,72 +365,100 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           <Text x={A4_W / 2} y={A4_H - 30} text="www.biodatamaker.online" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" offsetX={50} />
         </Layer>
         <Layer>
-          {fontsReady && (
-            <Group>
-              {/* Mantra Rendering */}
-              {formData.mantra && (
-                <Text
-                  x={A4_W / 2}
-                  y={padding + 10}
-                  text={formData.mantra}
-                  fontSize={layout.fSize * 1.2}
-                  fontFamily={fontFamily}
-                  fontStyle="bold"
-                  fill={primaryColor}
-                  align="center"
-                  width={A4_W}
-                  offsetX={A4_W / 2}
-                />
-              )}
+          <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
+            {fontsReady && (
+              <Group>
+                {/* Mantra Rendering */}
+                {formData.mantra && (
+                  <Text
+                    x={A4_W / 2}
+                    y={padding + 10}
+                    text={formData.mantra}
+                    fontSize={layout.fSize * 1.2}
+                    fontFamily={fontFamily}
+                    fontStyle="bold"
+                    fill={primaryColor}
+                    align="center"
+                    width={A4_W}
+                    offsetX={A4_W / 2}
+                  />
+                )}
 
-              {/* Title Rendering */}
-              {formData.title && (
-                <Text
-                  x={A4_W / 2}
-                  y={padding + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
-                  text={formData.title}
-                  fontSize={layout.fSize * 2}
-                  fontFamily={fontFamily}
-                  fontStyle="bold"
-                  fill={primaryColor}
-                  align="center"
-                  width={A4_W}
-                  offsetX={A4_W / 2}
-                />
-              )}
+                {/* Title Rendering */}
+                {formData.title && (
+                  <Text
+                    x={A4_W / 2}
+                    y={padding + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
+                    text={formData.title}
+                    fontSize={layout.fSize * 2}
+                    fontFamily={fontFamily}
+                    fontStyle="bold"
+                    fill={primaryColor}
+                    align="center"
+                    width={A4_W}
+                    offsetX={A4_W / 2}
+                  />
+                )}
 
-              {layout.sectionLayouts.map((sec: any) => (
-                <Group key={sec.titleText}>
-                  <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
-                  <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
-                  {sec.fields.map((field: any) => (
-                    <Group key={field.id}>
-                      <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
-                      <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                      <Text x={padding + 155} y={field.y} width={A4_W - padding * 2 - 165} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
-                      {field.logoUrl && <LogoImage src={field.logoUrl} x={padding - 5} y={field.y} size={layout.fSize} />}
-                    </Group>
-                  ))}
-                </Group>
-              ))}
-            </Group>
-          )}
+                {layout.sectionLayouts.map((sec: any) => (
+                  <Group key={sec.titleText}>
+                    <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
+                    <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
+                    {sec.fields.map((field: any) => (
+                      <Group key={field.id}>
+                        <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
+                        <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
+                        <Text x={padding + 155} y={field.y} width={A4_W - padding * 2 - 165} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
+                        {field.logoUrl && <LogoImage src={field.logoUrl} x={padding - 5} y={field.y} size={layout.fSize} />}
+                      </Group>
+                    ))}
+                  </Group>
+                ))}
+              </Group>
+            )}
 
-          {hasPhoto && photoConfig && (
-            <PhotoImage src={formData.photo!} x={photoConfig.x} y={photoConfig.y} width={photoConfig.width} height={photoConfig.height} cornerRadius={photoConfig.cornerRadius} />
-          )}
+            {hasPhoto && photoConfig && (
+              <PhotoImage src={formData.photo!} x={photoConfig.x} y={photoConfig.y} width={photoConfig.width} height={photoConfig.height} cornerRadius={photoConfig.cornerRadius} />
+            )}
 
-          {/* Stickers Rendering */}
-          {formData.stickers?.map((sticker) => (
-            <StickerItem 
-              key={sticker.id} 
-              sticker={sticker} 
-              color={primaryColor} 
-              isDesigner={isDesigner} 
-              isSelected={selectedSticker === sticker.id}
-              onClick={() => setSelectedSticker(sticker.id)}
+            {/* Stickers Rendering */}
+            {formData.stickers?.map((sticker) => (
+              <StickerItem 
+                key={sticker.id} 
+                sticker={sticker} 
+                color={primaryColor} 
+                isDesigner={isDesigner} 
+                isSelected={selectedSticker === sticker.id}
+                onClick={(e) => {
+                  if (isDesigner) {
+                    e.cancelBubble = true;
+                    setSelectedSticker(sticker.id);
+                  }
+                }}
+              />
+            ))}
+          </Group>
+
+          {isDesigner && selectedSticker && (
+            <Transformer
+              ref={transformerRef}
+              boundBoxFunc={(oldBox, newBox) => {
+                // Minimum size
+                if (newBox.width < 20 || newBox.height < 20) {
+                  return oldBox;
+                }
+                return newBox;
+              }}
+              rotateEnabled={true}
+              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+              anchorSize={8}
+              anchorCornerRadius={4}
+              anchorStroke="#D4AF37"
+              anchorFill="#ffffff"
+              borderStroke="#D4AF37"
+              keepRatio={true}
             />
-          ))}
+          )}
         </Layer>
       </Stage>
     </div>
