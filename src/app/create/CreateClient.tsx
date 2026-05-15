@@ -39,19 +39,26 @@ export function CreateClient() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
-
-  // Handle hydration and initial load
-  useEffect(() => {
-    setIsHydrated(true);
-    // Initialize form with stored data ONCE after mount
-    methods.reset(storedData);
-  }, []); // Run only once
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
     mode: "onChange",
   });
+
+  // Handle hydration and initial load
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // Sync store data to form ONCE when hydrated
+  useEffect(() => {
+    if (isHydrated && !hasInitialized && storedData) {
+      methods.reset(storedData);
+      setHasInitialized(true);
+    }
+  }, [isHydrated, hasInitialized, storedData, methods]);
 
   // Debounced store update
   useEffect(() => {
