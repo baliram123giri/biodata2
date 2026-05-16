@@ -5,7 +5,7 @@
  * font size to ensure all content fits on a single page.
  */
 import React from 'react';
-import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, Stop } from '@react-pdf/renderer';
+import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, Stop, Defs } from '@react-pdf/renderer';
 import { getPDFFontFamily } from './pdf-fonts';
 import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
@@ -181,12 +181,14 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           })
         : config.frame.type === 'gradient' ?
           React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-            React.createElement(LinearGradient, { id: "pdfBgGradient", x1: 0, y1: 0, x2: 1, y2: 0 },
-              (theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"]).map((color: string, idx: number, arr: string[]) => 
-                React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color })
+            React.createElement(Defs, {},
+              React.createElement(LinearGradient, { id: "bg-gradient", x1: 0, y1: 0, x2: A4_W, y2: 0, gradientUnits: "userSpaceOnUse" },
+                (theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"]).map((color: string, idx: number, arr: string[]) => 
+                  React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color, stopOpacity: 1 })
+                )
               )
             ),
-            React.createElement(Rect, { width: A4_W, height: A4_H, fill: "url(#pdfBgGradient)" }),
+            React.createElement(Rect, { width: A4_W, height: A4_H, fill: "url(#bg-gradient)" }),
             React.createElement(Rect, { 
               x: config.frame.outerInset, 
               y: config.frame.outerInset, 
