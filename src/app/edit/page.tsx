@@ -30,6 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { StickerSelector } from "@/components/editor/StickerSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
+import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
 import { useStore } from "zustand";
 import { cn } from "@/lib/utils";
@@ -104,6 +105,7 @@ export default function EditPage() {
             fontSize: theme.fontSize,
             padding: theme.padding,
             selectedPaletteName: theme.selectedPaletteName,
+            bgColors: theme.bgColors,
           },
         }),
       });
@@ -356,47 +358,61 @@ export default function EditPage() {
                         </button>
                       );
                     })()}
-                    {PALETTES.map((p) => {
-                      const isSelected = theme.selectedPaletteName === p.name;
-                      return (
-                        <button
-                          key={p.name}
-                          onClick={() => {
-                            if (isSelected) {
-                              // Unselect — reset to default neutral
-                              theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                            } else {
-                              theme.setPalette(p);
-                            }
-                          }}
-                          className={cn(
-                            "group relative flex items-center gap-3 p-2 rounded-xl border transition-all hover:shadow-md",
-                            isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
-                          )}
-                        >
-                          <div className="flex shrink-0 w-12 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
-                            <div className="flex-1" style={{ backgroundColor: p.primary }} />
-                            <div className="flex-1" style={{ backgroundColor: p.secondary }} />
-                            <div className="flex-1" style={{ backgroundColor: p.accent }} />
-                          </div>
-                          <div className="flex flex-col items-start overflow-hidden flex-1">
-                            <span className="text-xs font-bold text-stitch-on-surface truncate">{p.name}</span>
-                            <div className="flex gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
-                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
-                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
+                    {(() => {
+                      const templateConfig = TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate] || TEMPLATE_CONFIGS["royal"];
+                      const isGradientFrame = templateConfig.frame.type === "gradient";
+                      
+                      const filteredPalettes = isGradientFrame 
+                        ? PALETTES.filter(p => !!p.bgColors)
+                        : PALETTES.filter(p => !p.bgColors);
+
+                      return filteredPalettes.map((p) => {
+                        const isSelected = theme.selectedPaletteName === p.name;
+                        return (
+                          <button
+                            key={p.name}
+                            onClick={() => {
+                              if (isSelected) {
+                                theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                              } else {
+                                theme.setPalette(p);
+                              }
+                            }}
+                            className={cn(
+                              "group relative flex items-center gap-3 p-2 rounded-xl border transition-all hover:shadow-md",
+                              isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
+                            )}
+                          >
+                            <div className="flex shrink-0 w-12 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
+                              {p.bgColors ? (
+                                <div className="w-full h-full" style={{ background: `linear-gradient(90deg, ${p.bgColors.join(", ")})` }} />
+                              ) : (
+                                <>
+                                  <div className="flex-1" style={{ backgroundColor: p.primary }} />
+                                  <div className="flex-1" style={{ backgroundColor: p.secondary }} />
+                                  <div className="flex-1" style={{ backgroundColor: p.accent }} />
+                                </>
+                              )}
                             </div>
-                          </div>
-                          {isSelected && (
-                            <div className="w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                            <div className="flex flex-col items-start overflow-hidden flex-1">
+                              <span className="text-xs font-bold text-stitch-on-surface truncate">{p.name}</span>
+                              <div className="flex gap-1">
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
+                              </div>
                             </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                            {isSelected && (
+                              <div className="w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shrink-0">
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
@@ -446,7 +462,7 @@ export default function EditPage() {
 
               {activeTab === "frames" && (
                 <div className="flex flex-col gap-6">
-                  <p className="text-xs text-stitch-on-surface-variant italic">Frame customization coming soon...</p>
+                  <TemplateSelector />
                 </div>
               )}
 

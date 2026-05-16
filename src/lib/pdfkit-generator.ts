@@ -5,7 +5,7 @@
  * font size to ensure all content fits on a single page.
  */
 import React from 'react';
-import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect } from '@react-pdf/renderer';
+import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, Stop } from '@react-pdf/renderer';
 import { getPDFFontFamily } from './pdf-fonts';
 import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
@@ -179,6 +179,33 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             src: getFrameImageUrl(config.frame, primary), 
             style: styles.frame as any 
           })
+        : config.frame.type === 'gradient' ?
+          React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+            React.createElement(LinearGradient, { id: "pdfBgGradient", x1: 0, y1: 0, x2: 1, y2: 0 },
+              (theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"]).map((color: string, idx: number, arr: string[]) => 
+                React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color })
+              )
+            ),
+            React.createElement(Rect, { width: A4_W, height: A4_H, fill: "url(#pdfBgGradient)" }),
+            React.createElement(Rect, { 
+              x: config.frame.outerInset, 
+              y: config.frame.outerInset, 
+              width: A4_W - config.frame.outerInset * 2, 
+              height: A4_H - config.frame.outerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.outerStrokeWidth,
+              rx: config.frame.outerCornerRadius 
+            }),
+            React.createElement(Rect, { 
+              x: config.frame.innerInset, 
+              y: config.frame.innerInset, 
+              width: A4_W - config.frame.innerInset * 2, 
+              height: A4_H - config.frame.innerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.innerStrokeWidth,
+              rx: config.frame.innerCornerRadius 
+            })
+          )
         : 
           React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
             React.createElement(Rect, { width: A4_W, height: A4_H, fill: config.frame.bgColor }),

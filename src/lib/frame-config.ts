@@ -35,7 +35,23 @@ export interface FrameSvgConfig {
   hasCornerCurves: boolean;
 }
 
-export type FrameConfig = FrameImageConfig | FrameSvgConfig;
+export interface FrameGradientConfig {
+  type: "gradient";
+  /** Background fill for the page (fallback) */
+  bgColor: string;
+  /** Gradient start and end colors */
+  gradientColors: string[];
+  /** Outer border inset (px from edge) */
+  outerInset: number;
+  outerStrokeWidth: number;
+  outerCornerRadius: number;
+  /** Inner border inset */
+  innerInset: number;
+  innerStrokeWidth: number;
+  innerCornerRadius: number;
+}
+
+export type FrameConfig = FrameImageConfig | FrameSvgConfig | FrameGradientConfig;
 
 export interface TemplateConfig {
   id: string;
@@ -94,6 +110,26 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
       urlTemplate:
         "https://res.cloudinary.com/dhlyinfwd/image/upload/f_auto,q_auto,e_tint:100:rgb:{color}/v1778071856/biodata/templetes/classic/qeas9gkg1bdzxg4vjztg.png",
       bgColor: "#FFFFF5",
+    },
+  },
+  "modern-gradient": {
+    id: "modern-gradient",
+    name: "Modern Gradient",
+    defaultPrimary: "#1a365d", // Deep Navy
+    defaultSecondary: "#4a5568", // Slate Gray
+    defaultAccent: "#2b6cb0", // Strong Blue
+    defaultPadding: 45,
+    photo: { x: 420, y: 110, width: 119, height: 149, cornerRadius: 15 },
+    frame: {
+      type: "gradient",
+      bgColor: "#ffffff",
+      gradientColors: ["#2A7B9B", "#57C785", "#EDDD53"],
+      outerInset: 20,
+      outerStrokeWidth: 4,
+      outerCornerRadius: 20,
+      innerInset: 35,
+      innerStrokeWidth: 1,
+      innerCornerRadius: 15,
     },
   },
 };

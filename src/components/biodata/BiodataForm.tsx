@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Plus, Trash2, Pencil, Globe } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 
@@ -72,15 +72,22 @@ export function BiodataForm() {
 
       <Accordion type="multiple" defaultValue={["personal", "education", "family", "contact", "customization"]} className="w-full">
         
-        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} />
-        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} />
-        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} />
-        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} />
+        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} />
+        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
+        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
+        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
         {/* CUSTOMIZATION */}
-        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border">
-          <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{t.photoCustom || "Photo & Customization"}</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2">
+        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+          <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Palette className="w-5 h-5" />
+              </div>
+              {t.photoCustom || "Photo & Customization"}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-6 pt-4">
             <div className="space-y-4">
                <Label className="text-base font-semibold">Profile Photo</Label>
                <Controller
@@ -114,7 +121,7 @@ export function BiodataForm() {
   );
 }
 
-const FieldSection = memo(function FieldSection({ name, title, currentLang }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string }) {
+const FieldSection = memo(function FieldSection({ name, title, currentLang, icon }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string, icon: React.ReactNode }) {
   const { control, register } = useFormContext<BiodataFormValues>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -131,10 +138,17 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang }: { 
   const addMoreFieldLabel = t.addMoreField || "Add More Field";
 
   return (
-    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4">
-      <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{title}</AccordionTrigger>
+    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+      <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            {icon}
+          </div>
+          {title}
+        </div>
+      </AccordionTrigger>
       <AccordionContent className="space-y-4 pt-2">
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;
@@ -143,7 +157,6 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang }: { 
               <div className="flex items-center justify-between mb-1">
                 <EditableLabel name={`${name}.${index}.label`} />
                 
-                {/* Delete Icon for ALL fields */}
                 <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -181,21 +194,21 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang }: { 
                 <Controller
                   name={`${name}.${index}.value` as const}
                   control={control}
-                  render={({ field: compField }) => (
-                    <CompanyAutocomplete 
-                      value={compField.value} 
-                      onChange={(val, logo) => {
-                         compField.onChange(val);
-                         const logoIndex = fields.findIndex(f => f.id === "companyLogo");
-                         if (logoIndex !== -1) {
-                            // Update the hidden companyLogo field value properly
-                            // @ts-ignore
-                            setValue(`${name}.${logoIndex}.value`, logo || "");
-                         }
-                      }} 
-                      placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
-                    />
-                  )}
+                  render={({ field: compField }) => {
+                    return (
+                      <CompanyAutocomplete 
+                        value={compField.value} 
+                        onChange={(val, logo) => {
+                           compField.onChange(val);
+                           const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                           if (logoIndex !== -1) {
+                              setValue(`${name}.${logoIndex}.value`, logo || "");
+                           }
+                        }} 
+                        placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
+                      />
+                    );
+                  }}
                 />
               ) : field.type === "time12" ? (
                 <Controller

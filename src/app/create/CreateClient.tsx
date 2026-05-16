@@ -157,6 +157,14 @@ export function CreateClient() {
               <Button 
                 variant="outline" 
                 size="sm" 
+                className="rounded-full hidden md:flex border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+                onClick={() => methods.reset(defaultBiodataValues)}
+              >
+                <Sparkles className="w-4 h-4 mr-2 text-primary" /> Fill Sample
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
                 className="rounded-full hidden sm:flex"
                 onClick={() => setShowResetDialog(true)}
               >

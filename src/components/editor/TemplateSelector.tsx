@@ -26,7 +26,15 @@ export function TemplateSelector() {
             return (
               <button
                 key={tpl.id}
-                onClick={() => setSelectedTemplate(tpl.id)}
+                onClick={() => {
+                  setSelectedTemplate(tpl.id);
+                  theme.setPalette({ 
+                    name: "None", 
+                    primary: tpl.defaultPrimary, 
+                    secondary: tpl.defaultSecondary, 
+                    accent: tpl.defaultAccent 
+                  });
+                }}
                 className={cn(
                   "group relative flex flex-col gap-3 p-3 rounded-2xl border transition-all duration-300 text-left",
                   isSelected 
@@ -41,6 +49,12 @@ export function TemplateSelector() {
                          style={{ 
                            backgroundImage: `url(${tpl.frame.urlTemplate.replace("{color}", tpl.defaultPrimary.replace("#", ""))})`,
                            backgroundSize: 'cover'
+                         }} 
+                    />
+                  ) : tpl.frame.type === "gradient" ? (
+                    <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity" 
+                         style={{ 
+                           background: `linear-gradient(90deg, ${tpl.frame.gradientColors.join(", ")})`,
                          }} 
                     />
                   ) : (

@@ -18,7 +18,8 @@ export function StickerSelector() {
       type,
       x: 100, // Default drop position
       y: 100,
-      scale: 0.8,
+      scaleX: 0.8,
+      scaleY: 0.8,
     });
   };
 
@@ -68,7 +69,9 @@ export function StickerSelector() {
           <h4 className="text-[10px] font-bold text-stitch-primary uppercase tracking-widest">Designer Tip</h4>
         </div>
         <p className="text-[10px] text-stitch-on-surface-variant/80 leading-relaxed italic">
-          Add sacred symbols to the header or corners of your biodata to create a traditional, auspicious look.
+          Add sacred symbols to the header or corners of your biodata to create a traditional, auspicious look. 
+          <br /><br />
+          <strong>Pro Tip:</strong> Hold <strong>Alt</strong> while dragging a sticker to duplicate it!
         </p>
       </div>
     </div>

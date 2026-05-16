@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, AlignLeft, AlignCenter, AlignRight, AlignStartVertical as AlignTop, AlignCenterVertical as AlignMiddle, AlignEndVertical as AlignBottom, Layers } from "lucide-react";
 import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer } from "react-konva";
 import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -13,6 +14,7 @@ import {
   getFrameImageUrl,
   type FrameSvgConfig,
   type FrameImageConfig,
+  type FrameGradientConfig,
   type TemplateConfig,
 } from "@/lib/frame-config";
 import type { BiodataFormValues } from "@/types/biodata";
@@ -76,13 +78,13 @@ function StickerItem({
   isSelected: boolean;
   onClick: (e: any) => void;
 }) {
-  const { updateSticker } = useBiodataStore();
+  const { updateSticker, addSticker } = useBiodataStore();
   const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
   const groupRef = useRef<Konva.Group>(null);
 
   if (!asset) return null;
 
-  const size = 100 * sticker.scale;
+
 
   return (
     <Group 
@@ -90,8 +92,8 @@ function StickerItem({
       name={sticker.id}
       x={sticker.x} 
       y={sticker.y} 
-      scaleX={sticker.scale}
-      scaleY={sticker.scale}
+      scaleX={sticker.scaleX}
+      scaleY={sticker.scaleY}
       rotation={sticker.rotation || 0}
       width={100}
       height={100}
@@ -100,6 +102,18 @@ function StickerItem({
         if (isDesigner) {
           const stage = e.target.getStage();
           if (stage) stage.container().style.cursor = 'grabbing';
+          
+          // Duplicate sticker if Alt key is pressed
+          if (e.evt.altKey) {
+            addSticker({
+              type: sticker.type,
+              x: sticker.x,
+              y: sticker.y,
+              scaleX: sticker.scaleX,
+              scaleY: sticker.scaleY,
+              rotation: sticker.rotation,
+            });
+          }
         }
       }}
       onDragEnd={(e) => {
@@ -127,7 +141,8 @@ function StickerItem({
         updateSticker(sticker.id, {
           x: node.x(),
           y: node.y(),
-          scale: node.scaleX(),
+          scaleX: node.scaleX(),
+          scaleY: node.scaleY(),
           rotation: node.rotation(),
         });
       }}
@@ -156,11 +171,46 @@ function SvgFrame({ config, primaryColor }: { config: FrameSvgConfig; primaryCol
   );
 }
 
+function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradientConfig; primaryColor: string; bgColors: string[]; }) {
+  return (
+    <Group>
+      <Rect 
+        width={A4_W} 
+        height={A4_H} 
+        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+        fillLinearGradientEndPoint={{ x: A4_W, y: 0 }}
+        fillLinearGradientColorStops={
+          (bgColors || config.gradientColors).flatMap((color, i, arr) => [i / (arr.length - 1), color])
+        }
+      />
+      <Rect 
+        x={config.outerInset} 
+        y={config.outerInset} 
+        width={A4_W - config.outerInset * 2} 
+        height={A4_H - config.outerInset * 2} 
+        stroke={primaryColor} 
+        strokeWidth={config.outerStrokeWidth} 
+        cornerRadius={config.outerCornerRadius} 
+      />
+      <Rect 
+        x={config.innerInset} 
+        y={config.innerInset} 
+        width={A4_W - config.innerInset * 2} 
+        height={A4_H - config.innerInset * 2} 
+        stroke={primaryColor} 
+        strokeWidth={config.innerStrokeWidth} 
+        cornerRadius={config.innerCornerRadius} 
+        opacity={0.3}
+      />
+    </Group>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
 export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false }: KonvaPreviewProps) {
-  const { formData: storeFormData, selectedTemplate: storeTemplate, removeSticker } = useBiodataStore();
+  const { formData: storeFormData, selectedTemplate: storeTemplate, removeSticker, updateSticker } = useBiodataStore();
   const theme = useThemeStore();
   const formData = liveFormData || storeFormData;
   const selectedTemplate = templateId || storeTemplate;
@@ -174,32 +224,42 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [scale, setScale] = useState(propScale || 1);
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
-  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   const transformerRef = useRef<Konva.Transformer>(null);
 
   useEffect(() => {
-    if (selectedSticker && transformerRef.current && isDesigner) {
+    if (selectedStickers.length > 0 && transformerRef.current && isDesigner) {
       const stage = transformerRef.current.getStage();
-      const node = stage?.findOne('.' + selectedSticker);
-      if (node) {
-        transformerRef.current.nodes([node]);
+      const nodes = selectedStickers.map(id => stage?.findOne('.' + id)).filter(Boolean) as Konva.Node[];
+      if (nodes.length > 0) {
+        transformerRef.current.nodes(nodes);
         transformerRef.current.getLayer()?.batchDraw();
       }
     } else {
       transformerRef.current?.nodes([]);
     }
-  }, [selectedSticker, isDesigner]);
+  }, [selectedStickers, isDesigner]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedSticker) {
-        removeSticker(selectedSticker);
-        setSelectedSticker(null);
+      if (!isDesigner) return;
+      
+      // Delete selected
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedStickers.length > 0) {
+        selectedStickers.forEach(id => removeSticker(id));
+        setSelectedStickers([]);
+      }
+
+      // Select All (Ctrl+A)
+      if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        const allIds = formData.stickers?.map(s => s.id) || [];
+        setSelectedStickers(allIds);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedSticker, removeSticker]);
+  }, [selectedStickers, removeSticker, isDesigner, formData.stickers]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -320,6 +380,44 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title]);
 
+  const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+    if (selectedStickers.length < 2) return;
+    
+    const nodes = selectedStickers.map(id => stageRef.current?.findOne('.' + id)).filter(Boolean) as Konva.Node[];
+    if (nodes.length < 2) return;
+
+    // Get collective bounding box
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    nodes.forEach(node => {
+      const box = node.getClientRect();
+      minX = Math.min(minX, box.x);
+      maxX = Math.max(maxX, box.x + box.width);
+      minY = Math.min(minY, box.y);
+      maxY = Math.max(maxY, box.y + box.height);
+    });
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    nodes.forEach(node => {
+      const id = node.name();
+      const box = node.getClientRect();
+      let newX = node.x();
+      let newY = node.y();
+
+      switch (type) {
+        case 'left': newX = node.x() + (minX - box.x); break;
+        case 'center': newX = node.x() + (centerX - (box.x + box.width / 2)); break;
+        case 'right': newX = node.x() + (maxX - (box.x + box.width)); break;
+        case 'top': newY = node.y() + (minY - box.y); break;
+        case 'middle': newY = node.y() + (centerY - (box.y + box.height / 2)); break;
+        case 'bottom': newY = node.y() + (maxY - (box.y + box.height)); break;
+      }
+
+      updateSticker(id, { x: newX, y: newY });
+    });
+  };
+
   const hasPhoto = !!formData.photo;
   const photoConfig = templateConfig.photo;
 
@@ -350,7 +448,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
-            setSelectedSticker(null);
+            setSelectedStickers([]);
           }
         }}
         style={{ cursor: isDesigner ? 'grab' : 'default' }}
@@ -359,6 +457,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           <Rect x={4} y={4} width={A4_W} height={A4_H} fill="#000000" opacity={0.1} cornerRadius={2} />
           {templateConfig.frame.type === "image" ? (
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
+          ) : templateConfig.frame.type === "gradient" ? (
+            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} bgColors={theme.bgColors} />
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
@@ -366,8 +466,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
-            {fontsReady && (
-              <Group>
                 {/* Mantra Rendering */}
                 {formData.mantra && (
                   <Text
@@ -414,8 +512,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                     ))}
                   </Group>
                 ))}
-              </Group>
-            )}
+
+
 
             {hasPhoto && photoConfig && (
               <PhotoImage src={formData.photo!} x={photoConfig.x} y={photoConfig.y} width={photoConfig.width} height={photoConfig.height} cornerRadius={photoConfig.cornerRadius} />
@@ -428,18 +526,27 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 sticker={sticker} 
                 color={primaryColor} 
                 isDesigner={isDesigner} 
-                isSelected={selectedSticker === sticker.id}
+                isSelected={selectedStickers.includes(sticker.id)}
                 onClick={(e) => {
                   if (isDesigner) {
                     e.cancelBubble = true;
-                    setSelectedSticker(sticker.id);
+                    const isShift = e.evt.shiftKey || e.evt.metaKey;
+                    if (isShift) {
+                      setSelectedStickers(prev => 
+                        prev.includes(sticker.id) 
+                          ? prev.filter(id => id !== sticker.id) 
+                          : [...prev, sticker.id]
+                      );
+                    } else {
+                      setSelectedStickers([sticker.id]);
+                    }
                   }
                 }}
               />
             ))}
           </Group>
 
-          {isDesigner && selectedSticker && (
+          {isDesigner && selectedStickers.length > 0 && (
             <Transformer
               ref={transformerRef}
               boundBoxFunc={(oldBox, newBox) => {
@@ -450,17 +557,53 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 return newBox;
               }}
               rotateEnabled={true}
-              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']}
               anchorSize={8}
               anchorCornerRadius={4}
               anchorStroke="#D4AF37"
               anchorFill="#ffffff"
               borderStroke="#D4AF37"
-              keepRatio={true}
+              keepRatio={false}
             />
           )}
         </Layer>
       </Stage>
+      {isDesigner && (
+        <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+          {/* Alignment Toolbar */}
+          {selectedStickers.length >= 2 && (
+            <div className="flex bg-white/90 backdrop-blur-sm border border-primary/20 rounded-full shadow-2xl p-1 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+              <AlignButton icon={<AlignLeft className="w-4 h-4" />} onClick={() => handleAlign('left')} label="Align Left" />
+              <AlignButton icon={<AlignCenter className="w-4 h-4" />} onClick={() => handleAlign('center')} label="Align Center" />
+              <AlignButton icon={<AlignRight className="w-4 h-4" />} onClick={() => handleAlign('right')} label="Align Right" />
+              <div className="w-px h-4 bg-primary/10 mx-1 self-center" />
+              <AlignButton icon={<AlignTop className="w-4 h-4" />} onClick={() => handleAlign('top')} label="Align Top" />
+              <AlignButton icon={<AlignMiddle className="w-4 h-4" />} onClick={() => handleAlign('middle')} label="Align Middle" />
+              <AlignButton icon={<AlignBottom className="w-4 h-4" />} onClick={() => handleAlign('bottom')} label="Align Bottom" />
+            </div>
+          )}
+
+          {/* Selection Info */}
+          {selectedStickers.length > 0 && (
+            <div className="px-3 py-1.5 bg-primary/90 text-white text-[10px] font-bold rounded-full shadow-lg self-start pointer-events-auto flex items-center gap-2">
+              <Layers className="w-3 h-3" />
+              {selectedStickers.length} {selectedStickers.length === 1 ? 'Object' : 'Objects'} Selected
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function AlignButton({ icon, onClick, label }: { icon: React.ReactNode, onClick: () => void, label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="p-2 hover:bg-primary/10 rounded-full text-primary transition-colors"
+      title={label}
+    >
+      {icon}
+    </button>
   );
 }
