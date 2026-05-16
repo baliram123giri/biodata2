@@ -5,7 +5,7 @@
  * font size to ensure all content fits on a single page.
  */
 import React from 'react';
-import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, Stop, Defs } from '@react-pdf/renderer';
+import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, Stop, Defs, Circle } from '@react-pdf/renderer';
 import { getPDFFontFamily } from './pdf-fonts';
 import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
@@ -54,7 +54,16 @@ const registerFonts = () => {
 
 registerFonts();
 
+import { NewGenerationPDF } from './templates/classic/new-generation/PDFRenderer';
+
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
+function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
+  if (componentId === "new-generation-arch") {
+    return React.createElement(NewGenerationPDF, { primaryColor });
+  }
+  return null;
+}
+
 const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const config = getTemplateConfig(templateId);
   const primary = theme.selectedPaletteName === null ? config.defaultPrimary : theme.primaryColor;
@@ -207,6 +216,11 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               strokeWidth: config.frame.innerStrokeWidth,
               rx: config.frame.innerCornerRadius 
             })
+          )
+        : config.frame.type === 'custom' ?
+          React.createElement(View, { style: styles.frame as any },
+            React.createElement(Rect, { width: A4_W, height: A4_H, fill: config.frame.bgColor }),
+            React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
           )
         : 
           React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },

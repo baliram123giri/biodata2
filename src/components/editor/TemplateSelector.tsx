@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Check, Layout } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-export function TemplateSelector() {
+export function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
   const { selectedTemplate, setSelectedTemplate } = useBiodataStore();
   const theme = useThemeStore();
 
@@ -34,6 +34,7 @@ export function TemplateSelector() {
                     secondary: tpl.defaultSecondary, 
                     accent: tpl.defaultAccent 
                   });
+                  onSelect?.();
                 }}
                 className={cn(
                   "group relative flex flex-col gap-3 p-3 rounded-2xl border transition-all duration-300 text-left",

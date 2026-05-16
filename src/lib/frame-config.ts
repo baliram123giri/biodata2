@@ -1,67 +1,63 @@
 /**
- * Frame configuration registry for Konva canvas preview.
- *
- * Each template declares how its frame should be rendered:
- *   - "image" frames → loaded from a Cloudinary URL with dynamic color tinting
- *   - "svg"   frames → drawn with Konva shapes (borders, corners, etc.)
- *
- * The config also stores template-specific layout tokens like photo position
- * and default padding, so the preview matches the PDF output exactly.
+ * Unified Frame Configuration Registry
+ * 
+ * This file aggregates all template configurations. 
+ * To add a new template, create a file in ./templates/ and import it here.
  */
+
+import { royal } from "./templates/classic/royal";
+import { ivoryElegance } from "./templates/classic/ivory-elegance";
+import { modernGradient } from "./templates/classic/modern-gradient";
+import { newGeneration } from "./templates/classic/new-generation/config";
 
 // ── Types ──────────────────────────────────────────────────────────
 
 export interface FrameImageConfig {
   type: "image";
-  /** Cloudinary URL template. `{color}` is replaced with the hex color (no #) */
   urlTemplate: string;
-  /** Background fill behind the image (for transparent PNGs) */
   bgColor: string;
 }
 
 export interface FrameSvgConfig {
   type: "svg";
-  /** Background fill for the page */
   bgColor: string;
-  /** Outer border inset (px from edge) */
   outerInset: number;
   outerStrokeWidth: number;
   outerCornerRadius: number;
-  /** Inner border inset */
   innerInset: number;
   innerStrokeWidth: number;
   innerCornerRadius: number;
-  /** Whether to draw decorative corner curves */
   hasCornerCurves: boolean;
 }
 
 export interface FrameGradientConfig {
   type: "gradient";
-  /** Background fill for the page (fallback) */
   bgColor: string;
-  /** Gradient start and end colors */
   gradientColors: string[];
-  /** Outer border inset (px from edge) */
   outerInset: number;
   outerStrokeWidth: number;
   outerCornerRadius: number;
-  /** Inner border inset */
   innerInset: number;
   innerStrokeWidth: number;
   innerCornerRadius: number;
 }
 
-export type FrameConfig = FrameImageConfig | FrameSvgConfig | FrameGradientConfig;
+export interface FrameCustomConfig {
+  type: "custom";
+  /** Unique ID for the custom rendering logic in Konva/PDF */
+  componentId: string;
+  bgColor: string;
+}
+
+export type FrameConfig = FrameImageConfig | FrameSvgConfig | FrameGradientConfig | FrameCustomConfig;
 
 export interface TemplateConfig {
   id: string;
   name: string;
-  /** Default primary color when "None" palette is selected */
   defaultPrimary: string;
   defaultSecondary: string;
   defaultAccent: string;
   defaultPadding: number;
-  /** Photo frame position & size */
   photo: {
     x: number;
     y: number;
@@ -69,82 +65,25 @@ export interface TemplateConfig {
     height: number;
     cornerRadius: number;
   };
-  /** Frame rendering config */
   frame: FrameConfig;
 }
 
 // ── Registry ───────────────────────────────────────────────────────
 
 export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
-  royal: {
-    id: "royal",
-    name: "Royal Gold",
-    defaultPrimary: "#800000",
-    defaultSecondary: "#333333",
-    defaultAccent: "#D4AF37",
-    defaultPadding: 45,
-    photo: { x: 420, y: 110, width: 119, height: 149, cornerRadius: 10 },
-    frame: {
-      type: "svg",
-      bgColor: "#fffaf7",
-      outerInset: 15,
-      outerStrokeWidth: 3,
-      outerCornerRadius: 12,
-      innerInset: 28,
-      innerStrokeWidth: 1.5,
-      innerCornerRadius: 8,
-      hasCornerCurves: true,
-    },
-  },
-
-  "ivory-elegance": {
-    id: "ivory-elegance",
-    name: "Ivory Elegance",
-    defaultPrimary: "#7A5C2F",
-    defaultSecondary: "#333333",
-    defaultAccent: "#B8860B",
-    defaultPadding: 50,
-    photo: { x: 425, y: 112, width: 106, height: 141, cornerRadius: 10 },
-    frame: {
-      type: "image",
-      urlTemplate:
-        "https://res.cloudinary.com/dhlyinfwd/image/upload/f_auto,q_auto,e_tint:100:rgb:{color}/v1778071856/biodata/templetes/classic/qeas9gkg1bdzxg4vjztg.png",
-      bgColor: "#FFFFF5",
-    },
-  },
-  "modern-gradient": {
-    id: "modern-gradient",
-    name: "Modern Gradient",
-    defaultPrimary: "#1a365d", // Deep Navy
-    defaultSecondary: "#4a5568", // Slate Gray
-    defaultAccent: "#2b6cb0", // Strong Blue
-    defaultPadding: 45,
-    photo: { x: 420, y: 110, width: 119, height: 149, cornerRadius: 15 },
-    frame: {
-      type: "gradient",
-      bgColor: "#ffffff",
-      gradientColors: ["#2A7B9B", "#57C785", "#EDDD53"],
-      outerInset: 20,
-      outerStrokeWidth: 4,
-      outerCornerRadius: 20,
-      innerInset: 35,
-      innerStrokeWidth: 1,
-      innerCornerRadius: 15,
-    },
-  },
+  royal,
+  "ivory-elegance": ivoryElegance,
+  "modern-gradient": modernGradient,
+  "new-generation": newGeneration,
 };
 
-/**
- * Resolves the full frame image URL by injecting the current color.
- */
+// ── Utilities ──────────────────────────────────────────────────────
+
 export function getFrameImageUrl(config: FrameImageConfig, hexColor: string): string {
   const color = hexColor.replace("#", "");
   return config.urlTemplate.replace("{color}", color);
 }
 
-/**
- * Retrieves the template config, falling back to "royal" if unknown.
- */
 export function getTemplateConfig(templateId: string): TemplateConfig {
   return TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS["royal"];
 }

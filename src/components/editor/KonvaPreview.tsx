@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, AlignLeft, AlignCenter, AlignRight, AlignStartVertical as AlignTop, AlignCenterVertical as AlignMiddle, AlignEndVertical as AlignBottom, Layers } from "lucide-react";
-import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer, Circle } from "react-konva";
 import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
@@ -20,6 +20,8 @@ import {
 import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
 import Konva from "konva";
+
+import { NewGenerationKonva } from "@/lib/templates/classic/new-generation/KonvaRenderer";
 
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
@@ -49,6 +51,13 @@ function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; siz
 function StickerImage({ src }: { src: string }) {
   const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
+}
+
+function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
+  if (componentId === "new-generation-arch") {
+    return <NewGenerationKonva primaryColor={primaryColor} />;
+  }
+  return null;
 }
 
 function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
@@ -459,6 +468,11 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
             <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} bgColors={theme.bgColors} />
+          ) : templateConfig.frame.type === "custom" ? (
+            <>
+              <Rect width={A4_W} height={A4_H} fill={templateConfig.frame.bgColor} />
+              <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
+            </>
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
