@@ -9,6 +9,7 @@ import { royal } from "./templates/classic/royal";
 import { ivoryElegance } from "./templates/classic/ivory-elegance";
 import { modernGradient } from "./templates/classic/modern-gradient";
 import { newGeneration } from "./templates/classic/new-generation/config";
+import { ornateGrandeur } from "./templates/classic/ornate-grandeur/config";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   "ivory-elegance": ivoryElegance,
   "modern-gradient": modernGradient,
   "new-generation": newGeneration,
+  "ornate-grandeur": ornateGrandeur,
 };
 
 // ── Utilities ──────────────────────────────────────────────────────

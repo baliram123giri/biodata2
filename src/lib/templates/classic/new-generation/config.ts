@@ -7,12 +7,12 @@ export const newGeneration: TemplateConfig = {
   defaultSecondary: "#4A4A4A",
   defaultAccent: "#FFD700",
   defaultPadding: 60,
-  photo: { 
-    x: 415, 
-    y: 210, 
-    width: 120, 
-    height: 120, 
-    cornerRadius: 60 
+  photo: {
+    x: 400,
+    y: 100,
+    width: 120,
+    height: 140,
+    cornerRadius: 10
   },
   frame: {
     type: "custom",

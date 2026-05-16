@@ -55,11 +55,15 @@ const registerFonts = () => {
 registerFonts();
 
 import { NewGenerationPDF } from './templates/classic/new-generation/PDFRenderer';
+import { PDFRenderer as OrnateGrandeurPDF } from './templates/classic/ornate-grandeur/PDFRenderer';
 
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
   if (componentId === "new-generation-arch") {
     return React.createElement(NewGenerationPDF, { primaryColor });
+  }
+  if (componentId === "ornate-grandeur-frame") {
+    return React.createElement(OrnateGrandeurPDF, { primaryColor });
   }
   return null;
 }
@@ -107,8 +111,15 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
 
       for (const f of fields) {
         const fieldY = cursorY;
-        fieldRows.push({ ...f, y: fieldY });
-        const estimatedLines = Math.ceil((f.displayValue.length * fSize * 0.5) / (A4_W - padding*2 - 145));
+        
+        let rowWidth = A4_W - padding * 2;
+        if (data.photo && config.photo && fieldY >= config.photo.y - 15 && fieldY <= config.photo.y + config.photo.height + 15) {
+           rowWidth = config.photo.x - padding - 20; // Prevent overlap with photo
+        }
+        const valueW = rowWidth - 145;
+        
+        fieldRows.push({ ...f, y: fieldY, rowWidth, valueW });
+        const estimatedLines = Math.ceil((f.displayValue.length * fSize * 0.5) / valueW);
         cursorY += Math.max(fSize * 1.5 * estimatedLines, fSize * 1.5) + 4;
       }
       sectionLayouts.push({ title: sec.label, titleY, fields: fieldRows });
@@ -129,9 +140,9 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   }
 
   const styles = StyleSheet.create({
-    page: { backgroundColor: config.frame.bgColor, padding: 0 },
-    container: { position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H },
-    frame: { position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H },
+    page: { backgroundColor: config.frame.bgColor, padding: 0, margin: 0 },
+    container: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
+    frame: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
     photo: { 
       position: 'absolute', 
       left: config.photo.x, 
@@ -186,7 +197,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         config.frame.type === 'image' ? 
           React.createElement(Image, { 
             src: getFrameImageUrl(config.frame, primary), 
-            style: styles.frame as any 
+            style: [styles.frame, { objectFit: 'fill' }] as any
           })
         : config.frame.type === 'gradient' ?
           React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
@@ -218,8 +229,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             })
           )
         : config.frame.type === 'custom' ?
-          React.createElement(View, { style: styles.frame as any },
-            React.createElement(Rect, { width: A4_W, height: A4_H, fill: config.frame.bgColor }),
+          React.createElement(View, { style: [styles.frame, { backgroundColor: config.frame.bgColor }] as any },
             React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
           )
         : 
@@ -275,8 +285,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           style: {
             position: 'absolute',
             top: item.y,
-            left: padding + 40,
-            width: A4_W - padding*2 - 80,
+            left: 0,
+            width: A4_W,
             textAlign: 'center',
             fontSize: item.fontSize,
             fontFamily: item.font,
@@ -291,7 +301,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           React.createElement(Text, { style: [styles.sectionTitleText, { top: 2 }] as any }, sec.title),
           sec.fields.map((f: any, fi: any) => React.createElement(View, {
             key: fi,
-            style: { position: 'absolute', top: (f.y - sec.titleY), left: padding + 10, flexDirection: 'row', width: A4_W - padding*2 - 10 } as any
+            style: { position: 'absolute', top: (f.y - sec.titleY), left: padding, flexDirection: 'row', width: f.rowWidth } as any
           },
             React.createElement(Text, { style: styles.label as any }, f.displayLabel),
             React.createElement(Text, { style: styles.colon as any }, ":"),

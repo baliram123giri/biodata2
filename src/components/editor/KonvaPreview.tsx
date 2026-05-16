@@ -22,10 +22,11 @@ import useImage from "use-image";
 import Konva from "konva";
 
 import { NewGenerationKonva } from "@/lib/templates/classic/new-generation/KonvaRenderer";
+import { KonvaRenderer as OrnateGrandeurKonva } from "@/lib/templates/classic/ornate-grandeur/KonvaRenderer";
 
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
-  liveFormData?: BiodataFormValues;
+  liveFormData?: BiodataFormValues & { stickers?: Sticker[]; layout?: any };
   templateId?: string;
   scale?: number;
   isDesigner?: boolean;
@@ -56,6 +57,9 @@ function StickerImage({ src }: { src: string }) {
 function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
   if (componentId === "new-generation-arch") {
     return <NewGenerationKonva primaryColor={primaryColor} />;
+  }
+  if (componentId === "ornate-grandeur-frame") {
+    return <OrnateGrandeurKonva primaryColor={primaryColor} />;
   }
   return null;
 }
@@ -277,7 +281,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const { width, height } = el.getBoundingClientRect();
       setStageSize({ width, height });
       if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
-        const initialScale = Math.min(width / (A4_W + 40), height / (A4_H + 40));
+        const initialScale = Math.min(width / A4_W, height / A4_H);
         if (!propScale) setScale(initialScale);
         setStagePos({ x: (width - A4_W * (propScale || initialScale)) / 2, y: (height - A4_H * (propScale || initialScale)) / 2 });
       }
@@ -285,7 +289,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     updateSize();
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
-  }, [isDesigner, propScale, stagePos.x, stagePos.y]);
+  }, [isDesigner, propScale]);
 
   useEffect(() => { if (propScale !== undefined) setScale(propScale); }, [propScale]);
 
@@ -337,6 +341,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     renderSectionData(t.contact || "Contact Details", formData.contactDetails),
   ].filter(Boolean), [renderSectionData, formData, t]);
 
+  const hasPhoto = !!formData.photo;
+  const photoConfig = templateConfig.photo;
+
   const layout = useMemo(() => {
     const calculateForSize = (fSize: number) => {
       let cursorY = padding + 20; // Extra room for Mantra
@@ -365,10 +372,17 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         const fieldLayouts: any[] = [];
         for (const field of sec.fields) {
           const valText = String(field.displayValue);
+          
+          let rowWidth = contentWidth;
+          if (hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15) {
+             rowWidth = photoConfig.x - padding - 20; // Prevent photo overlap
+          }
+          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          
           const valW = measure(valText, fSize);
-          const lines = Math.ceil(valW / valueWidth) || 1;
+          const lines = Math.ceil(valW / valueW) || 1;
           const rowHeight = Math.max(fSize, lines * fSize * 1.1);
-          fieldLayouts.push({ id: field.id, label: field.displayLabel, value: valText, logoUrl: field.logoUrl, y: cursorY });
+          fieldLayouts.push({ id: field.id, label: field.displayLabel, value: valText, logoUrl: field.logoUrl, y: cursorY, availableWidth: valueW });
           cursorY += rowHeight + LINE_SPACING;
         }
         sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
@@ -387,7 +401,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
     }
     return { ...finalLayout, fSize: bestSize };
-  }, [sections, padding, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title]);
+  }, [sections, padding, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -427,9 +441,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     });
   };
 
-  const hasPhoto = !!formData.photo;
-  const photoConfig = templateConfig.photo;
-
   return (
     <div ref={containerRef} className="w-full h-full bg-[#f5f0eb] relative overflow-hidden">
       <Stage
@@ -463,7 +474,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         style={{ cursor: isDesigner ? 'grab' : 'default' }}
       >
         <Layer listening={false}>
-          <Rect x={4} y={4} width={A4_W} height={A4_H} fill="#000000" opacity={0.1} cornerRadius={2} />
           {templateConfig.frame.type === "image" ? (
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
@@ -520,7 +530,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                       <Group key={field.id}>
                         <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
                         <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                        <Text x={padding + 155} y={field.y} width={A4_W - padding * 2 - 165} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
+                        <Text x={padding + 155} y={field.y} width={field.availableWidth} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
                         {field.logoUrl && <LogoImage src={field.logoUrl} x={padding - 5} y={field.y} size={layout.fSize} />}
                       </Group>
                     ))}

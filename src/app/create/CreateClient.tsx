@@ -230,40 +230,42 @@ export function CreateClient() {
             {/* Right Side: Template Picker Box & Sidebar */}
             <div className="hidden lg:flex flex-col shrink-0 sticky top-24 z-30">
               <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <SheetTrigger>
-                  <button className="group flex flex-col items-center gap-3 p-4 bg-white border border-primary/10 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/40 transition-all active:scale-95 text-center w-28">
-                    <div className="p-2 rounded-full bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                      <LayoutDashboard className="w-5 h-5" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Frames</span>
-                      <div className="w-16 h-20 rounded-lg shadow-inner border border-black/5 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/20 transition-all">
-                        {currentTemplate.frame.type === "image" ? (
-                          <div
-                            className="absolute inset-0 bg-cover bg-center"
-                            style={{
-                              backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
-                              backgroundColor: currentTemplate.frame.bgColor
-                            }}
-                          />
-                        ) : currentTemplate.frame.type === "gradient" ? (
-                          <div
-                            className="absolute inset-0"
-                            style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
-                          />
-                        ) : (
-                          <div
-                            className="absolute inset-0"
-                            style={{ backgroundColor: currentTemplate.defaultPrimary }}
-                          />
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
+                <SheetTrigger 
+                  render={
+                    <button className="group flex flex-col items-center gap-3 p-4 bg-white border border-primary/10 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/40 transition-all active:scale-95 text-center w-28" />
+                  }
+                >
+                  <div className="p-2 rounded-full bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <LayoutDashboard className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Frames</span>
+                    <div className="w-16 h-20 rounded-lg shadow-inner border border-black/5 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/20 transition-all">
+                      {currentTemplate.frame.type === "image" ? (
+                        <div
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
+                            backgroundColor: currentTemplate.frame.bgColor
+                          }}
+                        />
+                      ) : currentTemplate.frame.type === "gradient" ? (
+                        <div
+                          className="absolute inset-0"
+                          style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
+                        />
+                      ) : (
+                        <div
+                          className="absolute inset-0"
+                          style={{ backgroundColor: currentTemplate.defaultPrimary }}
+                        />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Sparkles className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-[9px] font-black text-primary uppercase truncate w-full mt-1">{currentTemplate.name}</span>
                     </div>
-                  </button>
+                    <span className="text-[9px] font-black text-primary uppercase truncate w-full mt-1">{currentTemplate.name}</span>
+                  </div>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto">
                   <SheetHeader className="mb-6">
@@ -283,11 +285,13 @@ export function CreateClient() {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-4 flex flex-col gap-3 z-50">
           <div className="flex gap-3 w-full">
             <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-              <SheetTrigger>
-                <Button variant="outline" className="flex-1 rounded-full h-12 font-bold border-primary/20">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
-                  Templates
-                </Button>
+              <SheetTrigger
+                render={
+                  <Button variant="outline" className="flex-1 rounded-full h-12 font-bold border-primary/20" />
+                }
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Templates
               </SheetTrigger>
               <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
                 <SheetHeader className="mb-6">
@@ -347,7 +351,7 @@ function PreviewSection({ storedTemplate }: { storedTemplate: string }) {
   const formData = useWatch();
 
   return (
-    <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative rounded-xl shadow-2xl border border-primary/5 mx-auto">
+    <div id="biodata-preview" className="bg-white overflow-hidden w-full aspect-[210/297] print:shadow-none relative">
       <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
     </div>
   );

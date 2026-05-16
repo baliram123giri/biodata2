@@ -23,6 +23,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://biodatamaker.online'),
   title: {
     default: "Free Online Biodata Maker for Marriage | 50+ Premium Templates",
     template: "%s | Biodata Maker"

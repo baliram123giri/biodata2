@@ -5,40 +5,55 @@ import { Group, Path, Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
 import { SVG_PATHS } from "./paths";
 
-export function NewGenerationKonva({ primaryColor }: { primaryColor: string }) {
+export const NewGenerationKonva = React.memo(({ primaryColor }: { primaryColor: string }) => {
   const [ganeshaImg] = useImage("https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png", "anonymous");
-  
+
+  const [svgUrl, setSvgUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const svgString = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="590" height="842" viewBox="0 0 595 842">
+        <g transform="translate(0,842) scale(0.0697538,-0.06578125)">
+          <path d="${SVG_PATHS.join(' ')}" fill="${primaryColor}" />
+        </g>
+      </svg>
+    `.trim();
+
+    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    setSvgUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [primaryColor]);
+
+  const [image] = useImage(svgUrl || "");
+
   return (
     <Group>
       {/* Background Watermark (Ganesha) */}
       {ganeshaImg && (
-        <KonvaImage 
-          image={ganeshaImg} 
-          x={595 - 350} 
-          y={350} 
-          width={300} 
-          height={300} 
-          opacity={0.07} 
+        <KonvaImage
+          image={ganeshaImg}
+          x={595 - 350}
+          y={350}
+          width={300}
+          height={300}
+          opacity={0.07}
         />
       )}
 
-      {/* Editable SVG Paths from 1210514.svg */}
-      {/* The original SVG has a transform: translate(0, 1280) scale(0.1, -0.1) */}
-      {/* We then scale it to fit our 595x842 canvas (595/853 and 842/1280) */}
-      <Group 
-        scaleX={0.06975} 
-        scaleY={-0.06578} 
-        y={842}
-      >
-        {SVG_PATHS.map((d, i) => (
-          <Path 
-            key={i}
-            data={d}
-            fill={primaryColor}
-            stroke="none"
-          />
-        ))}
-      </Group>
+      {image && (
+        <KonvaImage
+          image={image}
+          x={0}
+          y={0}
+          width={595}
+          height={842}
+          listening={false}
+        />
+      )}
     </Group>
   );
-}
+});

@@ -5,7 +5,7 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { cn } from "@/lib/utils";
 import { Sparkles, Plus } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
 
