@@ -148,6 +148,17 @@ export default function EditPage() {
       setIsLeftOpen(false);
       setIsRightOpen(false);
     }
+
+    // Disable browser pull-to-refresh on this page
+    const originalBodyStyle = document.body.style.overscrollBehaviorY;
+    const originalHtmlStyle = document.documentElement.style.overscrollBehaviorY;
+    document.body.style.overscrollBehaviorY = "none";
+    document.documentElement.style.overscrollBehaviorY = "none";
+
+    return () => {
+      document.body.style.overscrollBehaviorY = originalBodyStyle;
+      document.documentElement.style.overscrollBehaviorY = originalHtmlStyle;
+    };
   }, []);
 
   if (!isMounted) return null;

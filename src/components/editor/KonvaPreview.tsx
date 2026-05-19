@@ -331,65 +331,101 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     setStagePos({ x: pointer.x - mousePointTo.x * clampedScale, y: pointer.y - mousePointTo.y * clampedScale });
   };
 
-  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const touches = e.evt.touches;
-    if (touches.length === 2) {
-      const p1 = { x: touches[0].clientX, y: touches[0].clientY };
-      const p2 = { x: touches[1].clientX, y: touches[1].clientY };
-      const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-      lastDistRef.current = dist;
-      
-      const rect = stage.container().getBoundingClientRect();
-      const centerX = ((p1.x + p2.x) / 2) - rect.left;
-      const centerY = ((p1.y + p2.y) / 2) - rect.top;
-      lastCenterRef.current = { x: centerX, y: centerY };
-    }
-  };
+  useEffect(() => {
+    let active = true;
+    let container: HTMLDivElement | null = null;
+    
+    // Custom touch listener handlers
+    let onTouchStartNative: any;
+    let onTouchMoveNative: any;
+    let onTouchEndNative: any;
 
-  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const touches = e.evt.touches;
-    if (touches.length === 2 && lastDistRef.current !== null && lastCenterRef.current !== null) {
-      e.evt.preventDefault();
-      const p1 = { x: touches[0].clientX, y: touches[0].clientY };
-      const p2 = { x: touches[1].clientX, y: touches[1].clientY };
-      const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    const setupTouchListeners = () => {
+      const stage = stageRef.current;
+      if (!stage) {
+        if (active) setTimeout(setupTouchListeners, 50);
+        return;
+      }
       
-      const oldScale = stage.scaleX();
-      const rect = stage.container().getBoundingClientRect();
-      const centerX = ((p1.x + p2.x) / 2) - rect.left;
-      const centerY = ((p1.y + p2.y) / 2) - rect.top;
-      
-      const ratio = dist / lastDistRef.current;
-      const newScale = oldScale * ratio;
-      const clampedScale = Math.min(Math.max(newScale, 0.4), 2.0);
-      
-      const stageX = stage.x();
-      const stageY = stage.y();
-      
-      const mousePointTo = {
-        x: (lastCenterRef.current.x - stageX) / oldScale,
-        y: (lastCenterRef.current.y - stageY) / oldScale,
+      container = stage.container() as HTMLDivElement;
+      if (!container) {
+        if (active) setTimeout(setupTouchListeners, 50);
+        return;
+      }
+
+      onTouchStartNative = (e: TouchEvent) => {
+        const touches = e.touches;
+        if (touches.length === 2) {
+          e.preventDefault();
+          const p1 = { x: touches[0].clientX, y: touches[0].clientY };
+          const p2 = { x: touches[1].clientX, y: touches[1].clientY };
+          const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+          lastDistRef.current = dist;
+          
+          const rect = container!.getBoundingClientRect();
+          const centerX = ((p1.x + p2.x) / 2) - rect.left;
+          const centerY = ((p1.y + p2.y) / 2) - rect.top;
+          lastCenterRef.current = { x: centerX, y: centerY };
+        }
       };
-      
-      setScale(clampedScale);
-      setStagePos({
-        x: centerX - mousePointTo.x * clampedScale,
-        y: centerY - mousePointTo.y * clampedScale,
-      });
-      
-      lastDistRef.current = dist;
-      lastCenterRef.current = { x: centerX, y: centerY };
-    }
-  };
 
-  const handleTouchEnd = () => {
-    lastDistRef.current = null;
-    lastCenterRef.current = null;
-  };
+      onTouchMoveNative = (e: TouchEvent) => {
+        const touches = e.touches;
+        if (touches.length === 2 && lastDistRef.current !== null && lastCenterRef.current !== null) {
+          e.preventDefault();
+          const p1 = { x: touches[0].clientX, y: touches[0].clientY };
+          const p2 = { x: touches[1].clientX, y: touches[1].clientY };
+          const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+          
+          const oldScale = stage.scaleX();
+          const rect = container!.getBoundingClientRect();
+          const centerX = ((p1.x + p2.x) / 2) - rect.left;
+          const centerY = ((p1.y + p2.y) / 2) - rect.top;
+          
+          const ratio = dist / lastDistRef.current;
+          const newScale = oldScale * ratio;
+          const clampedScale = Math.min(Math.max(newScale, 0.4), 2.0);
+          
+          const stageX = stage.x();
+          const stageY = stage.y();
+          
+          const mousePointTo = {
+            x: (lastCenterRef.current.x - stageX) / oldScale,
+            y: (lastCenterRef.current.y - stageY) / oldScale,
+          };
+          
+          setScale(clampedScale);
+          setStagePos({
+            x: centerX - mousePointTo.x * clampedScale,
+            y: centerY - mousePointTo.y * clampedScale,
+          });
+          
+          lastDistRef.current = dist;
+          lastCenterRef.current = { x: centerX, y: centerY };
+        }
+      };
+
+      onTouchEndNative = () => {
+        lastDistRef.current = null;
+        lastCenterRef.current = null;
+      };
+
+      container.addEventListener("touchstart", onTouchStartNative, { passive: false });
+      container.addEventListener("touchmove", onTouchMoveNative, { passive: false });
+      container.addEventListener("touchend", onTouchEndNative, { passive: true });
+    };
+
+    setupTouchListeners();
+
+    return () => {
+      active = false;
+      if (container) {
+        container.removeEventListener("touchstart", onTouchStartNative);
+        container.removeEventListener("touchmove", onTouchMoveNative);
+        container.removeEventListener("touchend", onTouchEndNative);
+      }
+    };
+  }, []);
 
   const primaryColor = theme.selectedPaletteName === null ? templateConfig.defaultPrimary : theme.primaryColor;
   const secondaryColor = theme.selectedPaletteName === null ? templateConfig.defaultSecondary : theme.secondaryColor;
@@ -550,9 +586,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         y={stagePos.y}
         draggable={isDesigner}
         onWheel={handleWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         onDragStart={e => {
           if (e.target === e.currentTarget) {
             const stage = e.target.getStage();

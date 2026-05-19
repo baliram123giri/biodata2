@@ -57,10 +57,26 @@ export function HomeBiodataBuilder() {
   const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
+    let lastScrollY = window.scrollY || document.documentElement.scrollTop;
+
     const handleScroll = () => {
       const scrollPos = window.scrollY || document.documentElement.scrollTop;
-      // Show mobile bar instantly as soon as user scrolls past the top 120px of the hero section
-      setShowMobileBar(scrollPos > 120);
+      
+      // Check direction of the scroll
+      const scrollingDown = scrollPos > lastScrollY;
+      
+      if (scrollPos <= 120) {
+        // Always hide at the top / hero section
+        setShowMobileBar(false);
+      } else if (scrollingDown) {
+        // Show only when actively scrolling down and past the threshold
+        setShowMobileBar(true);
+      } else {
+        // Hide immediately when scrolling up
+        setShowMobileBar(false);
+      }
+      
+      lastScrollY = Math.max(0, scrollPos);
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });
