@@ -57,26 +57,20 @@ export function HomeBiodataBuilder() {
   const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY || document.documentElement.scrollTop;
-
     const handleScroll = () => {
       const scrollPos = window.scrollY || document.documentElement.scrollTop;
+      const customSection = document.getElementById("photo-customization-section");
       
-      // Check direction of the scroll
-      const scrollingDown = scrollPos > lastScrollY;
-      
-      if (scrollPos <= 120) {
-        // Always hide at the top / hero section
-        setShowMobileBar(false);
-      } else if (scrollingDown) {
-        // Show only when actively scrolling down and past the threshold
-        setShowMobileBar(true);
+      if (customSection) {
+        const rect = customSection.getBoundingClientRect();
+        // Hide the mobile sticky bar once the user scrolls back up and reaches 
+        // the Photo & Customization section (meaning the section top is visible, rect.top >= 0).
+        // Show persistently only when they scroll past it (rect.top < 0).
+        setShowMobileBar(rect.top < 0);
       } else {
-        // Hide immediately when scrolling up
-        setShowMobileBar(false);
+        // Fallback if the element is not yet rendered
+        setShowMobileBar(scrollPos > 400);
       }
-      
-      lastScrollY = Math.max(0, scrollPos);
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });

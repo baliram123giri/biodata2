@@ -47,17 +47,17 @@ function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x
   return image ? <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} /> : null;
 }
 
-function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
+const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
   const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
-}
+});
 
-function StickerImage({ src }: { src: string }) {
+const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
   const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
-}
+});
 
-function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
+const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
   if (componentId === "new-generation-arch") {
     return <NewGenerationKonva primaryColor={primaryColor} />;
   }
@@ -68,9 +68,9 @@ function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; 
     return <GreenShapesKonva primaryColor={primaryColor} />;
   }
   return null;
-}
+});
 
-function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; bgColor: string; }) {
+const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; bgColor: string; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
   return (
@@ -82,7 +82,7 @@ function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { 
       )}
     </Group>
   );
-}
+});
 
 function StickerItem({ 
   sticker, 
@@ -180,7 +180,7 @@ function StickerItem({
   );
 }
 
-function SvgFrame({ config, primaryColor, bgColor }: { config: FrameSvgConfig; primaryColor: string; bgColor: string; }) {
+const SvgFrame = React.memo(function SvgFrame({ config, primaryColor, bgColor }: { config: FrameSvgConfig; primaryColor: string; bgColor: string; }) {
   return (
     <Group>
       <Rect width={A4_W} height={A4_H} fill={bgColor} />
@@ -188,9 +188,9 @@ function SvgFrame({ config, primaryColor, bgColor }: { config: FrameSvgConfig; p
       <Rect x={config.innerInset} y={config.innerInset} width={A4_W - config.innerInset * 2} height={A4_H - config.innerInset * 2} stroke={primaryColor} strokeWidth={config.innerStrokeWidth} cornerRadius={config.innerCornerRadius} opacity={0.6} />
     </Group>
   );
-}
+});
 
-function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradientConfig; primaryColor: string; bgColors: string[]; }) {
+const GradientFrame = React.memo(function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradientConfig; primaryColor: string; bgColors: string[]; }) {
   return (
     <Group>
       <Rect 
@@ -223,7 +223,7 @@ function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradie
       />
     </Group>
   );
-}
+});
 
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT

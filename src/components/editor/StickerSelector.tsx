@@ -9,7 +9,7 @@ import { Sparkles, Plus } from "lucide-react";
 
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
 
-export function StickerSelector({ onSelect }: { onSelect?: () => void }) {
+export const StickerSelector = React.memo(function StickerSelector({ onSelect }: { onSelect?: () => void }) {
   const { addSticker } = useBiodataStore();
   const theme = useThemeStore();
 
@@ -79,4 +79,4 @@ export function StickerSelector({ onSelect }: { onSelect?: () => void }) {
       </div>
     </div>
   );
-}
+});

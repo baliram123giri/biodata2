@@ -6,11 +6,11 @@ import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { Button } from "@/components/ui/button";
+import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
@@ -58,7 +58,7 @@ export function BiodataForm() {
           <Globe className="w-5 h-5" />
           <span>Language</span>
         </div>
-        <Select value={currentLang} onValueChange={handleLanguageChange}>
+        <Select value={currentLang} onValueChange={handleLanguageChange} modal={false}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
@@ -73,7 +73,7 @@ export function BiodataForm() {
       <Accordion type="multiple" defaultValue={["personal", "education", "family", "contact", "customization"]} className="w-full">
         
         {/* CUSTOMIZATION */}
-        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+        <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
           <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -153,7 +153,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
             if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;
             return (
-            <div key={field.id} className={`flex flex-col gap-1 relative group`}>
+            <div key={field.id} className={`flex flex-col gap-1 relative group px-1 py-0.5`}>
               <div className="flex items-center justify-between mb-1">
                 <EditableLabel name={`${name}.${index}.label`} />
                 
@@ -176,7 +176,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       } else {
                         selectField.onChange(val);
                       }
-                    }} value={selectField.value}>
+                    }} value={selectField.value} modal={false}>
                       <SelectTrigger>
                         <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
                           {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
@@ -231,7 +231,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                     return (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
+                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)} modal={false}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
@@ -239,7 +239,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                               {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
+                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)} modal={false}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
@@ -248,7 +248,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                             </SelectContent>
                           </Select>
                         </div>
-                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
+                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")} modal={false}>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={t.select || "Select Period"}>
                               {periodPart ? (t[periodPart] || periodPart) : undefined}
@@ -393,3 +393,59 @@ const EditableLabel = memo(function EditableLabel({ name }: { name: string }) {
     </div>
   );
 });
+
+const COMPANY_OPTIONS = [
+  "Google",
+  "Microsoft",
+  "Amazon",
+  "Meta",
+  "Apple",
+  "Netflix",
+  "TCS (Tata Consultancy Services)",
+  "Infosys",
+  "Wipro",
+  "Cognizant",
+  "Accenture",
+  "Capgemini",
+  "Tech Mahindra",
+  "HCL Technologies",
+  "IBM",
+  "Oracle",
+  "Cisco",
+  "Adobe",
+  "Salesforce",
+  "Deloitte",
+  "PwC",
+  "EY (Ernst & Young)",
+  "KPMG",
+  "J.P. Morgan",
+  "Morgan Stanley",
+  "Goldman Sachs",
+  "Other"
+];
+
+interface PremiumSelectProps {
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder: string;
+}
+
+function PremiumSelect({ value, onChange, options, placeholder }: PremiumSelectProps) {
+  return (
+    <div className="relative w-full">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white border border-input text-sm rounded-md h-9 pl-3 pr-10 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%237C726C%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[position:right_12px_center] bg-no-repeat transition-all text-foreground"
+      >
+        <option value="" disabled className="text-muted-foreground">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt} className="text-sm text-foreground bg-white">
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}

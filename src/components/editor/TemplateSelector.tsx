@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Check, Layout } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-export function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
+export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
   const { selectedTemplate, setSelectedTemplate } = useBiodataStore();
   const theme = useThemeStore();
 
@@ -105,4 +105,4 @@ export function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
       </div>
     </div>
   );
-}
+});

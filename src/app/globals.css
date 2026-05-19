@@ -176,3 +176,10 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(139, 29, 29, 0.3) rgba(0, 0, 0, 0.02);
 }
+
+/* Prevent Radix / Base UI scroll lock from causing jumps or scrolling to the top */
+html:has([data-scroll-locked]),
+html[style*="overflow: hidden"],
+body[style*="overflow: hidden"] {
+  scroll-behavior: auto !important;
+}
