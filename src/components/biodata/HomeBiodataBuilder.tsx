@@ -242,9 +242,17 @@ export function HomeBiodataBuilder() {
                       <Button variant="outline" size="sm" className="flex-1 rounded-full h-10" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
                         <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
                       </Button>
-                      <Button size="sm" className="flex-1 rounded-full shadow-lg text-white h-10" onClick={handleDownload} disabled={isGenerating}>
-                        <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
-                        {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
+                      <Button 
+                        size="sm" 
+                        className="relative overflow-hidden flex-1 rounded-full shadow-lg bg-stitch-primary text-white hover:bg-stitch-primary/90 h-10" 
+                        onClick={handleDownload} 
+                        disabled={isGenerating}
+                      >
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+                        <span className="relative flex items-center justify-center">
+                          <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
+                          {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
+                        </span>
                       </Button>
                     </div>
                   </div>
@@ -372,10 +380,13 @@ export function HomeBiodataBuilder() {
               size="sm" 
               onClick={handleDownload} 
               disabled={isGenerating}
-              className="rounded-2xl shadow-lg bg-gradient-to-r from-stitch-primary to-stitch-primary/90 text-white font-bold text-xs h-10 px-4 flex gap-1.5 shrink-0"
+              className="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-stitch-primary to-stitch-primary/90 text-white font-bold text-xs h-10 px-4 flex gap-1.5 shrink-0"
             >
-              <Download className={`w-3.5 h-3.5 ${isGenerating ? 'animate-bounce' : ''}`} />
-              {isGenerating ? '...' : (t.download || "Download")}
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+              <span className="relative flex items-center gap-1.5">
+                <Download className={`w-3.5 h-3.5 ${isGenerating ? 'animate-bounce' : ''}`} />
+                {isGenerating ? '...' : (t.download || "Download")}
+              </span>
             </Button>
 
           </div>
@@ -390,9 +401,15 @@ export function HomeBiodataBuilder() {
                 {t.resetDescription || "This will clear all the information you've entered and revert to the default template. This action cannot be undone."}
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex gap-2 sm:gap-0">
+            <DialogFooter className="flex gap-2 sm:gap-0 mt-4">
               <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">{t.cancel || "Cancel"}</Button>
-              <Button variant="destructive" onClick={handleReset} className="rounded-full">{t.yesReset || "Yes, Reset"}</Button>
+              <Button 
+                onClick={handleReset} 
+                className="relative overflow-hidden rounded-full bg-stitch-primary text-stitch-on-primary hover:bg-stitch-primary/90"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+                <span className="relative">{t.yesReset || "Yes, Reset"}</span>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -408,7 +425,7 @@ function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) 
   const formData = useWatch();
 
   return (
-    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5">
+    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none">
       <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
     </div>
   );

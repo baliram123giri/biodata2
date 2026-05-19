@@ -44,6 +44,7 @@ import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 
 
@@ -279,20 +280,25 @@ export default function EditPage() {
       {/* Top Navigation Bar */}
       <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-4 md:px-6 h-16">
         <div className="flex items-center gap-2 md:gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="rounded-full hover:bg-stitch-primary/10 text-stitch-primary"
             onClick={() => window.location.href = "/"}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <span className="font-noto-serif text-lg md:text-2xl text-stitch-primary font-bold tracking-tight hidden sm:block">Design Studio</span>
+          <span
+            className="font-noto-serif text-lg md:text-2xl text-stitch-primary font-bold tracking-tight hidden sm:block cursor-pointer"
+            onClick={() => window.location.href = "/"}
+          >
+            Biodata Maker
+          </span>
         </div>
 
         {/* Center toolbar: Undo/Redo always visible, other items hidden on mobile */}
         <div className="flex items-center gap-1 border-x border-stitch-outline/5 px-2 md:px-4 h-full">
-          <button 
+          <button
             onClick={handleUndo}
             disabled={!canUndo}
             className={cn(
@@ -303,7 +309,7 @@ export default function EditPage() {
           >
             <Undo2 className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          <button 
+          <button
             onClick={handleRedo}
             disabled={!canRedo}
             className={cn(
@@ -318,39 +324,66 @@ export default function EditPage() {
           {/* Reset button & divider: hidden on mobile */}
           <div className="hidden md:flex items-center gap-1 h-full">
             <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
-            <ToolbarItem icon={<RefreshCcw />} label="Reset" onClick={() => {
-              if (confirm("Reset layout positions?")) {
-                 useBiodataStore.getState().resetStore();
-              }
-            }} />
+            <Dialog>
+              <DialogTrigger >
+                <div>
+                  <ToolbarItem icon={<RefreshCcw />} label="Reset" />
+                </div>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reset Layout Positions?</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to reset all layout positions to their defaults? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0 mt-4">
+                  <DialogClose>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose>
+                    <Button
+                      className="relative overflow-hidden bg-stitch-primary text-stitch-on-primary hover:opacity-90"
+                      onClick={() => useBiodataStore.getState().resetStore()}
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+                      <span className="relative">Reset Layout</span>
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
           <div className="hidden xl:flex px-3 py-1.5 rounded-full bg-green-50 border border-green-100 items-center gap-2 mr-2">
-             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-             <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
           </div>
 
           <Button
             onClick={handleDownload}
             disabled={isGenerating}
-            className="bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-4 md:px-6 flex gap-2 shadow-sm disabled:opacity-50"
+            className="relative overflow-hidden bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-4 md:px-6 flex gap-2 shadow-sm disabled:opacity-50"
           >
-            {isGenerating ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="hidden sm:inline">Generating...</span>
-              </>
-            ) : (
-              <>
-                <span>Download</span>
-                <Download className="w-4 h-4" />
-              </>
-            )}
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+            <span className="relative flex items-center gap-2">
+              {isGenerating ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="hidden sm:inline">Generating...</span>
+                </>
+              ) : (
+                <>
+                  <span>Download</span>
+                  <Download className="w-4 h-4" />
+                </>
+              )}
+            </span>
           </Button>
         </div>
       </header>
@@ -360,39 +393,34 @@ export default function EditPage() {
 
         {/* Mobile Bottom Tab Bar */}
         <nav className="fixed bottom-4 left-4 right-4 h-16 flex lg:hidden flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50">
-          <ToolButton 
-            icon={<LayoutDashboard />} 
-            label="Templates" 
+          <ToolButton
+            icon={<LayoutDashboard />}
+            label="Templates"
             active={isRightOpen && activeTab === "templates"}
             onClick={() => handleTabClick("templates")}
           />
-          <ToolButton 
-            icon={<TypeIcon />} 
-            label="Fields" 
+          <ToolButton
+            icon={<TypeIcon />}
+            label="Fields"
             active={isRightOpen && activeTab === "fields"}
             onClick={() => handleTabClick("fields")}
           />
-          <ToolButton 
-            icon={<Palette />} 
-            label="Theme" 
+          <ToolButton
+            icon={<Palette />}
+            label="Theme"
             active={isRightOpen && activeTab === "theme"}
             onClick={() => handleTabClick("theme")}
           />
-          <ToolButton 
-            icon={<Sliders className="w-5 h-5" />} 
-            label="Spacing" 
+          <ToolButton
+            icon={<Sliders className="w-5 h-5" />}
+            label="Spacing"
             active={isRightOpen && activeTab === "spacing"}
             onClick={() => handleTabClick("spacing")}
           />
-          <ToolButton 
-            icon={<ImageIcon />} 
-            label="Photo" 
-            active={isRightOpen && activeTab === "photo"}
-            onClick={() => handleTabClick("photo")}
-          />
-          <ToolButton 
-            icon={<Sparkles />} 
-            label="Stickers" 
+
+          <ToolButton
+            icon={<Sparkles />}
+            label="Stickers"
             active={isRightOpen && activeTab === "stickers"}
             onClick={() => handleTabClick("stickers")}
           />
@@ -405,39 +433,39 @@ export default function EditPage() {
           {/* Floating Left Toolbar — Desktop only, overlaid on the canvas */}
           {isLeftOpen && (
             <nav className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center py-4 px-2 gap-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-black/5">
-              <ToolButton 
-                icon={<LayoutDashboard />} 
-                label="Templates" 
+              <ToolButton
+                icon={<LayoutDashboard />}
+                label="Templates"
                 active={isRightOpen && activeTab === "templates"}
                 onClick={() => handleTabClick("templates")}
               />
-              <ToolButton 
-                icon={<TypeIcon />} 
-                label="Fields" 
+              <ToolButton
+                icon={<TypeIcon />}
+                label="Fields"
                 active={isRightOpen && activeTab === "fields"}
                 onClick={() => handleTabClick("fields")}
               />
-              <ToolButton 
-                icon={<Palette />} 
-                label="Theme" 
+              <ToolButton
+                icon={<Palette />}
+                label="Theme"
                 active={isRightOpen && activeTab === "theme"}
                 onClick={() => handleTabClick("theme")}
               />
-              <ToolButton 
-                icon={<Sliders className="w-5 h-5" />} 
-                label="Spacing" 
+              <ToolButton
+                icon={<Sliders className="w-5 h-5" />}
+                label="Spacing"
                 active={isRightOpen && activeTab === "spacing"}
                 onClick={() => handleTabClick("spacing")}
               />
-              <ToolButton 
-                icon={<ImageIcon />} 
-                label="Photo" 
+              <ToolButton
+                icon={<ImageIcon />}
+                label="Photo"
                 active={isRightOpen && activeTab === "photo"}
                 onClick={() => handleTabClick("photo")}
               />
-              <ToolButton 
-                icon={<Sparkles />} 
-                label="Stickers" 
+              <ToolButton
+                icon={<Sparkles />}
+                label="Stickers"
                 active={isRightOpen && activeTab === "stickers"}
                 onClick={() => handleTabClick("stickers")}
               />
@@ -446,15 +474,15 @@ export default function EditPage() {
 
           {/* Floating Zoom Controls */}
           <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
-            <button 
-              onClick={handleZoomOut} 
+            <button
+              onClick={handleZoomOut}
               className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
               title="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
-            <button 
-              onClick={handleFitToScreen} 
+            <button
+              onClick={handleFitToScreen}
               className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
               title="Fit to Screen"
             >
@@ -463,8 +491,8 @@ export default function EditPage() {
             <span className="text-[10px] font-black text-stitch-on-surface w-10 text-center select-none">
               {Math.round(zoom * 100)}%
             </span>
-            <button 
-              onClick={handleZoomIn} 
+            <button
+              onClick={handleZoomIn}
               className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
               title="Zoom In"
             >
@@ -474,10 +502,10 @@ export default function EditPage() {
         </main>
 
         {/* Right Properties Panel / Bottom Drawer on Mobile */}
-        <aside 
+        <aside
           style={{
-            transform: isDraggingDrawer 
-              ? `translateY(${drawerTranslateY}px)` 
+            transform: isDraggingDrawer
+              ? `translateY(${drawerTranslateY}px)`
               : undefined
           }}
           className={cn(
@@ -485,13 +513,13 @@ export default function EditPage() {
             isDraggingDrawer ? "" : "transition-all duration-300",
             // Desktop: right sidebar
             "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-96 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
-            isRightOpen 
-              ? "lg:translate-x-0 lg:w-96" 
+            isRightOpen
+              ? "lg:translate-x-0 lg:w-96"
               : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
             // Mobile: bottom drawer (sitting flush at bottom-0)
             "fixed left-0 right-0 bottom-0 h-[50vh] border-t border-stitch-outline/10 rounded-t-[32px] bg-white",
-            isRightOpen 
-              ? "translate-y-0 opacity-100" 
+            isRightOpen
+              ? "translate-y-0 opacity-100"
               : "translate-y-full opacity-0 pointer-events-none"
           )}
         >
@@ -519,7 +547,7 @@ export default function EditPage() {
           <div className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
             <div className="flex flex-col gap-8 pb-28 lg:pb-10">
               {activeTab === "templates" && <TemplateSelector />}
-              
+
               {activeTab === "fields" && (
                 <div className="flex flex-col gap-6 text-left">
                   <div className="flex flex-col gap-1.5">
@@ -533,171 +561,171 @@ export default function EditPage() {
                   </FormProvider>
                 </div>
               )}
-              
+
               {activeTab === "theme" && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3">
-                  <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* None / Reset option */}
-                    {(() => {
-                      const isNone = theme.selectedPaletteName === null;
-                      return (
-                        <button
-                          onClick={() => {
-                            theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                            if (window.innerWidth < 1024) {
-                              setIsRightOpen(false);
-                            }
-                          }}
-                          className={cn(
-                            "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
-                            isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
-                          )}
-                        >
-                          <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
-                            <svg className="w-4 h-4 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <circle cx="12" cy="12" r="9" />
-                              <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
-                            </svg>
-                          </div>
-                          <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
-                          {isNone && (
-                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
-                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })()}
-                    {(() => {
-                      const templateConfig = TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate] || TEMPLATE_CONFIGS["royal"];
-                      const isGradientFrame = templateConfig.frame.type === "gradient";
-                      
-                      const filteredPalettes = isGradientFrame 
-                        ? PALETTES.filter(p => !!p.bgColors)
-                        : PALETTES.filter(p => !p.bgColors);
-
-                      return filteredPalettes.map((p) => {
-                        const isSelected = theme.selectedPaletteName === p.name;
-                        return (
-                          <button
-                            key={p.name}
-                            onClick={() => {
-                              if (isSelected) {
+                    <div className="flex flex-col gap-3">
+                      <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* None / Reset option */}
+                        {(() => {
+                          const isNone = theme.selectedPaletteName === null;
+                          return (
+                            <button
+                              onClick={() => {
                                 theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                              } else {
-                                theme.setPalette(p);
-                              }
-                              if (window.innerWidth < 1024) {
-                                setIsRightOpen(false);
-                              }
-                            }}
-                            className={cn(
-                              "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
-                              isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
-                            )}
-                          >
-                            <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
-                              {p.bgColors ? (
-                                <div className="w-full h-full" style={{ background: `linear-gradient(90deg, ${p.bgColors.join(", ")})` }} />
-                              ) : (
-                                <>
-                                  <div className="flex-1" style={{ backgroundColor: p.primary }} />
-                                  <div className="flex-1" style={{ backgroundColor: p.secondary }} />
-                                  <div className="flex-1" style={{ backgroundColor: p.accent }} />
-                                </>
+                                if (window.innerWidth < 1024) {
+                                  setIsRightOpen(false);
+                                }
+                              }}
+                              className={cn(
+                                "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
+                                isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
                               )}
-                            </div>
-                            <div className="flex flex-col items-start overflow-hidden flex-1">
-                              <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{p.name}</span>
-                              <div className="flex gap-0.5 mt-0.5">
-                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
-                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
-                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
-                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            >
+                              <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
+                                <svg className="w-4 h-4 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <circle cx="12" cy="12" r="9" />
+                                  <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
                                 </svg>
                               </div>
-                            )}
-                          </button>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
+                              <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
+                              {isNone && (
+                                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })()}
+                        {(() => {
+                          const templateConfig = TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate] || TEMPLATE_CONFIGS["royal"];
+                          const isGradientFrame = templateConfig.frame.type === "gradient";
 
-                <div className="flex flex-col gap-4">
-                  <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Color</Label>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-                      style={{ backgroundColor: theme.primaryColor }}
-                    >
-                      <Sparkles className="w-4 h-4 text-white" />
+                          const filteredPalettes = isGradientFrame
+                            ? PALETTES.filter(p => !!p.bgColors)
+                            : PALETTES.filter(p => !p.bgColors);
+
+                          return filteredPalettes.map((p) => {
+                            const isSelected = theme.selectedPaletteName === p.name;
+                            return (
+                              <button
+                                key={p.name}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                                  } else {
+                                    theme.setPalette(p);
+                                  }
+                                  if (window.innerWidth < 1024) {
+                                    setIsRightOpen(false);
+                                  }
+                                }}
+                                className={cn(
+                                  "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
+                                  isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
+                                )}
+                              >
+                                <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
+                                  {p.bgColors ? (
+                                    <div className="w-full h-full" style={{ background: `linear-gradient(90deg, ${p.bgColors.join(", ")})` }} />
+                                  ) : (
+                                    <>
+                                      <div className="flex-1" style={{ backgroundColor: p.primary }} />
+                                      <div className="flex-1" style={{ backgroundColor: p.secondary }} />
+                                      <div className="flex-1" style={{ backgroundColor: p.accent }} />
+                                    </>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-start overflow-hidden flex-1">
+                                  <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{p.name}</span>
+                                  <div className="flex gap-0.5 mt-0.5">
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          });
+                        })()}
+                      </div>
                     </div>
-                    <div className="flex-1 bg-white border border-stitch-outline/20 rounded-xl px-4 py-2.5 text-sm text-stitch-on-surface font-bold flex justify-between items-center shadow-sm">
-                      <span>{theme.primaryColor.toUpperCase()}</span>
-                      <span className="text-stitch-on-surface-variant text-[10px] font-bold">Primary</span>
+
+                    <div className="flex flex-col gap-4">
+                      <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Color</Label>
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                          style={{ backgroundColor: theme.primaryColor }}
+                        >
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="flex-1 bg-white border border-stitch-outline/20 rounded-xl px-4 py-2.5 text-sm text-stitch-on-surface font-bold flex justify-between items-center shadow-sm">
+                          <span>{theme.primaryColor.toUpperCase()}</span>
+                          <span className="text-stitch-on-surface-variant text-[10px] font-bold">Primary</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              </div>
               )}
 
-            {activeTab === "spacing" && (
-              <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-1.5">
-                  <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Spacing & Padding</Label>
-                  <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
-                    Adjust horizontal and vertical page margins to perfectly compact or space out your content layout.
-                  </p>
-                </div>
+              {activeTab === "spacing" && (
+                <div className="flex flex-col gap-8">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Spacing & Padding</Label>
+                    <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
+                      Adjust horizontal and vertical page margins to perfectly compact or space out your content layout.
+                    </p>
+                  </div>
 
-                <div className="flex flex-col gap-6 bg-stitch-surface-variant/10 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
-                  {/* Spacing Section */}
-                  <div className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
-                        <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
+                  <div className="flex flex-col gap-6 bg-stitch-surface-variant/10 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
+                    {/* Spacing Section */}
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
+                        </div>
+                        <Slider
+                          value={[theme.padding]}
+                          onValueChange={([v]) => theme.setPadding(v)}
+                          min={40}
+                          max={100}
+                          step={4}
+                        />
                       </div>
-                      <Slider
-                        value={[theme.padding]}
-                        onValueChange={([v]) => theme.setPadding(v)}
-                        min={40}
-                        max={100}
-                        step={4}
-                      />
-                    </div>
 
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
-                        <span className="text-[10px] font-bold text-stitch-primary">
-                          {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
-                        </span>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">
+                            {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
+                          </span>
+                        </div>
+                        <Slider
+                          value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
+                          onValueChange={([v]) => theme.setPaddingY(v)}
+                          min={20}
+                          max={150}
+                          step={2}
+                        />
                       </div>
-                      <Slider
-                        value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
-                        onValueChange={([v]) => theme.setPaddingY(v)}
-                        min={20}
-                        max={150}
-                        step={2}
-                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
 
 
@@ -705,15 +733,15 @@ export default function EditPage() {
                 <div className="flex flex-col gap-6">
                   <div className="space-y-4">
                     <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
-                    <ImageUpload 
-                      value={formData.photo} 
+                    <ImageUpload
+                      value={formData.photo}
                       onChange={(url) => {
                         setFormData({ ...formData, photo: url });
                         if (url && window.innerWidth < 1024) {
                           setIsRightOpen(false);
                         }
-                      }} 
-                      aspect={3 / 4} 
+                      }}
+                      aspect={3 / 4}
                     />
                     <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed italic">
                       Tip: A clear portrait with a simple background looks best in matrimonial biodata.
@@ -723,12 +751,12 @@ export default function EditPage() {
               )}
 
               {activeTab === "stickers" && (
-                <StickerSelector 
+                <StickerSelector
                   onSelect={() => {
                     if (window.innerWidth < 1024) {
                       setIsRightOpen(false);
                     }
-                  }} 
+                  }}
                 />
               )}
             </div>
@@ -741,7 +769,7 @@ export default function EditPage() {
 
 function ToolButton({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={cn(
         "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0",
@@ -758,7 +786,7 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
 
 function ToolbarItem({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick?: () => void }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className="flex items-center gap-2 px-3 py-2 rounded-xl text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-stitch-primary/5 transition-all group"
       title={label}
