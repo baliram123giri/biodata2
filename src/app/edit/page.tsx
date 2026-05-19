@@ -20,6 +20,7 @@ import {
   Layers,
   PanelLeft,
   PanelRight,
+  Sliders,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,7 +40,7 @@ import { useStore } from "zustand";
 import { cn } from "@/lib/utils";
 
 export default function EditPage() {
-  const { formData, setFormData, updateField, updateLayout } = useBiodataStore();
+  const { formData, selectedTemplate, setFormData, updateField, updateLayout } = useBiodataStore();
   const theme = useThemeStore();
   const biodataHistory = useStore(useBiodataStore.temporal, (state) => state);
   const themeHistory = useStore(useThemeStore.temporal, (state) => state);
@@ -78,7 +79,7 @@ export default function EditPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"templates" | "theme" | "photo" | "stickers">("theme");
+  const [activeTab, setActiveTab] = useState<"templates" | "theme" | "spacing" | "photo" | "stickers">("theme");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
@@ -333,6 +334,12 @@ export default function EditPage() {
             active={isRightOpen && activeTab === "theme"}
             onClick={() => handleTabClick("theme")}
           />
+          <ToolButton 
+            icon={<Sliders className="w-5 h-5" />} 
+            label="Spacing" 
+            active={isRightOpen && activeTab === "spacing"}
+            onClick={() => handleTabClick("spacing")}
+          />
 
           <ToolButton 
             icon={<ImageIcon />} 
@@ -543,43 +550,54 @@ export default function EditPage() {
                   </div>
                 </div>
               </div>
+              </div>
+              )}
 
-              <Separator className="bg-stitch-outline/10" />
-
-              {/* Spacing Section */}
-              <div className="flex flex-col gap-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
-                    <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
-                  </div>
-                  <Slider
-                    value={[theme.padding]}
-                    onValueChange={([v]) => theme.setPadding(v)}
-                    min={40}
-                    max={100}
-                    step={4}
-                  />
+            {activeTab === "spacing" && (
+              <div className="flex flex-col gap-8">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Spacing & Padding</Label>
+                  <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
+                    Adjust horizontal and vertical page margins to perfectly compact or space out your content layout.
+                  </p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
-                    <span className="text-[10px] font-bold text-stitch-primary">
-                      {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
-                    </span>
+                <div className="flex flex-col gap-6 bg-stitch-surface-variant/10 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
+                  {/* Spacing Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
+                        <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
+                      </div>
+                      <Slider
+                        value={[theme.padding]}
+                        onValueChange={([v]) => theme.setPadding(v)}
+                        min={40}
+                        max={100}
+                        step={4}
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
+                        <span className="text-[10px] font-bold text-stitch-primary">
+                          {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
+                        </span>
+                      </div>
+                      <Slider
+                        value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
+                        onValueChange={([v]) => theme.setPaddingY(v)}
+                        min={20}
+                        max={150}
+                        step={2}
+                      />
+                    </div>
                   </div>
-                  <Slider
-                    value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
-                    onValueChange={([v]) => theme.setPaddingY(v)}
-                    min={20}
-                    max={150}
-                    step={2}
-                  />
                 </div>
               </div>
-            </div>
-              )}
+            )}
 
 
 
