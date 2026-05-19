@@ -451,7 +451,18 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-[#f5f0eb] relative overflow-hidden">
+    <div 
+      ref={containerRef} 
+      className="w-full h-full relative overflow-hidden"
+      style={{
+        backgroundColor: "#ffffff",
+        backgroundImage: `
+          linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px)
+        `,
+        backgroundSize: "24px 24px",
+      }}
+    >
       <Stage
         ref={stageRef}
         width={stageSize.width}

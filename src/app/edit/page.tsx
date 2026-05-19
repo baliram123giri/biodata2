@@ -13,10 +13,13 @@ import {
   Sparkles,
   Type as TypeIcon,
   ArrowLeft,
-  Maximize2,
-  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
   RefreshCcw,
   Layers,
+  PanelLeft,
+  PanelRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -75,13 +78,40 @@ export default function EditPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [activeTab, setActiveTab] = useState<"templates" | "theme" | "typography" | "frames" | "photo" | "stickers">("theme");
+  const [isLeftOpen, setIsLeftOpen] = useState(true);
+  const [isRightOpen, setIsRightOpen] = useState(true);
+
+  const handleTabClick = (tab: typeof activeTab) => {
+    setActiveTab(tab);
+    setIsRightOpen(true);
+    if (window.innerWidth < 1024) {
+      setIsLeftOpen(false);
+    }
+  };
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.4));
 
-  // Fix hydration issues
+  const handleFitToScreen = () => {
+    if (typeof window === "undefined") return;
+    const A4_W = 595;
+    const isMobile = window.innerWidth < 1024;
+    const sidebarWidth = isMobile ? 0 : 416; // Left sidebar (96px) + Right properties panel (320px)
+    const padding = isMobile ? 32 : 64;
+    const availableWidth = window.innerWidth - sidebarWidth - padding;
+    const fitZoom = availableWidth / A4_W;
+    setZoom(Math.max(0.4, Math.min(fitZoom, 1.0)));
+  };
+
+  // Fix hydration issues and auto-calculate fit-to-screen zoom
   useEffect(() => {
     setIsMounted(true);
+    handleFitToScreen();
+
+    if (window.innerWidth < 1024) {
+      setIsLeftOpen(false);
+      setIsRightOpen(false);
+    }
   }, []);
 
   if (!isMounted) return null;
@@ -166,8 +196,8 @@ export default function EditPage() {
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col bg-stitch-surface font-sans selection:bg-stitch-primary-container selection:text-stitch-on-primary-container">
       {/* Top Navigation Bar */}
-      <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-6 h-16">
-        <div className="flex items-center gap-4">
+      <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-4 md:px-6 h-16">
+        <div className="flex items-center gap-2 md:gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -176,74 +206,80 @@ export default function EditPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <span className="font-noto-serif text-2xl text-stitch-primary font-bold tracking-tight">Design Studio</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsLeftOpen(!isLeftOpen)}
+            className={cn(
+              "rounded-full text-stitch-primary hover:bg-stitch-primary/10 hidden lg:flex",
+              isLeftOpen && "bg-stitch-primary/10"
+            )}
+            title="Toggle Tools"
+          >
+            <PanelLeft className="w-5 h-5" />
+          </Button>
+          <span className="font-noto-serif text-lg md:text-2xl text-stitch-primary font-bold tracking-tight hidden sm:block">Design Studio</span>
         </div>
 
-        <div className="flex items-center gap-4 border-x border-stitch-outline/10 px-6 h-full">
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={handleUndo}
-              disabled={!canUndo}
-              className={cn(
-                "p-2 rounded-lg transition-all active:scale-90",
-                canUndo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
-              )}
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={handleRedo}
-              disabled={!canRedo}
-              className={cn(
-                "p-2 rounded-lg transition-all active:scale-90",
-                canRedo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
-              )}
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo2 className="w-5 h-5" />
-            </button>
-          </div>
+        {/* Center toolbar: Undo/Redo always visible, other items hidden on mobile */}
+        <div className="flex items-center gap-1 border-x border-stitch-outline/5 px-2 md:px-4 h-full">
+          <button 
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className={cn(
+              "p-2 rounded-lg transition-all active:scale-90",
+              canUndo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
+            )}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+          <button 
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className={cn(
+              "p-2 rounded-lg transition-all active:scale-90",
+              canRedo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
+            )}
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
 
-          <Separator orientation="vertical" className="h-8 mx-2 bg-stitch-outline/10" />
-
-          <div className="flex items-center gap-1">
+          {/* Reset button & divider: hidden on mobile */}
+          <div className="hidden md:flex items-center gap-1 h-full">
+            <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
             <ToolbarItem icon={<RefreshCcw />} label="Reset" onClick={() => {
               if (confirm("Reset layout positions?")) {
                  useBiodataStore.getState().resetStore();
               }
             }} />
-            <ToolbarItem 
-              icon={<Maximize2 />} 
-              label="Zoom In" 
-              onClick={handleZoomIn}
-            />
-            <ToolbarItem 
-              icon={<Minimize2 />} 
-              label="Zoom Out" 
-              onClick={handleZoomOut}
-            />
-            <div className="text-[10px] font-bold text-stitch-on-surface-variant w-10 text-center">
-              {Math.round(zoom * 100)}%
-            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className="hidden xl:flex px-3 py-1.5 rounded-full bg-green-50 border border-green-100 items-center gap-2 mr-2">
              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
              <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
           </div>
-          <button className="p-2 text-stitch-on-surface-variant hover:text-stitch-primary transition-all active:scale-90">
-            <Share2 className="w-5 h-5" />
-          </button>
-          <Button variant="outline" className="text-xs font-semibold h-9 px-4 border-stitch-primary/20 hover:border-stitch-primary hover:bg-transparent">
-            Save
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsRightOpen(!isRightOpen)}
+            className={cn(
+              "rounded-full text-stitch-primary hover:bg-stitch-primary/10",
+              isRightOpen && "bg-stitch-primary/10"
+            )}
+            title="Toggle Settings"
+          >
+            <PanelRight className="w-5 h-5" />
           </Button>
+
           <Button
             onClick={handleDownload}
             disabled={isGenerating}
-            className="bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-6 flex gap-2 shadow-sm disabled:opacity-50"
+            className="bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-4 md:px-6 flex gap-2 shadow-sm disabled:opacity-50"
           >
             {isGenerating ? (
               <>
@@ -251,11 +287,11 @@ export default function EditPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Generating...
+                <span className="hidden sm:inline">Generating...</span>
               </>
             ) : (
               <>
-                Download
+                <span>Download</span>
                 <Download className="w-4 h-4" />
               </>
             )}
@@ -264,54 +300,114 @@ export default function EditPage() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar (Tools) */}
-        <nav className="w-24 bg-stitch-surface/40 backdrop-blur-2xl border-r border-stitch-outline/10 flex flex-col items-center py-6 gap-4 z-40 overflow-y-auto">
+      <div className="flex-1 flex overflow-hidden relative pb-16 lg:pb-0">
+        {/* Mobile Sidebar Overlays */}
+        {isMounted && isRightOpen && (
+          <div 
+            className="lg:hidden fixed top-16 bottom-[50vh] left-0 right-0 z-30 bg-black/20 backdrop-blur-sm"
+            onClick={() => {
+              setIsRightOpen(false);
+            }}
+          />
+        )}
+
+        {/* Left Sidebar (Tools) / Bottom Tab Bar on Mobile */}
+        <nav className={cn(
+          "bg-stitch-surface/95 border-stitch-outline/10 z-40 transition-all duration-300",
+          // Desktop: vertical sidebar
+          "hidden lg:flex lg:flex-col lg:items-center lg:py-6 lg:gap-4 lg:relative lg:border-r lg:h-full lg:top-0 lg:bottom-0 lg:left-auto lg:right-auto lg:translate-x-0 lg:opacity-100",
+          isLeftOpen ? "lg:w-24" : "lg:w-0 lg:opacity-0 lg:pointer-events-none lg:border-r-0",
+          // Mobile: horizontal bottom bar
+          "fixed bottom-0 left-0 right-0 h-16 flex flex-row items-center justify-around border-t px-2 py-1"
+        )}>
           <ToolButton 
             icon={<LayoutDashboard />} 
             label="Templates" 
             active={activeTab === "templates"}
-            onClick={() => setActiveTab("templates")}
+            onClick={() => handleTabClick("templates")}
           />
           <ToolButton 
             icon={<Palette />} 
             label="Theme" 
             active={activeTab === "theme"}
-            onClick={() => setActiveTab("theme")}
+            onClick={() => handleTabClick("theme")}
           />
           <ToolButton 
             icon={<TypeIcon />} 
             label="Typography" 
             active={activeTab === "typography"}
-            onClick={() => setActiveTab("typography")}
+            onClick={() => handleTabClick("typography")}
           />
           <ToolButton 
             icon={<Frame />} 
             label="Frames" 
             active={activeTab === "frames"}
-            onClick={() => setActiveTab("frames")}
+            onClick={() => handleTabClick("frames")}
           />
           <ToolButton 
             icon={<ImageIcon />} 
             label="Photo" 
             active={activeTab === "photo"}
-            onClick={() => setActiveTab("photo")}
+            onClick={() => handleTabClick("photo")}
           />
           <ToolButton 
             icon={<Sparkles />} 
             label="Stickers" 
             active={activeTab === "stickers"}
-            onClick={() => setActiveTab("stickers")}
+            onClick={() => handleTabClick("stickers")}
           />
         </nav>
 
         {/* Canvas Area */}
-        <main className="flex-1 overflow-hidden relative bg-[#f5f0eb]">
+        <main className="flex-1 overflow-hidden relative bg-transparent h-full">
           <KonvaPreview scale={zoom} isDesigner={true} />
+          
+          {/* Floating Zoom Controls */}
+          <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
+            <button 
+              onClick={handleZoomOut} 
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={handleFitToScreen} 
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              title="Fit to Screen"
+            >
+              <Maximize className="w-4 h-4" />
+            </button>
+            <span className="text-[10px] font-black text-stitch-on-surface w-10 text-center select-none">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button 
+              onClick={handleZoomIn} 
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+          </div>
         </main>
 
-        {/* Right Properties Panel */}
-        <aside className="w-80 h-full bg-stitch-surface/60 backdrop-blur-lg border-l border-stitch-outline/10 flex flex-col z-40 shadow-2xl overflow-hidden">
+        {/* Right Properties Panel / Bottom Drawer on Mobile */}
+        <aside className={cn(
+          "bg-stitch-surface/95 lg:bg-stitch-surface/60 backdrop-blur-lg flex flex-col z-35 shadow-2xl overflow-hidden transition-all duration-300",
+          // Desktop: right sidebar
+          "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none",
+          isRightOpen 
+            ? "lg:translate-x-0 lg:w-80" 
+            : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
+          // Mobile: bottom drawer (sitting above the bottom tools bar at bottom-16)
+          "fixed left-0 right-0 bottom-16 h-[50vh] border-t border-stitch-outline/10 rounded-t-3xl",
+          isRightOpen 
+            ? "translate-y-0 opacity-100" 
+            : "translate-y-full opacity-0 pointer-events-none"
+        )}>
+          {/* Mobile Grab Handle */}
+          <div className="w-12 h-1 bg-stitch-on-surface-variant/20 rounded-full mx-auto mt-3 mb-1 lg:hidden shrink-0" />
+          
           <div className="p-6 pb-4">
             <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
               {activeTab}
@@ -499,7 +595,15 @@ export default function EditPage() {
                 </div>
               )}
 
-              {activeTab === "stickers" && <StickerSelector />}
+              {activeTab === "stickers" && (
+                <StickerSelector 
+                  onSelect={() => {
+                    if (window.innerWidth < 1024) {
+                      setIsRightOpen(false);
+                    }
+                  }} 
+                />
+              )}
             </div>
           </div>
         </aside>
@@ -513,14 +617,14 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
     <button 
       onClick={onClick}
       className={cn(
-        "w-16 h-16 flex flex-col items-center justify-center gap-1.5 transition-all rounded-2xl",
+        "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0",
         active
           ? "bg-stitch-primary text-white shadow-lg shadow-stitch-primary/20 -translate-y-0.5"
           : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
       )}
     >
-      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-5 h-5" })}
-      <span className="text-[9px] uppercase tracking-wider font-bold">{label}</span>
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 h-4 lg:w-5 lg:h-5" })}
+      <span className="text-[8px] lg:text-[9px] uppercase tracking-wider font-bold">{label}</span>
     </button>
   );
 }

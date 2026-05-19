@@ -51,7 +51,7 @@ export function BiodataForm() {
   const t = translations[currentLang] || translations["English"];
 
   return (
-    <form className="space-y-6 pb-40 lg:pb-20">
+    <form className="space-y-6 pb-0">
       {/* Language Selector */}
       <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
         <div className="flex items-center gap-2 text-primary font-semibold">
@@ -72,13 +72,8 @@ export function BiodataForm() {
 
       <Accordion type="multiple" defaultValue={["personal", "education", "family", "contact", "customization"]} className="w-full">
         
-        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} />
-        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
-        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
-        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
-
         {/* CUSTOMIZATION */}
-        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
           <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -115,6 +110,11 @@ export function BiodataForm() {
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} />
+        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
+        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
+        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
       </Accordion>
     </form>

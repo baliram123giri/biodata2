@@ -54,6 +54,20 @@ export function HomeBiodataBuilder() {
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [showMobileBar, setShowMobileBar] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 450) {
+        setShowMobileBar(true);
+      } else {
+        setShowMobileBar(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
@@ -147,7 +161,7 @@ export function HomeBiodataBuilder() {
 
   return (
     <FormProvider {...methods}>
-      <section id="builder" className="py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
+      <section id="builder" className="py-8 md:py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
         {/* Section Header */}
         <div className="container mx-auto max-w-[1400px] mb-10">
           <div className="flex flex-col items-center text-center gap-4 mb-8">
@@ -173,6 +187,31 @@ export function HomeBiodataBuilder() {
             >
               <Sparkles className="w-4 h-4 mr-2 text-primary" /> Fill Sample Data
             </Button>
+            
+            {/* Mobile-only templates quick trigger */}
+            <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
+              <SheetTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all lg:hidden"
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2 text-primary" /> Templates
+                  </Button>
+                }
+              />
+              <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="flex items-center gap-2">
+                    <LayoutDashboard className="w-5 h-5 text-primary" />
+                    Pick a Template
+                  </SheetTitle>
+                </SheetHeader>
+                <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
+              </SheetContent>
+            </Sheet>
+
             <Button
               variant="outline"
               size="sm"
@@ -195,13 +234,18 @@ export function HomeBiodataBuilder() {
 
         {/* Builder Content */}
         <div className="container mx-auto max-w-[1400px]">
-          <div className="flex flex-col lg:flex-row gap-10 items-start">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-10 items-start">
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-10 items-start">
+            <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
-              {/* Mobile Preview — shown ABOVE the form on small screens */}
-              <div id="mobile-preview-section" className="lg:hidden w-full flex flex-col gap-4 items-center">
+              {/* Form Side */}
+              <div className="md:col-span-5 flex flex-col w-full">
+                <BiodataForm />
+              </div>
+
+              {/* Mobile Preview — shown AFTER the form on small screens (mobile only) */}
+              <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-28">
                 <EmbeddedPreviewSection storedTemplate={storedTemplate} />
                 <Button
                   onClick={() => router.push("/edit")}
@@ -213,14 +257,9 @@ export function HomeBiodataBuilder() {
                 </Button>
               </div>
 
-              {/* Form Side */}
-              <div className="lg:col-span-5 flex flex-col w-full">
-                <BiodataForm />
-              </div>
-
-              {/* Preview Side - Sticky (desktop only) */}
-              <div className="hidden lg:block lg:col-span-7 lg:sticky lg:top-24">
-                <div className="flex-1 flex flex-col gap-6 items-center">
+              {/* Preview Side - Sticky (tablet and desktop) */}
+              <div className="hidden md:block md:col-span-7 md:sticky md:top-24 w-full">
+                <div className="flex-1 flex flex-col gap-6 items-center w-full">
                   <EmbeddedPreviewSection storedTemplate={storedTemplate} />
 
                   <div className="flex flex-col w-full gap-3">
@@ -301,56 +340,79 @@ export function HomeBiodataBuilder() {
         </div>
 
         {/* Mobile Sticky Bottom Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t p-3 flex flex-col gap-2 z-50">
-          <div className="flex gap-2 w-full">
-            <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-              <SheetTrigger
-                render={
-                  <Button variant="outline" className="rounded-full h-11 font-bold border-primary/20 px-4" />
-                }
+        {showMobileBar && (
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-background/95 backdrop-blur-md border border-primary/10 py-2.5 px-4 rounded-3xl z-50 shadow-[0_10px_30px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-4">
+            
+            {/* Left Icons Grid */}
+            <div className="flex items-center justify-between flex-1 pr-2 border-r border-muted-foreground/10">
+              
+              {/* Templates Option */}
+              <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
+                <SheetTrigger
+                  render={
+                    <button className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11" />
+                  }
+                >
+                  <LayoutDashboard className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+                  <span className="text-[9px] font-bold tracking-tight">Themes</span>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
+                  <SheetHeader className="mb-6">
+                    <SheetTitle className="flex items-center gap-2">
+                      <LayoutDashboard className="w-5 h-5 text-primary" />
+                      Pick a Template
+                    </SheetTitle>
+                  </SheetHeader>
+                  <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
+                </SheetContent>
+              </Sheet>
+
+              {/* Preview Option */}
+              <button
+                onClick={() => {
+                  const el = document.getElementById('mobile-preview-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11"
               >
-                <LayoutDashboard className="w-4 h-4 mr-1.5" />
-                Templates
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
-                <SheetHeader className="mb-6">
-                  <SheetTitle className="flex items-center gap-2">
-                    <LayoutDashboard className="w-5 h-5 text-primary" />
-                    Pick a Template
-                  </SheetTitle>
-                </SheetHeader>
-                <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
-              </SheetContent>
-            </Sheet>
-            <Button
-              onClick={() => {
-                const el = document.getElementById('mobile-preview-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }}
-              variant="outline"
-              className="rounded-full h-11 font-bold border-primary/20 px-4"
+                <Eye className="w-5 h-5" />
+                <span className="text-[9px] font-bold tracking-tight">Preview</span>
+              </button>
+
+              {/* Designer Option */}
+              <button
+                onClick={() => router.push("/edit")}
+                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11"
+              >
+                <Sparkles className="w-5 h-5" />
+                <span className="text-[9px] font-bold tracking-tight">Design</span>
+              </button>
+
+              {/* Reset Option */}
+              <button
+                onClick={() => setShowResetDialog(true)}
+                disabled={isGenerating}
+                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all w-11 disabled:opacity-50"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span className="text-[9px] font-bold tracking-tight">Reset</span>
+              </button>
+
+            </div>
+
+            {/* Right Download Button */}
+            <Button 
+              size="sm" 
+              onClick={handleDownload} 
+              disabled={isGenerating}
+              className="rounded-2xl shadow-lg bg-gradient-to-r from-stitch-primary to-stitch-primary/90 text-white font-bold text-xs h-10 px-4 flex gap-1.5 shrink-0"
             >
-              <Eye className="w-4 h-4 mr-1.5" />
-              Preview
+              <Download className={`w-3.5 h-3.5 ${isGenerating ? 'animate-bounce' : ''}`} />
+              {isGenerating ? '...' : (t.download || "Download")}
             </Button>
-            <Button
-              onClick={() => router.push("/edit")}
-              className="flex-1 rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-lg h-11 font-bold"
-            >
-              <Sparkles className="w-4 h-4 mr-1.5" />
-              Designer
-            </Button>
+
           </div>
-          <div className="flex gap-3 w-full">
-            <Button variant="outline" size="sm" className="flex-1 rounded-full h-9" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> {t.reset || "Reset"}
-            </Button>
-            <Button size="sm" className="flex-1 rounded-full shadow-lg text-white h-9" onClick={handleDownload} disabled={isGenerating}>
-              <Download className={`w-3.5 h-3.5 mr-1.5 ${isGenerating ? 'animate-bounce' : ''}`} />
-              {isGenerating ? (t.generating || 'Generating...') : (t.download || "Download")}
-            </Button>
-          </div>
-        </div>
+        )}
 
         {/* Reset Confirmation Dialog */}
         <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>

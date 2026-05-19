@@ -9,7 +9,7 @@ import { Sparkles, Plus } from "lucide-react";
 
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
 
-export function StickerSelector() {
+export function StickerSelector({ onSelect }: { onSelect?: () => void }) {
   const { addSticker } = useBiodataStore();
   const theme = useThemeStore();
 
@@ -21,6 +21,9 @@ export function StickerSelector() {
       scaleX: 0.8,
       scaleY: 0.8,
     });
+    if (onSelect) {
+      onSelect();
+    }
   };
 
   return (
