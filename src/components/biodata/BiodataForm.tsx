@@ -148,7 +148,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
         </div>
       </AccordionTrigger>
       <AccordionContent className="space-y-4 pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;

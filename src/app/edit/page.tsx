@@ -163,7 +163,7 @@ export default function EditPage() {
     if (typeof window === "undefined") return;
     const A4_W = 595;
     const isMobile = window.innerWidth < 1024;
-    const sidebarWidth = isMobile ? 0 : 416; // Left sidebar (96px) + Right properties panel (320px)
+    const sidebarWidth = isMobile ? 0 : 480; // Left sidebar (96px) + Right properties panel (384px)
     const padding = isMobile ? 32 : 64;
     const availableWidth = window.innerWidth - sidebarWidth - padding;
     const fitZoom = availableWidth / A4_W;
@@ -358,15 +358,8 @@ export default function EditPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative pb-24 lg:pb-0">
 
-        {/* Left Sidebar (Tools) / Bottom Tab Bar on Mobile */}
-        <nav className={cn(
-          "z-45 transition-all duration-300",
-          // Desktop: vertical sidebar
-          "hidden lg:flex lg:flex-col lg:items-center lg:py-6 lg:gap-4 lg:relative lg:border-r lg:h-full lg:top-0 lg:bottom-0 lg:left-auto lg:right-auto lg:translate-x-0 lg:opacity-100 lg:w-24 lg:bg-stitch-surface/95 lg:border-stitch-outline/10",
-          isLeftOpen ? "lg:w-24" : "lg:w-0 lg:opacity-0 lg:pointer-events-none lg:border-r-0",
-          // Mobile: horizontal floating glassy bottom bar
-          "fixed bottom-4 left-4 right-4 h-16 flex flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50"
-        )}>
+        {/* Mobile Bottom Tab Bar */}
+        <nav className="fixed bottom-4 left-4 right-4 h-16 flex lg:hidden flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50">
           <ToolButton 
             icon={<LayoutDashboard />} 
             label="Templates" 
@@ -391,7 +384,6 @@ export default function EditPage() {
             active={isRightOpen && activeTab === "spacing"}
             onClick={() => handleTabClick("spacing")}
           />
-
           <ToolButton 
             icon={<ImageIcon />} 
             label="Photo" 
@@ -409,7 +401,49 @@ export default function EditPage() {
         {/* Canvas Area */}
         <main className="flex-1 overflow-hidden relative bg-transparent h-full">
           <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
-          
+
+          {/* Floating Left Toolbar — Desktop only, overlaid on the canvas */}
+          {isLeftOpen && (
+            <nav className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center py-4 px-2 gap-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-black/5">
+              <ToolButton 
+                icon={<LayoutDashboard />} 
+                label="Templates" 
+                active={isRightOpen && activeTab === "templates"}
+                onClick={() => handleTabClick("templates")}
+              />
+              <ToolButton 
+                icon={<TypeIcon />} 
+                label="Fields" 
+                active={isRightOpen && activeTab === "fields"}
+                onClick={() => handleTabClick("fields")}
+              />
+              <ToolButton 
+                icon={<Palette />} 
+                label="Theme" 
+                active={isRightOpen && activeTab === "theme"}
+                onClick={() => handleTabClick("theme")}
+              />
+              <ToolButton 
+                icon={<Sliders className="w-5 h-5" />} 
+                label="Spacing" 
+                active={isRightOpen && activeTab === "spacing"}
+                onClick={() => handleTabClick("spacing")}
+              />
+              <ToolButton 
+                icon={<ImageIcon />} 
+                label="Photo" 
+                active={isRightOpen && activeTab === "photo"}
+                onClick={() => handleTabClick("photo")}
+              />
+              <ToolButton 
+                icon={<Sparkles />} 
+                label="Stickers" 
+                active={isRightOpen && activeTab === "stickers"}
+                onClick={() => handleTabClick("stickers")}
+              />
+            </nav>
+          )}
+
           {/* Floating Zoom Controls */}
           <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
             <button 
@@ -450,9 +484,9 @@ export default function EditPage() {
             "flex flex-col z-40 shadow-2xl overflow-hidden",
             isDraggingDrawer ? "" : "transition-all duration-300",
             // Desktop: right sidebar
-            "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
+            "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-96 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
             isRightOpen 
-              ? "lg:translate-x-0 lg:w-80" 
+              ? "lg:translate-x-0 lg:w-96" 
               : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
             // Mobile: bottom drawer (sitting flush at bottom-0)
             "fixed left-0 right-0 bottom-0 h-[50vh] border-t border-stitch-outline/10 rounded-t-[32px] bg-white",
