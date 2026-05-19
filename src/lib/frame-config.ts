@@ -10,6 +10,7 @@ import { ivoryElegance } from "./templates/classic/ivory-elegance";
 import { modernGradient } from "./templates/classic/modern-gradient";
 import { newGeneration } from "./templates/classic/new-generation/config";
 import { ornateGrandeur } from "./templates/classic/ornate-grandeur/config";
+import { greenShapes } from "./templates/classic/green-shapes/config";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ export interface TemplateConfig {
   defaultSecondary: string;
   defaultAccent: string;
   defaultPadding: number;
+  defaultYPadding?: number;
   photo: {
     x: number;
     y: number;
@@ -77,6 +79,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   "modern-gradient": modernGradient,
   "new-generation": newGeneration,
   "ornate-grandeur": ornateGrandeur,
+  "green-shapes": greenShapes,
 };
 
 // ── Utilities ──────────────────────────────────────────────────────

@@ -36,8 +36,8 @@ export const NewGenerationKonva = React.memo(({ primaryColor }: { primaryColor: 
       {ganeshaImg && (
         <KonvaImage
           image={ganeshaImg}
-          x={595 - 350}
-          y={350}
+          x={595 - 380}
+          y={250}
           width={300}
           height={300}
           opacity={0.07}

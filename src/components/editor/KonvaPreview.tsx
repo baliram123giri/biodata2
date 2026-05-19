@@ -23,6 +23,8 @@ import Konva from "konva";
 
 import { NewGenerationKonva } from "@/lib/templates/classic/new-generation/KonvaRenderer";
 import { KonvaRenderer as OrnateGrandeurKonva } from "@/lib/templates/classic/ornate-grandeur/KonvaRenderer";
+import { GreenShapesKonva } from "@/lib/templates/classic/green-shapes/KonvaRenderer";
+import { getLightBgColor } from "@/lib/color-utils";
 
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
@@ -61,15 +63,18 @@ function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; 
   if (componentId === "ornate-grandeur-frame") {
     return <OrnateGrandeurKonva primaryColor={primaryColor} />;
   }
+  if (componentId === "green-shapes") {
+    return <GreenShapesKonva primaryColor={primaryColor} />;
+  }
   return null;
 }
 
-function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
+function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; bgColor: string; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
   return (
     <Group>
-      <Rect width={A4_W} height={A4_H} fill={config.bgColor || "#ffffff"} />
+      <Rect width={A4_W} height={A4_H} fill={bgColor} />
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
       {hasPhoto && photoConfig && (
         <Rect x={photoConfig.x - 2} y={photoConfig.y - 2} width={photoConfig.width + 4} height={photoConfig.height + 4} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
@@ -174,10 +179,10 @@ function StickerItem({
   );
 }
 
-function SvgFrame({ config, primaryColor }: { config: FrameSvgConfig; primaryColor: string; }) {
+function SvgFrame({ config, primaryColor, bgColor }: { config: FrameSvgConfig; primaryColor: string; bgColor: string; }) {
   return (
     <Group>
-      <Rect width={A4_W} height={A4_H} fill={config.bgColor || "#ffffff"} />
+      <Rect width={A4_W} height={A4_H} fill={bgColor} />
       <Rect x={config.outerInset} y={config.outerInset} width={A4_W - config.outerInset * 2} height={A4_H - config.outerInset * 2} stroke={primaryColor} strokeWidth={config.outerStrokeWidth} cornerRadius={config.outerCornerRadius} />
       <Rect x={config.innerInset} y={config.innerInset} width={A4_W - config.innerInset * 2} height={A4_H - config.innerInset * 2} stroke={primaryColor} strokeWidth={config.innerStrokeWidth} cornerRadius={config.innerCornerRadius} opacity={0.6} />
     </Group>
@@ -312,8 +317,12 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const primaryColor = theme.selectedPaletteName === null ? templateConfig.defaultPrimary : theme.primaryColor;
   const secondaryColor = theme.selectedPaletteName === null ? templateConfig.defaultSecondary : theme.secondaryColor;
   const accentColor = theme.selectedPaletteName === null ? templateConfig.defaultAccent : theme.accentColor;
+  const bgColor = theme.selectedPaletteName === null 
+    ? (templateConfig.frame as any).bgColor || "#ffffff" 
+    : getLightBgColor(primaryColor);
   const baseFontSize = theme.fontSize || 11;
   const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
+  const paddingY = theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : padding);
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
 
   useEffect(() => {
@@ -346,7 +355,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
   const layout = useMemo(() => {
     const calculateForSize = (fSize: number) => {
-      let cursorY = padding + 20; // Extra room for Mantra
+      let cursorY = paddingY + 20; // Extra room for Mantra
       
       // 1. Calculate Mantra & Title Height
       if (formData.mantra) cursorY += fSize * 2;
@@ -390,7 +399,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
       return { sectionLayouts, totalHeight: cursorY };
     };
-    const MAX_H = A4_H - padding;
+    const MAX_H = A4_H - paddingY;
     let bestSize = baseFontSize;
     let finalLayout = calculateForSize(bestSize);
     if (finalLayout.totalHeight > MAX_H) {
@@ -401,7 +410,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
     }
     return { ...finalLayout, fSize: bestSize };
-  }, [sections, padding, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig]);
+  }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -475,16 +484,16 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       >
         <Layer listening={false}>
           {templateConfig.frame.type === "image" ? (
-            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
+            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} bgColor={bgColor} />
           ) : templateConfig.frame.type === "gradient" ? (
             <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} bgColors={theme.bgColors} />
           ) : templateConfig.frame.type === "custom" ? (
             <>
-              <Rect width={A4_W} height={A4_H} fill={templateConfig.frame.bgColor} />
+              <Rect width={A4_W} height={A4_H} fill={bgColor} />
               <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
             </>
           ) : (
-            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
+            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} bgColor={bgColor} />
           )}
           <Text x={A4_W / 2} y={A4_H - 30} text="www.biodatamaker.online" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" offsetX={50} />
         </Layer>
@@ -494,7 +503,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 {formData.mantra && (
                   <Text
                     x={A4_W / 2}
-                    y={padding + 10}
+                    y={paddingY + 10}
                     text={formData.mantra}
                     fontSize={layout.fSize * 1.2}
                     fontFamily={fontFamily}
@@ -510,7 +519,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 {formData.title && (
                   <Text
                     x={A4_W / 2}
-                    y={padding + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
+                    y={paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
                     text={formData.title}
                     fontSize={layout.fSize * 2}
                     fontFamily={fontFamily}

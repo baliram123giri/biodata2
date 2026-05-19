@@ -7,16 +7,16 @@ export const ornateGrandeur: TemplateConfig = {
   defaultSecondary: "#2F4F4F",
   defaultAccent: "#FFD700",
   defaultPadding: 60,
-  photo: { 
-    x: 415, 
-    y: 160, 
-    width: 120, 
-    height: 140, 
-    cornerRadius: 0 
+  photo: {
+    x: 415,
+    y: 160,
+    width: 120,
+    height: 140,
+    cornerRadius: 10
   },
   frame: {
     type: "custom",
     componentId: "ornate-grandeur-frame",
-    bgColor: "#FDF5E6", // Old Lace
+    bgColor: "#fff", // Old Lace
   },
 };

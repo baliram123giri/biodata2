@@ -51,7 +51,7 @@ export function BiodataForm() {
   const t = translations[currentLang] || translations["English"];
 
   return (
-    <form className="space-y-6 pb-20">
+    <form className="space-y-6 pb-40 lg:pb-20">
       {/* Language Selector */}
       <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
         <div className="flex items-center gap-2 text-primary font-semibold">

@@ -11,6 +11,7 @@ import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
 import { getTemplateConfig, getFrameImageUrl } from './frame-config';
 import { STICKER_ASSETS } from './sticker-assets';
+import { getLightBgColor } from './color-utils';
 
 const A4_W = 595;
 const A4_H = 842;
@@ -56,6 +57,7 @@ registerFonts();
 
 import { NewGenerationPDF } from './templates/classic/new-generation/PDFRenderer';
 import { PDFRenderer as OrnateGrandeurPDF } from './templates/classic/ornate-grandeur/PDFRenderer';
+import { GreenShapesPDF } from './templates/classic/green-shapes/PDFRenderer';
 
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
@@ -65,6 +67,9 @@ function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; pr
   if (componentId === "ornate-grandeur-frame") {
     return React.createElement(OrnateGrandeurPDF, { primaryColor });
   }
+  if (componentId === "green-shapes") {
+    return React.createElement(GreenShapesPDF, { primaryColor });
+  }
   return null;
 }
 
@@ -72,7 +77,11 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const config = getTemplateConfig(templateId);
   const primary = theme.selectedPaletteName === null ? config.defaultPrimary : theme.primaryColor;
   const secondary = theme.selectedPaletteName === null ? config.defaultSecondary : theme.secondaryColor;
+  const bgColor = theme.selectedPaletteName === null 
+    ? (config.frame as any).bgColor || "#ffffff" 
+    : getLightBgColor(primary);
   const padding = theme.padding ?? config.defaultPadding;
+  const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
   const initialFontSize = theme.fontSize || 11;
 
   const currentLang = data.language || "English";
@@ -81,18 +90,21 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
 
   // ── Layout Algorithm (with Dynamic Scaling) ────────────────────
   const calculateLayout = (fSize: number) => {
-    let cursorY = padding;
+    let cursorY = paddingY + 20;
     const headerItems: any[] = [];
     if (data.mantra) {
-      headerItems.push({ type: 'mantra', text: data.mantra, y: cursorY, fontSize: 14, font: 'Noto Sans Devanagari' });
-      cursorY += 22;
+      headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10, fontSize: fSize * 1.2, font: 'Noto Sans Devanagari' });
+      cursorY += fSize * 2;
     }
     if (data.title) {
-      headerItems.push({ type: 'title', text: data.title.toUpperCase(), y: cursorY, fontSize: Math.round(fSize * 2.2), font: fontFamily });
-      cursorY += Math.round(fSize * 2.2) + 14;
+      headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: fontFamily });
+      cursorY += fSize * 2.5;
     }
-    cursorY += 20;
 
+    const LABEL_WIDTH = 130;
+    const COLON_WIDTH = 20;
+    const LINE_SPACING = fSize * 0.5;
+    const contentWidth = A4_W - padding * 2 - 10;
     const sectionLayouts: any[] = [];
     const sectionKeys = [
       { key: 'personal', fields: data.personalDetails, label: t.personal || "Personal Details" },
@@ -102,28 +114,33 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     ];
 
     for (const sec of sectionKeys) {
-      const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip) || [];
+      const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(fSize * 1.4) + 14;
+      cursorY += Math.round(fSize * 1.4) + LINE_SPACING;
       const fieldRows: any[] = [];
 
       for (const f of fields) {
         const fieldY = cursorY;
         
-        let rowWidth = A4_W - padding * 2;
+        let rowWidth = contentWidth;
         if (data.photo && config.photo && fieldY >= config.photo.y - 15 && fieldY <= config.photo.y + config.photo.height + 15) {
-           rowWidth = config.photo.x - padding - 20; // Prevent overlap with photo
+           rowWidth = config.photo.x - padding - 20;
         }
-        const valueW = rowWidth - 145;
+        const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
         
+        const valText = String(f.displayValue);
+        const valW = valText.length * fSize * 0.6;
+        const lines = Math.ceil(valW / valueW) || 1;
+        const rowHeight = Math.max(fSize, lines * fSize * 1.1);
+
         fieldRows.push({ ...f, y: fieldY, rowWidth, valueW });
-        const estimatedLines = Math.ceil((f.displayValue.length * fSize * 0.5) / valueW);
-        cursorY += Math.max(fSize * 1.5 * estimatedLines, fSize * 1.5) + 4;
+        
+        cursorY += rowHeight + LINE_SPACING;
       }
       sectionLayouts.push({ title: sec.label, titleY, fields: fieldRows });
-      cursorY += 10;
+      cursorY += fSize * 1.5;
     }
     return { headerItems, sectionLayouts, totalHeight: cursorY };
   };
@@ -131,7 +148,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   // Find optimal font size to fit on one page
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
-  const MAX_Y = A4_H - padding - 20;
+  const MAX_Y = A4_H - paddingY - 20;
 
   // Reduce font size if content exceeds page height
   while (layout.totalHeight > MAX_Y && currentFontSize > 7) {
@@ -140,7 +157,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   }
 
   const styles = StyleSheet.create({
-    page: { backgroundColor: config.frame.bgColor, padding: 0, margin: 0 },
+    page: { backgroundColor: bgColor, padding: 0, margin: 0 },
     container: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
     frame: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
     photo: { 
@@ -156,14 +173,16 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     sectionTitleBar: { 
       position: 'absolute', 
       left: padding, 
-      width: 4, 
-      height: Math.round(currentFontSize * 1.4) + 4, 
-      backgroundColor: primary,
-      borderRadius: 2
+      top: 15,
+      width: 5, 
+      height: 3, 
+      backgroundColor: theme.accentColor || primary,
+      borderRadius: 1.5
     },
     sectionTitleText: {
       position: 'absolute',
       left: padding + 10,
+      top: 2,
       fontSize: Math.round(currentFontSize * 1.4),
       fontFamily: fontFamily,
       fontWeight: 'bold',
@@ -186,7 +205,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       flex: 1,
       fontSize: currentFontSize,
       fontFamily: fontFamily,
-      color: '#000000'
+      color: '#333333',
+      lineHeight: 1.1
     },
     logo: { width: 14, height: 14, marginRight: 4 }
   });
@@ -229,12 +249,12 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             })
           )
         : config.frame.type === 'custom' ?
-          React.createElement(View, { style: [styles.frame, { backgroundColor: config.frame.bgColor }] as any },
+          React.createElement(View, { style: [styles.frame, { backgroundColor: bgColor }] as any },
             React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
           )
         : 
           React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-            React.createElement(Rect, { width: A4_W, height: A4_H, fill: config.frame.bgColor }),
+            React.createElement(Rect, { width: A4_W, height: A4_H, fill: bgColor }),
             React.createElement(Rect, { 
               x: config.frame.outerInset, 
               y: config.frame.outerInset, 
@@ -291,21 +311,20 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             fontSize: item.fontSize,
             fontFamily: item.font,
             fontWeight: 'bold',
-            color: primary,
-            letterSpacing: item.type === 'title' ? 2 : 0
+            color: primary
           } as any
         }, item.text)),
         data.photo && React.createElement(Image, { src: data.photo, style: styles.photo as any }),
         layout.sectionLayouts.map((sec, si) => React.createElement(View, { key: si, style: { position: 'absolute', top: sec.titleY, left: 0, width: A4_W } as any },
-          React.createElement(View, { style: [styles.sectionTitleBar, { top: 0 }] as any }),
-          React.createElement(Text, { style: [styles.sectionTitleText, { top: 2 }] as any }, sec.title),
+          React.createElement(View, { style: styles.sectionTitleBar as any }),
+          React.createElement(Text, { style: styles.sectionTitleText as any }, sec.title),
           sec.fields.map((f: any, fi: any) => React.createElement(View, {
             key: fi,
-            style: { position: 'absolute', top: (f.y - sec.titleY), left: padding, flexDirection: 'row', width: f.rowWidth } as any
+            style: { position: 'absolute', top: (f.y - sec.titleY), left: padding + 10, flexDirection: 'row', width: f.rowWidth - 10 } as any
           },
             React.createElement(Text, { style: styles.label as any }, f.displayLabel),
             React.createElement(Text, { style: styles.colon as any }, ":"),
-            React.createElement(View, { style: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' } as any },
+            React.createElement(View, { style: { width: f.valueW, flexDirection: 'row', flexWrap: 'wrap' } as any },
               f.logoUrl && React.createElement(Image, { src: f.logoUrl, style: styles.logo as any }),
               React.createElement(Text, { style: styles.value as any }, f.logoUrl ? `(${f.displayValue})` : f.displayValue)
             )
@@ -315,7 +334,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
           if (!asset) return null;
           
-          const stickerSize = 100 * sticker.scale;
+          const sX = sticker.scaleX ?? 1;
+          const sY = sticker.scaleY ?? 1;
           
           return React.createElement(View, {
             key: `sticker-${i}`,
@@ -323,15 +343,16 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               position: 'absolute',
               left: sticker.x,
               top: sticker.y,
-              width: stickerSize,
-              height: stickerSize,
+              width: 100 * sX,
+              height: 100 * sY,
+              transformOrigin: 'top left',
               transform: sticker.rotation ? `rotate(${sticker.rotation}deg)` : undefined,
             } as any
           },
             asset.type === 'image' ? 
               React.createElement(Image, { 
                 src: asset.url, 
-                style: { width: '100%', height: '100%' } 
+                style: { width: '100%', height: '100%', objectFit: 'fill' } as any
               })
             : 
               React.createElement(Svg, { viewBox: asset.viewBox, width: '100%', height: '100%' },

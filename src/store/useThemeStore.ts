@@ -36,6 +36,7 @@ export interface ThemeState {
   accentColor: string;
   bgColors: string[];
   padding: number;
+  paddingY?: number;
   borderRadius: number;
   selectedElement: string | null;
   selectedPaletteName: string | null;
@@ -47,6 +48,7 @@ export interface ThemeState {
   setPrimaryColor: (color: string) => void;
   setPalette: (palette: Palette) => void;
   setPadding: (padding: number) => void;
+  setPaddingY: (paddingY: number | undefined) => void;
   setBorderRadius: (radius: number) => void;
   setSelectedElement: (elementId: string | null) => void;
 }
@@ -64,6 +66,7 @@ export const useThemeStore = create<ThemeState>()(
         accentColor: "#D4AF37",
         bgColors: ["#2A7B9B", "#57C785", "#EDDD53"],
         padding: 45,
+        paddingY: undefined,
         borderRadius: 12,
         selectedElement: "Section Group",
         selectedPaletteName: "Royal Maroon",
@@ -81,6 +84,7 @@ export const useThemeStore = create<ThemeState>()(
           selectedPaletteName: palette.name === "None" ? null : palette.name
         }),
         setPadding: (padding) => set({ padding: padding }),
+        setPaddingY: (paddingY) => set({ paddingY: paddingY }),
         setBorderRadius: (radius) => set({ borderRadius: radius }),
         setSelectedElement: (elementId) => set({ selectedElement: elementId }),
       })

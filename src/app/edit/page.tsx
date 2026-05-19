@@ -104,6 +104,7 @@ export default function EditPage() {
             accentColor: theme.accentColor,
             fontSize: theme.fontSize,
             padding: theme.padding,
+            paddingY: theme.paddingY,
             selectedPaletteName: theme.selectedPaletteName,
             bgColors: theme.bgColors,
           },
@@ -439,19 +440,35 @@ export default function EditPage() {
               <div className="flex flex-col gap-6">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Padding</Label>
+                    <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
                     <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
                   </div>
-                      <Slider
-                        value={[theme.padding]}
-                        onValueChange={([v]) => theme.setPadding(v)}
-                        min={40}
-                        max={100}
-                        step={4}
-                      />
-                    </div>
-                  </div>
+                  <Slider
+                    value={[theme.padding]}
+                    onValueChange={([v]) => theme.setPadding(v)}
+                    min={40}
+                    max={100}
+                    step={4}
+                  />
                 </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
+                    <span className="text-[10px] font-bold text-stitch-primary">
+                      {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
+                    </span>
+                  </div>
+                  <Slider
+                    value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
+                    onValueChange={([v]) => theme.setPaddingY(v)}
+                    min={20}
+                    max={150}
+                    step={2}
+                  />
+                </div>
+              </div>
+            </div>
               )}
 
               {activeTab === "typography" && (

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock } from "lucide-react";
+import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown } from "lucide-react";
+import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 
 export default function Home() {
   return (
@@ -21,7 +22,10 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
               <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all" asChild>
-                <Link href="/create">Start Creating — It&apos;s Free</Link>
+                <a href="#builder">
+                  Start Creating — It&apos;s Free
+                  <ArrowDown className="w-5 h-5 ml-2 animate-bounce" />
+                </a>
               </Button>
               <Button size="lg" variant="outline" className="rounded-full text-lg px-8 py-6" asChild>
                 <Link href="/templates">View Templates</Link>
@@ -43,6 +47,11 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          BIODATA BUILDER — Full create experience embedded on homepage
+          ═══════════════════════════════════════════════════════════════════ */}
+      <HomeBiodataBuilder />
 
       {/* Features Section */}
       <section className="py-20 px-4">
@@ -104,7 +113,7 @@ export default function Home() {
 
           <div className="mt-16 text-center">
              <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg" asChild>
-                <Link href="/create">Start Creating Free</Link>
+                <a href="#builder">Start Creating Free</a>
              </Button>
           </div>
         </div>

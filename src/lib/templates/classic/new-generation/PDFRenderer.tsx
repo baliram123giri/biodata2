@@ -1,5 +1,5 @@
 import React from "react";
-import { Svg, Image } from "@react-pdf/renderer";
+import { View, Image } from "@react-pdf/renderer";
 import { SVG_PATHS } from "./paths";
 
 const A4_W = 595;
@@ -15,20 +15,20 @@ export function NewGenerationPDF({ primaryColor }: { primaryColor: string }) {
     </svg>
   `.trim();
 
-  const base64Svg = typeof window !== 'undefined' 
+  const base64Svg = typeof window !== 'undefined'
     ? btoa(unescape(encodeURIComponent(borderSvgString)))
     : Buffer.from(borderSvgString).toString('base64');
-  
+
   const borderDataUrl = `data:image/svg+xml;base64,${base64Svg}`;
 
   return (
-    <Svg style={{ position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H } as any} viewBox={`0 0 ${A4_W} ${A4_H}`}>
+    <View style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' } as any}>
       {/* Background Watermark */}
-      <Image 
+      <Image
         src="https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png"
-        style={{ position: 'absolute', left: A4_W - 350, top: 350, width: 300, height: 300, opacity: 0.07 } as any}
+        style={{ position: 'absolute', left: A4_W - 380, top: 250, width: 300, height: 300, opacity: 0.07 } as any}
       />
-      
+
       {/* Editable SVG Border as Image */}
       <Image
         src={borderDataUrl}
@@ -41,6 +41,6 @@ export function NewGenerationPDF({ primaryColor }: { primaryColor: string }) {
           objectFit: 'fill',
         } as any}
       />
-    </Svg>
+    </View>
   );
 }
