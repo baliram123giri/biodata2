@@ -126,29 +126,19 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
           </div>
         </div>
       ) : (
-        <div className="relative w-32 h-40 group">
+        <div className="relative w-28 h-36">
           <img
             src={value}
             alt="Profile"
-            className="w-full h-full object-cover rounded-lg border shadow-sm"
+            className="w-full h-full object-cover rounded-lg border shadow-sm bg-gray-50"
           />
           <button
             onClick={() => onChange("")}
-            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -top-2 -right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-all active:scale-95 z-10"
+            title="Remove photo"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-             <div className="flex gap-2">
-                <Button size="sm" variant="secondary" className="h-8 pointer-events-auto" onClick={() => {
-                   setImgSrc(value);
-                   setIsOpen(true);
-                }}>
-                   <CropIcon className="w-3.5 h-3.5 mr-1" />
-                   Recrop
-                </Button>
-             </div>
-          </div>
         </div>
       )}
 

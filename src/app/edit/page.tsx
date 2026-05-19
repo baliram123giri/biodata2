@@ -77,13 +77,17 @@ export default function EditPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [activeTab, setActiveTab] = useState<"templates" | "theme" | "typography" | "frames" | "photo" | "stickers">("theme");
+  const [activeTab, setActiveTab] = useState<"templates" | "theme" | "photo" | "stickers">("theme");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
 
   const handleTabClick = (tab: typeof activeTab) => {
-    setActiveTab(tab);
-    setIsRightOpen(true);
+    if (activeTab === tab && isRightOpen) {
+      setIsRightOpen(false);
+    } else {
+      setActiveTab(tab);
+      setIsRightOpen(true);
+    }
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
     }
@@ -300,11 +304,11 @@ export default function EditPage() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative pb-16 lg:pb-0">
+      <div className="flex-1 flex overflow-hidden relative pb-24 lg:pb-0">
         {/* Mobile Sidebar Overlays */}
         {isMounted && isRightOpen && (
           <div 
-            className="lg:hidden fixed top-16 bottom-[50vh] left-0 right-0 z-30 bg-black/20 backdrop-blur-sm"
+            className="lg:hidden fixed top-16 bottom-[50vh] left-0 right-0 z-30 bg-black/10 backdrop-blur-sm"
             onClick={() => {
               setIsRightOpen(false);
             }}
@@ -313,12 +317,12 @@ export default function EditPage() {
 
         {/* Left Sidebar (Tools) / Bottom Tab Bar on Mobile */}
         <nav className={cn(
-          "bg-stitch-surface/95 border-stitch-outline/10 z-40 transition-all duration-300",
+          "z-45 transition-all duration-300",
           // Desktop: vertical sidebar
-          "hidden lg:flex lg:flex-col lg:items-center lg:py-6 lg:gap-4 lg:relative lg:border-r lg:h-full lg:top-0 lg:bottom-0 lg:left-auto lg:right-auto lg:translate-x-0 lg:opacity-100",
+          "hidden lg:flex lg:flex-col lg:items-center lg:py-6 lg:gap-4 lg:relative lg:border-r lg:h-full lg:top-0 lg:bottom-0 lg:left-auto lg:right-auto lg:translate-x-0 lg:opacity-100 lg:w-24 lg:bg-stitch-surface/95 lg:border-stitch-outline/10",
           isLeftOpen ? "lg:w-24" : "lg:w-0 lg:opacity-0 lg:pointer-events-none lg:border-r-0",
-          // Mobile: horizontal bottom bar
-          "fixed bottom-0 left-0 right-0 h-16 flex flex-row items-center justify-around border-t px-2 py-1"
+          // Mobile: horizontal floating glassy bottom bar
+          "fixed bottom-4 left-4 right-4 h-16 flex flex-row items-center justify-around px-2 py-1 bg-white/70 backdrop-blur-xl border border-black/5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] z-50"
         )}>
           <ToolButton 
             icon={<LayoutDashboard />} 
@@ -332,18 +336,7 @@ export default function EditPage() {
             active={activeTab === "theme"}
             onClick={() => handleTabClick("theme")}
           />
-          <ToolButton 
-            icon={<TypeIcon />} 
-            label="Typography" 
-            active={activeTab === "typography"}
-            onClick={() => handleTabClick("typography")}
-          />
-          <ToolButton 
-            icon={<Frame />} 
-            label="Frames" 
-            active={activeTab === "frames"}
-            onClick={() => handleTabClick("frames")}
-          />
+
           <ToolButton 
             icon={<ImageIcon />} 
             label="Photo" 
@@ -393,20 +386,20 @@ export default function EditPage() {
 
         {/* Right Properties Panel / Bottom Drawer on Mobile */}
         <aside className={cn(
-          "bg-stitch-surface/95 lg:bg-stitch-surface/60 backdrop-blur-lg flex flex-col z-35 shadow-2xl overflow-hidden transition-all duration-300",
+          "flex flex-col z-40 shadow-2xl overflow-hidden transition-all duration-300",
           // Desktop: right sidebar
-          "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none",
+          "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
           isRightOpen 
             ? "lg:translate-x-0 lg:w-80" 
             : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
-          // Mobile: bottom drawer (sitting above the bottom tools bar at bottom-16)
-          "fixed left-0 right-0 bottom-16 h-[50vh] border-t border-stitch-outline/10 rounded-t-3xl",
+          // Mobile: bottom drawer (sitting flush at bottom-0)
+          "fixed left-0 right-0 bottom-0 h-[50vh] border-t border-stitch-outline/10 rounded-t-[32px] bg-white",
           isRightOpen 
             ? "translate-y-0 opacity-100" 
             : "translate-y-full opacity-0 pointer-events-none"
         )}>
           {/* Mobile Grab Handle */}
-          <div className="w-12 h-1 bg-stitch-on-surface-variant/20 rounded-full mx-auto mt-3 mb-1 lg:hidden shrink-0" />
+          <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-3 mb-1 lg:hidden shrink-0" />
           
           <div className="p-6 pb-4">
             <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
@@ -418,7 +411,7 @@ export default function EditPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
-            <div className="flex flex-col gap-8 pb-10">
+            <div className="flex flex-col gap-8 pb-28 lg:pb-10">
               {activeTab === "templates" && <TemplateSelector />}
               
               {activeTab === "theme" && (
@@ -432,7 +425,12 @@ export default function EditPage() {
                       const isNone = theme.selectedPaletteName === null;
                       return (
                         <button
-                          onClick={() => theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" })}
+                          onClick={() => {
+                            theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                            if (window.innerWidth < 1024) {
+                              setIsRightOpen(false);
+                            }
+                          }}
                           className={cn(
                             "group relative flex items-center gap-3 p-2 rounded-xl border transition-all hover:shadow-md",
                             isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
@@ -473,6 +471,9 @@ export default function EditPage() {
                                 theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
                               } else {
                                 theme.setPalette(p);
+                              }
+                              if (window.innerWidth < 1024) {
+                                setIsRightOpen(false);
                               }
                             }}
                             className={cn(
@@ -567,17 +568,7 @@ export default function EditPage() {
             </div>
               )}
 
-              {activeTab === "typography" && (
-                <div className="flex flex-col gap-6">
-                  <p className="text-xs text-stitch-on-surface-variant italic">Typography settings coming soon...</p>
-                </div>
-              )}
 
-              {activeTab === "frames" && (
-                <div className="flex flex-col gap-6">
-                  <TemplateSelector />
-                </div>
-              )}
 
               {activeTab === "photo" && (
                 <div className="flex flex-col gap-6">
@@ -585,7 +576,12 @@ export default function EditPage() {
                     <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
                     <ImageUpload 
                       value={formData.photo} 
-                      onChange={(url) => setFormData({ ...formData, photo: url })} 
+                      onChange={(url) => {
+                        setFormData({ ...formData, photo: url });
+                        if (url && window.innerWidth < 1024) {
+                          setIsRightOpen(false);
+                        }
+                      }} 
                       aspect={3 / 4} 
                     />
                     <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed italic">
