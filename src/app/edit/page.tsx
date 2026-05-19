@@ -28,175 +28,33 @@ import { Card } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 import { ImageUpload } from "@/components/ImageUpload";
 const KonvaPreview = dynamic(() => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview), { ssr: false });
-import { CompanyAutocomplete } from "../../components/biodata/CompanyAutocomplete";
 
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { StickerSelector } from "@/components/editor/StickerSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
 import { useStore } from "zustand";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
+import { defaultBiodataValues } from "@/lib/default-biodata";
+import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { cn } from "@/lib/utils";
 
-// ════════════════════════════════════════════════════════════════════
-// Snappy, 60 FPS Debounced Input Components to Eliminate Typing Lag
-// ════════════════════════════════════════════════════════════════════
-interface DebouncedInputProps {
-  value: string;
-  onChange: (val: string) => void;
-  className?: string;
-  placeholder?: string;
-}
 
-function DebouncedInput({ value, onChange, className, placeholder }: DebouncedInputProps) {
-  const [localVal, setLocalVal] = useState(value);
-  const timerRef = useRef<any>(null);
-
-  useEffect(() => {
-    setLocalVal(value);
-  }, [value]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setLocalVal(val);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      onChange(val);
-    }, 150);
-  };
-
-  const handleBlur = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    onChange(localVal);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  return (
-    <Input
-      value={localVal}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      className={className}
-      placeholder={placeholder}
-    />
-  );
-}
-
-interface DebouncedTextareaProps {
-  value: string;
-  onChange: (val: string) => void;
-  className?: string;
-}
-
-function DebouncedTextarea({ value, onChange, className }: DebouncedTextareaProps) {
-  const [localVal, setLocalVal] = useState(value);
-  const timerRef = useRef<any>(null);
-
-  useEffect(() => {
-    setLocalVal(value);
-  }, [value]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setLocalVal(val);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      onChange(val);
-    }, 150);
-  };
-
-  const handleBlur = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    onChange(localVal);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  return (
-    <Textarea
-      value={localVal}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      className={className}
-    />
-  );
-}
-
-interface PremiumSelectProps {
-  value: string;
-  onChange: (val: string) => void;
-  options: string[];
-  placeholder: string;
-}
-
-function PremiumSelect({ value, onChange, options, placeholder }: PremiumSelectProps) {
-  return (
-    <div className="relative w-full">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white border border-stitch-outline/10 text-xs font-bold rounded-xl h-10 pl-3 pr-10 shadow-sm focus:outline-none focus:ring-2 focus:ring-stitch-primary cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%237C726C%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[position:right_12px_center] bg-no-repeat transition-all text-stitch-on-surface"
-      >
-        <option value="" disabled className="text-stitch-on-surface-variant/50">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt} className="text-xs font-semibold text-stitch-on-surface bg-white py-1">
-            {opt}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-
-const COMPANY_OPTIONS = [
-  "Google",
-  "Microsoft",
-  "Amazon",
-  "Meta",
-  "Apple",
-  "Netflix",
-  "TCS (Tata Consultancy Services)",
-  "Infosys",
-  "Wipro",
-  "Cognizant",
-  "Accenture",
-  "Capgemini",
-  "Tech Mahindra",
-  "HCL Technologies",
-  "IBM",
-  "Oracle",
-  "Cisco",
-  "Adobe",
-  "Salesforce",
-  "Deloitte",
-  "PwC",
-  "EY (Ernst & Young)",
-  "KPMG",
-  "J.P. Morgan",
-  "Morgan Stanley",
-  "Goldman Sachs",
-  "Other"
-];
 
 export default function EditPage() {
   const { formData, selectedTemplate, setFormData, updateField, updateLayout } = useBiodataStore();
+  const methods = useForm<BiodataFormValues>({
+    resolver: zodResolver(biodataSchema) as any,
+    defaultValues: defaultBiodataValues,
+    mode: "onChange",
+  });
+
   const theme = useThemeStore();
   const biodataHistory = useStore(useBiodataStore.temporal, (state) => state);
   const themeHistory = useStore(useThemeStore.temporal, (state) => state);
@@ -232,6 +90,26 @@ export default function EditPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [biodataHistory, themeHistory]);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasInitializedForm, setHasInitializedForm] = useState(false);
+
+  // Sync store data to form ONCE when mounted/hydrated
+  useEffect(() => {
+    if (isMounted && !hasInitializedForm && formData) {
+      methods.reset(formData);
+      setHasInitializedForm(true);
+    }
+  }, [isMounted, hasInitializedForm, formData, methods]);
+
+  // Synchronize form changes back to the zustand store in real-time
+  useEffect(() => {
+    const subscription = methods.watch((value) => {
+      if (value) {
+        setFormData(value as BiodataFormValues);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [methods, setFormData]);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
@@ -609,186 +487,16 @@ export default function EditPage() {
               {activeTab === "templates" && <TemplateSelector />}
               
               {activeTab === "fields" && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 text-left">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Edit Form Details</Label>
                     <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
                       Modify your biodata details in real-time. Changes will update instantly on the canvas.
                     </p>
                   </div>
-
-                  <div className="space-y-4">
-                    {/* Mantra & Title */}
-                    <div className="p-4 rounded-2xl bg-stitch-surface-variant/5 border border-stitch-outline/5 space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant">Header Mantra</Label>
-                        <DebouncedInput
-                          value={formData.mantra || ""}
-                          onChange={(val) => setFormData({ ...formData, mantra: val })}
-                          className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                          placeholder="e.g. || Shree Ganeshay Namah ||"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant">Document Title</Label>
-                        <DebouncedInput
-                          value={formData.title || ""}
-                          onChange={(val) => setFormData({ ...formData, title: val })}
-                          className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                          placeholder="e.g. BIODATA"
-                        />
-                      </div>
-                    </div>
-
-                    <Accordion type="multiple" defaultValue={["personal"]} className="w-full space-y-3">
-                      {/* Personal Details Accordion */}
-                      <AccordionItem value="personal" className="border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 overflow-hidden">
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-stitch-surface-variant/10 text-xs font-black text-stitch-on-surface">
-                          Personal Details
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4 pt-2 space-y-4">
-                          {formData.personalDetails?.map((field: any) => (
-                            <div key={field.id} className="space-y-1.5 text-left px-1 py-0.5">
-                              <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant/80">{field.label}</Label>
-                              {field.type === "textarea" ? (
-                                <DebouncedTextarea
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("personalDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl shadow-sm focus-visible:ring-stitch-primary min-h-[60px]"
-                                />
-                              ) : field.type === "select" && field.options ? (
-                                <PremiumSelect
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("personalDetails", field.id, val)}
-                                  options={field.options}
-                                  placeholder={`Select ${field.label}`}
-                                />
-                              ) : (
-                                <DebouncedInput
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("personalDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
-
-                      {/* Education Details Accordion */}
-                      <AccordionItem value="education" className="border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 overflow-hidden">
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-stitch-surface-variant/10 text-xs font-black text-stitch-on-surface">
-                          Education & Work
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4 pt-2 space-y-4">
-                          {formData.educationDetails?.map((field: any) => (
-                            <div key={field.id} className="space-y-1.5 text-left px-1 py-0.5">
-                              <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant/80">{field.label}</Label>
-                              {field.type === "textarea" ? (
-                                <DebouncedTextarea
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("educationDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl shadow-sm focus-visible:ring-stitch-primary min-h-[60px]"
-                                />
-                              ) : field.type === "select" && field.options ? (
-                                <PremiumSelect
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("educationDetails", field.id, val)}
-                                  options={field.options}
-                                  placeholder={`Select ${field.label}`}
-                                />
-                              ) : field.id === "companyName" ? (
-                                <CompanyAutocomplete
-                                  value={field.value || ""}
-                                  onChange={(val, logo) => {
-                                    updateField("educationDetails", field.id, val);
-                                    if (logo) {
-                                      updateField("educationDetails", "companyLogo", logo);
-                                    }
-                                  }}
-                                  placeholder={`Select ${field.label}...`}
-                                />
-                              ) : (
-                                <DebouncedInput
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("educationDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
-
-                      {/* Family Details Accordion */}
-                      <AccordionItem value="family" className="border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 overflow-hidden">
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-stitch-surface-variant/10 text-xs font-black text-stitch-on-surface">
-                          Family Details
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4 pt-2 space-y-4">
-                          {formData.familyDetails?.map((field: any) => (
-                            <div key={field.id} className="space-y-1.5 text-left px-1 py-0.5">
-                              <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant/80">{field.label}</Label>
-                              {field.type === "textarea" ? (
-                                <DebouncedTextarea
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("familyDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl shadow-sm focus-visible:ring-stitch-primary min-h-[60px]"
-                                />
-                              ) : field.type === "select" && field.options ? (
-                                <PremiumSelect
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("familyDetails", field.id, val)}
-                                  options={field.options}
-                                  placeholder={`Select ${field.label}`}
-                                />
-                              ) : (
-                                <DebouncedInput
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("familyDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
-
-                      {/* Contact Details Accordion */}
-                      <AccordionItem value="contact" className="border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 overflow-hidden">
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-stitch-surface-variant/10 text-xs font-black text-stitch-on-surface">
-                          Contact Details
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4 pt-2 space-y-4">
-                          {formData.contactDetails?.map((field: any) => (
-                            <div key={field.id} className="space-y-1.5 text-left px-1 py-0.5">
-                              <Label className="text-[10px] uppercase font-bold text-stitch-on-surface-variant/80">{field.label}</Label>
-                              {field.type === "textarea" ? (
-                                <DebouncedTextarea
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("contactDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl shadow-sm focus-visible:ring-stitch-primary min-h-[60px]"
-                                />
-                              ) : field.type === "select" && field.options ? (
-                                <PremiumSelect
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("contactDetails", field.id, val)}
-                                  options={field.options}
-                                  placeholder={`Select ${field.label}`}
-                                />
-                              ) : (
-                                <DebouncedInput
-                                  value={field.value || ""}
-                                  onChange={(val) => updateField("contactDetails", field.id, val)}
-                                  className="bg-white border-stitch-outline/10 text-xs font-bold rounded-xl h-10 shadow-sm focus-visible:ring-stitch-primary"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
+                  <FormProvider {...methods}>
+                    <BiodataForm />
+                  </FormProvider>
                 </div>
               )}
               
