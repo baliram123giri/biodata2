@@ -8,37 +8,37 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-muted to-background pt-20 pb-16 px-4">
-        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-12">
-          <div className="flex-1 text-center lg:text-left space-y-6">
+      <section className="bg-gradient-to-b from-muted to-background pt-10 pb-8 px-4">
+        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-6 lg:gap-12">
+          <div className="flex-1 text-center lg:text-left space-y-4">
             <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
               Trusted by 100,000+ Happy Families
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
               Free Online Biodata Maker <span className="text-primary">for Marriage</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+            <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
               Create FREE marriage biodata online in 2 minutes. 50+ professional templates, 10+ Indian languages. Instant PDF download. No login required.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-              <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all w-full sm:w-auto" asChild>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
+              <Button size="lg" className="rounded-full text-lg px-8 py-5 shadow-lg hover:shadow-xl transition-all w-full sm:w-auto" asChild>
                 <a href="#builder">
                   Start Creating — It&apos;s Free
                   <ArrowDown className="w-5 h-5 ml-2 animate-bounce" />
                 </a>
               </Button>
-              <Button size="lg" variant="outline" className="rounded-full text-lg px-8 py-6 w-full sm:w-auto" asChild>
+              <Button size="lg" variant="outline" className="rounded-full text-lg px-8 py-5 w-full sm:w-auto" asChild>
                 <Link href="/templates">View Templates</Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6 text-sm text-muted-foreground pt-4">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 md:gap-6 text-sm text-muted-foreground pt-2">
               <div className="flex items-center gap-2 shrink-0"><CheckCircle2 className="w-4 h-4 text-primary" /> No Login Needed</div>
               <div className="flex items-center gap-2 shrink-0"><CheckCircle2 className="w-4 h-4 text-primary" /> 100% Private</div>
               <div className="flex items-center gap-2 shrink-0"><CheckCircle2 className="w-4 h-4 text-primary" /> Free PDF</div>
             </div>
           </div>
           
-          <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0">
+          <div className="flex-1 w-full max-w-md mx-auto lg:mx-0">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-muted/20">
               <img 
                 src="/arjun_sharma.png" 

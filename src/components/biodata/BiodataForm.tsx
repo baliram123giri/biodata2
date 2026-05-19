@@ -56,7 +56,7 @@ export function BiodataForm() {
       <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
         <div className="flex items-center gap-2 text-primary font-semibold">
           <Globe className="w-5 h-5" />
-          <span>Select Language</span>
+          <span>Language</span>
         </div>
         <Select value={currentLang} onValueChange={handleLanguageChange}>
           <SelectTrigger className="w-[180px]">

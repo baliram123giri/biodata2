@@ -58,15 +58,25 @@ export function HomeBiodataBuilder() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 450) {
-        setShowMobileBar(true);
-      } else {
-        setShowMobileBar(false);
-      }
+      const scrollPos = window.scrollY || document.documentElement.scrollTop;
+      // Show mobile bar instantly as soon as user scrolls past the top 120px of the hero section
+      setShowMobileBar(scrollPos > 120);
     };
+    
     window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // Execute immediately on mount
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Run repeated checks for the first 1.5s to capture scroll-restoration timing instantly
+    const interval = setInterval(handleScroll, 100);
+    const timeout = setTimeout(() => clearInterval(interval), 1500);
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
 
   const methods = useForm<BiodataFormValues>({
@@ -176,60 +186,7 @@ export function HomeBiodataBuilder() {
               Fill in your details below, pick a template, and download your professional marriage biodata — all without leaving this page.
             </p>
           </div>
-
-          {/* Quick Action Bar */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
-              onClick={() => methods.reset(defaultBiodataValues)}
-            >
-              <Sparkles className="w-4 h-4 mr-2 text-primary" /> Fill Sample Data
-            </Button>
-            
-            {/* Mobile-only templates quick trigger */}
-            <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-              <SheetTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all lg:hidden"
-                  >
-                    <LayoutDashboard className="w-4 h-4 mr-2 text-primary" /> Templates
-                  </Button>
-                }
-              />
-              <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
-                <SheetHeader className="mb-6">
-                  <SheetTitle className="flex items-center gap-2">
-                    <LayoutDashboard className="w-5 h-5 text-primary" />
-                    Pick a Template
-                  </SheetTitle>
-                </SheetHeader>
-                <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
-              </SheetContent>
-            </Sheet>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              onClick={() => setShowResetDialog(true)}
-            >
-              <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
-            </Button>
-            <Button
-              size="sm"
-              className="rounded-full shadow-lg text-white"
-              onClick={handleDownload}
-              disabled={isGenerating}
-            >
-              <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
-              {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
-            </Button>
-          </div>
+          {/* Quick Action Bar Removed */}
         </div>
 
         {/* Builder Content */}
@@ -341,7 +298,7 @@ export function HomeBiodataBuilder() {
 
         {/* Mobile Sticky Bottom Bar */}
         {showMobileBar && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-background/95 backdrop-blur-md border border-primary/10 py-2.5 px-4 rounded-3xl z-50 shadow-[0_10px_30px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-4">
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2.5 px-4 rounded-3xl z-50 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-4">
             
             {/* Left Icons Grid */}
             <div className="flex items-center justify-between flex-1 pr-2 border-r border-muted-foreground/10">

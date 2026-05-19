@@ -32,6 +32,7 @@ interface KonvaPreviewProps {
   templateId?: string;
   scale?: number;
   isDesigner?: boolean;
+  resetKey?: number;
 }
 
 const A4_W = 595;
@@ -227,7 +228,7 @@ function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradie
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
-export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false }: KonvaPreviewProps) {
+export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
   const { formData: storeFormData, selectedTemplate: storeTemplate, removeSticker, updateSticker } = useBiodataStore();
   const theme = useThemeStore();
   const formData = liveFormData || storeFormData;
@@ -310,7 +311,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         });
       }
     }
-  }, [propScale]);
+    // resetKey changes every time fit-to-screen is clicked, forcing
+    // this effect to re-run even if propScale didn't change
+  }, [propScale, resetKey]);
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!isDesigner) return;

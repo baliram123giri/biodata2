@@ -9,7 +9,7 @@ import { useState } from "react";
 
 export function Header() {
   const pathname = usePathname();
-  const isEditorPage = pathname === "/create" || pathname === "/edit";
+  const isEditorPage = pathname === "/edit";
   const [open, setOpen] = useState(false);
 
   if (isEditorPage) return null;

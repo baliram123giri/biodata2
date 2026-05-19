@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Undo2,
   Redo2,
@@ -77,9 +77,37 @@ export default function EditPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [fitResetKey, setFitResetKey] = useState(0);
   const [activeTab, setActiveTab] = useState<"templates" | "theme" | "photo" | "stickers">("theme");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
+  const [drawerTranslateY, setDrawerTranslateY] = useState(0);
+  const [isDraggingDrawer, setIsDraggingDrawer] = useState(false);
+  const touchStartY = useRef(0);
+
+  const handleDrawerTouchStart = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 1024) return;
+    touchStartY.current = e.touches[0].clientY;
+    setIsDraggingDrawer(true);
+  };
+
+  const handleDrawerTouchMove = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 1024 || !isDraggingDrawer) return;
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - touchStartY.current;
+    if (diffY > 0) {
+      setDrawerTranslateY(diffY);
+    }
+  };
+
+  const handleDrawerTouchEnd = () => {
+    if (window.innerWidth >= 1024) return;
+    setIsDraggingDrawer(false);
+    if (drawerTranslateY > 120) {
+      setIsRightOpen(false);
+    }
+    setDrawerTranslateY(0);
+  };
 
   const handleTabClick = (tab: typeof activeTab) => {
     if (activeTab === tab && isRightOpen) {
@@ -105,6 +133,9 @@ export default function EditPage() {
     const availableWidth = window.innerWidth - sidebarWidth - padding;
     const fitZoom = availableWidth / A4_W;
     setZoom(Math.max(0.4, Math.min(fitZoom, 1.0)));
+    // Always bump the reset key so KonvaPreview re-centers
+    // even if the zoom value happens to be identical
+    setFitResetKey(k => k + 1);
   };
 
   // Fix hydration issues and auto-calculate fit-to-screen zoom
@@ -206,21 +237,9 @@ export default function EditPage() {
             variant="ghost" 
             size="icon" 
             className="rounded-full hover:bg-stitch-primary/10 text-stitch-primary"
-            onClick={() => window.location.href = "/create"}
+            onClick={() => window.location.href = "/"}
           >
             <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsLeftOpen(!isLeftOpen)}
-            className={cn(
-              "rounded-full text-stitch-primary hover:bg-stitch-primary/10 hidden lg:flex",
-              isLeftOpen && "bg-stitch-primary/10"
-            )}
-            title="Toggle Tools"
-          >
-            <PanelLeft className="w-5 h-5" />
           </Button>
           <span className="font-noto-serif text-lg md:text-2xl text-stitch-primary font-bold tracking-tight hidden sm:block">Design Studio</span>
         </div>
@@ -266,19 +285,6 @@ export default function EditPage() {
              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
              <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsRightOpen(!isRightOpen)}
-            className={cn(
-              "rounded-full text-stitch-primary hover:bg-stitch-primary/10",
-              isRightOpen && "bg-stitch-primary/10"
-            )}
-            title="Toggle Settings"
-          >
-            <PanelRight className="w-5 h-5" />
-          </Button>
 
           <Button
             onClick={handleDownload}
@@ -305,15 +311,6 @@ export default function EditPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative pb-24 lg:pb-0">
-        {/* Mobile Sidebar Overlays */}
-        {isMounted && isRightOpen && (
-          <div 
-            className="lg:hidden fixed top-16 bottom-[50vh] left-0 right-0 z-30 bg-black/10 backdrop-blur-sm"
-            onClick={() => {
-              setIsRightOpen(false);
-            }}
-          />
-        )}
 
         {/* Left Sidebar (Tools) / Bottom Tab Bar on Mobile */}
         <nav className={cn(
@@ -322,38 +319,38 @@ export default function EditPage() {
           "hidden lg:flex lg:flex-col lg:items-center lg:py-6 lg:gap-4 lg:relative lg:border-r lg:h-full lg:top-0 lg:bottom-0 lg:left-auto lg:right-auto lg:translate-x-0 lg:opacity-100 lg:w-24 lg:bg-stitch-surface/95 lg:border-stitch-outline/10",
           isLeftOpen ? "lg:w-24" : "lg:w-0 lg:opacity-0 lg:pointer-events-none lg:border-r-0",
           // Mobile: horizontal floating glassy bottom bar
-          "fixed bottom-4 left-4 right-4 h-16 flex flex-row items-center justify-around px-2 py-1 bg-white/70 backdrop-blur-xl border border-black/5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] z-50"
+          "fixed bottom-4 left-4 right-4 h-16 flex flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50"
         )}>
           <ToolButton 
             icon={<LayoutDashboard />} 
             label="Templates" 
-            active={activeTab === "templates"}
+            active={isRightOpen && activeTab === "templates"}
             onClick={() => handleTabClick("templates")}
           />
           <ToolButton 
             icon={<Palette />} 
             label="Theme" 
-            active={activeTab === "theme"}
+            active={isRightOpen && activeTab === "theme"}
             onClick={() => handleTabClick("theme")}
           />
 
           <ToolButton 
             icon={<ImageIcon />} 
             label="Photo" 
-            active={activeTab === "photo"}
+            active={isRightOpen && activeTab === "photo"}
             onClick={() => handleTabClick("photo")}
           />
           <ToolButton 
             icon={<Sparkles />} 
             label="Stickers" 
-            active={activeTab === "stickers"}
+            active={isRightOpen && activeTab === "stickers"}
             onClick={() => handleTabClick("stickers")}
           />
         </nav>
 
         {/* Canvas Area */}
         <main className="flex-1 overflow-hidden relative bg-transparent h-full">
-          <KonvaPreview scale={zoom} isDesigner={true} />
+          <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
           
           {/* Floating Zoom Controls */}
           <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
@@ -385,29 +382,45 @@ export default function EditPage() {
         </main>
 
         {/* Right Properties Panel / Bottom Drawer on Mobile */}
-        <aside className={cn(
-          "flex flex-col z-40 shadow-2xl overflow-hidden transition-all duration-300",
-          // Desktop: right sidebar
-          "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
-          isRightOpen 
-            ? "lg:translate-x-0 lg:w-80" 
-            : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
-          // Mobile: bottom drawer (sitting flush at bottom-0)
-          "fixed left-0 right-0 bottom-0 h-[50vh] border-t border-stitch-outline/10 rounded-t-[32px] bg-white",
-          isRightOpen 
-            ? "translate-y-0 opacity-100" 
-            : "translate-y-full opacity-0 pointer-events-none"
-        )}>
-          {/* Mobile Grab Handle */}
-          <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-3 mb-1 lg:hidden shrink-0" />
-          
-          <div className="p-6 pb-4">
-            <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
-              {activeTab}
-            </h2>
-            <p className="text-[11px] text-stitch-on-surface-variant/60 font-bold uppercase tracking-widest mt-1">
-              Customize Design Properties
-            </p>
+        <aside 
+          style={{
+            transform: isDraggingDrawer 
+              ? `translateY(${drawerTranslateY}px)` 
+              : undefined
+          }}
+          className={cn(
+            "flex flex-col z-40 shadow-2xl overflow-hidden",
+            isDraggingDrawer ? "" : "transition-all duration-300",
+            // Desktop: right sidebar
+            "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-80 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
+            isRightOpen 
+              ? "lg:translate-x-0 lg:w-80" 
+              : "lg:translate-x-full lg:w-0 lg:pointer-events-none lg:border-l-0",
+            // Mobile: bottom drawer (sitting flush at bottom-0)
+            "fixed left-0 right-0 bottom-0 h-[50vh] border-t border-stitch-outline/10 rounded-t-[32px] bg-white",
+            isRightOpen 
+              ? "translate-y-0 opacity-100" 
+              : "translate-y-full opacity-0 pointer-events-none"
+          )}
+        >
+          {/* Mobile Drag Header */}
+          <div
+            onTouchStart={handleDrawerTouchStart}
+            onTouchMove={handleDrawerTouchMove}
+            onTouchEnd={handleDrawerTouchEnd}
+            className="cursor-ns-resize lg:cursor-default select-none shrink-0"
+          >
+            {/* Mobile Grab Handle */}
+            <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-3 mb-1 lg:hidden" />
+            
+            <div className="p-6 pb-4">
+              <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
+                {activeTab}
+              </h2>
+              <p className="text-[11px] text-stitch-on-surface-variant/60 font-bold uppercase tracking-widest mt-1">
+                Customize Design Properties
+              </p>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
@@ -419,7 +432,7 @@ export default function EditPage() {
                   <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-3">
                   <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {/* None / Reset option */}
                     {(() => {
                       const isNone = theme.selectedPaletteName === null;
@@ -432,20 +445,20 @@ export default function EditPage() {
                             }
                           }}
                           className={cn(
-                            "group relative flex items-center gap-3 p-2 rounded-xl border transition-all hover:shadow-md",
+                            "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
                             isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
                           )}
                         >
-                          <div className="flex shrink-0 w-12 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
-                            <svg className="w-5 h-5 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
+                            <svg className="w-4 h-4 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <circle cx="12" cy="12" r="9" />
                               <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
                             </svg>
                           </div>
-                          <span className="text-xs font-bold text-stitch-on-surface-variant">None</span>
+                          <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
                           {isNone && (
-                            <div className="ml-auto w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
@@ -477,11 +490,11 @@ export default function EditPage() {
                               }
                             }}
                             className={cn(
-                              "group relative flex items-center gap-3 p-2 rounded-xl border transition-all hover:shadow-md",
+                              "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
                               isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
                             )}
                           >
-                            <div className="flex shrink-0 w-12 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
+                            <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
                               {p.bgColors ? (
                                 <div className="w-full h-full" style={{ background: `linear-gradient(90deg, ${p.bgColors.join(", ")})` }} />
                               ) : (
@@ -493,16 +506,16 @@ export default function EditPage() {
                               )}
                             </div>
                             <div className="flex flex-col items-start overflow-hidden flex-1">
-                              <span className="text-xs font-bold text-stitch-on-surface truncate">{p.name}</span>
-                              <div className="flex gap-1">
+                              <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{p.name}</span>
+                              <div className="flex gap-0.5 mt-0.5">
                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
                               </div>
                             </div>
                             {isSelected && (
-                              <div className="w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shrink-0">
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                               </div>
