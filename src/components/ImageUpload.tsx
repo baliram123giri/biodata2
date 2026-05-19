@@ -7,7 +7,6 @@ import ReactCrop, {
   makeAspectCrop,
   Crop,
   PixelCrop,
-  type AspectRatio,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import {

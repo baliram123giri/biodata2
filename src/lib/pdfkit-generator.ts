@@ -351,12 +351,12 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           },
             asset.type === 'image' ? 
               React.createElement(Image, { 
-                src: asset.url, 
+                src: asset.url!, 
                 style: { width: '100%', height: '100%', objectFit: 'fill' } as any
               })
             : 
-              React.createElement(Svg, { viewBox: asset.viewBox, width: '100%', height: '100%' },
-                React.createElement(Path, { d: asset.path, fill: primary })
+              React.createElement(Svg, { viewBox: asset.viewBox || "0 0 100 100", width: '100%', height: '100%' },
+                React.createElement(Path, { d: asset.path || "", fill: primary })
               )
           );
         })
