@@ -298,7 +298,19 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     return () => window.removeEventListener("resize", updateSize);
   }, [isDesigner, propScale]);
 
-  useEffect(() => { if (propScale !== undefined) setScale(propScale); }, [propScale]);
+  useEffect(() => {
+    if (propScale !== undefined) {
+      setScale(propScale);
+      const el = containerRef.current;
+      if (el) {
+        const { width, height } = el.getBoundingClientRect();
+        setStagePos({
+          x: (width - A4_W * propScale) / 2,
+          y: (height - A4_H * propScale) / 2
+        });
+      }
+    }
+  }, [propScale]);
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!isDesigner) return;
