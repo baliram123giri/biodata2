@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { Logo } from "@/components/layout/Logo";
 
 export function Header() {
   const pathname = usePathname();
@@ -39,8 +40,8 @@ export function Header() {
               <SheetContent side="left" className="w-[280px]">
                 <SheetHeader className="mb-6 text-left">
                   <SheetTitle>
-                    <Link href="/" onClick={() => setOpen(false)} className="text-xl font-bold text-primary">
-                      Biodata Maker
+                    <Link href="/" onClick={() => setOpen(false)}>
+                      <Logo />
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
@@ -60,11 +61,11 @@ export function Header() {
                   {/* Removed Create Biodata button from mobile menu */}
                 </nav>
               </SheetContent>
-            </Sheet>
+             </Sheet>
           </div>
 
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">Biodata Maker</span>
+          <Link href="/">
+            <Logo />
           </Link>
         </div>
         

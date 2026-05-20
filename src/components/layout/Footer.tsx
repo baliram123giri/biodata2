@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/layout/Logo";
 
 export function Footer() {
   const pathname = usePathname();
@@ -13,7 +14,7 @@ export function Footer() {
     <footer className="w-full border-t bg-muted py-12">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <h3 className="font-bold text-lg mb-4 text-primary">Biodata Maker</h3>
+          <Logo className="mb-4" />
           <p className="text-sm text-muted-foreground mb-4">
             Create a Professional Marriage Biodata with our easy-to-use platform for Free. Designed for modern needs, loved by families.
           </p>

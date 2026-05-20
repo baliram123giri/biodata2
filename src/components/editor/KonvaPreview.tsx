@@ -48,12 +48,12 @@ function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x
 }
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src);
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 
 const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src);
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
 });
 
@@ -499,7 +499,10 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           if (hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15) {
              rowWidth = photoConfig.x - padding - 20; // Prevent photo overlap
           }
-          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          if (field.logoUrl) {
+            valueW -= (fSize + 4);
+          }
           
           const valW = measure(valText, fSize);
           const lines = Math.ceil(valW / valueW) || 1;
@@ -663,8 +666,32 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                       <Group key={field.id}>
                         <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
                         <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                        <Text x={padding + 155} y={field.y} width={field.availableWidth} text={field.value} fontSize={layout.fSize} fontFamily={fontFamily} fill="#333333" lineHeight={1.1} />
-                        {field.logoUrl && <LogoImage src={field.logoUrl} x={padding - 5} y={field.y} size={layout.fSize} />}
+                        {field.logoUrl ? (
+                          <>
+                            <LogoImage src={field.logoUrl} x={padding + 155} y={field.y + (layout.fSize * 0.05)} size={layout.fSize} />
+                            <Text
+                              x={padding + 155 + layout.fSize + 4}
+                              y={field.y}
+                              width={field.availableWidth}
+                              text={field.value}
+                              fontSize={layout.fSize}
+                              fontFamily={fontFamily}
+                              fill="#333333"
+                              lineHeight={1.1}
+                            />
+                          </>
+                        ) : (
+                          <Text
+                            x={padding + 155}
+                            y={field.y}
+                            width={field.availableWidth}
+                            text={field.value}
+                            fontSize={layout.fSize}
+                            fontFamily={fontFamily}
+                            fill="#333333"
+                            lineHeight={1.1}
+                          />
+                        )}
                       </Group>
                     ))}
                   </Group>

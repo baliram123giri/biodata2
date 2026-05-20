@@ -6,7 +6,7 @@ import useImage from "use-image";
 import { SVG_PATHS } from "./paths";
 
 export const NewGenerationKonva = React.memo(({ primaryColor }: { primaryColor: string }) => {
-  const [ganeshaImg] = useImage("https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png", "anonymous");
+  const [ganeshaImg] = useImage("https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png");
 
   const [svgUrl, setSvgUrl] = React.useState<string | null>(null);
 

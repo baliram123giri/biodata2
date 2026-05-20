@@ -1,13 +1,72 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { cn } from "@/lib/utils";
 import { Sparkles, Plus } from "lucide-react";
+import { STICKER_ASSETS, type StickerAsset } from "@/lib/sticker-assets";
 
+const StickerItem = React.memo(function StickerItem({
+  sticker,
+  themeColor,
+  onAdd
+}: {
+  sticker: StickerAsset;
+  themeColor: string;
+  onAdd: (id: string) => void;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
 
-import { STICKER_ASSETS } from "@/lib/sticker-assets";
+  return (
+    <button
+      onClick={() => onAdd(sticker.id)}
+      className="group relative flex flex-col items-center cursor-pointer gap-3 p-1.5 rounded-2xl border border-stitch-outline/10 bg-white/50 hover:bg-white hover:border-stitch-primary/30 transition-all hover:shadow-xl hover:-translate-y-1 w-full"
+    >
+      <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-xl bg-black/[0.02]">
+        {sticker.type === 'image' ? (
+          <>
+            {!isLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/5 animate-pulse rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-black/10" />
+              </div>
+            )}
+            <Image
+              src={sticker.url || ""}
+              alt={sticker.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
+              onLoad={() => setIsLoaded(true)}
+              className={cn(
+                "object-contain p-1.5 transition-opacity duration-300",
+                isLoaded ? "opacity-100" : "opacity-0"
+              )}
+            />
+          </>
+        ) : (
+          <svg
+            viewBox={sticker.viewBox}
+            className="w-10 h-10 transition-colors"
+            style={{ fill: themeColor }}
+          >
+            <path d={sticker.path} />
+          </svg>
+        )}
+      </div>
+
+      <div className="flex flex-col items-center">
+        <span className="text-[13px] font-bold text-stitch-on-surface-variant uppercase tracking-wider text-center">{sticker.name}</span>
+      </div>
+
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shadow-lg">
+          <Plus className="w-3 h-3 text-white" />
+        </div>
+      </div>
+    </button>
+  );
+});
 
 export const StickerSelector = React.memo(function StickerSelector({ onSelect }: { onSelect?: () => void }) {
   const { addSticker } = useBiodataStore();
@@ -30,39 +89,12 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
     <div className="flex flex-col h-full">
       <div className="grid grid-cols-2 gap-4">
         {STICKER_ASSETS.map((sticker) => (
-          <button
+          <StickerItem
             key={sticker.id}
-            onClick={() => handleAddSticker(sticker.id)}
-            className="group relative flex flex-col items-center cursor-pointer gap-3 p-1 rounded-2xl border border-stitch-outline/10 bg-white/50 hover:bg-white hover:border-stitch-primary/30 transition-all hover:shadow-xl hover:-translate-y-1"
-          >
-            <div className=" flex items-center justify-center  overflow-hidden">
-              {sticker.type === 'image' ? (
-                <img
-                  src={sticker.url}
-                  alt={sticker.name}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <svg
-                  viewBox={sticker.viewBox}
-                  className="w-10 h-10 transition-colors"
-                  style={{ fill: theme.primaryColor }}
-                >
-                  <path d={sticker.path} />
-                </svg>
-              )}
-            </div>
-
-            <div className="flex flex-col items-center">
-              <span className="text-[13px] font-bold text-stitch-on-surface-variant uppercase tracking-wider text-center">{sticker.name}</span>
-            </div>
-
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="w-5 h-5 rounded-full bg-stitch-primary flex items-center justify-center shadow-lg">
-                <Plus className="w-3 h-3 text-white" />
-              </div>
-            </div>
-          </button>
+            sticker={sticker}
+            themeColor={theme.primaryColor}
+            onAdd={handleAddSticker}
+          />
         ))}
       </div>
 

@@ -41,14 +41,19 @@ import { useStore } from "zustand";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
+import { useRouter } from "next/navigation";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/layout/Logo";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
+import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
 
 
 
 export default function EditPage() {
+  const router = useRouter();
   const { formData, selectedTemplate, setFormData, updateField, updateLayout } = useBiodataStore();
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
@@ -111,7 +116,7 @@ export default function EditPage() {
     return () => subscription.unsubscribe();
   }, [methods, setFormData]);
 
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
   const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "stickers">("theme");
@@ -162,22 +167,31 @@ export default function EditPage() {
 
   const handleFitToScreen = () => {
     if (typeof window === "undefined") return;
+    const container = document.getElementById("canvas-container");
+    if (!container) return;
+
     const A4_W = 595;
+    const A4_H = 842;
     const isMobile = window.innerWidth < 1024;
-    const sidebarWidth = isMobile ? 0 : 480; // Left sidebar (96px) + Right properties panel (384px)
-    const padding = isMobile ? 32 : 64;
-    const availableWidth = window.innerWidth - sidebarWidth - padding;
-    const fitZoom = availableWidth / A4_W;
-    setZoom(Math.max(0.4, Math.min(fitZoom, 1.0)));
-    // Always bump the reset key so KonvaPreview re-centers
-    // even if the zoom value happens to be identical
+    const padding = isMobile ? 24 : 48; // padding around the A4 page in the view
+
+    const availableWidth = container.clientWidth - padding * 2;
+    const availableHeight = container.clientHeight - padding * 2;
+
+    const fitWidthZoom = availableWidth / A4_W;
+    const fitHeightZoom = availableHeight / A4_H;
+
+    // Minimum zoom to fit both dimensions
+    const fitZoom = Math.min(fitWidthZoom, fitHeightZoom);
+
+    // Limit zoom to a reasonable range
+    setZoom(Math.max(0.3, Math.min(fitZoom, 1.2)));
     setFitResetKey(k => k + 1);
   };
 
-  // Fix hydration issues and auto-calculate fit-to-screen zoom
+  // Fix hydration issues and layout listening
   useEffect(() => {
     setIsMounted(true);
-    handleFitToScreen();
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
@@ -196,47 +210,27 @@ export default function EditPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isMounted) {
+      handleFitToScreen();
+      const handleResize = () => handleFitToScreen();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      // Trigger fit-to-screen when sidebar state changes (after transition)
+      const timer = setTimeout(handleFitToScreen, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isRightOpen, isMounted]);
+
   if (!isMounted) return null;
 
-  const handleDownload = async () => {
-    setIsGenerating(true);
-    try {
-      const nameField = formData.personalDetails?.find((f: any) => f.id === "fullName")?.value || "biodata";
-
-      const res = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formData,
-          templateId: useBiodataStore.getState().selectedTemplate,
-          theme: {
-            fontFamily: theme.fontFamily,
-            primaryColor: theme.primaryColor,
-            secondaryColor: theme.secondaryColor,
-            accentColor: theme.accentColor,
-            fontSize: theme.fontSize,
-            padding: theme.padding,
-            paddingY: theme.paddingY,
-            selectedPaletteName: theme.selectedPaletteName,
-            bgColors: theme.bgColors,
-          },
-        }),
-      });
-
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${nameField}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("PDF Export Error:", err);
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleDownload = async (format: DownloadFormat = "pdf") => {
+    await triggerDownload(formData, selectedTemplate, format);
   };
 
 
@@ -282,18 +276,12 @@ export default function EditPage() {
         <div className="flex items-center gap-2 md:gap-4">
           <Button
             variant="ghost"
-            size="icon"
-            className="rounded-full hover:bg-stitch-primary/10 text-stitch-primary"
-            onClick={() => window.location.href = "/"}
+            className="group gap-2 px-4 py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
+            onClick={() => router.push("/", { scroll: false })}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4.5 h-4.5 transition-transform group-hover:-translate-x-1" />
+            <span className="text-sm font-bold tracking-wide">Go Back</span>
           </Button>
-          <span
-            className="font-noto-serif text-lg md:text-2xl text-stitch-primary font-bold tracking-tight hidden sm:block cursor-pointer"
-            onClick={() => window.location.href = "/"}
-          >
-            Biodata Maker
-          </span>
         </div>
 
         {/* Center toolbar: Undo/Redo always visible, other items hidden on mobile */}
@@ -325,10 +313,8 @@ export default function EditPage() {
           <div className="hidden md:flex items-center gap-1 h-full">
             <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
             <Dialog>
-              <DialogTrigger >
-                <div>
-                  <ToolbarItem icon={<RefreshCcw />} label="Reset" />
-                </div>
+              <DialogTrigger>
+                <ToolbarItem icon={<RefreshCcw />} label="Reset" />
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -362,29 +348,11 @@ export default function EditPage() {
             <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">Live</span>
           </div>
 
-          <Button
-            onClick={handleDownload}
-            disabled={isGenerating}
-            className="relative overflow-hidden bg-stitch-primary-container text-stitch-on-primary-container hover:bg-stitch-primary hover:text-white transition-all text-xs font-semibold h-9 px-4 md:px-6 flex gap-2 shadow-sm disabled:opacity-50"
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-            <span className="relative flex items-center gap-2">
-              {isGenerating ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span className="hidden sm:inline">Generating...</span>
-                </>
-              ) : (
-                <>
-                  <span>Download</span>
-                  <Download className="w-4 h-4" />
-                </>
-              )}
-            </span>
-          </Button>
+          <DownloadDropdown
+            onDownload={handleDownload}
+            isGenerating={isGenerating}
+            variant="primary"
+          />
         </div>
       </header>
 
@@ -427,7 +395,7 @@ export default function EditPage() {
         </nav>
 
         {/* Canvas Area */}
-        <main className="flex-1 overflow-hidden relative bg-transparent h-full">
+        <main id="canvas-container" className="flex-1 overflow-hidden relative bg-transparent h-full">
           <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
 
           {/* Floating Left Toolbar — Desktop only, overlaid on the canvas */}
@@ -473,17 +441,17 @@ export default function EditPage() {
           )}
 
           {/* Floating Zoom Controls */}
-          <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
+          <div className="absolute bottom-6 left-6 lg:left-auto lg:right-6 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-black/5">
             <button
               onClick={handleZoomOut}
-              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <button
               onClick={handleFitToScreen}
-              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all cursor-pointer"
               title="Fit to Screen"
             >
               <Maximize className="w-4 h-4" />
@@ -493,7 +461,7 @@ export default function EditPage() {
             </span>
             <button
               onClick={handleZoomIn}
-              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all"
+              className="p-1.5 hover:bg-black/5 rounded-full text-stitch-on-surface-variant hover:text-stitch-primary active:scale-90 transition-all cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-4 h-4" />
@@ -736,7 +704,7 @@ export default function EditPage() {
                     <ImageUpload
                       value={formData.photo}
                       onChange={(url) => {
-                        setFormData({ ...formData, photo: url });
+                        methods.setValue("photo", url || "");
                         if (url && window.innerWidth < 1024) {
                           setIsRightOpen(false);
                         }
@@ -772,7 +740,7 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
     <button
       onClick={onClick}
       className={cn(
-        "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0",
+        "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0 cursor-pointer",
         active
           ? "bg-stitch-primary text-white shadow-lg shadow-stitch-primary/20 -translate-y-0.5"
           : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
@@ -784,18 +752,23 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
   );
 }
 
-function ToolbarItem({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2 px-3 py-2 rounded-xl text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-stitch-primary/5 transition-all group"
-      title={label}
-    >
-      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 h-4" })}
-      <span className="text-[10px] font-bold uppercase tracking-tight hidden sm:inline">{label}</span>
-    </button>
-  );
-}
+const ToolbarItem = React.forwardRef<HTMLButtonElement, { icon: React.ReactNode, label: string, onClick?: () => void, className?: string }>(
+  ({ icon, label, onClick, className, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        onClick={onClick}
+        className={cn("flex items-center gap-2 px-3 py-2 rounded-xl text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-stitch-primary/5 transition-all group cursor-pointer", className)}
+        title={label}
+        {...props}
+      >
+        {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 h-4" })}
+        <span className="text-[10px] font-bold uppercase tracking-tight hidden sm:inline">{label}</span>
+      </button>
+    );
+  }
+);
+ToolbarItem.displayName = "ToolbarItem";
 
 function DetailItem({ label, value }: { label: string, value: string }) {
   return (

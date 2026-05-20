@@ -11,15 +11,29 @@ export interface Palette {
 }
 
 export const PALETTES: Palette[] = [
+  // --- Solid & Traditional Palettes ---
   { name: "Royal Maroon", primary: "#800000", secondary: "#333333", accent: "#D4AF37" },
   { name: "Golden Elegance", primary: "#D4AF37", secondary: "#444444", accent: "#8B5E3C" },
   { name: "Deep Ocean", primary: "#1A3A5F", secondary: "#444444", accent: "#A4B6C8" },
-  { name: "Emerald Forest", primary: "#1E4D2B", secondary: "#333333", accent: "#9CC1A4" },
+  { name: "Emerald Luxury", primary: "#0D5C3A", secondary: "#2F3E46", accent: "#DFB15B" },
+  { name: "Imperial Purple", primary: "#4A154B", secondary: "#333333", accent: "#E6C64C" },
+  { name: "Peacock Majesty", primary: "#004B49", secondary: "#2D3748", accent: "#E5A93B" },
+  { name: "Ruby Crimson", primary: "#9B111E", secondary: "#2C3E50", accent: "#F3C68F" },
+  { name: "Saffron Blessings", primary: "#FF6F00", secondary: "#3E2723", accent: "#FFD54F" },
+  { name: "Rose Gold", primary: "#B76E79", secondary: "#333333", accent: "#D4AF37" },
+  { name: "Sandalwood Calm", primary: "#8D6E63", secondary: "#3E2723", accent: "#F5C27C" },
   { name: "Classic Charcoal", primary: "#2C3E50", secondary: "#555555", accent: "#BDC3C7" },
-  { name: "Auspicious Blue", primary: "#1a365d", secondary: "#4a5568", accent: "#2b6cb0", bgColors: ["#1e3a8a", "#3b82f6", "#60a5fa"] },
-  { name: "Modern Glow", primary: "#0f172a", secondary: "#334155", accent: "#57C785", bgColors: ["#2A7B9B", "#57C785", "#EDDD53"] },
+
+  // --- Gradient & Modern Palettes ---
+  { name: "Auspicious Blue", primary: "#1E3A8A", secondary: "#1E293B", accent: "#3B82F6", bgColors: ["#EFF6FF", "#DBEAFE", "#BFDBFE"] },
+  { name: "Modern Glow", primary: "#0F172A", secondary: "#334155", accent: "#0D9488", bgColors: ["#E0F2FE", "#D1FAE5", "#FEF08A"] },
   { name: "Sunrise Glow", primary: "#4c1d95", secondary: "#7c3aed", accent: "#f59e0b", bgColors: ["#fef3c7", "#fde68a", "#fcd34d"] },
   { name: "Ocean Breeze", primary: "#1e3a8a", secondary: "#3b82f6", accent: "#10b981", bgColors: ["#dcfce7", "#bbf7d0", "#86efac"] },
+  { name: "Divine Saffron", primary: "#92400E", secondary: "#78350F", accent: "#F59E0B", bgColors: ["#FFFBEB", "#FEF3C7", "#FDE68A"] },
+  { name: "Soft Rose", primary: "#9D174D", secondary: "#831843", accent: "#F472B6", bgColors: ["#FDF2F8", "#FCE7F3", "#FBCFE8"] },
+  { name: "Lilac Dream", primary: "#5B21B6", secondary: "#4C1D95", accent: "#8B5CF6", bgColors: ["#F5F3FF", "#EDE9FE", "#DDD6FE"] },
+  { name: "Warm Sand", primary: "#78350F", secondary: "#451A03", accent: "#D97706", bgColors: ["#FAF8F5", "#F4EFE6", "#EADEC9"] },
+  { name: "Classic Ivory", primary: "#5D4037", secondary: "#3E2723", accent: "#8D6E63", bgColors: ["#FCFBF7", "#FAF7EE", "#F4F0E0"] },
 ];
 
 export type FontFamily = "noto" | "inter" | "playfair";
@@ -51,6 +65,7 @@ export interface ThemeState {
   setPaddingY: (paddingY: number | undefined) => void;
   setBorderRadius: (radius: number) => void;
   setSelectedElement: (elementId: string | null) => void;
+  resetTheme: () => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -64,7 +79,7 @@ export const useThemeStore = create<ThemeState>()(
         primaryColor: "#800000",
         secondaryColor: "#333333",
         accentColor: "#D4AF37",
-        bgColors: ["#2A7B9B", "#57C785", "#EDDD53"],
+        bgColors: ["#E0F2FE", "#D1FAE5", "#FEF08A"],
         padding: 45,
         paddingY: undefined,
         borderRadius: 12,
@@ -80,13 +95,28 @@ export const useThemeStore = create<ThemeState>()(
           primaryColor: palette.primary, 
           secondaryColor: palette.secondary, 
           accentColor: palette.accent,
-          bgColors: palette.bgColors || ["#2A7B9B", "#57C785", "#EDDD53"],
+          bgColors: palette.bgColors || ["#E0F2FE", "#D1FAE5", "#FEF08A"],
           selectedPaletteName: palette.name === "None" ? null : palette.name
         }),
         setPadding: (padding) => set({ padding: padding }),
         setPaddingY: (paddingY) => set({ paddingY: paddingY }),
         setBorderRadius: (radius) => set({ borderRadius: radius }),
         setSelectedElement: (elementId) => set({ selectedElement: elementId }),
+        resetTheme: () => set({
+          fontFamily: "noto",
+          fontWeight: "medium",
+          fontSize: 16,
+          alignment: "center",
+          primaryColor: "#800000",
+          secondaryColor: "#333333",
+          accentColor: "#D4AF37",
+          bgColors: ["#E0F2FE", "#D1FAE5", "#FEF08A"],
+          padding: 45,
+          paddingY: undefined,
+          borderRadius: 12,
+          selectedElement: "Section Group",
+          selectedPaletteName: "Royal Maroon",
+        }),
       })
     ),
     {

@@ -200,7 +200,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                         value={compField.value} 
                         onChange={(val, logo) => {
                            compField.onChange(val);
-                           const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                           const logoIndex = liveFields.findIndex(f => f.id === "companyLogo");
                            if (logoIndex !== -1) {
                               setValue(`${name}.${logoIndex}.value`, logo || "");
                            }

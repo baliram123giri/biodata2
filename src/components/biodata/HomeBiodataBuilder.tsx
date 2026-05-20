@@ -9,7 +9,9 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { Button } from "@/components/ui/button";
 import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye } from "lucide-react";
+import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
+import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
 
 import {
   Dialog,
@@ -47,10 +49,10 @@ const KonvaPreview = dynamic(
  * Includes form, live preview, template picker, and download/export actions.
  */
 export function HomeBiodataBuilder() {
-  const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore } = useBiodataStore();
+  const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly } = useBiodataStore();
   const theme = useThemeStore();
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -95,18 +97,25 @@ export function HomeBiodataBuilder() {
     mode: "onChange",
   });
 
-  // Handle hydration and initial load
+  // Handle hydration and initial load (resets form details so homepage stays clean, but preserves selected template/theme)
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
 
-  // Sync store data to form ONCE when hydrated
-  useEffect(() => {
-    if (isHydrated && !hasInitialized && storedData) {
-      methods.reset(storedData);
-      setHasInitialized(true);
+    // Register a listener for when hydration completes
+    const unsub = useBiodataStore.persist.onFinishHydration(() => {
+      resetFormDataOnly();
+    });
+
+    // If store is already hydrated, run reset immediately
+    if (useBiodataStore.persist.hasHydrated()) {
+      resetFormDataOnly();
     }
-  }, [isHydrated, hasInitialized, storedData, methods]);
+
+    methods.reset(defaultBiodataValues);
+    setHasInitialized(true);
+
+    return () => unsub();
+  }, [resetFormDataOnly, methods]);
 
   // Debounced store update
   useEffect(() => {
@@ -123,53 +132,14 @@ export function HomeBiodataBuilder() {
   const t = translations[currentLang] || translations["English"];
 
   const handleReset = () => {
-    resetStore();
+    resetFormDataOnly();
     methods.reset(defaultBiodataValues);
     setShowResetDialog(false);
   };
 
-  const handleDownload = async () => {
-    setIsGenerating(true);
-    try {
-      const currentData = methods.getValues();
-      const nameField = currentData.personalDetails.find(f => f.id === "fullName")?.value || "biodata";
-
-      const res = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formData: currentData,
-          templateId: storedTemplate,
-          theme: {
-            fontFamily: theme.fontFamily,
-            primaryColor: theme.primaryColor,
-            secondaryColor: theme.secondaryColor,
-            accentColor: theme.accentColor,
-            fontSize: theme.fontSize,
-            padding: theme.padding,
-            selectedPaletteName: theme.selectedPaletteName,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("PDF Generation failed:", errorData);
-        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || "Unknown"}`);
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${nameField}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("PDF Export Error:", err);
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleDownload = async (format: DownloadFormat = "pdf") => {
+    const currentData = methods.getValues();
+    await triggerDownload(currentData, storedTemplate, format);
   };
 
   // Manage drawer open state
@@ -229,32 +199,33 @@ export function HomeBiodataBuilder() {
                 <div className="flex-1 flex flex-col gap-6 items-center w-full">
                   <EmbeddedPreviewSection storedTemplate={storedTemplate} />
 
-                  <div className="flex flex-col w-full gap-3">
+                  <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
                     <Button
                       onClick={() => router.push("/edit")}
-                      className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-xl hover:shadow-stitch-primary/20 transition-all flex gap-2 h-11 text-sm font-bold"
+                      className="rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
                     >
-                      <Sparkles className="w-4 h-4" />
-                      Edit in Designer
-                      <ArrowRight className="w-4 h-4 ml-1" />
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Edit in Designer</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Button>
-                    <div className="flex gap-4 w-full">
-                      <Button variant="outline" size="sm" className="flex-1 rounded-full h-10" onClick={() => setShowResetDialog(true)} disabled={isGenerating}>
-                        <RotateCcw className="w-4 h-4 mr-2" /> {t.reset || "Reset"}
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="relative overflow-hidden flex-1 rounded-full shadow-lg bg-stitch-primary text-white hover:bg-stitch-primary/90 h-10" 
-                        onClick={handleDownload} 
-                        disabled={isGenerating}
-                      >
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-                        <span className="relative flex items-center justify-center">
-                          <Download className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-bounce' : ''}`} />
-                          {isGenerating ? (t.generating || 'Generating...') : (t.downloadPdf || "Download PDF")}
-                        </span>
-                      </Button>
-                    </div>
+
+                    <DownloadDropdown
+                      onDownload={handleDownload}
+                      isGenerating={isGenerating}
+                      labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
+                      variant="compact"
+                      className="rounded-full shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                    />
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white" 
+                      onClick={() => setShowResetDialog(true)} 
+                      disabled={isGenerating}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> {t.reset || "Reset"}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -376,18 +347,12 @@ export function HomeBiodataBuilder() {
             </div>
 
             {/* Right Download Button */}
-            <Button 
-              size="sm" 
-              onClick={handleDownload} 
-              disabled={isGenerating}
-              className="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-stitch-primary to-stitch-primary/90 text-white font-bold text-xs h-10 px-4 flex gap-1.5 shrink-0"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-              <span className="relative flex items-center gap-1.5">
-                <Download className={`w-3.5 h-3.5 ${isGenerating ? 'animate-bounce' : ''}`} />
-                {isGenerating ? '...' : (t.download || "Download")}
-              </span>
-            </Button>
+            <DownloadDropdown
+              onDownload={handleDownload}
+              isGenerating={isGenerating}
+              labels={{ download: t.download, generating: t.generating }}
+              variant="compact"
+            />
 
           </div>
         )}

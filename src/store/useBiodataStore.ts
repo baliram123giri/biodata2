@@ -41,6 +41,7 @@ interface BiodataState {
   removeSticker: (id: string) => void;
   setSelectedTemplate: (templateId: string) => void;
   resetStore: () => void;
+  resetFormDataOnly: () => void;
 }
 
 export const useBiodataStore = create<BiodataState>()(
@@ -58,7 +59,15 @@ export const useBiodataStore = create<BiodataState>()(
           stickers: []
         },
         selectedTemplate: "royal",
-        setFormData: (data) => set({ formData: data }),
+        setFormData: (data) => set((state) => ({
+          formData: {
+            ...state.formData,
+            ...data,
+            // Preserve layout and stickers as they are managed independently in the store
+            layout: state.formData.layout,
+            stickers: state.formData.stickers,
+          }
+        })),
         updateField: (section, id, value) => set((state) => {
           const sectionData = state.formData[section];
           if (Array.isArray(sectionData)) {
@@ -117,6 +126,18 @@ export const useBiodataStore = create<BiodataState>()(
           }, 
           selectedTemplate: "royal" 
         }),
+        resetFormDataOnly: () => set((state) => ({
+          formData: {
+            ...defaultBiodataValues,
+            layout: {
+              header: { x: 0, y: 80 },
+              personalDetails: { x: 60, y: 280 },
+              education: { x: 320, y: 280 },
+              footer: { x: 0, y: 1023 },
+            },
+            stickers: []
+          }
+        })),
       })
     ),
     {
