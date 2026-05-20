@@ -7,8 +7,9 @@ import { BiodataForm } from "@/components/biodata/BiodataForm";
 
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
@@ -21,7 +22,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { translations } from "@/lib/translations";
 import { useBiodataStore } from "@/store/useBiodataStore";
@@ -37,11 +38,17 @@ import {
 } from "@/components/ui/sheet";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 
 // Konva uses canvas — must be client-only
 const KonvaPreview = dynamic(
   () => import("@/components/editor/KonvaPreview").then((mod) => mod.KonvaPreview),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <PreviewLoader />
+  }
 );
 
 /**
@@ -146,12 +153,93 @@ export function HomeBiodataBuilder() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  // Show floating template picker only while the builder section is in view
+  const builderRef = useRef<HTMLElement>(null);
+  const [isBuilderVisible, setIsBuilderVisible] = useState(false);
+
+  useEffect(() => {
+    const el = builderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsBuilderVisible(entry.isIntersecting),
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Get current template for the box preview
   const currentTemplate = TEMPLATE_CONFIGS[storedTemplate] || TEMPLATE_CONFIGS["royal"];
 
   return (
     <FormProvider {...methods}>
-      <section id="builder" className="py-8 md:py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
+      {/* Custom slow-floating style tag for premium designer look */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes gentle-float {
+          0%, 100% { transform: translateY(-50%) translateX(0); }
+          50% { transform: translateY(-52%) translateX(-3px); }
+        }
+        .animate-gentle-float {
+          animation: gentle-float 4s ease-in-out infinite;
+        }
+      `}} />
+
+      {/* Desktop Floating Sticky Template Trigger — only visible when builder section is in view */}
+      <div className={cn(
+        "hidden lg:flex fixed right-0 top-1/2 z-40 animate-gentle-float transition-all duration-500",
+        isBuilderVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
+      )}>
+        <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <SheetTrigger
+            render={
+              <button
+                className="group flex flex-col items-center gap-2.5 p-3.5 bg-white/80 backdrop-blur-xl border border-stone-300/80 border-r-0 rounded-l-2xl shadow-[-4px_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[-6px_6px_28px_rgba(0,0,0,0.12)] hover:bg-white/90 hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
+              />
+            }
+          >
+            <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+              <LayoutDashboard className="w-4 h-4" />
+            </div>
+            
+            <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
+              {currentTemplate.frame.type === "image" ? (
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
+                    backgroundColor: currentTemplate.frame.bgColor
+                  }}
+                />
+              ) : currentTemplate.frame.type === "gradient" ? (
+                <div
+                  className="absolute inset-0"
+                  style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
+                />
+              ) : (
+                <div
+                  className="absolute inset-0"
+                  style={{ backgroundColor: currentTemplate.defaultPrimary }}
+                />
+              )}
+            </div>
+
+            <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
+              Themes
+            </span>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto px-6">
+            <SheetHeader className="mb-6">
+              <SheetTitle className="flex items-center gap-2">
+                <LayoutDashboard className="w-5 h-5 text-primary" />
+                Pick a Template
+              </SheetTitle>
+            </SheetHeader>
+            <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <section ref={builderRef} id="builder" className="py-8 md:py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
         {/* Section Header */}
         <div className="container mx-auto max-w-[1400px] mb-10">
           <div className="flex flex-col items-center text-center gap-4 mb-8">
@@ -171,116 +259,61 @@ export function HomeBiodataBuilder() {
 
         {/* Builder Content */}
         <div className="container mx-auto max-w-[1400px]">
-          <div className="flex flex-col lg:flex-row gap-4 lg:gap-10 items-start">
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
-
-              {/* Form Side */}
-              <div className="md:col-span-5 flex flex-col w-full">
-                <BiodataForm />
-              </div>
-
-              {/* Mobile Preview — shown AFTER the form on small screens (mobile only) */}
-              <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-28">
-                <EmbeddedPreviewSection storedTemplate={storedTemplate} />
-                <Button
-                  onClick={() => router.push("/edit")}
-                  className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-xl hover:shadow-stitch-primary/20 transition-all flex gap-2 h-11 text-sm font-bold"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Edit in Designer
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-
-              {/* Preview Side - Sticky (tablet and desktop) */}
-              <div className="hidden md:block md:col-span-7 md:sticky md:top-24 w-full">
-                <div className="flex-1 flex flex-col gap-6 items-center w-full">
-                  <EmbeddedPreviewSection storedTemplate={storedTemplate} />
-
-                  <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
-                    <Button
-                      onClick={() => router.push("/edit")}
-                      className="rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Edit in Designer</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-
-                    <DownloadDropdown
-                      onDownload={handleDownload}
-                      isGenerating={isGenerating}
-                      labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
-                      variant="compact"
-                      className="rounded-full shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
-                    />
-
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white" 
-                      onClick={() => setShowResetDialog(true)} 
-                      disabled={isGenerating}
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> {t.reset || "Reset"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            {/* Form Side */}
+            <div className="md:col-span-5 flex flex-col w-full">
+              <BiodataForm />
             </div>
 
-            {/* Right Side: Template Picker Box */}
-            <div className="hidden lg:flex flex-col shrink-0 lg:sticky lg:top-24 z-30">
-              <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <SheetTrigger
-                  render={
-                    <button className="group flex flex-col items-center gap-3 p-4 bg-white border border-primary/10 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/40 transition-all active:scale-95 text-center w-28" />
-                  }
-                >
-                  <div className="p-2 rounded-full bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                    <LayoutDashboard className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Frames</span>
-                    <div className="w-16 h-20 rounded-lg shadow-inner border border-black/5 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/20 transition-all">
-                      {currentTemplate.frame.type === "image" ? (
-                        <div
-                          className="absolute inset-0 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
-                            backgroundColor: currentTemplate.frame.bgColor
-                          }}
-                        />
-                      ) : currentTemplate.frame.type === "gradient" ? (
-                        <div
-                          className="absolute inset-0"
-                          style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
-                        />
-                      ) : (
-                        <div
-                          className="absolute inset-0"
-                          style={{ backgroundColor: currentTemplate.defaultPrimary }}
-                        />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-black text-primary uppercase truncate w-full mt-1">{currentTemplate.name}</span>
-                  </div>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto">
-                  <SheetHeader className="mb-6">
-                    <SheetTitle className="flex items-center gap-2">
-                      <LayoutDashboard className="w-5 h-5 text-primary" />
-                      Pick a Template
-                    </SheetTitle>
-                  </SheetHeader>
-                  <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
-                </SheetContent>
-              </Sheet>
+            {/* Mobile Preview — shown AFTER the form on small screens (mobile only) */}
+            <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-28">
+              <EmbeddedPreviewSection storedTemplate={storedTemplate} />
+              <Button
+                onClick={() => router.push("/edit")}
+                className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-xl hover:shadow-stitch-primary/20 transition-all flex gap-2 h-11 text-sm font-bold"
+              >
+                <Sparkles className="w-4 h-4" />
+                Edit in Designer
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+
+            {/* Preview Side - Sticky (tablet and desktop) */}
+            <div className="hidden md:block md:col-span-7 md:sticky md:top-24 w-full">
+              <div className="flex-1 flex flex-col gap-6 items-center w-full">
+                <EmbeddedPreviewSection storedTemplate={storedTemplate} />
+
+                <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
+                  <Button
+                    onClick={() => router.push("/edit")}
+                    className="rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Edit in Designer</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+
+                  <DownloadDropdown
+                    onDownload={handleDownload}
+                    isGenerating={isGenerating}
+                    labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
+                    variant="compact"
+                    className="rounded-full shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                  />
+
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white" 
+                    onClick={() => setShowResetDialog(true)} 
+                    disabled={isGenerating}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> {t.reset || "Reset"}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -383,15 +416,21 @@ export function HomeBiodataBuilder() {
   );
 }
 
-/**
- * Isolated Preview Section — uses Konva canvas for instant, zero-flicker live preview.
- */
 function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) {
   const formData = useWatch();
+  const [isClientMounted, setIsClientMounted] = useState(false);
+
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
 
   return (
-    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none">
-      <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
+    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none flex items-center justify-center">
+      {!isClientMounted ? (
+        <PreviewLoader />
+      ) : (
+        <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
+      )}
     </div>
   );
 }

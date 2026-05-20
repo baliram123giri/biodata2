@@ -27,7 +27,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 import { ImageUpload } from "@/components/ImageUpload";
-const KonvaPreview = dynamic(() => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview), { ssr: false });
+
+import { PreviewLoader } from "@/components/biodata/PreviewLoader";
+
+const KonvaPreview = dynamic(
+  () => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview),
+  { 
+    ssr: false,
+    loading: () => <PreviewLoader />
+  }
+);
 
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -227,7 +236,40 @@ export default function EditPage() {
     }
   }, [isRightOpen, isMounted]);
 
-  if (!isMounted) return null;
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-stone-100/30 flex flex-col">
+        {/* Simple skeleton header */}
+        <header className="h-16 border-b border-stone-200/80 bg-white flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            {/* Mock Go Back button */}
+            <div className="w-24 h-9 bg-stone-100 rounded-full animate-pulse border border-stone-200" />
+          </div>
+          <div className="w-28 h-9 bg-stone-200 rounded-full animate-pulse" />
+        </header>
+        {/* Main loading area */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Skeleton Sidebar (Left) */}
+          <aside className="w-80 border-r border-stone-200/80 bg-white p-6 hidden lg:flex flex-col gap-6">
+            <div className="h-8 w-32 bg-stone-200 rounded-md animate-pulse" />
+            <div className="h-10 w-full bg-stone-100 rounded-md animate-pulse" />
+            <div className="h-20 w-full bg-stone-100 rounded-md animate-pulse" />
+            <div className="h-10 w-full bg-stone-100 rounded-md animate-pulse" />
+          </aside>
+          {/* Canvas Loading Area */}
+          <main className="flex-1 flex items-center justify-center p-6 bg-stone-50/20">
+            <PreviewLoader />
+          </main>
+          {/* Skeleton Sidebar (Right) */}
+          <aside className="w-80 border-l border-stone-200/80 bg-white p-6 hidden lg:flex flex-col gap-6">
+            <div className="h-8 w-24 bg-stone-200 rounded-md animate-pulse" />
+            <div className="h-12 w-full bg-stone-100 rounded-md animate-pulse" />
+            <div className="h-12 w-full bg-stone-100 rounded-md animate-pulse" />
+          </aside>
+        </div>
+      </div>
+    );
+  }
 
   const handleDownload = async (format: DownloadFormat = "pdf") => {
     await triggerDownload(formData, selectedTemplate, format);
