@@ -40,9 +40,15 @@ export function useDownloadBiodata() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
+        const text = await res.text();
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(text);
+        } catch (e) {
+          console.error("Non-JSON error response:", res.status, res.statusText, text.substring(0, 500));
+        }
         console.error("Generation failed:", errorData);
-        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || "Unknown"}`);
+        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || res.statusText}`);
       }
 
       const blob = await res.blob();

@@ -321,7 +321,10 @@ export function HomeBiodataBuilder() {
 
         {/* Mobile Sticky Bottom Bar */}
         {showMobileBar && (
-          <div className="lg:hidden fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2 sm:py-2.5 px-2.5 sm:px-4 rounded-3xl z-50 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-2">
+          <div className={cn(
+            "lg:hidden fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2 sm:py-2.5 px-2.5 sm:px-4 rounded-3xl z-40 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 flex items-center justify-between gap-2",
+            isMobileDrawerOpen ? "opacity-0 pointer-events-none translate-y-10" : "animate-in slide-in-from-bottom"
+          )}>
 
             {/* Left Icons Grid */}
             <div className="flex items-center justify-around flex-1 pr-1 sm:pr-2 border-r border-muted-foreground/10">

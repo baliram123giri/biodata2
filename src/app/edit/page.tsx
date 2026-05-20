@@ -134,6 +134,7 @@ export default function EditPage() {
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
   const [isDraggingDrawer, setIsDraggingDrawer] = useState(false);
   const touchStartY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleDrawerTouchStart = (e: React.TouchEvent) => {
     if (window.innerWidth >= 1024) return;
@@ -165,6 +166,9 @@ export default function EditPage() {
     } else {
       setActiveTab(tab);
       setIsRightOpen(true);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
@@ -404,7 +408,10 @@ export default function EditPage() {
       <div className="flex-1 flex overflow-hidden relative pb-24 lg:pb-0">
 
         {/* Mobile Bottom Tab Bar */}
-        <nav className="fixed bottom-4 left-4 right-4 h-16 flex lg:hidden flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50">
+        <nav className={cn(
+          "fixed bottom-4 left-4 right-4 h-16 flex lg:hidden flex-row items-center justify-around px-2 py-1 bg-white/30 backdrop-blur-2xl border border-white/40 rounded-2xl shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.08)] z-50 transition-all duration-300",
+          isRightOpen ? "opacity-0 pointer-events-none translate-y-20" : "opacity-100 translate-y-0"
+        )}>
           <ToolButton
             icon={<LayoutDashboard />}
             label="Templates"
@@ -556,7 +563,7 @@ export default function EditPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 pt-0 scrollbar-thin scrollbar-thumb-stitch-outline/20 scroll-smooth">
             <div className="flex flex-col gap-8 pb-28 lg:pb-10">
               {activeTab === "templates" && <TemplateSelector />}
 

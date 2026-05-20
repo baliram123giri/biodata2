@@ -81,11 +81,29 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
     const canvas = document.createElement("canvas");
     const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
     const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-    canvas.width = completedCrop.width;
-    canvas.height = completedCrop.height;
+    
+    let targetWidth = completedCrop.width * scaleX;
+    let targetHeight = completedCrop.height * scaleY;
+
+    // Cap resolution to avoid massive base64 strings and 413 server errors (800px is still very sharp for a biodata photo)
+    const maxDim = 800;
+    if (targetWidth > maxDim || targetHeight > maxDim) {
+      if (targetWidth > targetHeight) {
+        targetHeight = Math.round((maxDim / targetWidth) * targetHeight);
+        targetWidth = maxDim;
+      } else {
+        targetWidth = Math.round((maxDim / targetHeight) * targetWidth);
+        targetHeight = maxDim;
+      }
+    }
+
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     const ctx = canvas.getContext("2d");
 
     if (!ctx) return;
+
+    ctx.imageSmoothingQuality = "high";
 
     ctx.drawImage(
       imgRef.current,
@@ -95,11 +113,11 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
       completedCrop.height * scaleY,
       0,
       0,
-      completedCrop.width,
-      completedCrop.height
+      targetWidth,
+      targetHeight
     );
 
-    const base64Image = canvas.toDataURL("image/jpeg", 0.9);
+    const base64Image = canvas.toDataURL("image/jpeg", 0.85);
     onChange(base64Image);
     setIsOpen(false);
     setImgSrc("");
@@ -143,30 +161,31 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
       )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-xl md:max-w-2xl p-4 sm:p-6 rounded-xl overflow-hidden max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="w-[95vw] sm:max-w-xl md:max-w-2xl p-4 sm:p-6 rounded-xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Adjust your photo</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 flex flex-col items-center justify-center bg-gray-100/50 rounded-lg p-2 sm:p-4 min-h-[200px] sm:min-h-[300px] overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center bg-gray-100/50 rounded-lg p-2 sm:p-4 min-h-0 overflow-hidden relative">
             {imgSrc && (
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={aspect}
-                className="max-w-full max-h-[50vh] sm:max-h-[400px]"
+                className="flex items-center justify-center max-w-full max-h-full"
               >
                 <img
                   ref={imgRef}
                   alt="Crop me"
                   src={imgSrc}
                   onLoad={onImageLoad}
-                  className="max-w-full h-auto object-contain max-h-[50vh] sm:max-h-[400px]"
+                  className="max-w-full object-contain"
+                  style={{ maxHeight: "calc(90vh - 180px)" }}
                 />
               </ReactCrop>
             )}
           </div>
-          <DialogFooter className="gap-2 mt-4 sm:mt-0">
+          <DialogFooter className="shrink-0 gap-2 mt-2 sm:mt-0 pt-2">
             <Button variant="outline" onClick={() => setIsOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
