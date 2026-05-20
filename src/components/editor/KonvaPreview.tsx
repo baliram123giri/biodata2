@@ -488,8 +488,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
   const sections = useMemo(() => [
     renderSectionData(t.personal || "Personal Details", formData.personalDetails),
-    renderSectionData(t.family || "Family Details", formData.familyDetails),
     renderSectionData(t.education || "Education & Work", formData.educationDetails),
+    renderSectionData(t.family || "Family Details", formData.familyDetails),
     renderSectionData(t.contact || "Contact Details", formData.contactDetails),
   ].filter(Boolean), [renderSectionData, formData, t]);
 

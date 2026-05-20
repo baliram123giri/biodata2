@@ -71,7 +71,7 @@ export function BiodataForm() {
         </Select>
       </div>
 
-      <Accordion type="multiple" defaultValue={["personal", "education", "family", "contact", "customization"]} className="w-full">
+      <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
         
         {/* CUSTOMIZATION */}
         <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
