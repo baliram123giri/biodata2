@@ -355,9 +355,11 @@ export default function EditPage() {
           <div className="hidden md:flex items-center gap-1 h-full">
             <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
             <Dialog>
-              <DialogTrigger>
-                <ToolbarItem icon={<RefreshCcw />} label="Reset" />
-              </DialogTrigger>
+              <DialogTrigger
+                render={
+                  <ToolbarItem icon={<RefreshCcw />} label="Reset" />
+                }
+              />
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Reset Layout Positions?</DialogTitle>
