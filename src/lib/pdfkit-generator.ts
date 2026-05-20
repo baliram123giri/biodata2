@@ -12,6 +12,7 @@ import { processPDFField } from './pdf-data-utils';
 import { getTemplateConfig, getFrameImageUrl } from './frame-config';
 import { STICKER_ASSETS } from './sticker-assets';
 import { getLightBgColor } from './color-utils';
+import { WATERMARK_CONFIG, getWatermarkCoordinates } from './watermark-utils';
 
 const A4_W = 595;
 const A4_H = 842;
@@ -300,6 +301,23 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               })
             )
           ),
+          
+        WATERMARK_CONFIG.isEnabled && React.createElement(View, {
+          style: {
+            position: 'absolute',
+            left: getWatermarkCoordinates(A4_W, A4_H).x,
+            top: getWatermarkCoordinates(A4_W, A4_H).y,
+            width: WATERMARK_CONFIG.width,
+            height: WATERMARK_CONFIG.height,
+            opacity: WATERMARK_CONFIG.opacity,
+            borderRadius: getWatermarkCoordinates(A4_W, A4_H).radius,
+            overflow: 'hidden'
+          } as any
+        }, React.createElement(Image, {
+          src: WATERMARK_CONFIG.url,
+          style: { width: '100%', height: '100%' } as any
+        })),
+
         layout.headerItems.map((item, i) => React.createElement(Text, {
           key: i,
           style: {

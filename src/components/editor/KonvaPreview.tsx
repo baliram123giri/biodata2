@@ -25,6 +25,7 @@ import { NewGenerationKonva } from "@/lib/templates/classic/new-generation/Konva
 import { KonvaRenderer as OrnateGrandeurKonva } from "@/lib/templates/classic/ornate-grandeur/KonvaRenderer";
 import { GreenShapesKonva } from "@/lib/templates/classic/green-shapes/KonvaRenderer";
 import { getLightBgColor } from "@/lib/color-utils";
+import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
 
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
@@ -67,7 +68,36 @@ const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, pri
   if (componentId === "green-shapes") {
     return <GreenShapesKonva primaryColor={primaryColor} />;
   }
-  return null;
+});
+
+const GlobalWatermark = React.memo(function GlobalWatermark() {
+  const [watermarkImg] = useImage(WATERMARK_CONFIG.url);
+  if (!watermarkImg || !WATERMARK_CONFIG.isEnabled) return null;
+  
+  const coords = getWatermarkCoordinates(A4_W, A4_H);
+  
+  return (
+    <Group
+      x={coords.x}
+      y={coords.y}
+      width={coords.width}
+      height={coords.height}
+      clipFunc={(ctx) => {
+        ctx.beginPath();
+        ctx.arc(coords.width / 2, coords.height / 2, coords.radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+      }}
+    >
+      <KonvaImage
+        image={watermarkImg}
+        x={0}
+        y={0}
+        width={coords.width}
+        height={coords.height}
+        opacity={WATERMARK_CONFIG.opacity}
+      />
+    </Group>
+  );
 });
 
 const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; bgColor: string; }) {
@@ -622,6 +652,10 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} bgColor={bgColor} />
           )}
+          
+          {/* Global Watermark in center */}
+          <GlobalWatermark />
+          
           <Text x={A4_W / 2} y={A4_H - 30} text="www.biodatamaker.online" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" offsetX={50} />
         </Layer>
         <Layer>

@@ -45,7 +45,7 @@ import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 // Konva uses canvas — must be client-only
 const KonvaPreview = dynamic(
   () => import("@/components/editor/KonvaPreview").then((mod) => mod.KonvaPreview),
-  { 
+  {
     ssr: false,
     loading: () => <PreviewLoader />
   }
@@ -69,7 +69,7 @@ export function HomeBiodataBuilder() {
     const handleScroll = () => {
       const scrollPos = window.scrollY || document.documentElement.scrollTop;
       const customSection = document.getElementById("photo-customization-section");
-      
+
       if (customSection) {
         const rect = customSection.getBoundingClientRect();
         // Hide the mobile sticky bar once the user scrolls back up and reaches 
@@ -81,16 +81,16 @@ export function HomeBiodataBuilder() {
         setShowMobileBar(scrollPos > 400);
       }
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    
+
     // Execute immediately on mount
     handleScroll();
-    
+
     // Run repeated checks for the first 1.5s to capture scroll-restoration timing instantly
     const interval = setInterval(handleScroll, 100);
     const timeout = setTimeout(() => clearInterval(interval), 1500);
-    
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
       clearInterval(interval);
@@ -174,7 +174,8 @@ export function HomeBiodataBuilder() {
   return (
     <FormProvider {...methods}>
       {/* Custom slow-floating style tag for premium designer look */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes gentle-float {
           0%, 100% { transform: translateY(-50%) translateX(0); }
           50% { transform: translateY(-52%) translateX(-3px); }
@@ -200,7 +201,7 @@ export function HomeBiodataBuilder() {
             <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
               <LayoutDashboard className="w-4 h-4" />
             </div>
-            
+
             <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
               {currentTemplate.frame.type === "image" ? (
                 <div
@@ -258,12 +259,12 @@ export function HomeBiodataBuilder() {
         </div>
 
         {/* Builder Content */}
-        <div className="container mx-auto max-w-[1400px]">
+        <div className="container mx-auto max-w-6xl">
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
             {/* Form Side */}
-            <div className="md:col-span-5 flex flex-col w-full">
+            <div className="md:col-span-6 flex flex-col w-full">
               <BiodataForm />
             </div>
 
@@ -281,7 +282,7 @@ export function HomeBiodataBuilder() {
             </div>
 
             {/* Preview Side - Sticky (tablet and desktop) */}
-            <div className="hidden md:block md:col-span-7 md:sticky md:top-24 w-full">
+            <div className="hidden md:block md:col-span-5 md:sticky md:top-24 w-full">
               <div className="flex-1 flex flex-col gap-6 items-center w-full">
                 <EmbeddedPreviewSection storedTemplate={storedTemplate} />
 
@@ -303,11 +304,11 @@ export function HomeBiodataBuilder() {
                     className="rounded-full shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
                   />
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white" 
-                    onClick={() => setShowResetDialog(true)} 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white"
+                    onClick={() => setShowResetDialog(true)}
                     disabled={isGenerating}
                   >
                     <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> {t.reset || "Reset"}
@@ -321,10 +322,10 @@ export function HomeBiodataBuilder() {
         {/* Mobile Sticky Bottom Bar */}
         {showMobileBar && (
           <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2.5 px-4 rounded-3xl z-50 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-4">
-            
+
             {/* Left Icons Grid */}
             <div className="flex items-center justify-between flex-1 pr-2 border-r border-muted-foreground/10">
-              
+
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
                 <SheetTrigger
@@ -401,8 +402,8 @@ export function HomeBiodataBuilder() {
             </DialogHeader>
             <DialogFooter className="flex gap-2 sm:gap-0 mt-4">
               <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">{t.cancel || "Cancel"}</Button>
-              <Button 
-                onClick={handleReset} 
+              <Button
+                onClick={handleReset}
                 className="relative overflow-hidden rounded-full bg-stitch-primary text-stitch-on-primary hover:bg-stitch-primary/90"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />

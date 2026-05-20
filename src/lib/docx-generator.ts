@@ -38,6 +38,7 @@ import { getLightBgColor } from "./color-utils";
 import { ORNATE_SVG_PATHS } from "./templates/classic/ornate-grandeur/paths";
 import { SVG_PATHS } from "./templates/classic/new-generation/paths";
 import { STICKER_ASSETS } from "./sticker-assets";
+import { WATERMARK_CONFIG, getWatermarkCoordinates } from "./watermark-utils";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -132,41 +133,52 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${svgContent}</svg>`;
       let compositeOps: any[] = [];
 
-      if (componentId === "new-generation-arch") {
-        try {
-          const ganeshaBuffer = await fetchWithCache("https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png");
-          const wLeft = Math.round((595 - 380) * (A4_W / 595));
-          const wTop = Math.round(250 * (A4_H / 842));
-          const wWidth = Math.round(300 * (A4_W / 595));
-          const wHeight = Math.round(300 * (A4_H / 842));
-
-          const opaqueGanesha = await sharp(ganeshaBuffer)
-            .resize(wWidth, wHeight)
-            .ensureAlpha()
-            .composite([{
-              input: Buffer.from([255, 255, 255, Math.round(0.07 * 255)]),
-              raw: { width: 1, height: 1, channels: 4 },
-              blend: 'dest-in',
-              tile: true
-            }])
-            .png()
-            .toBuffer();
-
-          compositeOps.push({
-            input: opaqueGanesha,
-            top: wTop,
-            left: wLeft,
-          });
-        } catch (fetchErr) {
-          console.error("Failed to fetch/process ganesh watermark for docx", fetchErr);
-        }
       }
 
       let sharpImg = sharp(Buffer.from(fullSvg));
       if (compositeOps.length > 0) {
         sharpImg = sharpImg.composite(compositeOps);
       }
-      const buf = await sharpImg.png().toBuffer();
+      let buf = await sharpImg.png().toBuffer();
+      
+      if (WATERMARK_CONFIG.isEnabled) {
+        try {
+          const coords = getWatermarkCoordinates(595, 842);
+          const ganeshaBuffer = await fetchWithCache(WATERMARK_CONFIG.url);
+          const wLeft = Math.round(coords.x * (A4_W / 595));
+          const wTop = Math.round(coords.y * (A4_H / 842));
+          const wWidth = Math.round(coords.width * (A4_W / 595));
+          const wHeight = Math.round(coords.height * (A4_H / 842));
+          const wRadius = Math.round(coords.radius * (A4_W / 595));
+
+          const opaqueGanesha = await sharp(ganeshaBuffer)
+            .resize(wWidth, wHeight)
+            .ensureAlpha()
+            .composite([
+              {
+                input: Buffer.from(`
+                  <svg width="${wWidth}" height="${wHeight}">
+                    <circle cx="${wWidth / 2}" cy="${wHeight / 2}" r="${wRadius}" fill="white"/>
+                  </svg>
+                `),
+                blend: 'dest-in'
+              },
+              {
+                input: Buffer.from([255, 255, 255, Math.round(WATERMARK_CONFIG.opacity * 255)]),
+                raw: { width: 1, height: 1, channels: 4 },
+                blend: 'dest-in',
+                tile: true
+              }
+            ])
+            .png()
+            .toBuffer();
+
+          buf = await sharp(buf).composite([{ input: opaqueGanesha, top: wTop, left: wLeft }]).png().toBuffer();
+        } catch (fetchErr) {
+          console.error("Failed to fetch/process watermark for docx", fetchErr);
+        }
+      }
+
       return Buffer.from(buf);
     }
     
@@ -210,7 +222,46 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
     }
 
     const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${svgBody}</svg>`;
-    const buf = await sharp(Buffer.from(fullSvg)).png().toBuffer();
+    let buf = await sharp(Buffer.from(fullSvg)).png().toBuffer();
+
+    if (WATERMARK_CONFIG.isEnabled) {
+      try {
+        const coords = getWatermarkCoordinates(595, 842);
+        const ganeshaBuffer = await fetchWithCache(WATERMARK_CONFIG.url);
+        const wLeft = Math.round(coords.x * (A4_W / 595));
+        const wTop = Math.round(coords.y * (A4_H / 842));
+        const wWidth = Math.round(coords.width * (A4_W / 595));
+        const wHeight = Math.round(coords.height * (A4_H / 842));
+        const wRadius = Math.round(coords.radius * (A4_W / 595));
+
+        const opaqueGanesha = await sharp(ganeshaBuffer)
+          .resize(wWidth, wHeight)
+          .ensureAlpha()
+          .composite([
+            {
+              input: Buffer.from(`
+                <svg width="${wWidth}" height="${wHeight}">
+                  <circle cx="${wWidth / 2}" cy="${wHeight / 2}" r="${wRadius}" fill="white"/>
+                </svg>
+              `),
+              blend: 'dest-in'
+            },
+            {
+              input: Buffer.from([255, 255, 255, Math.round(WATERMARK_CONFIG.opacity * 255)]),
+              raw: { width: 1, height: 1, channels: 4 },
+              blend: 'dest-in',
+              tile: true
+            }
+          ])
+          .png()
+          .toBuffer();
+
+        buf = await sharp(buf).composite([{ input: opaqueGanesha, top: wTop, left: wLeft }]).png().toBuffer();
+      } catch (fetchErr) {
+        console.error("Failed to fetch/process watermark for docx", fetchErr);
+      }
+    }
+
     return Buffer.from(buf);
   } catch (err) {
     console.error("Frame generation error", err);
@@ -219,6 +270,51 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 }
 
 // ── Main Generator ───────────────────────────────────────────────────
+
+// ── Height estimation (mirrors KonvaPreview auto-scaling) ──────────
+// Word adds extra overhead per row (cell padding, default paragraph spacing)
+// that Konva/PDF renderers don't have. We apply a 1.4x multiplier to account.
+const DOCX_OVERHEAD_FACTOR = 1.4;
+
+function estimateContentHeight(fontSize: number, formData: any, trans: Record<string, string>): number {
+  const LINE_SPACING = fontSize * 0.5;
+  const LABEL_WIDTH = 130;
+  const COLON_WIDTH = 20;
+  const cWidth = 595 - (formData._padding || 45) * 2 - 10;
+  const valueWidth = cWidth - LABEL_WIDTH - COLON_WIDTH;
+  let cursorY = (formData._paddingY || formData._padding || 45) + 20;
+
+  // Floating image paragraphs (frame bg + photo) still occupy line height in doc flow
+  if (formData.mantra) cursorY += fontSize * 2;
+  if (formData.title) cursorY += fontSize * 2.5;
+
+  const secs = [
+    { fields: formData.personalDetails, label: trans.personal || "Personal Details" },
+    { fields: formData.educationDetails, label: trans.educationSec || "Education & Career" },
+    { fields: formData.familyDetails, label: trans.family || "Family Background" },
+    { fields: formData.contactDetails, label: trans.contact || "Contact Details" },
+  ];
+
+  for (const sec of secs) {
+    const fields = sec.fields
+      ?.map((f: any) => processPDFField(f, sec.fields, formData, trans))
+      .filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
+    if (fields.length === 0) continue;
+
+    cursorY += Math.round(fontSize * 1.4) + LINE_SPACING; // section title
+    for (const field of fields) {
+      const valText = String(field.displayValue);
+      const valW = valText.length * fontSize * 0.6;
+      const lines = Math.ceil(valW / valueWidth) || 1;
+      const rowHeight = Math.max(fontSize, lines * fontSize * 1.1);
+      cursorY += rowHeight + LINE_SPACING;
+    }
+    cursorY += fontSize * 1.5; // section gap
+  }
+
+  // Apply overhead factor to account for Word's extra cell padding & paragraph spacing
+  return cursorY * DOCX_OVERHEAD_FACTOR;
+}
 
 export async function generateDocxBuffer(opts: {
   formData: any;
@@ -236,6 +332,48 @@ export async function generateDocxBuffer(opts: {
   
   const currentLang = data.language || "English";
   const t = translations[currentLang] || translations["English"];
+
+  // ── Auto-scale font size to fit single page (mirrors Konva algorithm) ──
+  const baseFontSize = theme.fontSize || 11;
+  const padding = theme.padding ?? config.defaultPadding ?? 45;
+  const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
+  const A4_H = 842;
+  const MAX_H = A4_H - paddingY;
+
+  // Attach padding to data for height estimation
+  const dataWithPadding = { ...data, _padding: padding, _paddingY: paddingY };
+
+  let fSize = baseFontSize;
+  let totalHeight = estimateContentHeight(fSize, dataWithPadding, t);
+
+  // Reduce font size until content fits on one page (minimum 7pt)
+  if (totalHeight > MAX_H) {
+    for (let s = baseFontSize - 0.5; s >= 7; s -= 0.5) {
+      const testHeight = estimateContentHeight(s, dataWithPadding, t);
+      if (testHeight <= MAX_H) { fSize = s; break; }
+      fSize = s;
+    }
+  }
+
+  // ── Derive all DOCX sizes from the (possibly scaled) fSize ──
+  const docxFontSize = Math.round(fSize * 2);
+  const docxTitleFontSize = Math.round(fSize * 2 * 2);
+  const docxMantraFontSize = Math.round(fSize * 1.2 * 2);
+  const docxSectionTitleFontSize = Math.round(fSize * 1.4 * 2);
+  const lineSpacingTwips = Math.round(fSize * 0.5 * 20);
+  const sectionGapTwips = Math.round(fSize * 1.5 * 20);
+  const mantraAfterTwips = Math.round(fSize * 2 * 20);
+  const titleAfterTwips = Math.round(fSize * 2.5 * 20);
+
+  // Column widths matching Konva: Label=130, Colon=20, Value=rest
+  const contentWidth = 595 - padding * 2 - 10;
+  const labelPct = Math.round((130 / contentWidth) * 100);
+  const colonPct = Math.round((20 / contentWidth) * 100);
+  const valuePct = 100 - labelPct - colonPct;
+
+  // Page margins: convert padding (points) to twips (1pt = 20 twips)
+  const marginXTwips = Math.round(padding * 20);
+  const marginYTwips = Math.round(paddingY * 20);
 
   // ── Build document children ────────────────────────────────────
   const docChildren: (Paragraph | Table)[] = [];
@@ -354,12 +492,12 @@ export async function generateDocxBuffer(opts: {
     docChildren.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { after: 100 },
+        spacing: { after: mantraAfterTwips },
         children: [
           new TextRun({
             text: data.mantra,
             font: "Noto Sans Devanagari",
-            size: 24,
+            size: docxMantraFontSize,
             color: hexColor(primary),
             bold: true,
           }),
@@ -373,11 +511,11 @@ export async function generateDocxBuffer(opts: {
     docChildren.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { after: 300 },
+        spacing: { after: titleAfterTwips },
         children: [
           new TextRun({
             text: data.title,
-            size: 36,
+            size: docxTitleFontSize,
             bold: true,
             color: hexColor(primary),
           }),
@@ -474,44 +612,47 @@ export async function generateDocxBuffer(opts: {
 
     if (fields.length === 0) continue;
 
-    // Section Title with accent bar
+    // Section Title with accent bar — spacing matches Konva's section gap
     docChildren.push(
       new Paragraph({
-        spacing: { before: 300, after: 150 },
+        spacing: { before: sectionGapTwips, after: lineSpacingTwips },
         children: [
           new TextRun({
             text: "▎ ",
             color: hexColor(primary),
-            size: 24,
+            size: docxSectionTitleFontSize,
           }),
           new TextRun({
             text: sec.label,
             bold: true,
-            size: 24,
+            size: docxSectionTitleFontSize,
             color: hexColor(primary),
           }),
         ],
       })
     );
 
-    // Field rows as a table for alignment
+    // Field rows as a table — spacing matches Konva's LINE_SPACING
+    const rowSpacingBefore = Math.round(lineSpacingTwips * 0.3);
+    const rowSpacingAfter = Math.round(lineSpacingTwips * 0.7);
+
     const tableRows = fields.map(
       (f: any) =>
         new TableRow({
           children: [
             // Label cell
             new TableCell({
-              width: { size: 35, type: WidthType.PERCENTAGE },
+              width: { size: labelPct, type: WidthType.PERCENTAGE },
               borders: noBorders,
               verticalAlign: VerticalAlign.TOP,
               children: [
                 new Paragraph({
-                  spacing: { before: 40, after: 40 },
+                  spacing: { before: rowSpacingBefore, after: rowSpacingAfter },
                   children: [
                     new TextRun({
                       text: f.displayLabel,
                       bold: true,
-                      size: 20,
+                      size: docxFontSize,
                       color: hexColor(secondary),
                     }),
                   ],
@@ -520,16 +661,16 @@ export async function generateDocxBuffer(opts: {
             }),
             // Colon cell
             new TableCell({
-              width: { size: 5, type: WidthType.PERCENTAGE },
+              width: { size: colonPct, type: WidthType.PERCENTAGE },
               borders: noBorders,
               verticalAlign: VerticalAlign.TOP,
               children: [
                 new Paragraph({
-                  spacing: { before: 40, after: 40 },
+                  spacing: { before: rowSpacingBefore, after: rowSpacingAfter, line: Math.round(fSize * 1.1 * 20) },
                   children: [
                     new TextRun({
                       text: ":",
-                      size: 20,
+                      size: docxFontSize,
                       color: hexColor(secondary),
                     }),
                   ],
@@ -538,16 +679,16 @@ export async function generateDocxBuffer(opts: {
             }),
             // Value cell
             new TableCell({
-              width: { size: 60, type: WidthType.PERCENTAGE },
+              width: { size: valuePct, type: WidthType.PERCENTAGE },
               borders: noBorders,
               verticalAlign: VerticalAlign.TOP,
               children: [
                 new Paragraph({
-                  spacing: { before: 40, after: 40 },
+                  spacing: { before: rowSpacingBefore, after: rowSpacingAfter, line: Math.round(fSize * 1.1 * 20) },
                   children: [
                     new TextRun({
                       text: String(f.displayValue),
-                      size: 20,
+                      size: docxFontSize,
                       color: "333333",
                     }),
                   ],
@@ -565,8 +706,6 @@ export async function generateDocxBuffer(opts: {
         rows: tableRows,
       })
     );
-
-    // Table row height config doesn't exist perfectly, but spacing does the job
   }
 
   // ── Create Document ────────────────────────────────────────────
@@ -576,7 +715,10 @@ export async function generateDocxBuffer(opts: {
         document: {
           run: {
             font: "Calibri",
-            size: 20,
+            size: docxFontSize,
+          },
+          paragraph: {
+            spacing: { before: 0, after: 0, line: 240 },
           },
         },
       },
@@ -586,10 +728,10 @@ export async function generateDocxBuffer(opts: {
         properties: {
           page: {
             margin: {
-              top: convertInchesToTwip(0.8),
-              bottom: convertInchesToTwip(0.8),
-              left: convertInchesToTwip(0.8),
-              right: convertInchesToTwip(0.8),
+              top: marginYTwips,
+              bottom: marginYTwips,
+              left: marginXTwips,
+              right: marginXTwips,
             },
           },
         },

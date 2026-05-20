@@ -6,8 +6,6 @@ import useImage from "use-image";
 import { SVG_PATHS } from "./paths";
 
 export const NewGenerationKonva = React.memo(({ primaryColor }: { primaryColor: string }) => {
-  const [ganeshaImg] = useImage("https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png");
-
   const [svgUrl, setSvgUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -32,18 +30,6 @@ export const NewGenerationKonva = React.memo(({ primaryColor }: { primaryColor: 
 
   return (
     <Group>
-      {/* Background Watermark (Ganesha) */}
-      {ganeshaImg && (
-        <KonvaImage
-          image={ganeshaImg}
-          x={595 - 380}
-          y={250}
-          width={300}
-          height={300}
-          opacity={0.07}
-        />
-      )}
-
       {image && (
         <KonvaImage
           image={image}

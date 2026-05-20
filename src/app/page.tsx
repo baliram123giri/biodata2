@@ -37,12 +37,12 @@ export default function Home() {
               <div className="flex items-center gap-2 shrink-0"><CheckCircle2 className="w-4 h-4 text-primary" /> Free PDF</div>
             </div>
           </div>
-          
+
           <div className="flex-1 w-full max-w-md mx-auto lg:mx-0">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-muted/20">
-              <img 
-                src="/arjun_sharma.png" 
-                alt="Free Premium Marriage Biodata Template Preview" 
+              <img
+                src="/arjun_sharma.png"
+                alt="Free Premium Marriage Biodata Template Preview"
                 className="w-full h-auto object-cover aspect-[3/4] hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -64,32 +64,32 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard 
+            <FeatureCard
               icon={<FileText className="w-8 h-8 text-primary" />}
               title="50+ Beautiful Templates"
               description="Pick from professionally designed biodata formats — traditional designs with religious symbols to modern clean layouts."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Smartphone className="w-8 h-8 text-primary" />}
               title="Simple to Use"
               description="No design experience needed. Open the form, type in your details, pick a template, and your biodata is ready."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Monitor className="w-8 h-8 text-primary" />}
               title="Live Preview as You Type"
               description="Watch your biodata update with every keystroke. You see the final result on screen before you download."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Download className="w-8 h-8 text-primary" />}
               title="Free PDF Download"
               description="Download your finished biodata as a high-quality PDF instantly. Share on WhatsApp or print on A4 paper."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<span className="text-2xl font-bold text-primary">Aअ</span>}
               title="10 Indian Languages"
               description="Create your biodata in Hindi, Tamil, Telugu, Marathi, Gujarati, Kannada, Bengali, Punjabi, Urdu, or English."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Lock className="w-8 h-8 text-primary" />}
               title="100% Private"
               description="Your name, photo, and personal details never leave your device. No login required. Nothing stored on our servers."
@@ -114,9 +114,9 @@ export default function Home() {
           </div>
 
           <div className="mt-16 text-center">
-             <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg" asChild>
-                <a href="#builder">Start Creating Free</a>
-             </Button>
+            <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg" asChild>
+              <a href="#builder">Start Creating Free</a>
+            </Button>
           </div>
         </div>
       </section>
