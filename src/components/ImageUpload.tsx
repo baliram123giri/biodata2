@@ -143,34 +143,34 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
       )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-xl md:max-w-2xl p-4 sm:p-6 rounded-xl overflow-hidden max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Adjust your photo</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg p-4 min-h-[300px] max-h-[500px] overflow-auto">
+          <div className="flex-1 flex flex-col items-center justify-center bg-gray-100/50 rounded-lg p-2 sm:p-4 min-h-[200px] sm:min-h-[300px] overflow-hidden">
             {imgSrc && (
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={aspect}
-                className="max-w-full"
+                className="max-w-full max-h-[50vh] sm:max-h-[400px]"
               >
                 <img
                   ref={imgRef}
                   alt="Crop me"
                   src={imgSrc}
                   onLoad={onImageLoad}
-                  style={{ maxHeight: '400px' }}
+                  className="max-w-full h-auto object-contain max-h-[50vh] sm:max-h-[400px]"
                 />
               </ReactCrop>
             )}
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <DialogFooter className="gap-2 mt-4 sm:mt-0">
+            <Button variant="outline" onClick={() => setIsOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={getCroppedImg}>
+            <Button onClick={getCroppedImg} className="w-full sm:w-auto">
               Save Photo
             </Button>
           </DialogFooter>

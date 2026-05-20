@@ -48,18 +48,18 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Stitch Project Colors */
-  --color-stitch-primary: #735c00;
-  --color-stitch-primary-container: #d4af37;
-  --color-stitch-on-primary-container: #554300;
-  --color-stitch-surface: #fff8f5;
-  --color-stitch-on-surface: #1e1b18;
-  --color-stitch-surface-variant: #e9e1dc;
-  --color-stitch-on-surface-variant: #4d4635;
-  --color-stitch-outline: #7f7663;
-  --color-stitch-outline-variant: #d0c5af;
-  --color-stitch-tertiary: #70585b;
-  --color-stitch-tertiary-container: #c9acaf;
+  /* Stitch Project Colors - Updated to Ocean Theme */
+  --color-stitch-primary: #0891b2;
+  --color-stitch-primary-container: #cffafe;
+  --color-stitch-on-primary-container: #164e63;
+  --color-stitch-surface: #f8fafc;
+  --color-stitch-on-surface: #0f172a;
+  --color-stitch-surface-variant: #f1f5f9;
+  --color-stitch-on-surface-variant: #475569;
+  --color-stitch-outline: #cbd5e1;
+  --color-stitch-outline-variant: #e2e8f0;
+  --color-stitch-tertiary: #0284c7;
+  --color-stitch-tertiary-container: #e0f2fe;
   --font-noto-serif: var(--font-noto-serif);
 }
 
@@ -151,7 +151,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground bg-gradient-to-br from-cyan-50 via-white to-blue-50;
+    min-height: 100vh;
+  }
+  .dark body {
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950;
   }
   html {
     @apply font-sans;

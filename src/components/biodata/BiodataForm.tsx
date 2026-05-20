@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, memo } from "react";
+import { motion } from "framer-motion";
 
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 
@@ -123,7 +124,7 @@ export function BiodataForm() {
 
 const FieldSection = memo(function FieldSection({ name, title, currentLang, icon }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string, icon: React.ReactNode }) {
   const { control, register } = useFormContext<BiodataFormValues>();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, swap } = useFieldArray({
     control,
     name,
   });
@@ -147,19 +148,27 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
           {title}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="space-y-4 pt-2">
+      <AccordionContent className="space-y-4 pt-2 overflow-hidden">
         <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
             const liveLabel = liveFields[index]?.label || field.label;
             return (
-            <div key={field.id} className={`flex flex-col gap-1 relative group px-1 py-0.5`}>
+            <motion.div layout key={field.id} transition={{ type: "spring", stiffness: 400, damping: 30 }} className={`flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10`}>
               <div className="flex items-center justify-between mb-1">
                 <EditableLabel name={`${name}.${index}.label`} />
                 
-                <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-0.5">
+                  <button type="button" disabled={index === 0} onClick={() => swap(index, index - 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Up">
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" disabled={index === fields.length - 1} onClick={() => swap(index, index + 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Down">
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {field.type === "select" ? (
@@ -271,7 +280,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
               ) : (
                 <Input type={field.type} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
               )}
-            </div>
+            </motion.div>
             );
           })}
         </div>

@@ -321,20 +321,20 @@ export function HomeBiodataBuilder() {
 
         {/* Mobile Sticky Bottom Bar */}
         {showMobileBar && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2.5 px-4 rounded-3xl z-50 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-4">
+          <div className="lg:hidden fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2 sm:py-2.5 px-2.5 sm:px-4 rounded-3xl z-50 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-2">
 
             {/* Left Icons Grid */}
-            <div className="flex items-center justify-between flex-1 pr-2 border-r border-muted-foreground/10">
+            <div className="flex items-center justify-around flex-1 pr-1 sm:pr-2 border-r border-muted-foreground/10">
 
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
                 <SheetTrigger
                   render={
-                    <button className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11" />
+                    <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11" />
                   }
                 >
-                  <LayoutDashboard className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
-                  <span className="text-[9px] font-bold tracking-tight">Themes</span>
+                  <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
+                  <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Themes</span>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
                   <SheetHeader className="mb-6">
@@ -353,29 +353,29 @@ export function HomeBiodataBuilder() {
                   const el = document.getElementById('mobile-preview-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
-                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11"
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11"
               >
-                <Eye className="w-5 h-5" />
-                <span className="text-[9px] font-bold tracking-tight">Preview</span>
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Preview</span>
               </button>
 
               {/* Designer Option */}
               <button
                 onClick={() => router.push("/edit")}
-                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-11"
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11"
               >
-                <Sparkles className="w-5 h-5" />
-                <span className="text-[9px] font-bold tracking-tight">Design</span>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Design</span>
               </button>
 
               {/* Reset Option */}
               <button
                 onClick={() => setShowResetDialog(true)}
                 disabled={isGenerating}
-                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all w-11 disabled:opacity-50"
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50"
               >
-                <RotateCcw className="w-5 h-5" />
-                <span className="text-[9px] font-bold tracking-tight">Reset</span>
+                <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Reset</span>
               </button>
 
             </div>

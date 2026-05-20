@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,7 +86,7 @@ export default function Home() {
               description="Download your finished biodata as a high-quality PDF instantly. Share on WhatsApp or print on A4 paper."
             />
             <FeatureCard
-              icon={<span className="text-2xl font-bold text-primary">Aअ</span>}
+              icon={<span className="text-2xl font-bold text-white">Aअ</span>}
               title="10 Indian Languages"
               description="Create your biodata in Hindi, Tamil, Telugu, Marathi, Gujarati, Kannada, Bengali, Punjabi, Urdu, or English."
             />
@@ -126,10 +127,11 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <Card className="border-none shadow-md hover:shadow-lg transition-shadow bg-card h-full">
+    <Card className="border-none shadow-md hover:shadow-lg transition-all hover:-translate-y-1 bg-card h-full group">
       <CardContent className="pt-8 space-y-4 h-full flex flex-col items-center text-center">
-        <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mb-2">
-          {icon}
+        <div className="bg-gradient-primary w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-md group-hover:scale-110 transition-transform">
+          {/* Override the text-primary class passed from props to be white */}
+          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-8 h-8 text-white" })}
         </div>
         <h3 className="text-xl font-bold">{title}</h3>
         <p className="text-muted-foreground">{description}</p>
@@ -140,8 +142,8 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
 
 function StepCard({ number, title, description }: { number: string, title: string, description: string }) {
   return (
-    <div className="text-center space-y-4 relative">
-      <div className="w-16 h-16 mx-auto bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold shadow-lg z-10 relative">
+    <div className="text-center space-y-4 relative group">
+      <div className="w-16 h-16 mx-auto bg-gradient-primary text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg z-10 relative group-hover:scale-110 transition-transform border-0">
         {number}
       </div>
       <h3 className="text-lg font-bold">{title}</h3>
