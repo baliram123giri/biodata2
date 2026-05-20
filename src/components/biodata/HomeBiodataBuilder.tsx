@@ -9,7 +9,7 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2 } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
@@ -62,6 +62,12 @@ export function HomeBiodataBuilder() {
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleNavigateToEdit = () => {
+    setIsNavigating(true);
+    router.push("/edit");
+  };
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
 
@@ -272,12 +278,22 @@ export function HomeBiodataBuilder() {
             <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-28">
               <EmbeddedPreviewSection storedTemplate={storedTemplate} />
               <Button
-                onClick={() => router.push("/edit")}
-                className="w-full rounded-full bg-gradient-primary transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0"
+                onClick={handleNavigateToEdit}
+                disabled={isNavigating}
+                className="w-full rounded-full bg-gradient-primary transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0 disabled:opacity-70"
               >
-                <Sparkles className="w-4 h-4" />
-                Edit in Designer
-                <ArrowRight className="w-4 h-4 ml-1" />
+                {isNavigating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Opening Designer...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Edit in Designer
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
             </div>
 
@@ -288,12 +304,17 @@ export function HomeBiodataBuilder() {
 
                 <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
                   <Button
-                    onClick={() => router.push("/edit")}
-                    className="rounded-full bg-gradient-primary transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
+                    onClick={handleNavigateToEdit}
+                    disabled={isNavigating}
+                    className="rounded-full bg-gradient-primary transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0 disabled:opacity-70"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Edit in Designer</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    {isNavigating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isNavigating ? "Loading..." : "Edit in Designer"}</span>
+                    {!isNavigating && <ArrowRight className="w-3.5 h-3.5" />}
                   </Button>
 
                   <DownloadDropdown
@@ -364,10 +385,15 @@ export function HomeBiodataBuilder() {
 
               {/* Designer Option */}
               <button
-                onClick={() => router.push("/edit")}
-                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11"
+                onClick={handleNavigateToEdit}
+                disabled={isNavigating}
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50"
               >
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                {isNavigating ? (
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
                 <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Design</span>
               </button>
 
