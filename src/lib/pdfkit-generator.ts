@@ -34,6 +34,14 @@ const registerFonts = () => {
       { src: 'https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf', fontWeight: 700 },
     ]
   });
+  
+  Font.register({
+    family: 'Noto Serif',
+    fonts: [
+      { src: `${FONT_BASE_URL}/NotoSerif/NotoSerif-Regular.ttf`, fontWeight: 400 },
+      { src: `${FONT_BASE_URL}/NotoSerif/NotoSerif-Bold.ttf`, fontWeight: 700 },
+    ]
+  });
 
   const registerNoto = (name: string) => {
     Font.register({

@@ -47,8 +47,8 @@ export function useDownloadBiodata() {
         } catch (e) {
           console.error("Non-JSON error response:", res.status, res.statusText, text.substring(0, 500));
         }
-        console.error("Generation failed:", errorData);
-        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || res.statusText}`);
+        
+        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || text.substring(0, 200) || res.statusText}`);
       }
 
       const blob = await res.blob();
