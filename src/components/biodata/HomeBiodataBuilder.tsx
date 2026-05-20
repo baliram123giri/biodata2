@@ -249,7 +249,7 @@ export function HomeBiodataBuilder() {
               Start Building Now
             </div>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-              Create Your Biodata <span className="text-primary">Right Here</span>
+              Create Your Biodata <span className="text-gradient-primary">Right Here</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl">
               Fill in your details below, pick a template, and download your professional marriage biodata — all without leaving this page.
@@ -273,7 +273,7 @@ export function HomeBiodataBuilder() {
               <EmbeddedPreviewSection storedTemplate={storedTemplate} />
               <Button
                 onClick={() => router.push("/edit")}
-                className="w-full rounded-full bg-gradient-to-r from-stitch-primary to-stitch-primary/80 text-white shadow-xl hover:shadow-stitch-primary/20 transition-all flex gap-2 h-11 text-sm font-bold"
+                className="w-full rounded-full bg-gradient-primary transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0"
               >
                 <Sparkles className="w-4 h-4" />
                 Edit in Designer
@@ -289,7 +289,7 @@ export function HomeBiodataBuilder() {
                 <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
                   <Button
                     onClick={() => router.push("/edit")}
-                    className="rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
+                    className="rounded-full bg-gradient-primary transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Edit in Designer</span>
@@ -301,7 +301,7 @@ export function HomeBiodataBuilder() {
                     isGenerating={isGenerating}
                     labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
                     variant="compact"
-                    className="rounded-full shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                    className="rounded-full bg-gradient-primary transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
                   />
 
                   <Button
@@ -404,7 +404,7 @@ export function HomeBiodataBuilder() {
               <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">{t.cancel || "Cancel"}</Button>
               <Button
                 onClick={handleReset}
-                className="relative overflow-hidden rounded-full bg-stitch-primary text-stitch-on-primary hover:bg-stitch-primary/90"
+                className="relative overflow-hidden rounded-full bg-gradient-primary border-0"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
                 <span className="relative">{t.yesReset || "Yes, Reset"}</span>

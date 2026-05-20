@@ -373,7 +373,7 @@ export default function EditPage() {
                   </DialogClose>
                   <DialogClose>
                     <Button
-                      className="relative overflow-hidden bg-stitch-primary text-stitch-on-primary hover:opacity-90"
+                      className="relative overflow-hidden bg-gradient-primary text-white border-0"
                       onClick={() => useBiodataStore.getState().resetStore()}
                     >
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
@@ -786,7 +786,7 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
       className={cn(
         "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0 cursor-pointer",
         active
-          ? "bg-stitch-primary text-white shadow-lg shadow-stitch-primary/20 -translate-y-0.5"
+          ? "bg-gradient-primary text-white shadow-lg -translate-y-0.5 border-0"
           : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
       )}
     >

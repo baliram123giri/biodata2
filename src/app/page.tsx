@@ -15,13 +15,13 @@ export default function Home() {
               Trusted by 100,000+ Happy Families
             </div>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-              Free Online Biodata Maker <span className="text-primary">for Marriage</span>
+              Free Online Biodata Maker <span className="text-gradient-primary">for Marriage</span>
             </h1>
             <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
               Create FREE marriage biodata online in 2 minutes. 50+ professional templates, 10+ Indian languages. Instant PDF download. No login required.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
-              <Button size="lg" className="rounded-full text-lg px-8 py-5 shadow-lg hover:shadow-xl transition-all w-full sm:w-auto" asChild>
+              <Button size="lg" className="rounded-full text-lg px-8 py-5 w-full sm:w-auto bg-gradient-primary border-0" asChild>
                 <a href="#builder">
                   Start Creating — It&apos;s Free
                   <ArrowDown className="w-5 h-5 ml-2 animate-bounce" />
@@ -114,7 +114,7 @@ export default function Home() {
           </div>
 
           <div className="mt-16 text-center">
-            <Button size="lg" className="rounded-full text-lg px-8 py-6 shadow-lg" asChild>
+            <Button size="lg" className="rounded-full text-lg px-8 py-6 bg-gradient-primary border-0" asChild>
               <a href="#builder">Start Creating Free</a>
             </Button>
           </div>

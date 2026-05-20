@@ -133,8 +133,6 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${svgContent}</svg>`;
       let compositeOps: any[] = [];
 
-      }
-
       let sharpImg = sharp(Buffer.from(fullSvg));
       if (compositeOps.length > 0) {
         sharpImg = sharpImg.composite(compositeOps);

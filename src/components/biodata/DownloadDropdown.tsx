@@ -50,7 +50,7 @@ export function DownloadDropdown({
             <button
               disabled={isGenerating}
               className={cn(
-                "relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs h-10 px-4 flex items-center gap-1.5 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all",
+                "relative overflow-hidden rounded-2xl shadow-lg bg-gradient-primary font-bold text-xs h-10 px-4 flex items-center gap-1.5 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0",
                 className
               )}
             />
@@ -114,7 +114,7 @@ export function DownloadDropdown({
           <button
             disabled={isGenerating}
             className={cn(
-              "relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all text-xs font-semibold h-9 px-4 md:px-6 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-md border-0",
+              "relative overflow-hidden bg-gradient-primary text-xs font-semibold h-9 px-4 md:px-6 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-md border-0",
               className
             )}
           />
