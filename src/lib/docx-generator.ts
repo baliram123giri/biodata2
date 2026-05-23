@@ -139,7 +139,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       }
       let buf = await sharpImg.png().toBuffer();
       
-      if (false) { // Watermark only in PDF
+      if (WATERMARK_CONFIG.isEnabled) {
         try {
           const coords = getWatermarkCoordinates(595, 842);
           const watermarkPath = path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath);

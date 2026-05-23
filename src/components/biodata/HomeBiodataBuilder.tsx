@@ -9,11 +9,12 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2 } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
+import { FeedbackModal } from "./FeedbackModal";
 
 import {
   Dialog,
@@ -21,7 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
+  DialogClose
 } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 
@@ -62,6 +64,11 @@ export function HomeBiodataBuilder() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Rating & Feedback Modal states
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
+  const [filename, setFilename] = useState("biodata");
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -108,7 +115,7 @@ export function HomeBiodataBuilder() {
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
-    mode: "onChange",
+    mode: "onBlur",
   });
 
   // Handle hydration and initial load (resets form details so homepage stays clean, but preserves selected template/theme)
@@ -136,7 +143,7 @@ export function HomeBiodataBuilder() {
     const subscription = methods.watch((value) => {
       const timer = setTimeout(() => {
         if (value) setFormData(value as BiodataFormValues);
-      }, 2000);
+      }, 400);
       return () => clearTimeout(timer);
     });
     return () => subscription.unsubscribe();
@@ -153,7 +160,45 @@ export function HomeBiodataBuilder() {
 
   const handleDownload = async (format: DownloadFormat = "pdf") => {
     const currentData = methods.getValues();
-    await triggerDownload(currentData, storedTemplate, format);
+    const nameField =
+      currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+      "biodata";
+    const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+    setFilename(cleanName);
+
+    setPendingDownloadFormat(format);
+    setIsFeedbackOpen(true);
+  };
+
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
+    setIsFeedbackOpen(false);
+
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: modalFilename,
+          rating: modalRating,
+          comment: modalComment,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save feedback:", err);
+    }
+
+    if (pendingDownloadFormat) {
+      const currentData = methods.getValues();
+      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
+    }
+  };
+
+  const handleSkipDownload = async (modalFilename: string) => {
+    setIsFeedbackOpen(false);
+    if (pendingDownloadFormat) {
+      const currentData = methods.getValues();
+      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
+    }
   };
 
   /** Generate a JPG data URL for the WhatsApp share button */
@@ -456,6 +501,13 @@ export function HomeBiodataBuilder() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <FeedbackModal
+          isOpen={isFeedbackOpen}
+          onOpenChange={setIsFeedbackOpen}
+          initialName={filename}
+          onSubmit={handleFeedbackSubmit}
+          onSkip={handleSkipDownload}
+        />
       </section>
     </FormProvider>
   );

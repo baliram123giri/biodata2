@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, AlignLeft, AlignCenter, AlignRight, AlignStartVertical as AlignTop, AlignCenterVertical as AlignMiddle, AlignEndVertical as AlignBottom, Layers } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, AlignLeft, AlignCenter, AlignRight, AlignStartVertical as AlignTop, AlignCenterVertical as AlignMiddle, AlignEndVertical as AlignBottom, Layers, ArrowUp, ArrowDown } from "lucide-react";
 import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer, Circle } from "react-konva";
 import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -43,10 +43,10 @@ const A4_H = 842;
 // SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; }) {
+const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; }) {
   const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} /> : null;
-}
+});
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
   const [image] = useImage(src);
@@ -70,7 +70,7 @@ const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, pri
   }
 });
 
-const GlobalWatermark = React.memo(function GlobalWatermark() {
+const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }: { visible?: boolean }) {
   const [watermarkImg] = useImage(WATERMARK_CONFIG.url);
   if (!watermarkImg || !WATERMARK_CONFIG.isEnabled) return null;
   
@@ -78,6 +78,7 @@ const GlobalWatermark = React.memo(function GlobalWatermark() {
   
   return (
     <KonvaImage
+      id="watermark"
       image={watermarkImg}
       x={A4_W / 2}
       y={A4_H / 2}
@@ -87,6 +88,7 @@ const GlobalWatermark = React.memo(function GlobalWatermark() {
       offsetY={coords.height / 2}
       rotation={WATERMARK_CONFIG.rotation || 0}
       opacity={WATERMARK_CONFIG.opacity}
+      visible={visible}
     />
   );
 });
@@ -121,6 +123,11 @@ function StickerItem({
   const { updateSticker, addSticker } = useBiodataStore();
   const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
   const groupRef = useRef<Konva.Group>(null);
+  
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   if (!asset) return null;
 
@@ -137,7 +144,7 @@ function StickerItem({
       rotation={sticker.rotation || 0}
       width={100}
       height={100}
-      draggable={isDesigner}
+      draggable={isDesigner && (!isMobile || isSelected)}
       onDragStart={(e) => {
         if (isDesigner) {
           const stage = e.target.getStage();
@@ -268,6 +275,11 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const transformerRef = useRef<Konva.Transformer>(null);
   const lastDistRef = useRef<number | null>(null);
   const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   useEffect(() => {
     if (selectedStickers.length > 0 && transformerRef.current && isDesigner) {
@@ -463,6 +475,13 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       stage.scale({ x: 1, y: 1 });
       stage.position({ x: 0, y: 0 });
       stage.size({ width: A4_W, height: A4_H });
+
+      // Programmatically show the watermark node for the export capture
+      const watermarkNode = stage.findOne("#watermark");
+      if (watermarkNode) {
+        watermarkNode.show();
+      }
+
       stage.batchDraw();
 
       const dataUrl = stage.toDataURL({
@@ -470,6 +489,11 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         quality: 0.95,
         pixelRatio: 2, // 2× = ~1190×1684px — crisp on mobile
       });
+
+      // Programmatically hide the watermark node again to keep editor preview clean
+      if (watermarkNode) {
+        watermarkNode.hide();
+      }
 
       // Restore previous transform
       stage.scale({ x: savedScale, y: savedScale });
@@ -680,6 +704,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} bgColor={bgColor} />
           )}
           
+          {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
+          <GlobalWatermark visible={false} />
+          
           <Text x={0} y={A4_H - 30} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>
         <Layer>
@@ -799,13 +826,17 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 return newBox;
               }}
               rotateEnabled={true}
-              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']}
-              anchorSize={8}
+              enabledAnchors={
+                isMobile 
+                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] 
+                  : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']
+              }
+              anchorSize={isMobile ? 12 : 8}
               anchorCornerRadius={4}
               anchorStroke="#D4AF37"
               anchorFill="#ffffff"
               borderStroke="#D4AF37"
-              keepRatio={false}
+              keepRatio={true}
             />
           )}
         </Layer>
@@ -825,11 +856,23 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             </div>
           )}
 
-          {/* Selection Info */}
+          {/* Selection Info & Simple Delete Option */}
           {selectedStickers.length > 0 && (
-            <div className="px-3 py-1.5 bg-primary/90 text-white text-[10px] font-bold rounded-full shadow-lg self-start pointer-events-auto flex items-center gap-2">
-              <Layers className="w-3 h-3" />
-              {selectedStickers.length} {selectedStickers.length === 1 ? 'Object' : 'Objects'} Selected
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <div className="px-3 py-1.5 bg-primary/95 text-white text-[10px] font-bold rounded-full shadow-lg flex items-center gap-2">
+                <Layers className="w-3 h-3" />
+                {selectedStickers.length} Selected
+              </div>
+              <button
+                onClick={() => {
+                  selectedStickers.forEach(id => removeSticker(id));
+                  setSelectedStickers([]);
+                }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded-full shadow-lg flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Selected
+              </button>
             </div>
           )}
         </div>

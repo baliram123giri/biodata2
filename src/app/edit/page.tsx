@@ -22,6 +22,7 @@ import {
   PanelRight,
   Sliders,
   X,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,7 +33,7 @@ import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 
 const KonvaPreview = dynamic(
   () => import("../../components/editor/KonvaPreview").then(mod => mod.KonvaPreview),
-  { 
+  {
     ssr: false,
     loading: () => <PreviewLoader />
   }
@@ -57,17 +58,19 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
-import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
+import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
+import { FeedbackModal } from "@/components/biodata/FeedbackModal";
+import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 
 
 
 export default function EditPage() {
   const router = useRouter();
-  const { formData, selectedTemplate, setFormData, updateField, updateLayout } = useBiodataStore();
+  const { formData, selectedTemplate, setFormData } = useBiodataStore();
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
-    mode: "onChange",
+    mode: "onBlur",
   });
 
   const theme = useThemeStore();
@@ -107,6 +110,12 @@ export default function EditPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
 
+  // Rating & Feedback Modal states
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
+  const [hasRated, setHasRated] = useState(false);
+  const [filename, setFilename] = useState("biodata");
+
   // Sync store data to form ONCE when mounted/hydrated
   useEffect(() => {
     if (isMounted && !hasInitializedForm && formData) {
@@ -115,12 +124,15 @@ export default function EditPage() {
     }
   }, [isMounted, hasInitializedForm, formData, methods]);
 
-  // Synchronize form changes back to the zustand store in real-time
+  // Synchronize form changes back to the zustand store with debounce to prevent typing lag
   useEffect(() => {
     const subscription = methods.watch((value) => {
-      if (value) {
-        setFormData(value as BiodataFormValues);
-      }
+      const timer = setTimeout(() => {
+        if (value) {
+          setFormData(value as BiodataFormValues);
+        }
+      }, 400);
+      return () => clearTimeout(timer);
     });
     return () => subscription.unsubscribe();
   }, [methods, setFormData]);
@@ -276,7 +288,44 @@ export default function EditPage() {
   }
 
   const handleDownload = async (format: DownloadFormat = "pdf") => {
-    await triggerDownload(formData, selectedTemplate, format);
+    const nameField =
+      formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+      "biodata";
+    const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+    setFilename(cleanName);
+
+    setPendingDownloadFormat(format);
+    setIsFeedbackOpen(true);
+  };
+
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
+    setHasRated(true);
+    setIsFeedbackOpen(false);
+
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: modalFilename,
+          rating: modalRating,
+          comment: modalComment,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save feedback:", err);
+    }
+
+    if (pendingDownloadFormat) {
+      await triggerDownload(formData, selectedTemplate, pendingDownloadFormat, modalFilename);
+    }
+  };
+
+  const handleSkipDownload = async (modalFilename: string) => {
+    setIsFeedbackOpen(false);
+    if (pendingDownloadFormat) {
+      await triggerDownload(formData, selectedTemplate, pendingDownloadFormat, modalFilename);
+    }
   };
 
   /** Generate a JPG data URL for WhatsApp sharing */
@@ -808,6 +857,13 @@ export default function EditPage() {
           </div>
         </aside>
       </div>
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onOpenChange={setIsFeedbackOpen}
+        initialName={filename}
+        onSubmit={handleFeedbackSubmit}
+        onSkip={handleSkipDownload}
+      />
     </div>
   );
 }

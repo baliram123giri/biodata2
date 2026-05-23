@@ -76,17 +76,41 @@ export function useDownloadBiodata() {
   const handleDownload = async (
     formData: any,
     templateId: string,
-    format: DownloadFormat = "pdf"
+    format: DownloadFormat = "pdf",
+    customFilename?: string
   ) => {
     setIsGenerating(true);
+
+    const getFieldVal = (details: any[], id: string) => {
+      return details?.find((f: any) => f.id === id)?.value || "";
+    };
+
+    const nameField =
+      customFilename ||
+      getFieldVal(formData.personalDetails, "fullName") ||
+      "biodata";
+
+    const locField =
+      getFieldVal(formData.contactDetails, "residentialAddress") ||
+      getFieldVal(formData.familyDetails, "nativePlace") ||
+      getFieldVal(formData.personalDetails, "placeOfBirth") ||
+      "Unknown";
+
+    // Record download activity in database
+    fetch("/api/download-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nameField,
+        location: locField,
+        format,
+        templateId,
+      }),
+    }).catch((err) => console.error("Failed to log download:", err));
 
     // ── JPG Export: fully client-side via Konva canvas ──────────────
     if (format === "jpg") {
       try {
-        const nameField =
-          formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
-          "biodata";
-
         const dataUrl = await generateJpgDataUrl();
 
         const link = document.createElement("a");
@@ -103,9 +127,6 @@ export function useDownloadBiodata() {
 
     // ── PDF / DOCX Export: server-side ──────────────────────────────
     try {
-      const nameField =
-        formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
-        "biodata";
       const apiUrl = format === "docx" ? "/api/generate-docx" : "/api/generate-pdf";
       const fileExt = format === "docx" ? "docx" : "pdf";
 

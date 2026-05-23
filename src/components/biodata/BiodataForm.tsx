@@ -128,7 +128,18 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
     control,
     name,
   });
-  const liveFields = useWatch({ control, name }) || [];
+
+  // Watch ONLY the labels of the fields to prevent typing in values from causing re-renders
+  const watchedLabels = useWatch({
+    control,
+    name: fields.map((_, idx) => `${name}.${idx}.label` as const)
+  });
+
+  // Watch ONLY the options of the fields to prevent typing in values from causing re-renders
+  const watchedOptions = useWatch({
+    control,
+    name: fields.map((_, idx) => `${name}.${idx}.options` as const)
+  });
 
   const [dialogState, setDialogState] = useState<{ isOpen: boolean; index: number; options: string[]; label: string } | null>(null);
   const [customInput, setCustomInput] = useState("");
@@ -152,11 +163,11 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
         <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
-            const liveLabel = liveFields[index]?.label || field.label;
+            const liveLabel = watchedLabels[index] || field.label;
             return (
-            <motion.div layout key={field.id} transition={{ type: "spring", stiffness: 400, damping: 30 }} className={`flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10`}>
+            <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
               <div className="flex items-center justify-between mb-1">
-                <EditableLabel name={`${name}.${index}.label`} />
+                <EditableLabel name={`${name}.${index}.label`} value={liveLabel} />
                 
                 <div className="flex items-center gap-0.5">
                   <button type="button" disabled={index === 0} onClick={() => swap(index, index - 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Up">
@@ -176,7 +187,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                   name={`${name}.${index}.value` as const}
                   control={control}
                   render={({ field: selectField }) => {
-                    const liveOptions = liveFields[index]?.options || field.options;
+                    const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options;
                     return (
                     <Select onValueChange={(val) => {
                       if (val === "Other") {
@@ -209,9 +220,9 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                         value={compField.value} 
                         onChange={(val, logo) => {
                            compField.onChange(val);
-                           const logoIndex = liveFields.findIndex(f => f.id === "companyLogo");
+                           const logoIndex = fields.findIndex(f => f.id === "companyLogo");
                            if (logoIndex !== -1) {
-                              setValue(`${name}.${logoIndex}.value`, logo || "");
+                               setValue(`${name}.${logoIndex}.value`, logo || "");
                            }
                         }} 
                         placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
@@ -354,9 +365,8 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
   );
 });
 
-const EditableLabel = memo(function EditableLabel({ name }: { name: string }) {
-  const { register, watch } = useFormContext();
-  const value = watch(name);
+const EditableLabel = memo(function EditableLabel({ name, value }: { name: string, value: string }) {
+  const { register } = useFormContext();
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
