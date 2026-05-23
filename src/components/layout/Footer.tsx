@@ -41,12 +41,6 @@ const socialLinks = [
   { icon: Globe, href: "https://facebook.com", label: "Facebook" },
 ];
 
-const stats = [
-  { value: "50,000+", label: "Biodatas Created" },
-  { value: "100%", label: "Free to Use" },
-  { value: "10+", label: "Templates" },
-];
-
 export function Footer() {
   const pathname = usePathname();
   const isEditorPage = pathname === "/edit";
@@ -64,31 +58,13 @@ export function Footer() {
 
       {/* Main Footer Body */}
       <div className="bg-[#0f172a] text-white">
-        {/* Stats Bar */}
-        <div className="border-b border-white/10">
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
-              {stats.map((stat) => (
-                <div key={stat.label} className="flex flex-col gap-0.5">
-                  <span className="text-2xl md:text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                    {stat.value}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-                    {stat.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Main Grid */}
         <div className="container mx-auto px-4 py-14">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
 
             {/* Brand Column */}
             <div className="md:col-span-4 flex flex-col gap-5">
-              <Logo iconClassName="h-10 md:h-12" />
+              <Logo iconClassName="h-10 md:h-12" disableShine />
               <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
                 Create a professional marriage biodata in minutes — free, beautiful, and designed for modern Indian families.
               </p>

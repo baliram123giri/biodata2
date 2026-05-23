@@ -218,6 +218,12 @@ export default function EditPage() {
   useEffect(() => {
     setIsMounted(true);
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const templateParam = searchParams.get('template');
+    if (templateParam && TEMPLATE_CONFIGS[templateParam]) {
+      useBiodataStore.getState().setSelectedTemplate(templateParam);
+    }
+
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
       setIsRightOpen(false);

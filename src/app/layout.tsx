@@ -21,6 +21,7 @@ const playfair = Playfair_Display({
 
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PageProgressBar } from "@/components/layout/PageProgressBar";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
     default: "Free Online Biodata Maker for Marriage | biodata99.com",
     template: "%s | biodata99.com"
   },
-  description: "Create professional marriage biodata online for FREE in 2 minutes. Choose from 50+ premium templates, supports 10+ Indian languages (Hindi, Marathi, Gujarati, etc.). Instant PDF download.",
+  description: "Create professional marriage biodata online for FREE in 2 minutes. Choose from our premium templates, supports multiple Indian languages (Hindi, Marathi, Gujarati, etc.). Instant PDF download.",
   keywords: ["marriage biodata maker", "online biodata builder", "matrimonial biodata format", "free biodata maker", "marriage resume maker", "shadi biodata creator"],
   authors: [{ name: "biodata99.com Team" }],
   creator: "biodata99.com",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     url: "https://biodata99.com",
     siteName: "biodata99.com",
     title: "Free Online Biodata Maker for Marriage | biodata99.com",
-    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates, 10+ Indian languages.",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. Premium templates, multiple Indian languages.",
     images: [
       {
         url: "/og-image.png",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Free Online Biodata Maker for Marriage | biodata99.com",
-    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates.",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. Premium templates.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -96,7 +97,7 @@ export default function RootLayout({
               "@type": "WebApplication",
               "name": "biodata99.com",
               "url": "https://biodata99.com",
-              "description": "Create professional marriage biodata online for FREE. 50+ templates, 10+ languages.",
+              "description": "Create professional marriage biodata online for FREE. Beautiful templates, multiple languages.",
               "applicationCategory": "MultimediaApplication",
               "operatingSystem": "All",
               "offers": {
@@ -105,8 +106,8 @@ export default function RootLayout({
                 "priceCurrency": "INR"
               },
               "featureList": [
-                "50+ Premium Templates",
-                "10+ Indian Languages",
+                "Premium Templates",
+                "Multiple Indian Languages",
                 "No Login Required",
                 "Instant PDF Download",
                 "100% Private"
@@ -114,6 +115,7 @@ export default function RootLayout({
             })
           }}
         />
+        <PageProgressBar />
         <Header />
         <main className="flex-1">
           {children}

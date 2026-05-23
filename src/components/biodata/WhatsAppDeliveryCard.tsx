@@ -86,52 +86,78 @@ export function WhatsAppDeliveryCard({
 
       // 3. Check if server requested Client-Side fallback
       if (resJson.fallback) {
-        // Change status to uploading client-side
-        setStatus("uploading");
-
         const nameField =
           formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
           "biodata";
 
         // Generate PDF Blob on client
         const pdfBlob = await generatePdfBlob(formData, selectedTemplate, themeData);
+        // Prefilled template message builder
+        const getTemplateMessage = (name: string, url?: string) => {
+          let msg = `*Matrimonial Biodata* 💍\n\n`;
+          msg += `Hello! 🙏 Please find attached the matrimonial biodata of *${name}* for your review.\n\n`;
+          msg += `We hope you find the profile suitable. Looking forward to connecting and discussing further.\n\n`;
+          if (url) {
+            msg += `📄 View PDF Online: ${url}\n\n`;
+          }
+          msg += `Created via biodata99.com`;
+          return msg;
+        };
+
+        // Change status to uploading client-side for desktop/non-compatible browsers
+        setStatus("uploading");
 
         let downloadUrl = "";
+        
+        // 1. Try uploading to tmpfiles.org (high rate limits, CORS supported)
         try {
-          // Upload to file.io (temporary public link for direct download on WhatsApp)
           const body = new FormData();
           body.append("file", pdfBlob, `${nameField}.pdf`);
-          body.append("expiry", "1d"); // Expires in 1 day
-
-          const uploadRes = await fetch("https://file.io", {
+          
+          const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
             method: "POST",
             body: body,
           });
 
           if (uploadRes.ok) {
             const uploadJson = await uploadRes.json();
-            if (uploadJson.success) {
-              downloadUrl = uploadJson.link;
+            if (uploadJson.status === "success" && uploadJson.data?.url) {
+              // Convert to direct download url by adding /dl/
+              downloadUrl = uploadJson.data.url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/");
             }
           }
         } catch (uploadErr) {
-          console.warn("file.io upload failed/blocked, falling back to local download + direct text", uploadErr);
+          console.warn("tmpfiles.org upload failed, trying file.io", uploadErr);
+        }
+
+        // 2. Try file.io if tmpfiles.org failed
+        if (!downloadUrl) {
+          try {
+            const body = new FormData();
+            body.append("file", pdfBlob, `${nameField}.pdf`);
+            body.append("expiry", "1d");
+
+            const uploadRes = await fetch("https://file.io", {
+              method: "POST",
+              body: body,
+            });
+
+            if (uploadRes.ok) {
+              const uploadJson = await uploadRes.json();
+              if (uploadJson.success) {
+                downloadUrl = uploadJson.link;
+              }
+            }
+          } catch (uploadErr) {
+            console.warn("file.io upload failed/blocked", uploadErr);
+          }
         }
 
         setStatus("redirecting");
 
         // Construct direct WhatsApp link
         const formattedNum = `${countryCode.replace("+", "")}${phoneNumber.trim()}`;
-        
-        // Prefilled text message
-        let shareText = `Hello! 🙏 Here is the Marriage Biodata for ${nameField}.\n\n`;
-        if (downloadUrl) {
-          shareText += `📄 Click here to download/view the PDF: ${downloadUrl}\n\n`;
-        } else {
-          shareText += `📄 I have generated and saved the PDF locally on my device.\n\n`;
-        }
-        shareText += `Created using Biodata99 Matrimonial Builder.`;
-
+        const shareText = getTemplateMessage(nameField, downloadUrl);
         const shareTextEncoded = encodeURIComponent(shareText);
 
         // Open WhatsApp Web/App
@@ -141,14 +167,6 @@ export function WhatsAppDeliveryCard({
         } else {
           window.open(`https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`, "_blank");
         }
-
-        // Also trigger a local backup download of the PDF so the user has the file locally
-        const localUrl = URL.createObjectURL(pdfBlob);
-        const link = document.createElement("a");
-        link.href = localUrl;
-        link.download = `${nameField}.pdf`;
-        link.click();
-        URL.revokeObjectURL(localUrl);
       }
 
       setStatus("success");

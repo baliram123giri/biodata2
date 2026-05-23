@@ -31,8 +31,8 @@ export default function Home() {
           {/* Left Text Column */}
           <div className="flex-1 text-center lg:text-left space-y-7">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 text-xs font-extrabold text-[#8A7233] dark:text-[#E6C97A] backdrop-blur-sm shadow-md transition-all duration-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] animate-pulse" />
-              Trusted by 100,000+ Happy Families
+              <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+              Free Online Matrimonial Biodata Builder
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6.5xl font-black tracking-tight text-foreground leading-[1.08] font-sans">
@@ -40,7 +40,7 @@ export default function Home() {
             </h1>
             
             <p className="text-base md:text-xl text-muted-foreground/90 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-sans font-medium">
-              Design a beautiful, traditional biodata in just 2 minutes. Pick from 50+ hand-crafted templates, customize in 10+ languages, and download an instant PDF. No registration required.
+              Design a beautiful, traditional biodata in just 2 minutes. Pick from our premium templates, customize in multiple languages, and download an instant PDF. No registration required.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4.5 justify-center lg:justify-start pt-2">
@@ -85,29 +85,6 @@ export default function Home() {
               </svg>
             </div>
 
-            {/* Floating Trust Badge */}
-            <div className="absolute -left-14 top-1/3 bg-card/95 backdrop-blur-md border border-[#C9A84C]/35 p-3.5 rounded-2xl shadow-xl z-20 hidden md:flex items-center gap-3 animate-float">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white font-black text-lg">
-                ★
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Top Rated</p>
-                <p className="text-xs font-black text-foreground">4.9/5 (12K+ Reviews)</p>
-              </div>
-            </div>
-
-            {/* Interactive Live-Editing Mock Badge */}
-            <div className="absolute -right-10 top-12 bg-card/95 backdrop-blur-md border border-[#C9A84C]/35 px-4 py-3 rounded-2xl shadow-xl z-20 hidden md:flex flex-col gap-1.5 animate-float-slow">
-              <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-wider">Live Customizer</span>
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-extrabold text-foreground">Name:</span>
-                <span className="text-xs font-semibold text-muted-foreground border-r border-[#9B1B30] pr-1 animate-pulse">Arjun Sharma</span>
-              </div>
-              <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Updating live...
-              </span>
-            </div>
 
             {/* Premium Frame for Image */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-card border border-[#C9A84C]/30 p-2.5 z-10 transition-transform duration-300 hover:scale-[1.02]">
@@ -120,11 +97,6 @@ export default function Home() {
                   alt="Premium Marriage Biodata Template Preview"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                 />
-              </div>
-              
-              {/* Floating Auspicious Badge */}
-              <div className="absolute bottom-6 right-6 bg-gradient-saffron text-secondary-foreground text-xs font-black tracking-wider uppercase px-4 py-2 rounded-xl shadow-lg border border-[#C9A84C] z-30 animate-bounce">
-                ★ Best Seller ★
               </div>
             </div>
           </div>
@@ -157,7 +129,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon={<FileText className="w-8 h-8 text-primary" />}
-              title="50+ Beautiful Templates"
+              title="Beautiful Templates"
               description="Pick from professionally designed biodata formats — traditional designs with religious symbols to modern clean layouts."
             />
             <FeatureCard
@@ -177,7 +149,7 @@ export default function Home() {
             />
             <FeatureCard
               icon={<span className="text-2xl font-bold text-white">Aअ</span>}
-              title="10 Indian Languages"
+              title="Regional Indian Languages"
               description="Create your biodata in Hindi, Tamil, Telugu, Marathi, Gujarati, Kannada, Bengali, Punjabi, Urdu, or English."
             />
             <FeatureCard
@@ -199,7 +171,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <StepCard number="1" title="Fill In Details" description="Enter your name, family background, education, and contact details." />
-            <StepCard number="2" title="Pick a Template" description="Browse 50+ designs and choose one that fits your style." />
+            <StepCard number="2" title="Pick a Template" description="Browse designs and choose one that fits your style." />
             <StepCard number="3" title="Customize" description="Add your photo, select a color theme, and pick religious symbols." />
             <StepCard number="4" title="Download" description="Download as a high-quality PDF — instantly. Share anywhere." />
           </div>

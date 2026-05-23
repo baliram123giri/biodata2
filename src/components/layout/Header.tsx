@@ -20,6 +20,7 @@ export function Header() {
     { href: "/templates", label: "Templates" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/faqs", label: "FAQs" },
+    { href: "/blog", label: "Blog" },
   ];
 
   return (
