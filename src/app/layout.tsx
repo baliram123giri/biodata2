@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Noto_Serif, Playfair_Display } from "next/font/google";
 import "./globals.css";
@@ -115,7 +116,9 @@ export default function RootLayout({
             })
           }}
         />
-        <PageProgressBar />
+        <Suspense fallback={null}>
+          <PageProgressBar />
+        </Suspense>
         <Header />
         <main className="flex-1">
           {children}

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
-import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
+import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 import { FeedbackModal } from "./FeedbackModal";
 
