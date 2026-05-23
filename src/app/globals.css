@@ -167,12 +167,18 @@
 
   /* Primary gradient: Royal Crimson → Deep Rose */
   .bg-gradient-primary {
-    @apply bg-gradient-to-r from-[#9B1B30] via-[#D4627A] to-[#9B1B30] text-white shadow-lg hover:shadow-[#9B1B30]/30 transition-all;
+    background: linear-gradient(to right, #9B1B30, #D4627A, #9B1B30) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 15px -3px rgba(155, 27, 48, 0.3) !important;
+    transition: all 0.2s !important;
   }
 
   /* Gold gradient: for CTAs, highlights */
   .bg-gradient-saffron {
-    @apply bg-gradient-to-r from-[#C9A84C] via-[#E6C97A] to-[#C9A84C] text-[#2C1117] shadow-lg hover:shadow-[#C9A84C]/30 transition-all;
+    background: linear-gradient(to right, #C9A84C, #E6C97A, #C9A84C) !important;
+    color: #2C1117 !important;
+    box-shadow: 0 10px 15px -3px rgba(201, 168, 76, 0.3) !important;
+    transition: all 0.2s !important;
   }
 
   /* Text gradient — Crimson to Gold */
