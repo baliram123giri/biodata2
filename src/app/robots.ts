@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/private/',
     },
-    sitemap: 'https://biodatamaker.online/sitemap.xml',
+    sitemap: 'https://biodata99.com/sitemap.xml',
   }
 }

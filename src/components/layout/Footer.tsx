@@ -180,10 +180,10 @@ export function Footer() {
               <div className="mt-6 flex items-center gap-2 text-slate-400 group">
                 <Mail className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                 <a
-                  href="mailto:hello@biodatamaker.in"
+                  href="mailto:hello@biodata99.com"
                   className="text-xs hover:text-cyan-400 transition-colors"
                 >
-                  hello@biodatamaker.in
+                  hello@biodata99.com
                 </a>
               </div>
             </div>
@@ -194,7 +194,7 @@ export function Footer() {
         <div className="border-t border-white/8">
           <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-slate-500 text-center sm:text-left" suppressHydrationWarning>
-              © {new Date().getFullYear()} Biodata Maker. All Rights Reserved.
+              © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
             </p>
             <p className="text-xs text-slate-500 flex items-center gap-1.5">
               Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for Happy Marriages

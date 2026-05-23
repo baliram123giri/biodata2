@@ -79,10 +79,13 @@ const GlobalWatermark = React.memo(function GlobalWatermark() {
   return (
     <KonvaImage
       image={watermarkImg}
-      x={coords.x}
-      y={coords.y}
+      x={A4_W / 2}
+      y={A4_H / 2}
       width={coords.width}
       height={coords.height}
+      offsetX={coords.width / 2}
+      offsetY={coords.height / 2}
+      rotation={WATERMARK_CONFIG.rotation || 0}
       opacity={WATERMARK_CONFIG.opacity}
     />
   );
@@ -677,10 +680,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} bgColor={bgColor} />
           )}
           
-          {/* Global Watermark in center */}
-          <GlobalWatermark />
-          
-          <Text x={A4_W / 2} y={A4_H - 30} text="www.biodatamaker.online" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" offsetX={50} />
+          <Text x={0} y={A4_H - 30} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>

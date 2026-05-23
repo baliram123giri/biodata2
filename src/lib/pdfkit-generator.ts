@@ -314,11 +314,12 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         WATERMARK_CONFIG.isEnabled && React.createElement(View, {
           style: {
             position: 'absolute',
-            left: getWatermarkCoordinates(A4_W, A4_H).x,
-            top: getWatermarkCoordinates(A4_W, A4_H).y,
+            left: (A4_W - WATERMARK_CONFIG.width) / 2,
+            top: (A4_H - WATERMARK_CONFIG.height) / 2,
             width: WATERMARK_CONFIG.width,
             height: WATERMARK_CONFIG.height,
             opacity: WATERMARK_CONFIG.opacity,
+            transform: `rotate(${WATERMARK_CONFIG.rotation || 0}deg)`,
           } as any
         }, React.createElement(Image, {
           src: path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath),

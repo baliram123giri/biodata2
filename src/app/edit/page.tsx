@@ -377,18 +377,18 @@ export default function EditPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0 mt-4">
-                  <DialogClose>
-                    <Button variant="outline">Cancel</Button>
+                  <DialogClose render={<Button variant="outline" />}>
+                    Cancel
                   </DialogClose>
-                  <DialogClose>
-                    <Button
-                      className="relative overflow-hidden bg-gradient-primary text-white border-0"
-                      onClick={() => useBiodataStore.getState().resetStore()}
-                    >
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-                      <span className="relative">Reset Layout</span>
-                    </Button>
-                  </DialogClose>
+                  <DialogClose
+                    onClick={() => useBiodataStore.getState().resetStore()}
+                    render={
+                      <Button className="relative overflow-hidden bg-gradient-primary text-white border-0">
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+                        <span className="relative">Reset Layout</span>
+                      </Button>
+                    }
+                  />
                 </DialogFooter>
               </DialogContent>
             </Dialog>

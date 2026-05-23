@@ -139,18 +139,23 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       }
       let buf = await sharpImg.png().toBuffer();
       
-      if (WATERMARK_CONFIG.isEnabled) {
+      if (false) { // Watermark only in PDF
         try {
           const coords = getWatermarkCoordinates(595, 842);
           const watermarkPath = path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath);
           const logoBuffer = fs.readFileSync(watermarkPath);
-          const wLeft = Math.round(coords.x * (A4_W / 595));
-          const wTop = Math.round(coords.y * (A4_H / 842));
           const wWidth = Math.round(coords.width * (A4_W / 595));
           const wHeight = Math.round(coords.height * (A4_H / 842));
 
-          const opaqueLogo = await sharp(logoBuffer)
+          const rotatedImage = sharp(logoBuffer)
             .resize(wWidth, wHeight)
+            .rotate(WATERMARK_CONFIG.rotation || 0, { background: { r: 0, g: 0, b: 0, alpha: 0 } });
+
+          const meta = await rotatedImage.metadata();
+          const finalTop = Math.round((A4_H - (meta.height || wHeight)) / 2);
+          const finalLeft = Math.round((A4_W - (meta.width || wWidth)) / 2);
+
+          const opaqueLogo = await rotatedImage
             .ensureAlpha()
             .composite([
               {
@@ -163,7 +168,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
             .png()
             .toBuffer();
 
-          buf = await sharp(buf).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
+          buf = await sharp(buf).composite([{ input: opaqueLogo, top: finalTop, left: finalLeft }]).png().toBuffer();
         } catch (fetchErr) {
           console.error("Failed to fetch/process watermark for docx", fetchErr);
         }

@@ -3,9 +3,10 @@ export const WATERMARK_CONFIG = {
   url: "/new_logo.svg",
   // PNG fallback logo used for PDF/DOCX server-side export watermarks
   fallbackPngPath: "public/logo.png",
-  width: 250,
-  height: 250,
-  opacity: 0.06,
+  width: 680,
+  height: 140,
+  opacity: 0.18,
+  rotation: -30,
   // Set to true to show the watermark
   isEnabled: true,
 };
