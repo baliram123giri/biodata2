@@ -88,10 +88,7 @@ export function Footer() {
 
             {/* Brand Column */}
             <div className="md:col-span-4 flex flex-col gap-5">
-              {/* Logo with dark-mode filter */}
-              <div className="brightness-0 invert opacity-90 w-fit">
-                <Logo />
-              </div>
+              <Logo iconClassName="h-10 md:h-12" />
               <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
                 Create a professional marriage biodata in minutes — free, beautiful, and designed for modern Indian families.
               </p>

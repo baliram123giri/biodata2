@@ -142,25 +142,17 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       if (WATERMARK_CONFIG.isEnabled) {
         try {
           const coords = getWatermarkCoordinates(595, 842);
-          const ganeshaBuffer = await fetchWithCache(WATERMARK_CONFIG.url);
+          const watermarkPath = path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath);
+          const logoBuffer = fs.readFileSync(watermarkPath);
           const wLeft = Math.round(coords.x * (A4_W / 595));
           const wTop = Math.round(coords.y * (A4_H / 842));
           const wWidth = Math.round(coords.width * (A4_W / 595));
           const wHeight = Math.round(coords.height * (A4_H / 842));
-          const wRadius = Math.round(coords.radius * (A4_W / 595));
 
-          const opaqueGanesha = await sharp(ganeshaBuffer)
+          const opaqueLogo = await sharp(logoBuffer)
             .resize(wWidth, wHeight)
             .ensureAlpha()
             .composite([
-              {
-                input: Buffer.from(`
-                  <svg width="${wWidth}" height="${wHeight}">
-                    <circle cx="${wWidth / 2}" cy="${wHeight / 2}" r="${wRadius}" fill="white"/>
-                  </svg>
-                `),
-                blend: 'dest-in'
-              },
               {
                 input: Buffer.from([255, 255, 255, Math.round(WATERMARK_CONFIG.opacity * 255)]),
                 raw: { width: 1, height: 1, channels: 4 },
@@ -171,7 +163,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
             .png()
             .toBuffer();
 
-          buf = await sharp(buf).composite([{ input: opaqueGanesha, top: wTop, left: wLeft }]).png().toBuffer();
+          buf = await sharp(buf).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
         } catch (fetchErr) {
           console.error("Failed to fetch/process watermark for docx", fetchErr);
         }
@@ -225,25 +217,17 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
     if (WATERMARK_CONFIG.isEnabled) {
       try {
         const coords = getWatermarkCoordinates(595, 842);
-        const ganeshaBuffer = await fetchWithCache(WATERMARK_CONFIG.url);
+        const watermarkPath = path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath);
+        const logoBuffer = fs.readFileSync(watermarkPath);
         const wLeft = Math.round(coords.x * (A4_W / 595));
         const wTop = Math.round(coords.y * (A4_H / 842));
         const wWidth = Math.round(coords.width * (A4_W / 595));
         const wHeight = Math.round(coords.height * (A4_H / 842));
-        const wRadius = Math.round(coords.radius * (A4_W / 595));
 
-        const opaqueGanesha = await sharp(ganeshaBuffer)
+        const opaqueLogo = await sharp(logoBuffer)
           .resize(wWidth, wHeight)
           .ensureAlpha()
           .composite([
-            {
-              input: Buffer.from(`
-                <svg width="${wWidth}" height="${wHeight}">
-                  <circle cx="${wWidth / 2}" cy="${wHeight / 2}" r="${wRadius}" fill="white"/>
-                </svg>
-              `),
-              blend: 'dest-in'
-            },
             {
               input: Buffer.from([255, 255, 255, Math.round(WATERMARK_CONFIG.opacity * 255)]),
               raw: { width: 1, height: 1, channels: 4 },
@@ -254,7 +238,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
           .png()
           .toBuffer();
 
-        buf = await sharp(buf).composite([{ input: opaqueGanesha, top: wTop, left: wLeft }]).png().toBuffer();
+        buf = await sharp(buf).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
       } catch (fetchErr) {
         console.error("Failed to fetch/process watermark for docx", fetchErr);
       }

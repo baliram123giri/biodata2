@@ -4,6 +4,71 @@ import { useState } from "react";
 import { useThemeStore } from "@/store/useThemeStore";
 import type { DownloadFormat } from "@/components/biodata/DownloadDropdown";
 
+/**
+ * Generate a JPG data URL from the Konva canvas preview.
+ * Uses custom events to communicate with KonvaPreview.
+ */
+export function generateJpgDataUrl(): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("JPG export timed out")),
+      10_000
+    );
+
+    const handler = (e: Event) => {
+      clearTimeout(timeout);
+      window.removeEventListener("biodata:jpg-ready", handler);
+      resolve((e as CustomEvent<string>).detail);
+    };
+    window.addEventListener("biodata:jpg-ready", handler);
+    window.dispatchEvent(new CustomEvent("biodata:export-jpg"));
+  });
+}
+
+/**
+ * Generate a PDF Blob directly from the server API.
+ */
+export async function generatePdfBlob(
+  formData: any,
+  templateId: string,
+  theme: any
+): Promise<Blob> {
+  const res = await fetch("/api/generate-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      formData,
+      templateId,
+      theme: {
+        fontFamily: theme.fontFamily,
+        primaryColor: theme.primaryColor,
+        secondaryColor: theme.secondaryColor,
+        accentColor: theme.accentColor,
+        fontSize: theme.fontSize,
+        padding: theme.padding,
+        paddingY: theme.paddingY,
+        selectedPaletteName: theme.selectedPaletteName,
+        bgColors: theme.bgColors,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let errorDetails = "";
+    try {
+      const parsed = JSON.parse(text);
+      errorDetails = parsed.details || parsed.error || text;
+    } catch {
+      errorDetails = text;
+    }
+    throw new Error(errorDetails || "Failed to generate PDF");
+  }
+
+  return await res.blob();
+}
+
+
 export function useDownloadBiodata() {
   const [isGenerating, setIsGenerating] = useState(false);
   const theme = useThemeStore();
@@ -14,8 +79,33 @@ export function useDownloadBiodata() {
     format: DownloadFormat = "pdf"
   ) => {
     setIsGenerating(true);
+
+    // ── JPG Export: fully client-side via Konva canvas ──────────────
+    if (format === "jpg") {
+      try {
+        const nameField =
+          formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+          "biodata";
+
+        const dataUrl = await generateJpgDataUrl();
+
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `${nameField}.jpg`;
+        link.click();
+      } catch (err) {
+        console.error("JPG Export Error:", err);
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
+    // ── PDF / DOCX Export: server-side ──────────────────────────────
     try {
-      const nameField = formData.personalDetails?.find((f: any) => f.id === "fullName")?.value || "biodata";
+      const nameField =
+        formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+        "biodata";
       const apiUrl = format === "docx" ? "/api/generate-docx" : "/api/generate-pdf";
       const fileExt = format === "docx" ? "docx" : "pdf";
 
@@ -47,8 +137,9 @@ export function useDownloadBiodata() {
         } catch (e) {
           console.error("Non-JSON error response:", res.status, res.statusText, text.substring(0, 500));
         }
-        
-        throw new Error(`Server error: ${res.status} - ${errorData.details || errorData.error || text.substring(0, 200) || res.statusText}`);
+        throw new Error(
+          `Server error: ${res.status} - ${errorData.details || errorData.error || text.substring(0, 200) || res.statusText}`
+        );
       }
 
       const blob = await res.blob();

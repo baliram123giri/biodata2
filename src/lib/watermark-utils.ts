@@ -1,11 +1,13 @@
 export const WATERMARK_CONFIG = {
-  // Replace this URL with your custom watermark image URL
-  url: "https://res.cloudinary.com/dhlyinfwd/image/upload/v1778844624/biodata/Stickers/God%20Signs/ganesh.png",
-  width: 300,
-  height: 300,
-  opacity: 0.07,
-  // Set to false if you want to completely disable the watermark
-  isEnabled: false,
+  // SVG logo used for browser preview watermark
+  url: "/new_logo.svg",
+  // PNG fallback logo used for PDF/DOCX server-side export watermarks
+  fallbackPngPath: "public/logo.png",
+  width: 250,
+  height: 250,
+  opacity: 0.06,
+  // Set to true to show the watermark
+  isEnabled: true,
 };
 
 export function getWatermarkCoordinates(pageWidth: number, pageHeight: number) {

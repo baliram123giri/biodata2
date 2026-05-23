@@ -13,6 +13,7 @@ import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye,
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata } from "@/hooks/useDownloadBiodata";
+import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 
 import {
   Dialog,
@@ -153,6 +154,11 @@ export function HomeBiodataBuilder() {
   const handleDownload = async (format: DownloadFormat = "pdf") => {
     const currentData = methods.getValues();
     await triggerDownload(currentData, storedTemplate, format);
+  };
+
+  /** Generate a JPG data URL for the WhatsApp share button */
+  const handleGenerateShareImage = async (): Promise<string> => {
+    return await generateJpgDataUrl();
   };
 
   // Manage drawer open state
@@ -338,6 +344,14 @@ export function HomeBiodataBuilder() {
               </div>
             </div>
           </div>
+          
+          {/* Get on WhatsApp Widget (Matching mockup) */}
+          <div className="mt-12 pt-4 px-4 w-full flex justify-center">
+            <WhatsAppDeliveryCard
+              onTriggerDownload={handleDownload}
+              isGenerating={isGenerating}
+            />
+          </div>
         </div>
 
         {/* Mobile Sticky Bottom Bar */}
@@ -396,6 +410,7 @@ export function HomeBiodataBuilder() {
                 )}
                 <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Design</span>
               </button>
+
 
               {/* Reset Option */}
               <button

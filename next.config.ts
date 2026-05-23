@@ -27,3 +27,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// Trigger Next.js server reload for Peacock Theme

@@ -77,26 +77,14 @@ const GlobalWatermark = React.memo(function GlobalWatermark() {
   const coords = getWatermarkCoordinates(A4_W, A4_H);
   
   return (
-    <Group
+    <KonvaImage
+      image={watermarkImg}
       x={coords.x}
       y={coords.y}
       width={coords.width}
       height={coords.height}
-      clipFunc={(ctx) => {
-        ctx.beginPath();
-        ctx.arc(coords.width / 2, coords.height / 2, coords.radius, 0, Math.PI * 2, false);
-        ctx.closePath();
-      }}
-    >
-      <KonvaImage
-        image={watermarkImg}
-        x={0}
-        y={0}
-        width={coords.width}
-        height={coords.height}
-        opacity={WATERMARK_CONFIG.opacity}
-      />
-    </Group>
+      opacity={WATERMARK_CONFIG.opacity}
+    />
   );
 });
 
@@ -456,6 +444,42 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
     };
   }, []);
+
+  // ── JPG Export via Custom Event ──────────────────────────────────
+  useEffect(() => {
+    const handleExportJpg = () => {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      // Save current transform
+      const savedScale = stage.scaleX();
+      const savedX = stage.x();
+      const savedY = stage.y();
+
+      // Reset to origin at 1:1 so the full A4 canvas is captured
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: 0, y: 0 });
+      stage.size({ width: A4_W, height: A4_H });
+      stage.batchDraw();
+
+      const dataUrl = stage.toDataURL({
+        mimeType: "image/jpeg",
+        quality: 0.95,
+        pixelRatio: 2, // 2× = ~1190×1684px — crisp on mobile
+      });
+
+      // Restore previous transform
+      stage.scale({ x: savedScale, y: savedScale });
+      stage.position({ x: savedX, y: savedY });
+      stage.size({ width: stageSize.width, height: stageSize.height });
+      stage.batchDraw();
+
+      window.dispatchEvent(new CustomEvent("biodata:jpg-ready", { detail: dataUrl }));
+    };
+
+    window.addEventListener("biodata:export-jpg", handleExportJpg);
+    return () => window.removeEventListener("biodata:export-jpg", handleExportJpg);
+  }, [stageSize]);
 
   const primaryColor = theme.selectedPaletteName === null ? templateConfig.defaultPrimary : theme.primaryColor;
   const secondaryColor = theme.selectedPaletteName === null ? templateConfig.defaultSecondary : theme.secondaryColor;
