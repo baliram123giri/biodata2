@@ -172,9 +172,56 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
 
+  const streamTextSmoothly = (
+    field: "name" | "description",
+    reader: ReadableStreamDefaultReader<Uint8Array>
+  ): Promise<void> => {
+    const decoder = new TextDecoder("utf-8");
+    let queue: string[] = [];
+    let isFinished = false;
+
+    // Clear the target field first
+    setFormState(prev => ({ ...prev, [field]: "" }));
+
+    return new Promise<void>((resolve, reject) => {
+      // 15ms interval achieves standard 60fps refresh rate
+      const interval = setInterval(() => {
+        if (queue.length > 0) {
+          // Dynamic batch size: names stream letter-by-letter, long descriptions stream in small batches
+          const batchSize = field === "description" ? 3 : 1;
+          const charsToAdd = queue.splice(0, batchSize).join("");
+          setFormState(prev => ({
+            ...prev,
+            [field]: prev[field] + charsToAdd
+          }));
+        } else if (isFinished) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 15);
+
+      // Read from stream in background and feed the animation queue
+      (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              isFinished = true;
+              break;
+            }
+            const text = decoder.decode(value, { stream: true });
+            queue.push(...text.split(""));
+          }
+        } catch (err) {
+          clearInterval(interval);
+          reject(err);
+        }
+      })();
+    });
+  };
+
   const handleGenerateName = async () => {
     setIsNameGenerating(true);
-    setFormState(prev => ({ ...prev, name: "" }));
     try {
       const res = await fetch("/api/admin/templates/generate-ai", {
         method: "POST",
@@ -182,10 +229,21 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         body: JSON.stringify({
           type: "name",
           frameType: formState.frameType,
+          frameBgType: formState.frameBgType,
           frameBgColor: formState.frameBgColor,
+          frameBgGradientColors: formState.frameBgGradientColors,
           defaultPrimary: formState.defaultPrimary,
           defaultSecondary: formState.defaultSecondary,
           defaultAccent: formState.defaultAccent,
+          frameOuterInset: formState.frameOuterInset,
+          frameOuterStrokeWidth: formState.frameOuterStrokeWidth,
+          frameOuterCornerRadius: formState.frameOuterCornerRadius,
+          frameInnerInset: formState.frameInnerInset,
+          frameInnerStrokeWidth: formState.frameInnerStrokeWidth,
+          frameInnerCornerRadius: formState.frameInnerCornerRadius,
+          frameHasCornerCurves: formState.frameHasCornerCurves,
+          frameGradientColors: formState.frameGradientColors,
+          frameComponentId: formState.frameComponentId,
         }),
       });
 
@@ -197,16 +255,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       const reader = res.body?.getReader();
       if (!reader) return;
 
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const text = decoder.decode(value);
-        setFormState(prev => ({
-          ...prev,
-          name: prev.name + text,
-        }));
-      }
+      await streamTextSmoothly("name", reader);
     } catch (err: any) {
       toast.error(err.message || "An error occurred");
     } finally {
@@ -216,7 +265,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
 
   const handleGenerateDescription = async () => {
     setIsDescGenerating(true);
-    setFormState(prev => ({ ...prev, description: "" }));
     try {
       const res = await fetch("/api/admin/templates/generate-ai", {
         method: "POST",
@@ -225,10 +273,21 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
           type: "description",
           name: formState.name,
           frameType: formState.frameType,
+          frameBgType: formState.frameBgType,
           frameBgColor: formState.frameBgColor,
+          frameBgGradientColors: formState.frameBgGradientColors,
           defaultPrimary: formState.defaultPrimary,
           defaultSecondary: formState.defaultSecondary,
           defaultAccent: formState.defaultAccent,
+          frameOuterInset: formState.frameOuterInset,
+          frameOuterStrokeWidth: formState.frameOuterStrokeWidth,
+          frameOuterCornerRadius: formState.frameOuterCornerRadius,
+          frameInnerInset: formState.frameInnerInset,
+          frameInnerStrokeWidth: formState.frameInnerStrokeWidth,
+          frameInnerCornerRadius: formState.frameInnerCornerRadius,
+          frameHasCornerCurves: formState.frameHasCornerCurves,
+          frameGradientColors: formState.frameGradientColors,
+          frameComponentId: formState.frameComponentId,
         }),
       });
 
@@ -240,16 +299,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       const reader = res.body?.getReader();
       if (!reader) return;
 
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const text = decoder.decode(value);
-        setFormState(prev => ({
-          ...prev,
-          description: prev.description + text,
-        }));
-      }
+      await streamTextSmoothly("description", reader);
     } catch (err: any) {
       toast.error(err.message || "An error occurred");
     } finally {
