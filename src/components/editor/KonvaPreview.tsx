@@ -21,9 +21,7 @@ import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
 import Konva from "konva";
 
-import { NewGenerationKonva } from "@/lib/templates/classic/new-generation/KonvaRenderer";
-import { KonvaRenderer as OrnateGrandeurKonva } from "@/lib/templates/classic/ornate-grandeur/KonvaRenderer";
-import { GreenShapesKonva } from "@/lib/templates/classic/green-shapes/KonvaRenderer";
+
 import { getLightBgColor } from "@/lib/color-utils";
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
 
@@ -59,15 +57,7 @@ const StickerImage = React.memo(function StickerImage({ src }: { src: string }) 
 });
 
 const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
-  if (componentId === "new-generation-arch") {
-    return <NewGenerationKonva primaryColor={primaryColor} />;
-  }
-  if (componentId === "ornate-grandeur-frame") {
-    return <OrnateGrandeurKonva primaryColor={primaryColor} />;
-  }
-  if (componentId === "green-shapes") {
-    return <GreenShapesKonva primaryColor={primaryColor} />;
-  }
+  return null;
 });
 
 const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }: { visible?: boolean }) {
@@ -104,26 +94,22 @@ const PageBackground = React.memo(function PageBackground({
   themeSelectedPalette: string | null;
   primaryColor: string;
 }) {
-  // 1. If a theme palette is selected (not Custom/None), respect the palette background settings
-  if (themeSelectedPalette !== null) {
-    const lightBg = getLightBgColor(primaryColor);
-    if (themeBgColors && themeBgColors.length > 1) {
-      return (
-        <Rect 
-          width={A4_W} 
-          height={A4_H} 
-          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
-          fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
-          fillLinearGradientColorStops={
-            themeBgColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
-          }
-        />
-      );
-    }
-    return <Rect width={A4_W} height={A4_H} fill={lightBg} />;
+  // 1. If a theme palette is selected and has a custom background gradient (length > 1), respect the palette background settings
+  if (themeSelectedPalette !== null && themeBgColors && themeBgColors.length > 1) {
+    return (
+      <Rect 
+        width={A4_W} 
+        height={A4_H} 
+        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+        fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
+        fillLinearGradientColorStops={
+          themeBgColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
+        }
+      />
+    );
   }
 
-  // 2. If no palette is selected (None), use the template's background
+  // 2. Otherwise, check if the template itself has a gradient background (linear or radial)
   const bgType = templateConfig.bgType || "solid";
   const bgGradientColors = templateConfig.bgGradientColors || [];
   
@@ -175,7 +161,13 @@ const PageBackground = React.memo(function PageBackground({
     }
   }
 
-  // Solid background fallback
+  // 3. If neither the theme nor the template has a gradient background, apply the theme solid fallback if selected
+  if (themeSelectedPalette !== null) {
+    const lightBg = getLightBgColor(primaryColor);
+    return <Rect width={A4_W} height={A4_H} fill={lightBg} />;
+  }
+
+  // 4. Default template solid background fallback
   const solidColor = (templateConfig.frame as any).bgColor || "#ffffff";
   return <Rect width={A4_W} height={A4_H} fill={solidColor} />;
 });

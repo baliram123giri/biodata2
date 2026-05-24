@@ -5,12 +5,7 @@
  * To add a new template, create a file in ./templates/ and import it here.
  */
 
-import { royal } from "./templates/classic/royal";
-import { ivoryElegance } from "./templates/classic/ivory-elegance";
-import { modernGradient } from "./templates/classic/modern-gradient";
-import { newGeneration } from "./templates/classic/new-generation/config";
-import { ornateGrandeur } from "./templates/classic/ornate-grandeur/config";
-import { greenShapes } from "./templates/classic/green-shapes/config";
+
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -77,14 +72,7 @@ export interface TemplateConfig {
 
 // ── Registry ───────────────────────────────────────────────────────
 
-export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
-  royal,
-  "ivory-elegance": ivoryElegance,
-  "modern-gradient": modernGradient,
-  "new-generation": newGeneration,
-  "ornate-grandeur": ornateGrandeur,
-  "green-shapes": greenShapes,
-};
+export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {};
 
 // ── Utilities ──────────────────────────────────────────────────────
 
@@ -94,7 +82,34 @@ export function getFrameImageUrl(config: FrameImageConfig, hexColor: string): st
 }
 
 export function getTemplateConfig(templateId: string): TemplateConfig {
-  return TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS["royal"];
+  if (TEMPLATE_CONFIGS[templateId]) {
+    return TEMPLATE_CONFIGS[templateId];
+  }
+  const keys = Object.keys(TEMPLATE_CONFIGS);
+  if (keys.length > 0) {
+    return TEMPLATE_CONFIGS[keys[0]];
+  }
+  // Ultimate robust static fallback template to prevent runtime crashes if empty
+  return {
+    id: "royal",
+    name: "Royal Gold",
+    defaultPrimary: "#800000",
+    defaultSecondary: "#333333",
+    defaultAccent: "#D4AF37",
+    defaultPadding: 45,
+    photo: { x: 390, y: 100, width: 140, height: 175, cornerRadius: 8 },
+    frame: {
+      type: "svg",
+      bgColor: "#ffffff",
+      outerInset: 10,
+      outerStrokeWidth: 2,
+      outerCornerRadius: 8,
+      innerInset: 16,
+      innerStrokeWidth: 1,
+      innerCornerRadius: 6,
+      hasCornerCurves: true
+    }
+  };
 }
 
 export function registerDynamicTemplates(templates: TemplateConfig[]) {

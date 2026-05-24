@@ -64,22 +64,8 @@ const registerFonts = () => {
 };
 
 registerFonts();
-
-import { NewGenerationPDF } from './templates/classic/new-generation/PDFRenderer';
-import { PDFRenderer as OrnateGrandeurPDF } from './templates/classic/ornate-grandeur/PDFRenderer';
-import { GreenShapesPDF } from './templates/classic/green-shapes/PDFRenderer';
-
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
-  if (componentId === "new-generation-arch") {
-    return React.createElement(NewGenerationPDF, { primaryColor });
-  }
-  if (componentId === "ornate-grandeur-frame") {
-    return React.createElement(OrnateGrandeurPDF, { primaryColor });
-  }
-  if (componentId === "green-shapes") {
-    return React.createElement(GreenShapesPDF, { primaryColor });
-  }
   return null;
 }
 
@@ -88,35 +74,33 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
   const accent = theme.accentColor || config.defaultAccent;
-  const bgColor = theme.selectedPaletteName === null 
-    ? (config.frame as any).bgColor || "#ffffff" 
-    : getLightBgColor(primary);
+  const isTemplateGradient = (config.bgType === "linear" || config.bgType === "radial") && (config.bgGradientColors || []).length > 1;
+  const isStaticGradient = config.frame.type === "gradient" && ((config.frame as any).gradientColors || []).length > 1;
+  const hasTemplateGradient = isTemplateGradient || isStaticGradient;
+
+  const bgColor = (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined && (!theme.bgColors || theme.bgColors.length <= 1) && !hasTemplateGradient)
+    ? getLightBgColor(primary)
+    : (config.frame as any).bgColor || "#ffffff";
   const padding = theme.padding ?? config.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
   const initialFontSize = theme.fontSize || 11;
 
   const renderPDFBackground = () => {
-    // 1. If a theme palette is selected, respect the palette background settings
-    if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined) {
-      const lightBg = getLightBgColor(primary);
-      if (theme.bgColors && theme.bgColors.length > 1) {
-        return React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-          React.createElement(Defs, {},
-            React.createElement(LinearGradient, { id: "bg-pdf-gradient", x1: 0, y1: 0, x2: 0, y2: A4_H, gradientUnits: "userSpaceOnUse" },
-              theme.bgColors.map((color: string, idx: number, arr: string[]) => 
-                React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color, stopOpacity: 1 })
-              )
-            )
-          ),
-          React.createElement(Rect, { width: A4_W, height: A4_H, fill: "url(#bg-pdf-gradient)" })
-        );
-      }
+    // 1. If a theme palette has a custom background gradient (length > 1), respect the palette background settings
+    if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined && theme.bgColors && theme.bgColors.length > 1) {
       return React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-        React.createElement(Rect, { width: A4_W, height: A4_H, fill: lightBg })
+        React.createElement(Defs, {},
+          React.createElement(LinearGradient, { id: "bg-pdf-gradient", x1: 0, y1: 0, x2: 0, y2: A4_H, gradientUnits: "userSpaceOnUse" },
+            theme.bgColors.map((color: string, idx: number, arr: string[]) => 
+              React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color, stopOpacity: 1 })
+            )
+          )
+        ),
+        React.createElement(Rect, { width: A4_W, height: A4_H, fill: "url(#bg-pdf-gradient)" })
       );
     }
 
-    // 2. If no palette is selected, use the template's background
+    // 2. Otherwise, check if the template itself has a gradient background (linear or radial)
     const bgType = config.bgType || "solid";
     const bgGradientColors = config.bgGradientColors || [];
 
@@ -163,7 +147,15 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       }
     }
 
-    // Solid fallback
+    // 3. Fall back to solid background colors (apply solid theme fallback if active)
+    if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined) {
+      const lightBg = getLightBgColor(primary);
+      return React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+        React.createElement(Rect, { width: A4_W, height: A4_H, fill: lightBg })
+      );
+    }
+
+    // 4. Default template solid background fallback
     const solidColor = (config.frame as any).bgColor || "#ffffff";
     return React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
       React.createElement(Rect, { width: A4_W, height: A4_H, fill: solidColor })
@@ -303,7 +295,18 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         renderPDFBackground(),
         config.frame.type === 'image' ? 
           React.createElement(Image, { 
-            src: getFrameImageUrl(config.frame, primary), 
+            src: theme?.rasterizedFrameBase64 || (() => {
+              let url = getFrameImageUrl(config.frame, primary);
+              // Force PNG format by replacing f_auto with f_png and translating .svg to .png
+              // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
+              url = url.replace(/f_auto/g, 'f_png');
+              if (url.toLowerCase().endsWith('.svg')) {
+                url = url.substring(0, url.length - 4) + '.png';
+              } else if (url.toLowerCase().includes('.svg?')) {
+                url = url.replace(/\.svg\?/i, '.png?');
+              }
+              return url;
+            })(), 
             style: [styles.frame, { objectFit: 'fill' }] as any
           })
         : config.frame.type === 'gradient' ?
@@ -315,7 +318,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               height: A4_H - config.frame.outerInset * 2, 
               stroke: primary, 
               strokeWidth: config.frame.outerStrokeWidth,
-              rx: config.frame.outerCornerRadius 
+              rx: config.frame.outerCornerRadius,
+              fill: "none"
             }),
             React.createElement(Rect, { 
               x: config.frame.innerInset, 
@@ -325,7 +329,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               stroke: primary, 
               strokeWidth: config.frame.innerStrokeWidth,
               rx: config.frame.innerCornerRadius,
-              strokeOpacity: 0.3
+              strokeOpacity: 0.3,
+              fill: "none"
             })
           )
         : config.frame.type === 'custom' ?
@@ -341,7 +346,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               height: A4_H - config.frame.outerInset * 2, 
               stroke: primary, 
               strokeWidth: config.frame.outerStrokeWidth,
-              rx: config.frame.outerCornerRadius 
+              rx: config.frame.outerCornerRadius,
+              fill: "none"
             }),
             React.createElement(Rect, { 
               x: config.frame.innerInset, 
@@ -351,7 +357,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               stroke: primary, 
               strokeWidth: config.frame.innerStrokeWidth,
               rx: config.frame.innerCornerRadius,
-              strokeOpacity: 0.6
+              strokeOpacity: 0.6,
+              fill: "none"
             }),
             config.frame.hasCornerCurves && React.createElement(G, {},
               // Top-Left
@@ -474,6 +481,33 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
       });
       if (dbTpl) {
         TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+      }
+    }
+
+    const config = TEMPLATE_CONFIGS[tId];
+    if (config && config.frame && config.frame.type === "image") {
+      const primaryColor = theme?.primaryColor || config.defaultPrimary || "#800000";
+      const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);
+      
+      if (finalUrl && finalUrl.startsWith("data:image/svg+xml")) {
+        try {
+          const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
+          let svgXml = "";
+          if (finalUrl.includes(";base64,")) {
+            svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+          } else {
+            svgXml = decodeURIComponent(base64Content);
+          }
+          
+          const sharp = require("sharp");
+          const pngBuffer = await sharp(Buffer.from(svgXml), { density: 300 })
+            .png()
+            .toBuffer();
+            
+          theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+        } catch (rasterError) {
+          console.error("Failed to rasterize base64 SVG frame to PNG:", rasterError);
+        }
       }
     }
 
