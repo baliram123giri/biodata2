@@ -56,6 +56,7 @@ export type FrameConfig = FrameImageConfig | FrameSvgConfig | FrameGradientConfi
 export interface TemplateConfig {
   id: string;
   name: string;
+  description?: string;
   defaultPrimary: string;
   defaultSecondary: string;
   defaultAccent: string;
@@ -69,6 +70,7 @@ export interface TemplateConfig {
     cornerRadius: number;
   };
   frame: FrameConfig;
+  thumbnailUrl?: string;
 }
 
 // ── Registry ───────────────────────────────────────────────────────
@@ -91,4 +93,72 @@ export function getFrameImageUrl(config: FrameImageConfig, hexColor: string): st
 
 export function getTemplateConfig(templateId: string): TemplateConfig {
   return TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS["royal"];
+}
+
+export function registerDynamicTemplates(templates: TemplateConfig[]) {
+  templates.forEach((tpl) => {
+    TEMPLATE_CONFIGS[tpl.id] = tpl;
+  });
+}
+
+export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
+  let frame: FrameConfig;
+  
+  if (dbTpl.frameType === "image") {
+    frame = {
+      type: "image",
+      urlTemplate: dbTpl.frameUrlTemplate || "",
+      bgColor: dbTpl.frameBgColor || "#ffffff",
+    };
+  } else if (dbTpl.frameType === "svg") {
+    frame = {
+      type: "svg",
+      bgColor: dbTpl.frameBgColor || "#ffffff",
+      outerInset: dbTpl.frameOuterInset ?? 10,
+      outerStrokeWidth: dbTpl.frameOuterStrokeWidth ?? 2,
+      outerCornerRadius: dbTpl.frameOuterCornerRadius ?? 8,
+      innerInset: dbTpl.frameInnerInset ?? 16,
+      innerStrokeWidth: dbTpl.frameInnerStrokeWidth ?? 1,
+      innerCornerRadius: dbTpl.frameInnerCornerRadius ?? 6,
+      hasCornerCurves: dbTpl.frameHasCornerCurves ?? true,
+    };
+  } else if (dbTpl.frameType === "gradient") {
+    frame = {
+      type: "gradient",
+      bgColor: dbTpl.frameBgColor || "#ffffff",
+      gradientColors: dbTpl.frameGradientColors || ["#4F46E5", "#06B6D4"],
+      outerInset: dbTpl.frameOuterInset ?? 10,
+      outerStrokeWidth: dbTpl.frameOuterStrokeWidth ?? 2,
+      outerCornerRadius: dbTpl.frameOuterCornerRadius ?? 8,
+      innerInset: dbTpl.frameInnerInset ?? 16,
+      innerStrokeWidth: dbTpl.frameInnerStrokeWidth ?? 1,
+      innerCornerRadius: dbTpl.frameInnerCornerRadius ?? 6,
+    };
+  } else {
+    frame = {
+      type: "custom",
+      componentId: dbTpl.frameComponentId || "new-generation-arch",
+      bgColor: dbTpl.frameBgColor || "#ffffff",
+    };
+  }
+
+  return {
+    id: dbTpl.id,
+    name: dbTpl.name,
+    description: dbTpl.description || "",
+    defaultPrimary: dbTpl.defaultPrimary,
+    defaultSecondary: dbTpl.defaultSecondary,
+    defaultAccent: dbTpl.defaultAccent,
+    defaultPadding: dbTpl.defaultPadding,
+    defaultYPadding: dbTpl.defaultYPadding ?? undefined,
+    photo: {
+      x: dbTpl.photoX,
+      y: dbTpl.photoY,
+      width: dbTpl.photoWidth,
+      height: dbTpl.photoHeight,
+      cornerRadius: dbTpl.photoCornerRadius,
+    },
+    frame,
+    thumbnailUrl: dbTpl.thumbnailUrl || undefined,
+  };
 }

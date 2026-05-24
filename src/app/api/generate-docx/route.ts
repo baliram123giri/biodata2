@@ -10,9 +10,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "formData is required" }, { status: 400 });
     }
 
+    // Resolve template dynamically if it is a database template
+    const tId = templateId || "royal";
+    const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = await import("@/lib/frame-config");
+    if (tId && !TEMPLATE_CONFIGS[tId]) {
+      const { prisma } = await import("@/lib/prisma");
+      const dbTpl = await prisma.template.findUnique({
+        where: { id: tId }
+      });
+      if (dbTpl) {
+        TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+      }
+    }
+
     const docxBuffer = await generateDocxBuffer({
       formData,
-      templateId: templateId || "royal",
+      templateId: tId,
       theme: theme || {
         fontFamily: "noto",
         primaryColor: "#800000",

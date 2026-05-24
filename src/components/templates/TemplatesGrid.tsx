@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,7 @@ interface Template {
   accent: string;
   tags: string[];
   color: string;
+  thumbnailUrl?: string;
 }
 
 const templatesList: Template[] = [
@@ -304,8 +305,20 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 }
 
 export function TemplatesGrid() {
+  const [dbTemplates, setDbTemplates] = useState<any[]>([]);
   const [selectedTpl, setSelectedTpl] = useState<Template | null>(null);
   const [customColor, setCustomColor] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/templates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.templates) {
+          setDbTemplates(data.templates);
+        }
+      })
+      .catch((err) => console.error("Error loading templates in grid:", err));
+  }, []);
 
   const handleOpenDialog = (tpl: Template) => {
     setSelectedTpl(tpl);
@@ -314,20 +327,45 @@ export function TemplatesGrid() {
 
   const presetColors = ["#9B1B30", "#0D9488", "#4F46E5", "#B45309", "#D97706", "#059669", "#701A75", "#0F172A"];
 
+  // Merge static templates and database-backed templates
+  const allTemplates = [
+    ...templatesList.map(t => ({
+      ...t,
+      thumbnailUrl: undefined,
+    })),
+    ...dbTemplates.map(t => ({
+      id: t.id,
+      name: t.name,
+      description: t.description || "",
+      accent: "Custom theme",
+      tags: ["Dynamic", "Premium"],
+      color: t.defaultPrimary,
+      thumbnailUrl: t.thumbnailUrl,
+    }))
+  ];
+
   return (
     <Dialog>
       <div className="space-y-16">
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {templatesList.map((tpl) => (
+          {allTemplates.map((tpl) => (
             <Card
               key={tpl.id}
               className="border border-[#C9A84C]/25 bg-card overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group"
             >
               {/* Visual HTML Preview Cover */}
               <div className="h-56 relative overflow-hidden bg-muted flex items-center justify-center p-3 select-none">
-                <div className="w-full h-full relative transform scale-[0.95] group-hover:scale-100 transition-transform duration-500">
-                  <MiniTemplatePreview id={tpl.id} color={tpl.color} />
+                <div className="w-full h-full relative flex items-center justify-center transform scale-[0.95] group-hover:scale-100 transition-transform duration-500">
+                  {tpl.thumbnailUrl ? (
+                    <img
+                      src={tpl.thumbnailUrl}
+                      alt={tpl.name}
+                      className="h-full w-auto object-contain rounded-md border border-border/80 bg-white shadow-lg"
+                    />
+                  ) : (
+                    <MiniTemplatePreview id={tpl.id} color={tpl.color} />
+                  )}
                 </div>
                 
                 {/* Blur Action Overlay */}
@@ -380,84 +418,94 @@ export function TemplatesGrid() {
                   >
                     <Link href={`/edit?template=${tpl.id}`}>
                       Use Template <ArrowRight className="w-4 h-4 ml-1.5" />
-                  </Link>
-                </Button>
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Quick View Dialog / Modal */}
+        {selectedTpl && (
+          <DialogContent className="max-w-2xl w-[95vw] p-0 rounded-2xl overflow-y-auto border border-[#C9A84C]/35 bg-card">
+            <div className="grid grid-cols-1 md:grid-cols-12">
+              {/* Left Preview Grid */}
+              <div className="md:col-span-6 bg-muted/30 p-8 flex items-center justify-center relative min-h-[320px]">
+                <div className="w-[210px] h-[280px] relative shadow-2xl rounded-lg overflow-hidden">
+                  {selectedTpl.thumbnailUrl ? (
+                    <img
+                      src={selectedTpl.thumbnailUrl}
+                      alt={selectedTpl.name}
+                      className="w-full h-full object-contain rounded-md border border-border/80 bg-white shadow-lg"
+                    />
+                  ) : (
+                    <MiniTemplatePreview id={selectedTpl.id} color={customColor} scale={0.9} />
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {/* Quick View Dialog / Modal */}
-      {selectedTpl && (
-        <DialogContent className="max-w-2xl w-[95vw] p-0 rounded-2xl overflow-hidden border border-[#C9A84C]/35 bg-card">
-          <div className="grid grid-cols-1 md:grid-cols-12">
-            {/* Left Preview Grid */}
-            <div className="md:col-span-6 bg-muted/30 p-8 flex items-center justify-center relative min-h-[320px]">
-              <div className="w-[210px] h-[280px] relative shadow-2xl rounded-lg">
-                <MiniTemplatePreview id={selectedTpl.id} color={customColor} scale={0.9} />
-              </div>
-            </div>
+              {/* Right Editor/Details Grid */}
+              <div className="md:col-span-6 p-6 flex flex-col justify-between space-y-6 bg-card border-l border-border/40">
+                <div className="space-y-4">
+                  <DialogHeader className="p-0 text-left">
+                    <DialogTitle className="text-2xl font-black text-foreground">
+                      {selectedTpl.name}
+                    </DialogTitle>
+                  </DialogHeader>
 
-            {/* Right Editor/Details Grid */}
-            <div className="md:col-span-6 p-6 flex flex-col justify-between space-y-6 bg-card border-l border-border/40">
-              <div className="space-y-4">
-                <DialogHeader className="p-0 text-left">
-                  <DialogTitle className="text-2xl font-black text-foreground">
-                    {selectedTpl.name}
-                  </DialogTitle>
-                </DialogHeader>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selectedTpl.description}
+                  </p>
 
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {selectedTpl.description}
-                </p>
+                  {/* Color Customizer */}
+                  {!selectedTpl.thumbnailUrl && (
+                    <div className="space-y-3 pt-2">
+                      <span className="text-xs font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                        <Palette className="w-3.5 h-3.5" />
+                        Preview Color Theme
+                      </span>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {presetColors.map((color) => (
+                          <button
+                            key={color}
+                            className={`w-7 h-7 rounded-full border-2 transition-transform duration-200 hover:scale-110 active:scale-95 ${
+                              customColor === color ? "border-primary scale-105" : "border-transparent"
+                            }`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => setCustomColor(color)}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                {/* Color Customizer */}
-                <div className="space-y-3 pt-2">
-                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Palette className="w-3.5 h-3.5" />
-                    Preview Color Theme
-                  </span>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {presetColors.map((color) => (
-                      <button
-                        key={color}
-                        className={`w-7 h-7 rounded-full border-2 transition-transform duration-200 hover:scale-110 active:scale-95 ${
-                          customColor === color ? "border-primary scale-105" : "border-transparent"
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setCustomColor(color)}
-                        title={color}
-                      />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedTpl.tags.map((tag) => (
+                      <span 
+                        key={tag} 
+                        className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-muted text-muted-foreground border border-border/60"
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
+                  
+                  <Button className="w-full rounded-full bg-gradient-primary border-0 font-bold py-5 text-white" asChild>
+                    <Link href={`/edit?template=${selectedTpl.id}`}>
+                      Start Editing with {selectedTpl.name}
+                    </Link>
+                  </Button>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedTpl.tags.map((tag) => (
-                    <span 
-                      key={tag} 
-                      className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-muted text-muted-foreground border border-border/60"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <Button className="w-full rounded-full bg-gradient-primary border-0 font-bold py-5 text-white" asChild>
-                  <Link href={`/edit?template=${selectedTpl.id}`}>
-                    Start Editing with {selectedTpl.name}
-                  </Link>
-                </Button>
               </div>
             </div>
-          </div>
-        </DialogContent>
-      )}
-    </div>
-  </Dialog>
+          </DialogContent>
+        )}
+      </div>
+    </Dialog>
   );
 }

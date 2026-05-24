@@ -220,9 +220,15 @@ export default function EditPage() {
 
     const searchParams = new URLSearchParams(window.location.search);
     const templateParam = searchParams.get('template');
-    if (templateParam && TEMPLATE_CONFIGS[templateParam]) {
-      useBiodataStore.getState().setSelectedTemplate(templateParam);
-    }
+    
+    useBiodataStore.getState().fetchCustomTemplates().then(() => {
+      const currentTemplates = useBiodataStore.getState().customTemplates;
+      if (templateParam) {
+        if (TEMPLATE_CONFIGS[templateParam] || currentTemplates.some(t => t.id === templateParam)) {
+          useBiodataStore.getState().setSelectedTemplate(templateParam);
+        }
+      }
+    });
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);

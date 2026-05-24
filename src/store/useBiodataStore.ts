@@ -4,6 +4,8 @@ import { temporal } from "zundo";
 import { type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
+import { type TemplateConfig } from "@/lib/frame-config";
+
 interface LayoutPosition {
   x: number;
   y: number;
@@ -33,6 +35,7 @@ interface BiodataState {
     stickers: Sticker[];
   };
   selectedTemplate: string;
+  customTemplates: TemplateConfig[];
   setFormData: (data: any) => void;
   updateField: (section: keyof BiodataFormValues, id: string, value: string) => void;
   updateLayout: (id: string, x: number, y: number) => void;
@@ -40,6 +43,8 @@ interface BiodataState {
   updateSticker: (id: string, updates: Partial<Sticker>) => void;
   removeSticker: (id: string) => void;
   setSelectedTemplate: (templateId: string) => void;
+  setCustomTemplates: (templates: TemplateConfig[]) => void;
+  fetchCustomTemplates: () => Promise<void>;
   resetStore: () => void;
   resetFormDataOnly: () => void;
 }
@@ -59,6 +64,7 @@ export const useBiodataStore = create<BiodataState>()(
           stickers: []
         },
         selectedTemplate: "royal",
+        customTemplates: [],
         setFormData: (data) => set((state) => ({
           formData: {
             ...state.formData,
@@ -113,6 +119,20 @@ export const useBiodataStore = create<BiodataState>()(
           }
         })),
         setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
+        setCustomTemplates: (templates) => set({ customTemplates: templates }),
+        fetchCustomTemplates: async () => {
+          try {
+            const res = await fetch("/api/templates");
+            const data = await res.json();
+            if (data.templates) {
+              set({ customTemplates: data.templates });
+              const { registerDynamicTemplates } = await import("@/lib/frame-config");
+              registerDynamicTemplates(data.templates);
+            }
+          } catch (err) {
+            console.error("Store failed to fetch templates:", err);
+          }
+        },
         resetStore: () => set({ 
           formData: {
             ...defaultBiodataValues,
@@ -143,6 +163,10 @@ export const useBiodataStore = create<BiodataState>()(
     {
       name: "biodata-storage",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        formData: state.formData,
+        selectedTemplate: state.selectedTemplate,
+      }),
     }
   )
 );

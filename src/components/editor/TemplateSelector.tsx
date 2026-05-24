@@ -16,7 +16,7 @@ const TEMPLATE_LABELS: Record<string, string> = {
 };
 
 export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
-  const { selectedTemplate, setSelectedTemplate } = useBiodataStore();
+  const { selectedTemplate, setSelectedTemplate, customTemplates } = useBiodataStore();
   const theme = useThemeStore();
 
   const templates = Object.values(TEMPLATE_CONFIGS);
@@ -28,7 +28,13 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
 
         // Build the card background style
         let cardStyle: React.CSSProperties = {};
-        if (tpl.frame.type === "image") {
+        if (tpl.thumbnailUrl) {
+          cardStyle = {
+            backgroundImage: `url(${tpl.thumbnailUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          };
+        } else if (tpl.frame.type === "image") {
           cardStyle = {
             backgroundImage: `url(${getFrameImageUrl(tpl.frame, tpl.defaultPrimary)})`,
             backgroundColor: tpl.frame.bgColor,
@@ -73,18 +79,22 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
               )}
               style={cardStyle}
             >
-              {/* Simulated inner border lines like a real biodata frame */}
-              <div
-                className="absolute inset-[6px] border rounded-xl opacity-40 pointer-events-none"
-                style={{ borderColor: tpl.defaultSecondary }}
-              />
+              {/* Simulated inner border lines like a real biodata frame (only if there is no custom thumbnail) */}
+              {!tpl.thumbnailUrl && (
+                <>
+                  <div
+                    className="absolute inset-[6px] border rounded-xl opacity-40 pointer-events-none"
+                    style={{ borderColor: tpl.defaultSecondary }}
+                  />
 
-              {/* Mock content lines */}
-              <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5 pointer-events-none">
-                <div className="h-1 rounded-full w-3/4 opacity-30" style={{ backgroundColor: tpl.defaultSecondary }} />
-                <div className="h-1 rounded-full w-1/2 opacity-20" style={{ backgroundColor: tpl.defaultSecondary }} />
-                <div className="h-1 rounded-full w-2/3 opacity-20" style={{ backgroundColor: tpl.defaultSecondary }} />
-              </div>
+                  {/* Mock content lines */}
+                  <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5 pointer-events-none">
+                    <div className="h-1 rounded-full w-3/4 opacity-30" style={{ backgroundColor: tpl.defaultSecondary }} />
+                    <div className="h-1 rounded-full w-1/2 opacity-20" style={{ backgroundColor: tpl.defaultSecondary }} />
+                    <div className="h-1 rounded-full w-2/3 opacity-20" style={{ backgroundColor: tpl.defaultSecondary }} />
+                  </div>
+                </>
+              )}
 
               {/* Selected overlay with checkmark */}
               {isSelected && (

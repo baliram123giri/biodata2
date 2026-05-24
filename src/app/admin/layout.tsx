@@ -3,6 +3,8 @@ import { AdminLayoutContent } from "@/components/admin/AdminLayoutContent";
 import { AdminAuthProvider } from "@/components/admin/AdminAuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 
+import Script from "next/script";
+
 export const metadata: Metadata = {
   title: "Admin Panel | biodata99.com",
   description: "Administrative console for managing matrimonial biodatas, users, and templates.",
@@ -18,33 +20,21 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AdminAuthProvider>
-      <QueryProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var themeStorage = localStorage.getItem('admin-theme-storage');
-                  var isDark = true;
-                  if (themeStorage) {
-                    var parsed = JSON.parse(themeStorage);
-                    if (parsed && parsed.state) {
-                      isDark = parsed.state.theme === 'dark';
-                    }
-                  }
-                  if (isDark) {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                  }
-                } catch (e) {}
-              })();
-            `
-          }}
-        />
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </QueryProvider>
-    </AdminAuthProvider>
+    <>
+      {/* Theme initialiser — must run before paint to avoid flash. 
+          Placed here (server component) so Next.js emits it as real HTML. */}
+      <Script
+        id="admin-theme-init"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var s=localStorage.getItem('admin-theme-storage');var dark=true;if(s){var p=JSON.parse(s);if(p&&p.state)dark=p.state.theme==='dark';}if(dark){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`
+        }}
+      />
+      <AdminAuthProvider>
+        <QueryProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </QueryProvider>
+      </AdminAuthProvider>
+    </>
   );
 }

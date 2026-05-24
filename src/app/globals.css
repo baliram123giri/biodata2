@@ -377,3 +377,10 @@ body[style*="overflow: hidden"] {
     left: 150%;
   }
 }
+
+/* Global input placeholder opacity reduction */
+input::placeholder,
+textarea::placeholder,
+[data-placeholder] {
+  opacity: 0.5 !important;
+}

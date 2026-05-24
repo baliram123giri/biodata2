@@ -41,3 +41,37 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Template {
+  id                     String   @id @default(uuid())
+  name                   String
+  description            String?  @default("")
+  defaultPrimary         String
+  defaultSecondary       String
+  defaultAccent          String
+  defaultPadding         Int      @default(60)
+  defaultYPadding        Int?
+  photoX                 Int      @default(390)
+  photoY                 Int      @default(100)
+  photoWidth             Int      @default(140)
+  photoHeight            Int      @default(175)
+  photoCornerRadius      Int      @default(8)
+  frameType              String   @default("image") // "image", "svg", "gradient", "custom"
+  frameUrlTemplate       String?
+  frameBgType            String?  @default("solid")
+  frameBgColor           String?
+  frameBgGradientColors  String[]
+  frameOuterInset        Int?
+  frameOuterStrokeWidth  Int?
+  frameOuterCornerRadius Int?
+  frameInnerInset        Int?
+  frameInnerStrokeWidth  Int?
+  frameInnerCornerRadius Int?
+  frameHasCornerCurves   Boolean?
+  frameGradientColors    String[]
+  frameComponentId       String?
+  thumbnailUrl           String?
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
