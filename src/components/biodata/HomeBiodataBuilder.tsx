@@ -40,7 +40,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
-import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
+import { getTemplateConfig, getFrameImageUrl } from "@/lib/frame-config";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PreviewLoader } from "@/components/biodata/PreviewLoader";
@@ -229,7 +229,7 @@ export function HomeBiodataBuilder() {
   }, []);
 
   // Get current template for the box preview
-  const currentTemplate = TEMPLATE_CONFIGS[storedTemplate] || TEMPLATE_CONFIGS["royal"];
+  const currentTemplate = getTemplateConfig(storedTemplate);
 
   return (
     <FormProvider {...methods}>

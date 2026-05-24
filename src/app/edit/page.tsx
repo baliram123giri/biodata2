@@ -47,7 +47,7 @@ import { Separator } from "@/components/ui/separator";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { StickerSelector } from "@/components/editor/StickerSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
-import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
+import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
 import { useStore } from "zustand";
 import { useForm, FormProvider } from "react-hook-form";
@@ -227,7 +227,7 @@ export default function EditPage() {
     useBiodataStore.getState().fetchCustomTemplates().then(() => {
       const currentTemplates = useBiodataStore.getState().customTemplates;
       if (templateParam) {
-        if (TEMPLATE_CONFIGS[templateParam] || currentTemplates.some(t => t.id === templateParam)) {
+        if (currentTemplates.some(t => t.id === templateParam) || getTemplateConfig(templateParam)) {
           useBiodataStore.getState().setSelectedTemplate(templateParam);
         }
       }
@@ -718,7 +718,7 @@ export default function EditPage() {
                             
                             const bgType = dbTpl 
                               ? dbTpl.bgType 
-                              : TEMPLATE_CONFIGS[activeTemplateId]?.bgType || TEMPLATE_CONFIGS[activeTemplateId]?.frame?.type;
+                              : getTemplateConfig(activeTemplateId)?.bgType || getTemplateConfig(activeTemplateId)?.frame?.type;
 
                             const isGradient = bgType === "linear" || bgType === "radial" || bgType === "gradient";
 
@@ -977,11 +977,11 @@ export default function EditPage() {
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">
-                            {theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)}px
+                            {theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding)}px
                           </span>
                         </div>
                         <Slider
-                          value={[theme.paddingY !== undefined ? theme.paddingY : (TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate]?.defaultYPadding ?? theme.padding)]}
+                          value={[theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding)]}
                           onValueChange={([v]) => theme.setPaddingY(v)}
                           min={20}
                           max={150}
