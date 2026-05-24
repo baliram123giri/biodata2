@@ -124,38 +124,38 @@
    DARK MODE — Royal Crimson + Soft Gold
 ───────────────────────────────────────────── */
 .dark {
-  --background: #1A0A0E;
-  /* Deep crimson-black */
-  --foreground: #FAEAED;
-  --card: #2A1218;
-  --card-foreground: #FAEAED;
-  --popover: #2A1218;
-  --popover-foreground: #FAEAED;
+  --background: #09090b;
+  /* Pure dark - zinc-950 */
+  --foreground: #fafafa;
+  --card: #121214;
+  --card-foreground: #fafafa;
+  --popover: #121214;
+  --popover-foreground: #fafafa;
   --primary: #C9A84C;
   /* Gold becomes primary in dark */
-  --primary-foreground: #1A0A0E;
+  --primary-foreground: #09090b;
   --secondary: #9B1B30;
-  --secondary-foreground: #FAEAED;
-  --muted: #3D1A22;
-  --muted-foreground: #C4949C;
-  --accent: #8A7233;
-  --accent-foreground: #FBF5E6;
-  --destructive: #F87171;
-  --border: #3D1A22;
-  --input: #3D1A22;
+  --secondary-foreground: #fafafa;
+  --muted: #1e1e21;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #27272a;
+  --input: #27272a;
   --ring: #C9A84C;
   --chart-1: #C9A84C;
   --chart-2: #E6C97A;
   --chart-3: #D4627A;
   --chart-4: #D4B5BA;
   --chart-5: #E8D5D9;
-  --sidebar: #2A1218;
-  --sidebar-foreground: #FAEAED;
+  --sidebar: #0f0f11;
+  --sidebar-foreground: #fafafa;
   --sidebar-primary: #C9A84C;
-  --sidebar-primary-foreground: #1A0A0E;
-  --sidebar-accent: #3D1A22;
-  --sidebar-accent-foreground: #FAEAED;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-primary-foreground: #09090b;
+  --sidebar-accent: #1e1e21;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #1e1e20;
   --sidebar-ring: #C9A84C;
   --font-sans: var(--font-inter);
 }

@@ -11,9 +11,10 @@ import { Logo } from "@/components/layout/Logo";
 export function Header() {
   const pathname = usePathname();
   const isEditorPage = pathname === "/edit";
+  const isAdminPage = pathname?.startsWith("/admin");
   const [open, setOpen] = useState(false);
 
-  if (isEditorPage) return null;
+  if (isEditorPage || isAdminPage) return null;
 
   const navLinks = [
     { href: "/", label: "Home" },

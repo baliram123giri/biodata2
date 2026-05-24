@@ -23,6 +23,7 @@ const playfair = Playfair_Display({
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageProgressBar } from "@/components/layout/PageProgressBar";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
@@ -124,6 +125,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );

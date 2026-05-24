@@ -44,8 +44,9 @@ const socialLinks = [
 export function Footer() {
   const pathname = usePathname();
   const isEditorPage = pathname === "/edit";
+  const isAdminPage = pathname?.startsWith("/admin");
 
-  if (isEditorPage) return null;
+  if (isEditorPage || isAdminPage) return null;
 
   return (
     <footer className="w-full relative overflow-hidden">
