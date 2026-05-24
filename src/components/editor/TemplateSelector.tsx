@@ -19,7 +19,16 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const { selectedTemplate, setSelectedTemplate, customTemplates } = useBiodataStore();
   const theme = useThemeStore();
 
-  const templates = Object.values(TEMPLATE_CONFIGS);
+  const templates = React.useMemo(() => {
+    const all = [...Object.values(TEMPLATE_CONFIGS)];
+    // Ensure all custom templates from the database are registered and rendered reactively
+    customTemplates.forEach((customTpl) => {
+      if (!all.some((t) => t.id === customTpl.id)) {
+        all.push(customTpl);
+      }
+    });
+    return all;
+  }, [customTemplates]);
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -56,11 +65,23 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
             key={tpl.id}
             onClick={() => {
               setSelectedTemplate(tpl.id);
+              
+              // Resolve template background colors (gradients or solids)
+              let bgColors: string[] = ["#ffffff"];
+              if (tpl.bgGradientColors && tpl.bgGradientColors.length > 0) {
+                bgColors = tpl.bgGradientColors;
+              } else if (tpl.frame.type === "gradient") {
+                bgColors = tpl.frame.gradientColors;
+              } else if (tpl.frame.bgColor) {
+                bgColors = [tpl.frame.bgColor];
+              }
+
               theme.setPalette({
                 name: "None",
                 primary: tpl.defaultPrimary,
                 secondary: tpl.defaultSecondary,
                 accent: tpl.defaultAccent,
+                bgColors: bgColors,
               });
               onSelect?.();
             }}

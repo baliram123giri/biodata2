@@ -60,6 +60,8 @@ export interface ThemeState {
   setFontSize: (size: number) => void;
   setAlignment: (alignment: Alignment) => void;
   setPrimaryColor: (color: string) => void;
+  setSecondaryColor: (color: string) => void;
+  setAccentColor: (color: string) => void;
   setPalette: (palette: Palette) => void;
   setPadding: (padding: number) => void;
   setPaddingY: (paddingY: number | undefined) => void;
@@ -79,7 +81,7 @@ export const useThemeStore = create<ThemeState>()(
         primaryColor: "#800000",
         secondaryColor: "#333333",
         accentColor: "#D4AF37",
-        bgColors: ["#E0F2FE", "#D1FAE5", "#FEF08A"],
+        bgColors: [],
         padding: 45,
         paddingY: undefined,
         borderRadius: 12,
@@ -91,11 +93,13 @@ export const useThemeStore = create<ThemeState>()(
         setFontSize: (size) => set({ fontSize: size }),
         setAlignment: (alignment) => set({ alignment: alignment }),
         setPrimaryColor: (color) => set({ primaryColor: color }),
+        setSecondaryColor: (color) => set({ secondaryColor: color }),
+        setAccentColor: (color) => set({ accentColor: color }),
         setPalette: (palette) => set({ 
           primaryColor: palette.primary, 
           secondaryColor: palette.secondary, 
           accentColor: palette.accent,
-          bgColors: palette.bgColors || ["#E0F2FE", "#D1FAE5", "#FEF08A"],
+          bgColors: palette.bgColors || [],
           selectedPaletteName: palette.name === "None" ? null : palette.name
         }),
         setPadding: (padding) => set({ padding: padding }),
@@ -110,7 +114,7 @@ export const useThemeStore = create<ThemeState>()(
           primaryColor: "#800000",
           secondaryColor: "#333333",
           accentColor: "#D4AF37",
-          bgColors: ["#E0F2FE", "#D1FAE5", "#FEF08A"],
+          bgColors: [],
           padding: 45,
           paddingY: undefined,
           borderRadius: 12,

@@ -71,69 +71,7 @@ interface TemplateFormProps {
   isEdit?: boolean;
 }
 
-const GRADIENT_PRESETS = [
-  // Dark / Rich Presets (Matches Gold frames well)
-  { name: "Midnight Navy", colors: "#0f172a,#1e293b" },
-  { name: "Deep Aubergine", colors: "#2a1b38,#3a254f" },
-  { name: "Royal Onyx", colors: "#0a0a0a,#1c1c1c" },
-  { name: "Emerald Black", colors: "#061a14,#0e3327" },
-  { name: "Rich Crimson", colors: "#2b0910,#4a101b" },
-  { name: "Deep Cocoa", colors: "#2c1810,#422418" },
-  { name: "Midnight Sapphire", colors: "#020c1b,#0a192f" },
-  { name: "Dark Amethyst", colors: "#1a0b2e,#3b185f" },
-  { name: "Forest Night", colors: "#013220,#02422b" },
-  { name: "Burgundy Wine", colors: "#3b0000,#5c0000" },
-  { name: "Obsidian", colors: "#000000,#242424" },
-  { name: "Navy to Purple", colors: "#0f0c29,#302b63,#24243e" },
-  
-  // Warm & Earthy
-  { name: "Warm Gold", colors: "#ffffff,#fef9e7" },
-  { name: "Sunset Orange", colors: "#ff7e5f,#feb47b" },
-  { name: "Peachy Dawn", colors: "#ffedbc,#ed4264" },
-  { name: "Desert Sand", colors: "#e6dada,#274046" },
-  { name: "Autumn Leaves", colors: "#d38312,#a83279" },
-  { name: "Mocha", colors: "#e6d0ce,#9a8478" },
-  { name: "Bronze Muted", colors: "#b79891,#94716b" },
-  { name: "Coffee", colors: "#603813,#b29f94" },
-  
-  // Cool & Aquatic
-  { name: "Aqua Marine", colors: "#1a2a6c,#b21f1f,#fdbb2d" },
-  { name: "Ocean Breeze", colors: "#2193b0,#6dd5ed" },
-  { name: "Deep Sea", colors: "#2c3e50,#3498db" },
-  { name: "Mint Water", colors: "#56ab2f,#a8e063" },
-  { name: "Subtle Mint", colors: "#ffffff,#f2fbf5" },
-  { name: "Teal Glow", colors: "#11998e,#38ef7d" },
-  { name: "Azure Pop", colors: "#00c6ff,#0072ff" },
-  { name: "Frost", colors: "#000428,#004e92" },
-  
-  // Vibrant & Playful
-  { name: "Magenta Pop", colors: "#f12711,#f5af19" },
-  { name: "Neon Pink", colors: "#dd3e54,#6be585" },
-  { name: "Purple Haze", colors: "#8e2de2,#4a00e0" },
-  { name: "Fruity", colors: "#f09819,#edde5d" },
-  { name: "Mango", colors: "#ffe259,#ffa751" },
-  { name: "Berry Smooth", colors: "#8a2387,#e94057,#f27121" },
-  { name: "Cosmic", colors: "#ff0099,#493240" },
-  
-  // Light / Pastel
-  { name: "Soft Rose", colors: "#ffffff,#fff0f5" },
-  { name: "Pearl White", colors: "#ffffff,#f8f9fa" },
-  { name: "Lavender Dream", colors: "#e0c3fc,#8ec5fc" },
-  { name: "Sky Tint", colors: "#e0eafc,#cfdef3" },
-  { name: "Rose Water", colors: "#e55d87,#5fc3e4" },
-  { name: "Cotton Candy", colors: "#ffecd2,#fcb69f" },
-  { name: "Peppermint", colors: "#a1ffce,#faffd1" },
-  { name: "Vanilla", colors: "#f3e7e9,#e3eeff" },
-  { name: "Lemon", colors: "#f9d423,#ff4e50" },
-  
-  // Elegant & Neutral
-  { name: "Silver Grey", colors: "#bdc3c7,#2c3e50" },
-  { name: "Slate", colors: "#4b6cb7,#182848" },
-  { name: "Steel", colors: "#141e30,#243b55" },
-  { name: "Platinum", colors: "#d7d2cc,#304352" },
-  { name: "Ash", colors: "#606c88,#3f4c6b" },
-  { name: "Graphite", colors: "#485563,#29323c" }
-];
+import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 
 const initialFormState = {
   name: "",
@@ -821,48 +759,63 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       </p>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Quick Presets</Label>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2.5">
+                      <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Select Gradient Background Color Palette</Label>
+                      <div className="flex flex-wrap gap-2 max-h-[220px] overflow-y-auto p-2 border border-border/80 rounded-xl bg-muted/20 shadow-inner">
                         {(() => {
-                          const basePresets = [
-                            { name: "Midnight Navy", colors: "#0f172a,#1e293b", style: { background: "linear-gradient(to bottom, #0f172a, #1e293b)" } },
-                            { name: "Deep Aubergine", colors: "#2a1b38,#3a254f", style: { background: "linear-gradient(to bottom, #2a1b38, #3a254f)" } },
-                            { name: "Royal Onyx", colors: "#0a0a0a,#1c1c1c", style: { background: "linear-gradient(to bottom, #0a0a0a, #1c1c1c)" } },
-                            { name: "Emerald Black", colors: "#061a14,#0e3327", style: { background: "linear-gradient(to bottom, #061a14, #0e3327)" } },
-                            { name: "Rich Crimson", colors: "#2b0910,#4a101b", style: { background: "linear-gradient(to bottom, #2b0910, #4a101b)" } },
-                            { name: "Deep Cocoa", colors: "#2c1810,#422418", style: { background: "linear-gradient(to bottom, #2c1810, #422418)" } },
-                          ];
+                          const basePresets = GRADIENT_PRESETS.map(preset => {
+                            const colorsArr = preset.colors.split(",");
+                            const c1 = colorsArr[0]?.trim();
+                            const c2 = colorsArr[1]?.trim() || c1;
+                            const c3 = colorsArr[2]?.trim();
+                            
+                            let bgStyle = "";
+                            if (formState.frameBgType === "linear") {
+                              bgStyle = c3 
+                                ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                            } else {
+                              bgStyle = c3 
+                                ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                : `radial-gradient(circle, ${c1}, ${c2})`;
+                            }
+                            
+                            return {
+                              name: preset.name,
+                              colors: preset.colors,
+                              style: { background: bgStyle }
+                            };
+                          });
 
                           const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
                           const activeNormalized = normalizeColors(formState.frameBgGradientColors || "");
-                          const isAlreadyInBase = basePresets.some(p => normalizeColors(p.colors) === activeNormalized);
+                          const isAlreadyInPresets = GRADIENT_PRESETS.some(p => normalizeColors(p.colors) === activeNormalized);
 
                           let finalPresets = [...basePresets];
 
-                          if (!isAlreadyInBase && activeNormalized) {
-                            // Find if this is in the 50 gradient library
-                            const libraryMatch = GRADIENT_PRESETS.find(p => normalizeColors(p.colors) === activeNormalized);
-                            if (libraryMatch) {
-                              const colorsArr = libraryMatch.colors.split(",");
-                              const c1 = colorsArr[0]?.trim();
+                          if (!isAlreadyInPresets && activeNormalized) {
+                            const colorsArr = formState.frameBgGradientColors.split(",");
+                            if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
+                              const c1 = colorsArr[0].trim();
                               const c2 = colorsArr[1]?.trim() || c1;
-                              finalPresets.push({
-                                name: libraryMatch.name,
-                                colors: libraryMatch.colors,
-                                style: { background: `linear-gradient(to bottom, ${c1}, ${c2})` }
-                              });
-                            } else {
-                              const colorsArr = formState.frameBgGradientColors.split(",");
-                              if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
-                                const c1 = colorsArr[0].trim();
-                                const c2 = colorsArr[1]?.trim() || c1;
-                                finalPresets.push({
-                                  name: "Custom Gradient",
-                                  colors: formState.frameBgGradientColors,
-                                  style: { background: `linear-gradient(to bottom, ${c1}, ${c2})` }
-                                });
+                              const c3 = colorsArr[2]?.trim();
+                              
+                              let bgStyle = "";
+                              if (formState.frameBgType === "linear") {
+                                bgStyle = c3 
+                                  ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                  : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                              } else {
+                                bgStyle = c3 
+                                  ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                  : `radial-gradient(circle, ${c1}, ${c2})`;
                               }
+                              
+                              finalPresets.push({
+                                name: "Custom Gradient",
+                                colors: formState.frameBgGradientColors,
+                                style: { background: bgStyle }
+                              });
                             }
                           }
 
@@ -876,7 +829,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                 className={cn(
                                   "w-8 h-8 rounded-full border shadow-sm transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 bg-background relative cursor-pointer",
                                   isPresetActive 
-                                    ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md"
+                                    ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md z-10"
                                     : "border-border/80 hover:border-foreground"
                                 )}
                                 style={preset.style}
@@ -889,67 +842,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                             );
                           });
                         })()}
-                        
-                        <Dialog>
-                          <DialogTrigger render={
-                            <button
-                              type="button"
-                              className="h-8 px-3 rounded-full border border-border/80 shadow-sm transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 bg-muted/50 text-xs font-semibold flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                            >
-                              + More
-                            </button>
-                          } />
-                          <DialogContent className="max-w-3xl bg-card border border-border p-6 rounded-xl max-h-[85vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="text-xl font-black text-primary">Gradient Library</DialogTitle>
-                              <DialogDescription className="text-sm">
-                                Choose from our curated collection of 50 premium gradient palettes.
-                              </DialogDescription>
-                            </DialogHeader>
-                            
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-6 mt-4 pb-4">
-                              {GRADIENT_PRESETS.map((preset, idx) => {
-                                const colorsArr = preset.colors.split(",");
-                                const c1 = colorsArr[0]?.trim();
-                                const c2 = colorsArr[1]?.trim() || c1;
-                                const bgStyle = formState.frameBgType === "linear" 
-                                  ? `linear-gradient(to bottom, ${c1}, ${c2})`
-                                  : `radial-gradient(circle, ${c1}, ${c2})`;
-                                
-                                const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
-                                const isPresetActive = normalizeColors(formState.frameBgGradientColors) === normalizeColors(preset.colors);
-                                  
-                                return (
-                                  <DialogTrigger key={idx} render={
-                                    <button
-                                      type="button"
-                                      onClick={() => setFormState({ ...formState, frameBgGradientColors: preset.colors })}
-                                      className="flex flex-col items-center gap-2 group focus:outline-none cursor-pointer"
-                                    >
-                                      <div 
-                                        className={cn(
-                                          "w-full aspect-video rounded-lg shadow-sm border transition-all duration-200",
-                                          isPresetActive
-                                            ? "ring-2 ring-primary ring-offset-2 ring-offset-card scale-105 border-primary shadow-md"
-                                            : "border-border group-hover:scale-105 group-hover:shadow-md group-hover:ring-2 group-hover:ring-primary/40 group-hover:ring-offset-1 group-hover:ring-offset-card"
-                                        )}
-                                        style={{ background: bgStyle }}
-                                      />
-                                      <span className={cn(
-                                        "text-[10px] font-medium transition-colors text-center w-full truncate flex items-center justify-center gap-1",
-                                        isPresetActive
-                                          ? "text-primary font-bold"
-                                          : "text-muted-foreground group-hover:text-foreground"
-                                      )}>
-                                        {preset.name} {isPresetActive && "✓"}
-                                      </span>
-                                    </button>
-                                  } />
-                                );
-                              })}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
                       </div>
                     </div>
                   </div>

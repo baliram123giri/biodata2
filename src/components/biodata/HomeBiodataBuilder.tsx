@@ -122,6 +122,9 @@ export function HomeBiodataBuilder() {
   useEffect(() => {
     setIsHydrated(true);
 
+    // Load dynamic templates from database on initial page load
+    useBiodataStore.getState().fetchCustomTemplates?.();
+
     // Register a listener for when hydration completes
     const unsub = useBiodataStore.persist.onFinishHydration(() => {
       resetFormDataOnly();

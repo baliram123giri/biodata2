@@ -200,9 +200,10 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const iSW = config.frame.innerStrokeWidth * scale;
       const iCR = config.frame.innerCornerRadius * scale;
       
+      const innerOpacity = config.frame.type === "gradient" ? 0.3 : 0.6;
       svgBody += `
         <rect x="${oI}" y="${oI}" width="${A4_W - oI * 2}" height="${A4_H - oI * 2}" stroke="${primaryColor}" stroke-width="${oSW}" rx="${oCR}" fill="none" />
-        <rect x="${iI}" y="${iI}" width="${A4_W - iI * 2}" height="${A4_H - iI * 2}" stroke="${primaryColor}" stroke-width="${iSW}" rx="${iCR}" fill="none" />
+        <rect x="${iI}" y="${iI}" width="${A4_W - iI * 2}" height="${A4_H - iI * 2}" stroke="${primaryColor}" stroke-width="${iSW}" rx="${iCR}" stroke-opacity="${innerOpacity}" fill="none" />
       `;
 
       if (config.frame.hasCornerCurves) {
@@ -310,9 +311,23 @@ export async function generateDocxBuffer(opts: {
 }): Promise<Buffer> {
   const { formData: data, theme, templateId } = opts;
 
-  const config = getTemplateConfig(templateId || "royal");
-  const primary = theme.selectedPaletteName === null ? config.defaultPrimary : (theme.primaryColor || "#800000");
-  const secondary = theme.selectedPaletteName === null ? config.defaultSecondary : (theme.secondaryColor || "#333333");
+  // Resolve template dynamically if it is a database template to align module contexts
+  const tId = templateId || "royal";
+  const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");
+  if (tId && !TEMPLATE_CONFIGS[tId]) {
+    const { prisma } = require("./prisma");
+    const dbTpl = await prisma.template.findUnique({
+      where: { id: tId }
+    });
+    if (dbTpl) {
+      TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+    }
+  }
+
+  const config = getTemplateConfig(tId);
+  const primary = theme.primaryColor || config.defaultPrimary;
+  const secondary = theme.secondaryColor || config.defaultSecondary;
+  const accent = theme.accentColor || config.defaultAccent;
   const bgColor = theme.selectedPaletteName === null 
     ? ((config.frame as any).bgColor || "ffffff") 
     : getLightBgColor(primary).replace("#", "");

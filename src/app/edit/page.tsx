@@ -40,6 +40,8 @@ const KonvaPreview = dynamic(
 );
 
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
@@ -64,6 +66,7 @@ import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard"
 
 
 
+import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 export default function EditPage() {
   const router = useRouter();
   const { formData, selectedTemplate, setFormData } = useBiodataStore();
@@ -660,92 +663,45 @@ export default function EditPage() {
               )}
 
               {activeTab === "theme" && (
-                <div className="flex flex-col gap-8">
-                  <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-3">
-                      <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* None / Reset option */}
-                        {(() => {
-                          const isNone = theme.selectedPaletteName === null;
-                          return (
-                            <button
-                              onClick={() => {
-                                theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                                if (window.innerWidth < 1024) {
-                                  setIsRightOpen(false);
-                                }
-                              }}
-                              className={cn(
-                                "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
-                                isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
-                              )}
-                            >
-                              <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
-                                <svg className="w-4 h-4 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <circle cx="12" cy="12" r="9" />
-                                  <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
-                                </svg>
-                              </div>
-                              <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
-                              {isNone && (
-                                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
-                                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })()}
-                        {(() => {
-                          const templateConfig = TEMPLATE_CONFIGS[useBiodataStore.getState().selectedTemplate] || TEMPLATE_CONFIGS["royal"];
-                          const isGradientFrame = templateConfig.frame.type === "gradient";
-
-                          const filteredPalettes = isGradientFrame
-                            ? PALETTES.filter(p => !!p.bgColors)
-                            : PALETTES.filter(p => !p.bgColors);
-
-                          return filteredPalettes.map((p) => {
-                            const isSelected = theme.selectedPaletteName === p.name;
+                <div className="flex flex-col gap-6">
+                  <Tabs defaultValue="bg" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl mb-6">
+                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs">
+                        Background Themes
+                      </TabsTrigger>
+                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs">
+                        Text Themes
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="bg" className="flex flex-col gap-4 animate-in fade-in duration-200">
+                      <div className="flex flex-col gap-3">
+                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
+                        <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto p-1.5 border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 shadow-inner">
+                          {/* None / Reset option */}
+                          {(() => {
+                            const isNone = theme.selectedPaletteName === null;
                             return (
                               <button
-                                key={p.name}
                                 onClick={() => {
-                                  if (isSelected) {
-                                    theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                                  } else {
-                                    theme.setPalette(p);
-                                  }
+                                  theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
                                   if (window.innerWidth < 1024) {
                                     setIsRightOpen(false);
                                   }
                                 }}
                                 className={cn(
                                   "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
-                                  isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
+                                  isNone ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
                                 )}
                               >
-                                <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
-                                  {p.bgColors ? (
-                                    <div className="w-full h-full" style={{ background: `linear-gradient(90deg, ${p.bgColors.join(", ")})` }} />
-                                  ) : (
-                                    <>
-                                      <div className="flex-1" style={{ backgroundColor: p.primary }} />
-                                      <div className="flex-1" style={{ backgroundColor: p.secondary }} />
-                                      <div className="flex-1" style={{ backgroundColor: p.accent }} />
-                                    </>
-                                  )}
+                                <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner items-center justify-center bg-stitch-surface-variant/30">
+                                  <svg className="w-4 h-4 text-stitch-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <circle cx="12" cy="12" r="9" />
+                                    <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
+                                  </svg>
                                 </div>
-                                <div className="flex flex-col items-start overflow-hidden flex-1">
-                                  <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{p.name}</span>
-                                  <div className="flex gap-0.5 mt-0.5">
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
-                                  </div>
-                                </div>
-                                {isSelected && (
+                                <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
+                                {isNone && (
                                   <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
                                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -754,27 +710,240 @@ export default function EditPage() {
                                 )}
                               </button>
                             );
-                          });
-                        })()}
-                      </div>
-                    </div>
+                          })()}
 
-                    <div className="flex flex-col gap-4">
-                      <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Color</Label>
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-                          style={{ backgroundColor: theme.primaryColor }}
-                        >
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
-                        <div className="flex-1 bg-white border border-stitch-outline/20 rounded-xl px-4 py-2.5 text-sm text-stitch-on-surface font-bold flex justify-between items-center shadow-sm">
-                          <span>{theme.primaryColor.toUpperCase()}</span>
-                          <span className="text-stitch-on-surface-variant text-[10px] font-bold">Primary</span>
+                          {(() => {
+                            const activeTemplateId = useBiodataStore.getState().selectedTemplate;
+                            const dbTpl = useBiodataStore.getState().customTemplates?.find(t => t.id === activeTemplateId);
+                            
+                            const bgType = dbTpl 
+                              ? dbTpl.bgType 
+                              : TEMPLATE_CONFIGS[activeTemplateId]?.bgType || TEMPLATE_CONFIGS[activeTemplateId]?.frame?.type;
+
+                            const isGradient = bgType === "linear" || bgType === "radial" || bgType === "gradient";
+
+                            if (isGradient) {
+                              return GRADIENT_PRESETS.map((preset) => {
+                                const colorsArr = preset.colors.split(",");
+                                const c1 = colorsArr[0]?.trim();
+                                const c2 = colorsArr[1]?.trim() || c1;
+                                const c3 = colorsArr[2]?.trim();
+                                
+                                let bgStyle = "";
+                                if (bgType === "linear" || bgType === "gradient") {
+                                  bgStyle = c3 
+                                    ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                    : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                                } else {
+                                  bgStyle = c3 
+                                    ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                    : `radial-gradient(circle, ${c1}, ${c2})`;
+                                }
+                                
+                                const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
+                                const activeBgColors = theme.bgColors || [];
+                                const activeNormalized = activeBgColors.map(c => normalizeColors(c)).join(",");
+                                const presetNormalized = colorsArr.map(c => normalizeColors(c)).join(",");
+                                
+                                const isSelected = activeNormalized === presetNormalized;
+                                
+                                return (
+                                  <button
+                                    key={preset.name}
+                                    onClick={() => {
+                                      theme.setPalette({
+                                        name: preset.name,
+                                        primary: theme.primaryColor,
+                                        secondary: theme.secondaryColor,
+                                        accent: theme.accentColor,
+                                        bgColors: colorsArr
+                                      });
+                                      if (window.innerWidth < 1024) {
+                                        setIsRightOpen(false);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
+                                      isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
+                                    )}
+                                  >
+                                    <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner animate-fade-in" style={{ background: bgStyle }} />
+                                    <div className="flex flex-col items-start overflow-hidden flex-1">
+                                      <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{preset.name}</span>
+                                      <div className="flex gap-0.5 mt-0.5">
+                                        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: c1 }} />
+                                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c2 }} />
+                                        {c3 && <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c3 }} />}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              });
+                            }
+
+                            // Static Solid Palettes (default behavior)
+                            const filteredPalettes = PALETTES.filter(p => !p.bgColors);
+                            return filteredPalettes.map((p) => {
+                              const isSelected = theme.selectedPaletteName === p.name;
+                              return (
+                                <button
+                                  key={p.name}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                                    } else {
+                                      theme.setPalette(p);
+                                    }
+                                    if (window.innerWidth < 1024) {
+                                      setIsRightOpen(false);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
+                                    isSelected ? "border-stitch-primary bg-white shadow-sm" : "border-stitch-outline/10 hover:border-stitch-outline/30 bg-transparent"
+                                  )}
+                                >
+                                  <div className="flex shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-black/5 shadow-inner">
+                                    <>
+                                      <div className="flex-1" style={{ backgroundColor: p.primary }} />
+                                      <div className="flex-1" style={{ backgroundColor: p.secondary }} />
+                                      <div className="flex-1" style={{ backgroundColor: p.accent }} />
+                                    </>
+                                  </div>
+                                  <div className="flex flex-col items-start overflow-hidden flex-1">
+                                    <span className="text-[11px] font-bold text-stitch-on-surface truncate pr-2 w-full text-left">{p.name}</span>
+                                    <div className="flex gap-0.5 mt-0.5">
+                                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.primary }} />
+                                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.secondary }} />
+                                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.accent }} />
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
+                                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </TabsContent>
+
+                    <TabsContent value="text" className="flex flex-col gap-4 animate-in fade-in duration-200">
+                      <div className="flex flex-col gap-4">
+                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Colors</Label>
+                        
+                        <div className="flex flex-col gap-3">
+                          {/* Primary Color Picker */}
+                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
+                              <input 
+                                type="color" 
+                                value={theme.primaryColor} 
+                                onChange={(e) => theme.setPrimaryColor(e.target.value)} 
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                            </label>
+                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Primary</span>
+                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Titles & Headers</span>
+                              </div>
+                              <Input
+                                type="text"
+                                placeholder="#000000"
+                                value={theme.primaryColor.toUpperCase()}
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.length > 0 && !val.startsWith("#")) {
+                                    val = "#" + val;
+                                  }
+                                  theme.setPrimaryColor(val);
+                                }}
+                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Secondary Color Picker */}
+                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
+                              <input 
+                                type="color" 
+                                value={theme.secondaryColor} 
+                                onChange={(e) => theme.setSecondaryColor(e.target.value)} 
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                            </label>
+                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Secondary</span>
+                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Field Values</span>
+                              </div>
+                              <Input
+                                type="text"
+                                placeholder="#000000"
+                                value={theme.secondaryColor.toUpperCase()}
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.length > 0 && !val.startsWith("#")) {
+                                    val = "#" + val;
+                                  }
+                                  theme.setSecondaryColor(val);
+                                }}
+                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Accent Color Picker */}
+                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
+                              <input 
+                                type="color" 
+                                value={theme.accentColor} 
+                                onChange={(e) => theme.setAccentColor(e.target.value)} 
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                            </label>
+                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Accent</span>
+                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Labels & Ornaments</span>
+                              </div>
+                              <Input
+                                type="text"
+                                placeholder="#000000"
+                                value={theme.accentColor.toUpperCase()}
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.length > 0 && !val.startsWith("#")) {
+                                    val = "#" + val;
+                                  }
+                                  theme.setAccentColor(val);
+                                }}
+                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               )}
 

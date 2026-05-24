@@ -71,6 +71,8 @@ export interface TemplateConfig {
   };
   frame: FrameConfig;
   thumbnailUrl?: string;
+  bgType?: string;
+  bgGradientColors?: string[];
 }
 
 // ── Registry ───────────────────────────────────────────────────────
@@ -160,5 +162,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     },
     frame,
     thumbnailUrl: dbTpl.thumbnailUrl || undefined,
+    bgType: dbTpl.frameBgType || "solid",
+    bgGradientColors: dbTpl.frameBgGradientColors || [],
   };
 }

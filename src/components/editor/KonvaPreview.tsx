@@ -93,12 +93,98 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
   );
 });
 
-const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig, bgColor }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; bgColor: string; }) {
+const PageBackground = React.memo(function PageBackground({ 
+  templateConfig, 
+  themeBgColors, 
+  themeSelectedPalette,
+  primaryColor
+}: { 
+  templateConfig: TemplateConfig; 
+  themeBgColors: string[]; 
+  themeSelectedPalette: string | null;
+  primaryColor: string;
+}) {
+  // 1. If a theme palette is selected (not Custom/None), respect the palette background settings
+  if (themeSelectedPalette !== null) {
+    const lightBg = getLightBgColor(primaryColor);
+    if (themeBgColors && themeBgColors.length > 1) {
+      return (
+        <Rect 
+          width={A4_W} 
+          height={A4_H} 
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
+          fillLinearGradientColorStops={
+            themeBgColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
+          }
+        />
+      );
+    }
+    return <Rect width={A4_W} height={A4_H} fill={lightBg} />;
+  }
+
+  // 2. If no palette is selected (None), use the template's background
+  const bgType = templateConfig.bgType || "solid";
+  const bgGradientColors = templateConfig.bgGradientColors || [];
+  
+  if ((bgType === "linear" || bgType === "radial") && bgGradientColors.length > 1) {
+    if (bgType === "linear") {
+      return (
+        <Rect 
+          width={A4_W} 
+          height={A4_H} 
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
+          fillLinearGradientColorStops={
+            bgGradientColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
+          }
+        />
+      );
+    } else {
+      return (
+        <Rect 
+          width={A4_W} 
+          height={A4_H} 
+          fillRadialGradientStartPoint={{ x: A4_W / 2, y: A4_H / 2 }}
+          fillRadialGradientStartRadius={0}
+          fillRadialGradientEndPoint={{ x: A4_W / 2, y: A4_H / 2 }}
+          fillRadialGradientEndRadius={Math.max(A4_W, A4_H) / 2}
+          fillRadialGradientColorStops={
+            bgGradientColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
+          }
+        />
+      );
+    }
+  }
+
+  // Static template gradient frame fallback
+  if (templateConfig.frame.type === "gradient") {
+    const gradColors = (templateConfig.frame as FrameGradientConfig).gradientColors || [];
+    if (gradColors.length > 1) {
+      return (
+        <Rect 
+          width={A4_W} 
+          height={A4_H} 
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: A4_W, y: 0 }}
+          fillLinearGradientColorStops={
+            gradColors.flatMap((color, i, arr) => [i / (arr.length - 1), color])
+          }
+        />
+      );
+    }
+  }
+
+  // Solid background fallback
+  const solidColor = (templateConfig.frame as any).bgColor || "#ffffff";
+  return <Rect width={A4_W} height={A4_H} fill={solidColor} />;
+});
+
+const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
   return (
     <Group>
-      <Rect width={A4_W} height={A4_H} fill={bgColor} />
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
       {hasPhoto && photoConfig && (
         <Rect x={photoConfig.x - 2} y={photoConfig.y - 2} width={photoConfig.width + 4} height={photoConfig.height + 4} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
@@ -208,28 +294,18 @@ function StickerItem({
   );
 }
 
-const SvgFrame = React.memo(function SvgFrame({ config, primaryColor, bgColor }: { config: FrameSvgConfig; primaryColor: string; bgColor: string; }) {
+const SvgFrame = React.memo(function SvgFrame({ config, primaryColor }: { config: FrameSvgConfig; primaryColor: string; }) {
   return (
     <Group>
-      <Rect width={A4_W} height={A4_H} fill={bgColor} />
       <Rect x={config.outerInset} y={config.outerInset} width={A4_W - config.outerInset * 2} height={A4_H - config.outerInset * 2} stroke={primaryColor} strokeWidth={config.outerStrokeWidth} cornerRadius={config.outerCornerRadius} />
       <Rect x={config.innerInset} y={config.innerInset} width={A4_W - config.innerInset * 2} height={A4_H - config.innerInset * 2} stroke={primaryColor} strokeWidth={config.innerStrokeWidth} cornerRadius={config.innerCornerRadius} opacity={0.6} />
     </Group>
   );
 });
 
-const GradientFrame = React.memo(function GradientFrame({ config, primaryColor, bgColors }: { config: FrameGradientConfig; primaryColor: string; bgColors: string[]; }) {
+const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }: { config: FrameGradientConfig; primaryColor: string; }) {
   return (
     <Group>
-      <Rect 
-        width={A4_W} 
-        height={A4_H} 
-        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
-        fillLinearGradientEndPoint={{ x: A4_W, y: 0 }}
-        fillLinearGradientColorStops={
-          (bgColors || config.gradientColors).flatMap((color, i, arr) => [i / (arr.length - 1), color])
-        }
-      />
       <Rect 
         x={config.outerInset} 
         y={config.outerInset} 
@@ -508,12 +584,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     return () => window.removeEventListener("biodata:export-jpg", handleExportJpg);
   }, [stageSize]);
 
-  const primaryColor = theme.selectedPaletteName === null ? templateConfig.defaultPrimary : theme.primaryColor;
-  const secondaryColor = theme.selectedPaletteName === null ? templateConfig.defaultSecondary : theme.secondaryColor;
-  const accentColor = theme.selectedPaletteName === null ? templateConfig.defaultAccent : theme.accentColor;
-  const bgColor = theme.selectedPaletteName === null 
-    ? (templateConfig.frame as any).bgColor || "#ffffff" 
-    : getLightBgColor(primaryColor);
+  const primaryColor = theme.primaryColor;
+  const secondaryColor = theme.secondaryColor;
+  const accentColor = theme.accentColor;
   const baseFontSize = theme.fontSize || 11;
   const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : padding);
@@ -691,17 +764,20 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         style={{ cursor: isDesigner ? 'grab' : 'default' }}
       >
         <Layer listening={false}>
+          <PageBackground
+            templateConfig={templateConfig}
+            themeBgColors={theme.bgColors}
+            themeSelectedPalette={theme.selectedPaletteName}
+            primaryColor={primaryColor}
+          />
           {templateConfig.frame.type === "image" ? (
-            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} bgColor={bgColor} />
+            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
-            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} bgColors={theme.bgColors} />
+            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
           ) : templateConfig.frame.type === "custom" ? (
-            <>
-              <Rect width={A4_W} height={A4_H} fill={bgColor} />
-              <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
-            </>
+            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
           ) : (
-            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} bgColor={bgColor} />
+            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
           
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
@@ -761,7 +837,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                               text={field.value}
                               fontSize={layout.fSize}
                               fontFamily={fontFamily}
-                              fill="#333333"
+                              fill={secondaryColor}
                               lineHeight={1.1}
                             />
                           </>
@@ -773,7 +849,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                             text={field.value}
                             fontSize={layout.fSize}
                             fontFamily={fontFamily}
-                            fill="#333333"
+                            fill={secondaryColor}
                             lineHeight={1.1}
                           />
                         )}
