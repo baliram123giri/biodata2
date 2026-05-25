@@ -59,8 +59,9 @@ const KonvaPreview = dynamic(
  * Includes form, live preview, template picker, and download/export actions.
  */
 export function HomeBiodataBuilder() {
-  const { formData: storedData, selectedTemplate: storedTemplate, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly } = useBiodataStore();
+  const { formData: storedData, selectedTemplate: storedTemplate, customTemplates, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly } = useBiodataStore();
   const theme = useThemeStore();
+  const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [isHydrated, setIsHydrated] = useState(false);
@@ -140,6 +141,43 @@ export function HomeBiodataBuilder() {
 
     return () => unsub();
   }, [resetFormDataOnly, methods]);
+
+  // Synchronize theme padding and palette with selected template defaults from database
+  useEffect(() => {
+    if (!isHydrated) return;
+    const config = getTemplateConfig(storedTemplate);
+    if (!config) return;
+
+    const configKey = `${storedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;
+    if (configKey !== prevTemplateRef.current) {
+      prevTemplateRef.current = configKey;
+      
+      // Resolve background colors
+      let bgColors: string[] = ["#ffffff"];
+      if (config.bgGradientColors && config.bgGradientColors.length > 0) {
+        bgColors = config.bgGradientColors;
+      } else if (config.frame.type === "gradient") {
+        bgColors = config.frame.gradientColors;
+      } else if (config.frame.bgColor) {
+        bgColors = [config.frame.bgColor];
+      }
+
+      // Apply template's colors
+      theme.setPalette({
+        name: "None",
+        primary: config.defaultPrimary,
+        secondary: config.defaultSecondary,
+        accent: config.defaultAccent || "",
+        bgColors: bgColors,
+      });
+
+      // Apply template's default padding
+      if (config.defaultPadding !== undefined && config.defaultPadding !== null) {
+        theme.setPadding(config.defaultPadding);
+      }
+      theme.setPaddingY(config.defaultYPadding !== null && config.defaultYPadding !== undefined ? config.defaultYPadding : undefined);
+    }
+  }, [storedTemplate, customTemplates, isHydrated, theme]);
 
   // Debounced store update
   useEffect(() => {
@@ -519,6 +557,7 @@ export function HomeBiodataBuilder() {
 function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) {
   const formData = useWatch();
   const [isClientMounted, setIsClientMounted] = useState(false);
+  const customTemplates = useBiodataStore((state) => state.customTemplates);
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -526,7 +565,7 @@ function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) 
 
   return (
     <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none flex items-center justify-center">
-      {!isClientMounted ? (
+      {!isClientMounted || customTemplates.length === 0 ? (
         <PreviewLoader />
       ) : (
         <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />

@@ -56,9 +56,17 @@ async function fetchWithCache(url: string): Promise<Buffer> {
   return buffer;
 }
 
-/** Convert hex color like "#800000" to "800000" (docx expects no hash) */
+/** Convert hex color like "#800000" to "800000" (docx expects no hash, and strictly 6 digits) */
 function hexColor(hex: string): string {
-  return hex.replace(/^#/, "");
+  if (!hex || typeof hex !== "string") return "000000";
+  let clean = hex.trim().replace(/^#/, "");
+  if (clean.length === 3) {
+    clean = clean.split("").map(c => c + c).join("");
+  }
+  if (clean.length !== 6) {
+    return "000000";
+  }
+  return clean;
 }
 
 /** Build a no-border cell config */
@@ -77,14 +85,101 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 
   try {
     if (config.frame.type === "image") {
-      const url = getFrameImageUrl(config.frame as any, primaryColor);
-      if (url.startsWith("http://") || url.startsWith("https://")) {
-        return await fetchWithCache(url);
+      const url = theme?.rasterizedFrameBase64 || getFrameImageUrl(config.frame as any, primaryColor);
+      let imgBuffer: Buffer | null = null;
+      if (url.startsWith("data:image/")) {
+        const formatMatch = url.match(/^data:image\/(\w+);base64,/);
+        const format = formatMatch ? formatMatch[1] : "png";
+        const base64Content = url.substring(url.indexOf(",") + 1);
+        const buffer = Buffer.from(base64Content, "base64");
+        
+        if (format.includes("svg") || url.includes("svg")) {
+          imgBuffer = await sharp(buffer, { density: 300 }).png().toBuffer();
+        } else {
+          imgBuffer = buffer;
+        }
+      } else if (url.startsWith("http://") || url.startsWith("https://")) {
+        imgBuffer = await fetchWithCache(url);
       } else {
         const filePath = path.join(process.cwd(), 'public', url);
         if (fs.existsSync(filePath)) {
-           return fs.readFileSync(filePath);
+           imgBuffer = fs.readFileSync(filePath);
         }
+      }
+
+      if (imgBuffer) {
+        let bgBuffer: Buffer;
+        const isGradient = theme.bgColors && theme.bgColors.length > 1;
+        
+        if (isGradient) {
+          const stops = theme.bgColors.map((c: string, idx: number) => `<stop offset="${Math.round((idx / (theme.bgColors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+          const bgSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+              <defs>
+                <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  ${stops}
+                </linearGradient>
+              </defs>
+              <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+            </svg>
+          `;
+          bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
+        } else {
+          const hexBg = cleanBgColor.startsWith("#") ? cleanBgColor : `#${cleanBgColor}`;
+          bgBuffer = await sharp({
+            create: {
+              width: A4_W,
+              height: A4_H,
+              channels: 4,
+              background: hexBg
+            }
+          }).png().toBuffer();
+        }
+
+        const resizedFrame = await sharp(imgBuffer).resize(A4_W, A4_H).png().toBuffer();
+        let finalBuffer = await sharp(bgBuffer)
+          .composite([{ input: resizedFrame, top: 0, left: 0 }])
+          .png()
+          .toBuffer();
+
+        if (WATERMARK_CONFIG.isEnabled) {
+          try {
+            const coords = getWatermarkCoordinates(595, 842);
+            const watermarkPath = path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath);
+            const logoBuffer = fs.readFileSync(watermarkPath);
+            const wWidth = Math.round(coords.width * (A4_W / 595));
+            const wHeight = Math.round(coords.height * (A4_H / 842));
+
+            const rotatedImage = sharp(logoBuffer)
+              .resize(wWidth, wHeight)
+              .rotate(WATERMARK_CONFIG.rotation || 0, { background: { r: 0, g: 0, b: 0, alpha: 0 } });
+
+            const meta = await rotatedImage.metadata();
+            const finalTop = Math.round((A4_H - (meta.height || wHeight)) / 2);
+            const finalLeft = Math.round((A4_W - (meta.width || wWidth)) / 2);
+
+            const opaqueLogo = await rotatedImage
+              .ensureAlpha()
+              .composite([
+                {
+                  input: Buffer.from([255, 255, 255, Math.round(WATERMARK_CONFIG.opacity * 255)]),
+                  raw: { width: 1, height: 1, channels: 4 },
+                  blend: 'dest-in',
+                  tile: true
+                }
+              ])
+              .png()
+              .toBuffer();
+
+            finalBuffer = await sharp(finalBuffer)
+              .composite([{ input: opaqueLogo, top: finalTop, left: finalLeft }])
+              .png()
+              .toBuffer();
+          } catch (watermarkErr) {
+            console.error("Failed to add watermark in docx frame compositing", watermarkErr);
+          }
+        }
+        return finalBuffer;
       }
       return null;
     }
@@ -265,7 +360,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 const DOCX_OVERHEAD_FACTOR = 1.4;
 
 function estimateContentHeight(fontSize: number, formData: any, trans: Record<string, string>): number {
-  const LINE_SPACING = fontSize * 0.5;
+  const LINE_SPACING = fontSize * 0.5 + 2;
   const LABEL_WIDTH = 130;
   const COLON_WIDTH = 20;
   const cWidth = 595 - (formData._padding || 45) * 2 - 10;
@@ -289,7 +384,7 @@ function estimateContentHeight(fontSize: number, formData: any, trans: Record<st
       .filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
     if (fields.length === 0) continue;
 
-    cursorY += Math.round(fontSize * 1.4) + LINE_SPACING; // section title
+    cursorY += Math.round(fontSize * 1.4) + LINE_SPACING + 6; // section title
     for (const field of fields) {
       const valText = String(field.displayValue);
       const valW = valText.length * fontSize * 0.6;
@@ -325,12 +420,41 @@ export async function generateDocxBuffer(opts: {
   }
 
   const config = getTemplateConfig(tId);
+  if (config && config.frame && config.frame.type === "image") {
+    const primaryColor = theme?.primaryColor || config.defaultPrimary || "#800000";
+    const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);
+    
+    if (finalUrl && finalUrl.startsWith("data:image/svg+xml")) {
+      try {
+        const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
+        let svgXml = "";
+        if (finalUrl.includes(";base64,")) {
+          svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+        } else {
+          svgXml = decodeURIComponent(base64Content);
+        }
+        
+        const pngBuffer = await sharp(Buffer.from(svgXml), { density: 300 })
+          .png()
+          .toBuffer();
+          
+        theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+      } catch (rasterError) {
+        console.error("Failed to rasterize base64 SVG frame for Word:", rasterError);
+      }
+    }
+  }
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
   const accent = theme.accentColor || config.defaultAccent;
-  const bgColor = theme.selectedPaletteName === null 
-    ? ((config.frame as any).bgColor || "ffffff") 
-    : getLightBgColor(primary).replace("#", "");
+  let bgColor = "ffffff";
+  if (theme.bgColors && theme.bgColors.length > 0) {
+    bgColor = theme.bgColors[0].replace("#", "");
+  } else if ((config.frame as any).bgColor) {
+    bgColor = (config.frame as any).bgColor.replace("#", "");
+  } else if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== "None") {
+    bgColor = getLightBgColor(primary).replace("#", "");
+  }
   
   const currentLang = data.language || "English";
   const t = translations[currentLang] || translations["English"];
@@ -362,7 +486,7 @@ export async function generateDocxBuffer(opts: {
   const docxTitleFontSize = Math.round(fSize * 2 * 2);
   const docxMantraFontSize = Math.round(fSize * 1.2 * 2);
   const docxSectionTitleFontSize = Math.round(fSize * 1.4 * 2);
-  const lineSpacingTwips = Math.round(fSize * 0.5 * 20);
+  const lineSpacingTwips = Math.round((fSize * 0.5 + 2) * 20);
   const sectionGapTwips = Math.round(fSize * 1.5 * 20);
   const mantraAfterTwips = Math.round(fSize * 2 * 20);
   const titleAfterTwips = Math.round(fSize * 2.5 * 20);
@@ -538,6 +662,10 @@ export async function generateDocxBuffer(opts: {
       const height = config.photo.height * 3;
       const cornerRadius = (config.photo.cornerRadius || 0) * 3;
 
+      const borderSvg = Buffer.from(
+        `<svg width="${width}" height="${height}"><rect x="3" y="3" width="${width - 6}" height="${height - 6}" rx="${Math.max(0, cornerRadius - 3)}" ry="${Math.max(0, cornerRadius - 3)}" fill="none" stroke="${primary}" stroke-width="6"/></svg>`
+      );
+
       if (cornerRadius > 0) {
         const roundedCorners = Buffer.from(
           `<svg><rect x="0" y="0" width="${width}" height="${height}" rx="${cornerRadius}" ry="${cornerRadius}"/></svg>`
@@ -545,13 +673,19 @@ export async function generateDocxBuffer(opts: {
 
         const sharpBuf = await sharp(imageBuffer)
           .resize(width, height, { fit: "cover" })
-          .composite([{ input: roundedCorners, blend: "dest-in" }])
+          .composite([
+            { input: roundedCorners, blend: "dest-in" },
+            { input: borderSvg }
+          ])
           .png()
           .toBuffer();
         imageBuffer = Buffer.from(sharpBuf);
       } else {
         const sharpBuf = await sharp(imageBuffer)
           .resize(width, height, { fit: "cover" })
+          .composite([
+            { input: borderSvg }
+          ])
           .png()
           .toBuffer();
         imageBuffer = Buffer.from(sharpBuf);
@@ -691,7 +825,7 @@ export async function generateDocxBuffer(opts: {
                     new TextRun({
                       text: String(f.displayValue),
                       size: docxFontSize,
-                      color: "333333",
+                      color: hexColor(secondary),
                     }),
                   ],
                 }),

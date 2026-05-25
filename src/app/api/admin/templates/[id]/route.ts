@@ -2,7 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
+
+export const BgConfigSchema = z.object({
+  url: z.string().optional().nullable(),
+  file: z.string().optional().nullable(),
+  x: z.number().default(0),
+  y: z.number().default(0),
+  width: z.number().default(595),
+  height: z.number().default(842),
+  opacity: z.number().min(0).max(1).default(1.0),
+});
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -18,7 +29,7 @@ function makeColorizableCloudinaryUrl(url: string): string {
       return url.replace("/image/upload/", "/image/upload/e_tint:100:rgb:{color}/");
     }
     
-    return url.replace("/image/upload/", "/image/upload/f_auto,q_auto,e_tint:100:rgb:{color}/");
+    return url.replace("/image/upload/", "/image/upload/f_auto,q_100,e_tint:100:rgb:{color}/");
   }
   return url;
 }
@@ -50,6 +61,43 @@ async function uploadToCloudinary(fileStr: string, folder: string) {
   } catch (error) {
     console.error(`Cloudinary upload error [${folder}]:`, error);
     throw new Error("Failed to upload asset to Cloudinary");
+  }
+}
+
+function extractCloudinaryPublicId(url: string): string | null {
+  if (!url || !url.includes("res.cloudinary.com")) return null;
+  try {
+    const parts = url.split("/image/upload/");
+    if (parts.length < 2) return null;
+    
+    // Remove version segment (e.g., v12345678/) if present
+    let path = parts[1];
+    const versionMatch = path.match(/^v\d+\/(.+)$/);
+    if (versionMatch) {
+      path = versionMatch[1];
+    }
+    
+    // Remove file extension
+    const dotIndex = path.lastIndexOf(".");
+    if (dotIndex !== -1) {
+      path = path.substring(0, dotIndex);
+    }
+    
+    return path;
+  } catch (err) {
+    console.error("Error extracting Cloudinary public_id:", err);
+    return null;
+  }
+}
+
+async function deleteFromCloudinary(url: string) {
+  const publicId = extractCloudinaryPublicId(url);
+  if (!publicId) return;
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    console.log(`Cloudinary asset deleted [${publicId}]:`, result);
+  } catch (error) {
+    console.error(`Failed to delete Cloudinary asset [${publicId}]:`, error);
   }
 }
 
@@ -87,6 +135,7 @@ export async function PATCH(
       "frameBgType",
       "frameBgColor",
       "frameComponentId",
+      "language",
       "active",
     ];
 
@@ -135,6 +184,10 @@ export async function PATCH(
       if (body.frameFile.startsWith("data:image/svg+xml")) {
         updateData.frameUrlTemplate = body.frameFile;
       } else {
+        // Clean up previous frame from Cloudinary if it existed
+        if (existing.frameUrlTemplate) {
+          await deleteFromCloudinary(existing.frameUrlTemplate);
+        }
         const secureUrl = await uploadToCloudinary(body.frameFile, "frames");
         updateData.frameUrlTemplate = makeColorizableCloudinaryUrl(secureUrl);
       }
@@ -143,9 +196,43 @@ export async function PATCH(
     }
 
     if (body.thumbnailFile) {
+      // Clean up previous thumbnail from Cloudinary if it existed
+      if (existing.thumbnailUrl) {
+        await deleteFromCloudinary(existing.thumbnailUrl);
+      }
       updateData.thumbnailUrl = await uploadToCloudinary(body.thumbnailFile, "thumbnails");
     } else if (body.thumbnailUrl !== undefined) {
       updateData.thumbnailUrl = body.thumbnailUrl;
+    }
+
+    // Process and validate bgConfig JSON schema if provided
+    if (body.bgConfig !== undefined) {
+      if (body.bgConfig === null) {
+        updateData.bgConfig = null;
+      } else {
+        const parsed = BgConfigSchema.safeParse(body.bgConfig);
+        if (!parsed.success) {
+          return NextResponse.json({ error: "Invalid background configuration", details: parsed.error.format() }, { status: 400 });
+        }
+        const bgConfigData = { ...parsed.data };
+        if (bgConfigData.file) {
+          // If there is an existing background image in Cloudinary, delete it first
+          if (existing.bgConfig) {
+            try {
+              const prevConfig = typeof existing.bgConfig === "string" ? JSON.parse(existing.bgConfig) : existing.bgConfig;
+              if (prevConfig?.url) {
+                await deleteFromCloudinary(prevConfig.url);
+              }
+            } catch (e) {
+              console.error("Error deleting old bgConfig image:", e);
+            }
+          }
+          const secureUrl = await uploadToCloudinary(bgConfigData.file, "backgrounds");
+          bgConfigData.url = secureUrl;
+          delete bgConfigData.file;
+        }
+        updateData.bgConfig = bgConfigData;
+      }
     }
 
     const updated = await prisma.template.update({
@@ -178,6 +265,24 @@ export async function DELETE(
 
     if (!existing) {
       return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    // Clean up template assets from Cloudinary
+    if (existing.frameUrlTemplate) {
+      await deleteFromCloudinary(existing.frameUrlTemplate);
+    }
+    if (existing.thumbnailUrl) {
+      await deleteFromCloudinary(existing.thumbnailUrl);
+    }
+    if (existing.bgConfig) {
+      try {
+        const prevConfig = typeof existing.bgConfig === "string" ? JSON.parse(existing.bgConfig) : existing.bgConfig;
+        if (prevConfig?.url) {
+          await deleteFromCloudinary(prevConfig.url);
+        }
+      } catch (e) {
+        console.error("Error deleting bgConfig image on template delete:", e);
+      }
     }
 
     await prisma.template.delete({

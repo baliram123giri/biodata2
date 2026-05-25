@@ -21,6 +21,10 @@ import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
 import Konva from "konva";
 
+if (typeof window !== "undefined") {
+  // Force high-DPI crystal clear canvas rendering on all monitors and devices
+  Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
+}
 
 import { getLightBgColor } from "@/lib/color-utils";
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
@@ -41,9 +45,24 @@ const A4_H = 842;
 // SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; }) {
+const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; }) {
   const [image] = useImage(src, "anonymous");
-  return image ? <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} /> : null;
+  if (!image) return null;
+  return (
+    <Group>
+      <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} />
+      <Rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        cornerRadius={cornerRadius}
+        stroke={borderColor}
+        strokeWidth={2}
+        listening={false}
+      />
+    </Group>
+  );
 });
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
@@ -79,6 +98,27 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
       rotation={WATERMARK_CONFIG.rotation || 0}
       opacity={WATERMARK_CONFIG.opacity}
       visible={visible}
+    />
+  );
+});
+
+const BgWatermarkImage = React.memo(function BgWatermarkImage({ 
+  bgConfig 
+}: { 
+  bgConfig?: TemplateConfig["bgConfig"] 
+}) {
+  const [image] = useImage(bgConfig?.url || "");
+  if (!bgConfig?.url || !image) return null;
+  
+  return (
+    <KonvaImage
+      image={image}
+      x={bgConfig.x}
+      y={bgConfig.y}
+      width={bgConfig.width}
+      height={bgConfig.height}
+      opacity={bgConfig.opacity}
+      listening={false}
     />
   );
 });
@@ -325,7 +365,7 @@ const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
 export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
-  const { formData: storeFormData, selectedTemplate: storeTemplate, removeSticker, updateSticker } = useBiodataStore();
+  const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore();
   const theme = useThemeStore();
   const formData = liveFormData || storeFormData;
   const selectedTemplate = templateId || storeTemplate;
@@ -604,7 +644,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
   const sections = useMemo(() => [
     renderSectionData(t.personal || "Personal Details", formData.personalDetails),
-    renderSectionData(t.education || "Education & Work", formData.educationDetails),
+    renderSectionData(t.educationSec || "Education & Career", formData.educationDetails),
     renderSectionData(t.family || "Family Details", formData.familyDetails),
     renderSectionData(t.contact || "Contact Details", formData.contactDetails),
   ].filter(Boolean), [renderSectionData, formData, t]);
@@ -622,7 +662,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
       const LABEL_WIDTH = 130;
       const COLON_WIDTH = 20;
-      const LINE_SPACING = fSize * 0.5;
+      const LINE_SPACING = fSize * 0.5 + 2;
       const contentWidth = A4_W - padding * 2 - 10;
       const valueWidth = contentWidth - LABEL_WIDTH - COLON_WIDTH;
       const sectionLayouts: any[] = [];
@@ -636,7 +676,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
       for (const sec of sections as any[]) {
         const titleY = cursorY;
-        cursorY += Math.round(fSize * 1.4) + LINE_SPACING;
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 6;
         const fieldLayouts: any[] = [];
         for (const field of sec.fields) {
           const valText = String(field.displayValue);
@@ -762,6 +802,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
+          <BgWatermarkImage bgConfig={templateConfig.bgConfig} />
           {templateConfig.frame.type === "image" ? (
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
@@ -853,7 +894,15 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
 
             {hasPhoto && photoConfig && (
-              <PhotoImage src={formData.photo!} x={photoConfig.x} y={photoConfig.y} width={photoConfig.width} height={photoConfig.height} cornerRadius={photoConfig.cornerRadius} />
+              <PhotoImage
+                src={formData.photo!}
+                x={photoConfig.x}
+                y={photoConfig.y}
+                width={photoConfig.width}
+                height={photoConfig.height}
+                cornerRadius={photoConfig.cornerRadius}
+                borderColor={primaryColor}
+              />
             )}
 
             {/* Stickers Rendering */}

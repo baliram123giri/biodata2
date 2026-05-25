@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
+import { LANGUAGES } from "@/lib/translations";
 
 interface Template {
   id: string;
@@ -64,6 +65,8 @@ interface Template {
   frameComponentId?: string | null;
   thumbnailUrl?: string | null;
   active: boolean;
+  bgConfig?: any;
+  language?: string | null;
 }
 
 interface TemplateFormProps {
@@ -101,6 +104,14 @@ const initialFormState = {
   frameComponentId: "new-generation-arch",
   frameFile: "",
   thumbnailFile: "",
+  bgImageUrl: "",
+  bgImageFile: "",
+  bgImageX: "0",
+  bgImageY: "0",
+  bgImageWidth: "595",
+  bgImageHeight: "842",
+  bgImageOpacity: "0.1",
+  language: "English",
 };
 
 export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
@@ -109,6 +120,22 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const [formState, setFormState] = React.useState(initialFormState);
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
+  const [dbBackgrounds, setDbBackgrounds] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchBgs = async () => {
+      try {
+        const res = await fetch("/api/admin/backgrounds");
+        const data = await res.json();
+        if (res.ok) {
+          setDbBackgrounds(data.backgrounds || []);
+        }
+      } catch (err) {
+        console.error("Failed to load background SVGs in form:", err);
+      }
+    };
+    fetchBgs();
+  }, []);
 
   const streamTextSmoothly = (
     field: "name" | "description",
@@ -277,11 +304,19 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameComponentId: template.frameComponentId || "new-generation-arch",
         frameFile: "",
         thumbnailFile: "",
+        bgImageUrl: template.bgConfig ? (typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).url || "" : "",
+        bgImageFile: "",
+        bgImageX: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).x ?? 0) : "0",
+        bgImageY: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).y ?? 0) : "0",
+        bgImageWidth: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).width ?? 595) : "595",
+        bgImageHeight: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).height ?? 842) : "842",
+        bgImageOpacity: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).opacity ?? 1.0) : "1.0",
+        language: template.language || "English",
       });
     }
   }, [template]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: "frameFile" | "thumbnailFile") => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: "frameFile" | "thumbnailFile" | "bgImageFile") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -322,7 +357,22 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameBgType: formState.frameBgType,
         frameBgColor: formState.frameBgColor,
         frameBgGradientColors: formState.frameBgGradientColors.split(",").map(c => c.trim()),
+        language: formState.language,
       };
+
+      if (formState.bgImageFile || formState.bgImageUrl || formState.bgImageX !== "0" || formState.bgImageY !== "0" || formState.bgImageWidth !== "595" || formState.bgImageHeight !== "842" || formState.bgImageOpacity !== "1") {
+        payload.bgConfig = {
+          url: formState.bgImageUrl || null,
+          file: formState.bgImageFile || null,
+          x: parseInt(formState.bgImageX) || 0,
+          y: parseInt(formState.bgImageY) || 0,
+          width: parseInt(formState.bgImageWidth) || 595,
+          height: parseInt(formState.bgImageHeight) || 842,
+          opacity: parseFloat(formState.bgImageOpacity) || 1.0,
+        };
+      } else {
+        payload.bgConfig = null;
+      }
 
       if (formState.frameType === "svg") {
         payload.frameOuterInset = parseInt(formState.frameOuterInset) || 10;
@@ -526,7 +576,27 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                     </Button>
                   </div>
                 </div>
+
                 <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-muted-foreground">Template Language *</Label>
+                  <Select
+                    value={formState.language}
+                    onValueChange={value => setFormState({ ...formState, language: value || "English" })}
+                  >
+                    <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                      <SelectValue placeholder="Select Language" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang} value={lang} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
+                          {lang}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description</Label>
                   <div className="relative flex items-start">
                     <Textarea
@@ -991,9 +1061,151 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               )}
             </div>
 
+            {/* Background Watermark Image settings */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Background Watermark SVG</h3>
+              <p className="text-xs text-muted-foreground leading-normal">
+                Optionally upload an SVG file to render as a background watermark graphic behind the biodata text.
+              </p>
+              <div className="space-y-3">
+                <div className="space-y-3 p-4 border border-border rounded-xl bg-muted/10">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground">Select from Uploaded Backgrounds Library</Label>
+                    <Select
+                      value={formState.bgImageUrl || "none"}
+                      onValueChange={(url: string | null) => {
+                        if (!url || url === "none") {
+                          setFormState({
+                            ...formState,
+                            bgImageUrl: "",
+                            bgImageFile: ""
+                          });
+                        } else {
+                          setFormState({
+                            ...formState,
+                            bgImageUrl: url,
+                            bgImageFile: ""
+                          });
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3 cursor-pointer">
+                        <SelectValue placeholder="-- Select background SVG --" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border border-border rounded-lg shadow-md max-h-[250px] overflow-y-auto">
+                        <SelectItem value="none" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">-- None (No Watermark) --</SelectItem>
+                        {dbBackgrounds.map((bg) => (
+                          <SelectItem key={bg.id} value={bg.url || ""} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
+                            {bg.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-border/80"></div>
+                    <span className="flex-shrink mx-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">or upload new one-off SVG</span>
+                    <div className="flex-grow border-t border-border/80"></div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground">Upload Custom SVG Watermark</Label>
+                    <Input
+                      type="file"
+                      accept="image/svg+xml"
+                      onChange={(e) => handleFileChange(e, "bgImageFile")}
+                      className="cursor-pointer focus-visible:ring-primary rounded-lg bg-background"
+                    />
+                    {formState.bgImageUrl && (
+                      <p className="text-[10px] text-green-600 font-medium truncate mt-1">
+                        Active Watermark: <a href={formState.bgImageUrl} target="_blank" rel="noreferrer" className="underline font-mono">{formState.bgImageUrl.substring(formState.bgImageUrl.lastIndexOf('/') + 1)}</a>
+                      </p>
+                    )}
+                    {formState.bgImageFile && (
+                      <p className="text-[10px] text-primary font-bold mt-1">
+                        ✓ New SVG uploaded (base64 payload ready)
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SliderInput
+                    label="Background X Position"
+                    id="bg-x"
+                    min={-200}
+                    max={595}
+                    value={formState.bgImageX}
+                    onChange={(val) => setFormState({ ...formState, bgImageX: val })}
+                  />
+                  <SliderInput
+                    label="Background Y Position"
+                    id="bg-y"
+                    min={-200}
+                    max={842}
+                    value={formState.bgImageY}
+                    onChange={(val) => setFormState({ ...formState, bgImageY: val })}
+                  />
+                  <SliderInput
+                    label="Background Width"
+                    id="bg-w"
+                    min={10}
+                    max={1200}
+                    value={formState.bgImageWidth}
+                    onChange={(val) => setFormState({ ...formState, bgImageWidth: val })}
+                  />
+                  <SliderInput
+                    label="Background Height"
+                    id="bg-h"
+                    min={10}
+                    max={1600}
+                    value={formState.bgImageHeight}
+                    onChange={(val) => setFormState({ ...formState, bgImageHeight: val })}
+                  />
+                  <div className="md:col-span-2 space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
+                      <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={formState.bgImageOpacity}
+                      onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
+                      className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                </div>
+
+                {(formState.bgImageUrl || formState.bgImageFile) && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setFormState({
+                      ...formState,
+                      bgImageUrl: "",
+                      bgImageFile: "",
+                      bgImageX: "0",
+                      bgImageY: "0",
+                      bgImageWidth: "595",
+                      bgImageHeight: "842",
+                      bgImageOpacity: "1.0",
+                    })}
+                    className="w-full text-xs h-8 rounded-lg mt-1 cursor-pointer"
+                  >
+                    Clear Background Image
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Automatic Thumbnail generation info notice */}
             <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Thumbnail</h3>
+              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Thumbnail</h3>
               <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
                 <div className="space-y-1">
@@ -1127,6 +1339,10 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
   const accentColor = formState.defaultAccent || "#C9A84C";
   const bgColor = formState.frameBgColor || "#ffffff";
 
+  const paddingX = parseFloat(formState.defaultPadding) || 75;
+  const paddingY = formState.defaultYPadding ? (parseFloat(formState.defaultYPadding) || paddingX) : paddingX;
+  const cursorY = paddingY + 150;
+
   // Parse gradient colors safely
   const gradientColors = formState.frameGradientColors
     ? formState.frameGradientColors.split(",").map(c => c.trim())
@@ -1209,6 +1425,19 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
           bgColor
         } 
       />
+
+      {/* Background Watermark Image rendering */}
+      {(formState.bgImageFile || formState.bgImageUrl) && (
+        <image
+          href={formState.bgImageFile || formState.bgImageUrl}
+          x={parseFloat(formState.bgImageX) || 0}
+          y={parseFloat(formState.bgImageY) || 0}
+          width={parseFloat(formState.bgImageWidth) || 595}
+          height={parseFloat(formState.bgImageHeight) || 842}
+          opacity={parseFloat(formState.bgImageOpacity) ?? 1.0}
+          preserveAspectRatio="none"
+        />
+      )}
 
       {/* Frame Rendering logic */}
       {formState.frameType === "svg" && (
@@ -1366,7 +1595,7 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
       <g textAnchor="middle">
         <text 
           x="297" 
-          y="75" 
+          y={paddingY + 15} 
           fill={primaryColor} 
           fontSize="14" 
           fontWeight="bold"
@@ -1375,8 +1604,8 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
           {formState.name ? `|| Shree Ganeshay Namah ||` : `|| Header Mantra Place Holder ||`}
         </text>
         {/* Accent Underline divider */}
-        <path d="M 220 87 L 375 87" stroke={accentColor} strokeWidth="1.5" />
-        <circle cx="297" cy="87" r="3" fill={primaryColor} />
+        <path d={`M 220 ${paddingY + 27} L 375 ${paddingY + 27}`} stroke={accentColor} strokeWidth="1.5" />
+        <circle cx="297" cy={paddingY + 27} r="3" fill={primaryColor} />
       </g>
 
       {/* Profile Photo Placeholder Area */}
@@ -1453,8 +1682,8 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
       {/* Main Document Title */}
       <g>
         <text 
-          x="75" 
-          y="155" 
+          x={paddingX} 
+          y={paddingY + 95} 
           fill={primaryColor} 
           fontSize="24" 
           fontWeight="900" 
@@ -1463,88 +1692,88 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         >
           BIODATA
         </text>
-        <path d="M 75 168 L 195 168" stroke={primaryColor} strokeWidth="3" />
-        <path d="M 75 174 L 140 174" stroke={accentColor} strokeWidth="1.5" />
+        <path d={`M ${paddingX} ${paddingY + 108} L ${paddingX + 120} ${paddingY + 108}`} stroke={primaryColor} strokeWidth="3" />
+        <path d={`M ${paddingX} ${paddingY + 114} L ${paddingX + 65} ${paddingY + 114}`} stroke={accentColor} strokeWidth="1.5" />
       </g>
 
       {/* Simulated Biodata Details Text */}
       <g fill={secondaryColor} fontSize="11" fontFamily="system-ui, -apple-system, sans-serif">
         
         {/* Section 1: Personal Details */}
-        <text x="75" y="210" fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
+        <text x={paddingX} y={cursorY} fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
           PERSONAL DETAILS
         </text>
 
-        <text x="75" y="235" fontWeight="semibold">Full Name</text>
-        <text x="180" y="235" opacity="0.95">: Rahul Anil Sharma</text>
+        <text x={paddingX} y={cursorY + 25} fontWeight="semibold">Full Name</text>
+        <text x={paddingX + 105} y={cursorY + 25} opacity="0.95">: Rahul Anil Sharma</text>
 
-        <text x="75" y="258" fontWeight="semibold">Date of Birth</text>
-        <text x="180" y="258" opacity="0.95">: 15 October 1995</text>
+        <text x={paddingX} y={cursorY + 48} fontWeight="semibold">Date of Birth</text>
+        <text x={paddingX + 105} y={cursorY + 48} opacity="0.95">: 15 October 1995</text>
 
-        <text x="75" y="281" fontWeight="semibold">Time of Birth</text>
-        <text x="180" y="281" opacity="0.95">: 10:15 AM</text>
+        <text x={paddingX} y={cursorY + 71} fontWeight="semibold">Time of Birth</text>
+        <text x={paddingX + 105} y={cursorY + 71} opacity="0.95">: 10:15 AM</text>
 
-        <text x="75" y="304" fontWeight="semibold">Place of Birth</text>
-        <text x="180" y="304" opacity="0.95">: Mumbai, Maharashtra</text>
+        <text x={paddingX} y={cursorY + 94} fontWeight="semibold">Place of Birth</text>
+        <text x={paddingX + 105} y={cursorY + 94} opacity="0.95">: Mumbai, Maharashtra</text>
 
-        <text x="75" y="327" fontWeight="semibold">Rashi / Nakshatra</text>
-        <text x="180" y="327" opacity="0.95">: Leo (Simha) / Poorva Phalguni</text>
+        <text x={paddingX} y={cursorY + 117} fontWeight="semibold">Rashi / Nakshatra</text>
+        <text x={paddingX + 105} y={cursorY + 117} opacity="0.95">: Leo (Simha) / Poorva Phalguni</text>
 
-        <text x="75" y="350" fontWeight="semibold">Height</text>
-        <text x="180" y="350" opacity="0.95">: 5 ft 10 in (178 cm)</text>
+        <text x={paddingX} y={cursorY + 140} fontWeight="semibold">Height</text>
+        <text x={paddingX + 105} y={cursorY + 140} opacity="0.95">: 5 ft 10 in (178 cm)</text>
 
         {/* Section 2: Education and Career */}
-        <text x="75" y="400" fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
+        <text x={paddingX} y={cursorY + 190} fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
           PROFESSIONAL DETAILS
         </text>
 
-        <text x="75" y="425" fontWeight="semibold">Education</text>
-        <text x="180" y="425" opacity="0.95">: B.Tech in Computer Science</text>
+        <text x={paddingX} y={cursorY + 215} fontWeight="semibold">Education</text>
+        <text x={paddingX + 105} y={cursorY + 215} opacity="0.95">: B.Tech in Computer Science</text>
 
-        <text x="75" y="448" fontWeight="semibold">College</text>
-        <text x="180" y="448" opacity="0.95">: IIT Bombay</text>
+        <text x={paddingX} y={cursorY + 238} fontWeight="semibold">College</text>
+        <text x={paddingX + 105} y={cursorY + 238} opacity="0.95">: IIT Bombay</text>
 
-        <text x="75" y="471" fontWeight="semibold">Occupation</text>
-        <text x="180" y="471" opacity="0.95">: Senior Software Engineer</text>
+        <text x={paddingX} y={cursorY + 261} fontWeight="semibold">Occupation</text>
+        <text x={paddingX + 105} y={cursorY + 261} opacity="0.95">: Senior Software Engineer</text>
 
-        <text x="75" y="494" fontWeight="semibold">Annual Income</text>
-        <text x="180" y="494" opacity="0.95" fill={primaryColor} fontWeight="bold">: ₹ 28,00,000 PA</text>
+        <text x={paddingX} y={cursorY + 284} fontWeight="semibold">Annual Income</text>
+        <text x={paddingX + 105} y={cursorY + 284} opacity="0.95" fill={primaryColor} fontWeight="bold">: ₹ 28,00,000 PA</text>
 
         {/* Section 3: Family Background */}
-        <text x="75" y="545" fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
+        <text x={paddingX} y={cursorY + 335} fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
           FAMILY BACKGROUND
         </text>
 
-        <text x="75" y="570" fontWeight="semibold">Father's Name</text>
-        <text x="180" y="570" opacity="0.95">: Mr. Anil Kumar Sharma (Businessperson)</text>
+        <text x={paddingX} y={cursorY + 360} fontWeight="semibold">Father's Name</text>
+        <text x={paddingX + 105} y={cursorY + 360} opacity="0.95">: Mr. Anil Kumar Sharma (Businessperson)</text>
 
-        <text x="75" y="593" fontWeight="semibold">Mother's Name</text>
-        <text x="180" y="593" opacity="0.95">: Mrs. Sunita Sharma (Homemaker)</text>
+        <text x={paddingX} y={cursorY + 383} fontWeight="semibold">Mother's Name</text>
+        <text x={paddingX + 105} y={cursorY + 383} opacity="0.95">: Mrs. Sunita Sharma (Homemaker)</text>
 
-        <text x="75" y="616" fontWeight="semibold">Siblings</text>
-        <text x="180" y="616" opacity="0.95">: 1 Younger Sister (Married)</text>
+        <text x={paddingX} y={cursorY + 406} fontWeight="semibold">Siblings</text>
+        <text x={paddingX + 105} y={cursorY + 406} opacity="0.95">: 1 Younger Sister (Married)</text>
 
-        <text x="75" y="639" fontWeight="semibold">Family Values</text>
-        <text x="180" y="639" opacity="0.95">: Moderate / Traditional</text>
+        <text x={paddingX} y={cursorY + 429} fontWeight="semibold">Family Values</text>
+        <text x={paddingX + 105} y={cursorY + 429} opacity="0.95">: Moderate / Traditional</text>
 
         {/* Section 4: Contact Details */}
-        <text x="75" y="690" fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
+        <text x={paddingX} y={cursorY + 480} fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
           CONTACT DETAILS
         </text>
 
-        <text x="75" y="715" fontWeight="semibold">Mobile Number</text>
-        <text x="180" y="715" opacity="0.95">: +91 98765 43210</text>
+        <text x={paddingX} y={cursorY + 505} fontWeight="semibold">Mobile Number</text>
+        <text x={paddingX + 105} y={cursorY + 505} opacity="0.95">: +91 98765 43210</text>
 
-        <text x="75" y="738" fontWeight="semibold">Email Address</text>
-        <text x="180" y="738" opacity="0.95" fill={primaryColor}>: rahul.sharma@example.com</text>
+        <text x={paddingX} y={cursorY + 528} fontWeight="semibold">Email Address</text>
+        <text x={paddingX + 105} y={cursorY + 528} opacity="0.95" fill={primaryColor}>: rahul.sharma@example.com</text>
 
-        <text x="75" y="761" fontWeight="semibold">Residential Address</text>
-        <text x="180" y="761" opacity="0.95">: 402, Royal Palms, Bandra West, Mumbai</text>
+        <text x={paddingX} y={cursorY + 551} fontWeight="semibold">Residential Address</text>
+        <text x={paddingX + 105} y={cursorY + 551} opacity="0.95">: 402, Royal Palms, Bandra West, Mumbai</text>
 
       </g>
       
       {/* Decorative footer elements */}
-      <line x1="60" y1="800" x2="535" y2="800" stroke={primaryColor} strokeWidth="0.5" opacity="0.3" />
+      <line x1={paddingX - 15} y1={842 - paddingY - 10} x2={595 - paddingX + 15} y2={842 - paddingY - 10} stroke={primaryColor} strokeWidth="0.5" opacity="0.3" />
     </svg>
   );
 }

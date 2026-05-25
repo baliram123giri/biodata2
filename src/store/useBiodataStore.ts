@@ -63,7 +63,7 @@ export const useBiodataStore = create<BiodataState>()(
           },
           stickers: []
         },
-        selectedTemplate: "royal",
+        selectedTemplate: "",
         customTemplates: [],
         setFormData: (data) => set((state) => ({
           formData: {
@@ -124,10 +124,18 @@ export const useBiodataStore = create<BiodataState>()(
           try {
             const res = await fetch("/api/templates");
             const data = await res.json();
-            if (data.templates) {
-              set({ customTemplates: data.templates });
+            if (data.templates && data.templates.length > 0) {
               const { registerDynamicTemplates } = await import("@/lib/frame-config");
               registerDynamicTemplates(data.templates);
+              
+              set((state) => {
+                const currentSelected = state.selectedTemplate;
+                const hasSelected = data.templates.some((t: any) => t.id === currentSelected);
+                return {
+                  customTemplates: data.templates,
+                  selectedTemplate: hasSelected ? currentSelected : data.templates[0].id,
+                };
+              });
             }
           } catch (err) {
             console.error("Store failed to fetch templates:", err);

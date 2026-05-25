@@ -48,6 +48,15 @@ export interface FrameCustomConfig {
 
 export type FrameConfig = FrameImageConfig | FrameSvgConfig | FrameGradientConfig | FrameCustomConfig;
 
+export interface BgConfig {
+  url?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity: number;
+}
+
 export interface TemplateConfig {
   id: string;
   name: string;
@@ -68,9 +77,12 @@ export interface TemplateConfig {
   thumbnailUrl?: string;
   bgType?: string;
   bgGradientColors?: string[];
+  bgConfig?: BgConfig;
+  language?: string;
 }
 
 // ── Registry ───────────────────────────────────────────────────────
+
 
 export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {};
 
@@ -159,6 +171,26 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     };
   }
 
+  // Safely parse bgConfig JSON from database
+  let bgConfig: BgConfig | undefined = undefined;
+  if (dbTpl.bgConfig) {
+    try {
+      const parsed = typeof dbTpl.bgConfig === "string" ? JSON.parse(dbTpl.bgConfig) : dbTpl.bgConfig;
+      if (parsed) {
+        bgConfig = {
+          url: parsed.url || undefined,
+          x: typeof parsed.x === "number" ? parsed.x : 0,
+          y: typeof parsed.y === "number" ? parsed.y : 0,
+          width: typeof parsed.width === "number" ? parsed.width : 595,
+          height: typeof parsed.height === "number" ? parsed.height : 842,
+          opacity: typeof parsed.opacity === "number" ? parsed.opacity : 1.0,
+        };
+      }
+    } catch (e) {
+      console.error("Error parsing bgConfig:", e);
+    }
+  }
+
   return {
     id: dbTpl.id,
     name: dbTpl.name,
@@ -179,5 +211,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     thumbnailUrl: dbTpl.thumbnailUrl || undefined,
     bgType: dbTpl.frameBgType || "solid",
     bgGradientColors: dbTpl.frameBgGradientColors || [],
+    bgConfig,
+    language: dbTpl.language || "English",
   };
 }

@@ -16,23 +16,59 @@ const TEMPLATE_LABELS: Record<string, string> = {
 };
 
 export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
-  const { selectedTemplate, setSelectedTemplate, customTemplates } = useBiodataStore();
+  const { selectedTemplate, setSelectedTemplate, customTemplates, formData } = useBiodataStore();
   const theme = useThemeStore();
 
+  // Initial language filter matches the current biodata form's selected language
+  const currentLang = formData?.language || "English";
+  const [langFilter, setLangFilter] = React.useState<string>(currentLang);
+
   const templates = React.useMemo(() => {
-    const all = [...Object.values(TEMPLATE_CONFIGS)];
-    // Ensure all custom templates from the database are registered and rendered reactively
-    customTemplates.forEach((customTpl) => {
-      if (!all.some((t) => t.id === customTpl.id)) {
-        all.push(customTpl);
-      }
-    });
-    return all;
+    return customTemplates;
   }, [customTemplates]);
 
+  // List of unique languages from uploaded custom templates
+  const languagesList = React.useMemo(() => {
+    const langs = new Set<string>();
+    customTemplates.forEach((t) => {
+      if (t.language) {
+        langs.add(t.language);
+      }
+    });
+    if (langs.size === 0) return [];
+    return ["all", ...Array.from(langs)];
+  }, [customTemplates]);
+
+  const filteredTemplates = React.useMemo(() => {
+    if (languagesList.length <= 1 || langFilter === "all") return templates;
+    // Show templates matching selection, OR classic templates (which have no language constraint)
+    return templates.filter((t) => !t.language || t.language === langFilter);
+  }, [templates, langFilter, languagesList]);
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {templates.map((tpl) => {
+    <div className="space-y-3">
+      {/* Horizontal scrollable language filters */}
+      {languagesList.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-1 border-b border-stone-100 dark:border-stone-800">
+          {languagesList.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => setLangFilter(lang)}
+              className={cn(
+                "px-2.5 py-1 text-[9px] font-black rounded-full border transition-all cursor-pointer whitespace-nowrap outline-none",
+                langFilter === lang
+                  ? "bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm"
+                  : "bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100 dark:bg-stone-900 dark:text-stone-400 dark:border-stone-800 dark:hover:bg-stone-800"
+              )}
+            >
+              {lang === "all" ? "All Languages" : lang}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4">
+      {filteredTemplates.map((tpl) => {
         const isSelected = selectedTemplate === tpl.id;
 
         // Build the card background style
@@ -83,6 +119,13 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                 accent: tpl.defaultAccent,
                 bgColors: bgColors,
               });
+
+              // Apply the template's dynamic default padding from the database configuration
+              if (tpl.defaultPadding !== undefined && tpl.defaultPadding !== null) {
+                theme.setPadding(tpl.defaultPadding);
+              }
+              theme.setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
+
               onSelect?.();
             }}
             className={cn(
@@ -93,13 +136,24 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
             {/* Card thumbnail */}
             <div
               className={cn(
-                "relative w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 transition-all duration-200 shadow-sm group-hover:shadow-md",
+                "relative w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 transition-all duration-200 shadow-sm group-hover:shadow-md bg-stone-50 dark:bg-stone-950",
                 isSelected
                   ? "border-stone-900 shadow-[0_0_0_3px_rgba(0,0,0,0.12)]"
                   : "border-transparent group-hover:border-stone-300"
               )}
-              style={cardStyle}
+              style={!tpl.thumbnailUrl ? cardStyle : undefined}
             >
+              {tpl.thumbnailUrl && (
+                <img
+                  src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
+                    ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_600,c_fill,q_100/")
+                    : tpl.thumbnailUrl
+                  }
+                  alt={tpl.name}
+                  className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out"
+                  loading="lazy"
+                />
+              )}
               {/* Simulated inner border lines like a real biodata frame (only if there is no custom thumbnail) */}
               {!tpl.thumbnailUrl && (
                 <>
@@ -117,12 +171,11 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                 </>
               )}
 
-              {/* Selected overlay with checkmark */}
+              {/* Selected overlay with checkmark (no blur backdrop) */}
               {isSelected && (
-                <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px] flex items-start justify-end p-2">
+                <div className="absolute top-2 right-2 pointer-events-none z-10">
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200"
-                    style={{ backgroundColor: tpl.defaultPrimary }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200 bg-emerald-500"
                   >
                     <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                   </div>
@@ -139,18 +192,26 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                 {tpl.name}
               </span>
 
-              {/* Color swatches */}
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultPrimary }} />
-                <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultSecondary }} />
-                {tpl.defaultAccent && (
-                  <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultAccent }} />
+              {/* Color swatches & language badge */}
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultPrimary }} />
+                  <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultSecondary }} />
+                  {tpl.defaultAccent && (
+                    <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: tpl.defaultAccent }} />
+                  )}
+                </div>
+                {tpl.language && (
+                  <span className="text-[7.5px] font-black px-1.5 py-px rounded bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 shrink-0">
+                    {tpl.language}
+                  </span>
                 )}
               </div>
             </div>
           </button>
         );
       })}
+      </div>
     </div>
   );
 });

@@ -69,7 +69,7 @@ import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard"
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 export default function EditPage() {
   const router = useRouter();
-  const { formData, selectedTemplate, setFormData } = useBiodataStore();
+  const { formData, selectedTemplate, customTemplates, setFormData } = useBiodataStore();
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
@@ -77,6 +77,7 @@ export default function EditPage() {
   });
 
   const theme = useThemeStore();
+  const prevTemplateRef = useRef<string | null>(null);
   const biodataHistory = useStore(useBiodataStore.temporal, (state) => state);
   const themeHistory = useStore(useThemeStore.temporal, (state) => state);
 
@@ -143,7 +144,7 @@ export default function EditPage() {
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "stickers" | "whatsapp">("theme");
+  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "stickers" | "whatsapp">("templates");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
@@ -249,6 +250,43 @@ export default function EditPage() {
       document.documentElement.style.overscrollBehaviorY = originalHtmlStyle;
     };
   }, []);
+
+  // Synchronize theme padding and palette with selected template defaults from database
+  useEffect(() => {
+    if (!isMounted) return;
+    const config = getTemplateConfig(selectedTemplate);
+    if (!config) return;
+
+    const configKey = `${selectedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;
+    if (configKey !== prevTemplateRef.current) {
+      prevTemplateRef.current = configKey;
+      
+      // Resolve background colors
+      let bgColors: string[] = ["#ffffff"];
+      if (config.bgGradientColors && config.bgGradientColors.length > 0) {
+        bgColors = config.bgGradientColors;
+      } else if (config.frame.type === "gradient") {
+        bgColors = config.frame.gradientColors;
+      } else if (config.frame.bgColor) {
+        bgColors = [config.frame.bgColor];
+      }
+
+      // Apply template's colors
+      theme.setPalette({
+        name: "None",
+        primary: config.defaultPrimary,
+        secondary: config.defaultSecondary,
+        accent: config.defaultAccent || "",
+        bgColors: bgColors,
+      });
+
+      // Apply template's default padding
+      if (config.defaultPadding !== undefined && config.defaultPadding !== null) {
+        theme.setPadding(config.defaultPadding);
+      }
+      theme.setPaddingY(config.defaultYPadding !== null && config.defaultYPadding !== undefined ? config.defaultYPadding : undefined);
+    }
+  }, [selectedTemplate, customTemplates, isMounted, theme]);
 
   useEffect(() => {
     if (isMounted) {
@@ -521,8 +559,12 @@ export default function EditPage() {
         </nav>
 
         {/* Canvas Area */}
-        <main id="canvas-container" className="flex-1 overflow-hidden relative bg-transparent h-full">
-          <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
+        <main id="canvas-container" className="flex-1 overflow-hidden relative bg-transparent h-full flex items-center justify-center">
+          {customTemplates.length === 0 ? (
+            <PreviewLoader />
+          ) : (
+            <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
+          )}
 
           {/* Floating Left Toolbar — Desktop only, overlaid on the canvas */}
           {isLeftOpen && (

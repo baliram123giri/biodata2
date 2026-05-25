@@ -181,7 +181,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
 
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
-    const LINE_SPACING = fSize * 0.5;
+    const LINE_SPACING = fSize * 0.5 + 2;
     const contentWidth = A4_W - padding * 2 - 10;
     const sectionLayouts: any[] = [];
     const sectionKeys = [
@@ -196,7 +196,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(fSize * 1.4) + LINE_SPACING;
+      cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 6;
       const fieldRows: any[] = [];
 
       for (const f of fields) {
@@ -248,6 +248,17 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       borderWidth: 2,
       borderColor: primary
     },
+    photoBorder: {
+      position: 'absolute',
+      left: config.photo.x,
+      top: config.photo.y,
+      width: config.photo.width,
+      height: config.photo.height,
+      borderRadius: config.photo.cornerRadius,
+      borderWidth: 2,
+      borderColor: primary,
+      backgroundColor: 'transparent'
+    },
     sectionTitleBar: { 
       position: 'absolute', 
       left: padding, 
@@ -293,6 +304,17 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     React.createElement(Page, { size: "A4", style: styles.page as any },
       React.createElement(View, { style: styles.container as any, wrap: false },
         renderPDFBackground(),
+        config.bgConfig?.url && React.createElement(Image, {
+          src: config.bgConfig.url,
+          style: {
+            position: 'absolute',
+            left: config.bgConfig.x ?? 0,
+            top: config.bgConfig.y ?? 0,
+            width: config.bgConfig.width ?? 595,
+            height: config.bgConfig.height ?? 842,
+            opacity: config.bgConfig.opacity ?? 1.0,
+          } as any
+        }),
         config.frame.type === 'image' ? 
           React.createElement(Image, { 
             src: theme?.rasterizedFrameBase64 || (() => {
@@ -417,7 +439,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             color: primary
           } as any
         }, item.text)),
-        data.photo && React.createElement(Image, { src: data.photo, style: styles.photo as any }),
+        data.photo && React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }),
+        data.photo && React.createElement(View, { style: styles.photoBorder as any }),
         layout.sectionLayouts.map((sec, si) => React.createElement(View, { key: si, style: { position: 'absolute', top: sec.titleY, left: 0, width: A4_W } as any },
           React.createElement(View, { style: styles.sectionTitleBar as any }),
           React.createElement(Text, { style: styles.sectionTitleText as any }, sec.title),

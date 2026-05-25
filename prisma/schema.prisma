@@ -71,7 +71,16 @@ model Template {
   frameGradientColors    String[]
   frameComponentId       String?
   thumbnailUrl           String?
+  bgConfig               Json?
+  language               String   @default("English")
   active                 Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
+}
+
+model Background {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  createdAt DateTime @default(now())
 }

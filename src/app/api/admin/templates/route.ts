@@ -2,7 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
+
+export const BgConfigSchema = z.object({
+  url: z.string().optional().nullable(),
+  file: z.string().optional().nullable(),
+  x: z.number().default(0),
+  y: z.number().default(0),
+  width: z.number().default(595),
+  height: z.number().default(842),
+  opacity: z.number().min(0).max(1).default(1.0),
+});
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -20,7 +31,7 @@ function makeColorizableCloudinaryUrl(url: string): string {
       return url.replace("/image/upload/", "/image/upload/e_tint:100:rgb:{color}/");
     }
     
-    return url.replace("/image/upload/", "/image/upload/f_auto,q_auto,e_tint:100:rgb:{color}/");
+    return url.replace("/image/upload/", "/image/upload/f_auto,q_100,e_tint:100:rgb:{color}/");
   }
   return url;
 }
@@ -110,6 +121,8 @@ export async function POST(req: Request) {
       frameComponentId,
       frameFile, // base64 string
       thumbnailFile, // base64 string
+      bgConfig, // dynamic bg configuration
+      language, // template language e.g. "English", "मराठी", "हिंदी", etc.
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -132,6 +145,21 @@ export async function POST(req: Request) {
     // Upload thumbnail if provided as Base64
     if (thumbnailFile) {
       thumbnailUrl = await uploadToCloudinary(thumbnailFile, "thumbnails");
+    }
+
+    // Process and validate bgConfig JSON schema if provided
+    let bgConfigData: any = null;
+    if (bgConfig) {
+      const parsed = BgConfigSchema.safeParse(bgConfig);
+      if (!parsed.success) {
+        return NextResponse.json({ error: "Invalid background configuration", details: parsed.error.format() }, { status: 400 });
+      }
+      bgConfigData = { ...parsed.data };
+      if (bgConfigData.file) {
+        const secureUrl = await uploadToCloudinary(bgConfigData.file, "backgrounds");
+        bgConfigData.url = secureUrl;
+        delete bgConfigData.file;
+      }
     }
 
     const template = await prisma.template.create({
@@ -163,6 +191,8 @@ export async function POST(req: Request) {
         frameGradientColors: frameGradientColors || [],
         frameComponentId: frameComponentId || null,
         thumbnailUrl,
+        bgConfig: bgConfigData || undefined,
+        language: language || "English",
         active: true,
       },
     });
