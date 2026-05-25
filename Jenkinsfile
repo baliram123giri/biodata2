@@ -22,7 +22,6 @@ pipeline {
       when {
         anyOf {
           branch 'main'
-          branch 'master'
         }
       }
       steps {
