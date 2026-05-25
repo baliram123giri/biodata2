@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown } from "lucide-react";
 import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
+import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { prisma } from "@/lib/prisma";
 
 export default async function Home() {
@@ -88,7 +89,7 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Right Preview Column with Overlapping Templates */}
+          {/* Right Preview Column with Interactive Overlapping Templates */}
           <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 relative">
             {/* Elegant Golden Mandala Ornament Behind Image */}
             <div className="absolute -inset-10 bg-gradient-to-tr from-[#C9A84C]/20 via-transparent to-[#9B1B30]/20 rounded-full blur-xl animate-pulse pointer-events-none" />
@@ -105,59 +106,8 @@ export default async function Home() {
               </svg>
             </div>
 
-            {/* Overlapping Premium Three-Card Deck */}
-            <div className="relative w-full h-[460px] flex items-center justify-center select-none pt-4">
-              {/* Left Stack Card (Index 0) */}
-              <div className="absolute left-[2%] w-[52%] aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-card border border-[#C9A84C]/20 p-2.5 z-10 -rotate-12 hover:-rotate-3 hover:-translate-y-4 hover:scale-[1.03] transition-all duration-300 origin-bottom-left cursor-pointer">
-                {/* Inner Gold Stitch Frame */}
-                <div className="absolute inset-3.5 border border-dashed border-[#C9A84C]/40 rounded-xl pointer-events-none z-20" />
-                <div className="relative rounded-xl overflow-hidden h-full w-full">
-                  <img
-                    src={finalSlides[0].imageUrl}
-                    alt={finalSlides[0].title || "Premium Template Format"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-4">
-                    <p className="text-[10px] font-black text-white uppercase tracking-wider truncate w-full">{finalSlides[0].title || "Premium Format"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Stack Card (Index 1) */}
-              <div className="absolute right-[2%] w-[52%] aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-card border border-[#C9A84C]/20 p-2.5 z-10 rotate-12 hover:rotate-3 hover:-translate-y-4 hover:scale-[1.03] transition-all duration-300 origin-bottom-right cursor-pointer">
-                {/* Inner Gold Stitch Frame */}
-                <div className="absolute inset-3.5 border border-dashed border-[#C9A84C]/40 rounded-xl pointer-events-none z-20" />
-                <div className="relative rounded-xl overflow-hidden h-full w-full">
-                  <img
-                    src={finalSlides[1].imageUrl}
-                    alt={finalSlides[1].title || "Premium Template Format"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-4">
-                    <p className="text-[10px] font-black text-white uppercase tracking-wider truncate w-full">{finalSlides[1].title || "Premium Format"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Center Prominent Card (Index 2) */}
-              <div className="absolute w-[56%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl bg-card border border-[#C9A84C]/40 p-2.5 z-20 hover:scale-[1.06] transition-all duration-500 cursor-pointer animate-float-slow">
-                {/* Inner Gold Stitch Frame */}
-                <div className="absolute inset-4 border border-dashed border-[#C9A84C]/50 rounded-xl pointer-events-none z-20" />
-                <div className="relative rounded-xl overflow-hidden h-full w-full">
-                  <img
-                    src={finalSlides[2].imageUrl}
-                    alt={finalSlides[2].title || "Premium Template Format"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-5">
-                    <div className="space-y-0.5 w-full">
-                      <span className="inline-block bg-gradient-primary text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider mb-1">Featured Layout</span>
-                      <p className="text-[10px] sm:text-xs font-black text-white uppercase tracking-widest truncate">{finalSlides[2].title || "Featured Format"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Interactive Premium Three-Card Deck */}
+            <HeroCardDeck slides={finalSlides} />
           </div>
         </div>
 
