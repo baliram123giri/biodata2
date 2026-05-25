@@ -67,7 +67,7 @@ export function Footer() {
             <div className="md:col-span-4 flex flex-col gap-5">
               <Logo iconClassName="h-10 md:h-12" disableShine />
               <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-                Create a professional marriage biodata in minutes — free, beautiful, and designed for modern Indian families.
+                Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
               </p>
 
               {/* Social Icons */}

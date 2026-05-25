@@ -36,40 +36,40 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4 border-b border-border/40">
+      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-4 pb-20 px-4 border-b border-border/40">
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
-        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 relative z-10">
+        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-start gap-12 lg:gap-20 relative z-10">
           {/* Left Text Column */}
-          <div className="flex-1 text-center lg:text-left space-y-8">
+          <div className="flex-1 text-center lg:text-left space-y-5">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 text-xs font-extrabold text-[#8A7233] dark:text-[#E6C97A] backdrop-blur-sm shadow-md transition-all duration-300">
               <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] animate-pulse" />
               100% Free Online Biodata Maker
             </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6.25xl font-black tracking-tight text-stone-900 dark:text-white leading-[1.12] font-sans">
+
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-stone-900 dark:text-white leading-[1.12] font-sans">
               Your <span className="text-gradient-primary">Marriage Biodata</span> with Photo - Ready in Minutes, Free to Download
             </h1>
-            
-            <p className="text-stone-600 dark:text-stone-300 text-sm md:text-base lg:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
+
+            <p className="text-stone-600 dark:text-stone-300 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
               Pick a stylish format, fill your details, add your photo and download as a print-ready PDF or editable Word file. No account needed. Your data stays on your device.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4.5 justify-center lg:justify-start pt-1">
-              <Button size="lg" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto bg-gradient-primary border-0 font-bold tracking-wide shadow-xl shadow-[#9B1B30]/25 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer" asChild>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
+              <Button size="sm" className="rounded-full text-sm px-7 py-5 w-full sm:w-auto bg-gradient-primary border-0 font-bold tracking-wide shadow-xl shadow-[#9B1B30]/25 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer" asChild>
                 <a href="#builder">
                   Start Creating Free
-                  <ArrowDown className="w-4 h-4 ml-2 animate-bounce" />
+                  <ArrowDown className="w-3.5 h-3.5 ml-2 animate-bounce" />
                 </a>
               </Button>
-              <Button size="lg" variant="outline" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200 cursor-pointer" asChild>
+              <Button size="sm" variant="outline" className="rounded-full text-sm px-7 py-5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200 cursor-pointer" asChild>
                 <Link href="/templates">View Templates</Link>
               </Button>
             </div>
-            
+
             {/* Features & Formats Metadata Stack */}
-            <div className="space-y-3.5 pt-3">
+            <div className="space-y-2.5 pt-2">
               {/* Trust Badges */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] font-extrabold">
                 <span className="text-stone-400 dark:text-stone-500 uppercase tracking-wider text-[9px] mr-1 shrink-0">Features:</span>
@@ -103,9 +103,9 @@ export default async function Home() {
           <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 relative">
             {/* Elegant Golden Mandala Ornament Behind Image */}
             <div className="absolute -inset-10 bg-gradient-to-tr from-[#C9A84C]/20 via-transparent to-[#9B1B30]/20 rounded-full blur-xl animate-pulse pointer-events-none" />
-            
+
             {/* SVG Decorative Indian Pattern Backdrop */}
-            <div className="absolute -top-14 -left-14 w-32 h-32 text-[#C9A84C]/25 pointer-events-none hidden md:block">
+            <div className="absolute -top-2 -left-14 w-32 h-32 text-[#C9A84C]/25 pointer-events-none hidden md:block">
               <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full">
                 <path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" />
               </svg>
