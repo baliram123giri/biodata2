@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2 } from "lucide-react";
 import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
@@ -14,18 +13,23 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  // Fetch active hero template slides from the database
-  const slides = await prisma.heroSlide.findMany({
-    where: { active: true },
-    orderBy: { order: "asc" },
-    take: 3,
-  });
-
   const fallbackSlides = [
     { id: "1", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/royal_gold.png", title: "Royal Gold Premium" },
     { id: "2", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/ornate_grandeur.png", title: "Ornate Grandeur Emerald" },
     { id: "3", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/elegant_peacock.png", title: "Elegant Peacock Royal" }
   ];
+
+  // Fetch active hero template slides from the database
+  let slides: typeof fallbackSlides = [];
+  try {
+    slides = await prisma.heroSlide.findMany({
+      where: { active: true },
+      orderBy: { order: "asc" },
+      take: 3,
+    });
+  } catch {
+    // DB unreachable — use fallback silently
+  }
 
   const activeSlides = slides.length > 0 ? slides : fallbackSlides;
   const finalSlides = [...activeSlides];
@@ -36,7 +40,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-4 pb-20 px-4 border-b border-border/40">
+      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-4 pb-8 px-4 border-b border-border/40">
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
@@ -110,7 +114,7 @@ export default async function Home() {
                 <path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" />
               </svg>
             </div>
-            <div className="absolute -bottom-14 -right-14 w-28 h-28 text-[#9B1B30]/20 pointer-events-none hidden md:block">
+            <div className="absolute bottom-14 -right-14 w-28 h-28 text-[#9B1B30]/20 pointer-events-none hidden md:block">
               <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full">
                 <path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" />
               </svg>
