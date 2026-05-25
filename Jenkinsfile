@@ -55,9 +55,9 @@ pipeline {
           echo "🔗 Linking .env file"
           ln -sfn "$PROD_BASE/.env" ./.env
 
-          # Install deps silently
+          # Install deps
           echo "📦 Installing dependencies"
-          npm ci --silent 2>&1 | grep -v "added"
+          npm ci
 
           # Generate Prisma Client
           echo "🗄️ Generating Prisma Client"
