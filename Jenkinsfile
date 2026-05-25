@@ -19,11 +19,6 @@ pipeline {
        PROD DEPLOY (main only)
        ======================= */
     stage('Deploy PROD') {
-      when {
-        anyOf {
-          branch 'main'
-        }
-      }
       steps {
         // Prevent shell command echoing — no secrets leak into logs
         sh '''
