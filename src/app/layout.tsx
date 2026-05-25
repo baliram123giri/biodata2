@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Serif, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,19 +8,39 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const notoSerif = Noto_Serif({
+  variable: "--font-noto-serif",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PageProgressBar } from "@/components/layout/PageProgressBar";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: {
-    default: "Free Online Biodata Maker for Marriage | 50+ Premium Templates",
-    template: "%s | Biodata Maker"
+  metadataBase: new URL('https://biodata99.com'),
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
-  description: "Create professional marriage biodata online for FREE in 2 minutes. Choose from 50+ premium templates, supports 10+ Indian languages (Hindi, Marathi, Gujarati, etc.). Instant PDF download.",
+  title: {
+    default: "Free Online Biodata Maker for Marriage | biodata99.com",
+    template: "%s | biodata99.com"
+  },
+  description: "Create professional marriage biodata online for FREE in 2 minutes. Choose from our premium templates, supports multiple Indian languages (Hindi, Marathi, Gujarati, etc.). Instant PDF download.",
   keywords: ["marriage biodata maker", "online biodata builder", "matrimonial biodata format", "free biodata maker", "marriage resume maker", "shadi biodata creator"],
-  authors: [{ name: "Biodata Maker Team" }],
-  creator: "Biodata Maker",
-  publisher: "Biodata Maker",
+  authors: [{ name: "biodata99.com Team" }],
+  creator: "biodata99.com",
+  publisher: "biodata99.com",
   formatDetection: {
     email: false,
     address: false,
@@ -28,23 +49,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://biodatamaker.online",
-    siteName: "Biodata Maker",
-    title: "Free Online Biodata Maker for Marriage | 50+ Premium Templates",
-    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates, 10+ Indian languages.",
+    url: "https://biodata99.com",
+    siteName: "biodata99.com",
+    title: "Free Online Biodata Maker for Marriage | biodata99.com",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. Premium templates, multiple Indian languages.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Biodata Maker - Create Marriage Biodata Online",
+        alt: "biodata99.com - Create Marriage Biodata Online",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free Online Biodata Maker for Marriage",
-    description: "Create professional marriage biodata online for FREE in 2 minutes. 50+ premium templates.",
+    title: "Free Online Biodata Maker for Marriage | biodata99.com",
+    description: "Create professional marriage biodata online for FREE in 2 minutes. Premium templates.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -59,7 +80,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://biodatamaker.online",
+    canonical: "https://biodata99.com",
   },
 };
 
@@ -71,7 +92,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSerif.variable} ${playfair.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
@@ -81,9 +102,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              "name": "Biodata Maker",
-              "url": "https://biodatamaker.online",
-              "description": "Create professional marriage biodata online for FREE. 50+ templates, 10+ languages.",
+              "name": "biodata99.com",
+              "url": "https://biodata99.com",
+              "description": "Create professional marriage biodata online for FREE. Beautiful templates, multiple languages.",
               "applicationCategory": "MultimediaApplication",
               "operatingSystem": "All",
               "offers": {
@@ -92,8 +113,8 @@ export default function RootLayout({
                 "priceCurrency": "INR"
               },
               "featureList": [
-                "50+ Premium Templates",
-                "10+ Indian Languages",
+                "Premium Templates",
+                "Multiple Indian Languages",
                 "No Login Required",
                 "Instant PDF Download",
                 "100% Private"
@@ -101,11 +122,15 @@ export default function RootLayout({
             })
           }}
         />
+        <Suspense fallback={null}>
+          <PageProgressBar />
+        </Suspense>
         <Header />
         <main className="flex-1">
           {children}
         </main>
         <Footer />
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );

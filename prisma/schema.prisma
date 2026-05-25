@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  name      String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model DownloadLog {
+  id         String   @id @default(uuid())
+  name       String
+  location   String?
+  format     String
+  templateId String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user") // "admin", "moderator", "user"
+  status    String   @default("active") // "active", "suspended"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Template {
+  id                     String   @id @default(uuid())
+  name                   String
+  description            String?  @default("")
+  defaultPrimary         String
+  defaultSecondary       String
+  defaultAccent          String
+  defaultPadding         Int      @default(60)
+  defaultYPadding        Int?
+  photoX                 Int      @default(390)
+  photoY                 Int      @default(100)
+  photoWidth             Int      @default(140)
+  photoHeight            Int      @default(175)
+  photoCornerRadius      Int      @default(8)
+  frameType              String   @default("image") // "image", "svg", "gradient", "custom"
+  frameUrlTemplate       String?
+  frameBgType            String?  @default("solid")
+  frameBgColor           String?
+  frameBgGradientColors  String[]
+  frameOuterInset        Int?
+  frameOuterStrokeWidth  Int?
+  frameOuterCornerRadius Int?
+  frameInnerInset        Int?
+  frameInnerStrokeWidth  Int?
+  frameInnerCornerRadius Int?
+  frameHasCornerCurves   Boolean?
+  frameGradientColors    String[]
+  frameComponentId       String?
+  thumbnailUrl           String?
+  bgConfig               Json?
+  language               String   @default("English")
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Background {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model HeroSlide {
+  id        String   @id @default(uuid())
+  title     String?  @default("")
+  imageUrl  String
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

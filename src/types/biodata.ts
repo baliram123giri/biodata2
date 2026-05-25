@@ -17,6 +17,7 @@ export const biodataSchema = z.object({
   educationDetails: z.array(FieldSchema),
   familyDetails: z.array(FieldSchema),
   contactDetails: z.array(FieldSchema),
+  photo: z.string().optional(),
 });
 
 export type BiodataFormValues = z.infer<typeof biodataSchema>;

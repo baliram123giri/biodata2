@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EternalUnion Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#281719",
+                      "tertiary-container": "#c9acaf",
+                      "surface-bright": "#fff8f5",
+                      "on-tertiary-fixed-variant": "#574144",
+                      "surface-container-highest": "#e9e1dc",
+                      "outline": "#7f7663",
+                      "secondary-fixed-dim": "#cac6be",
+                      "on-error": "#ffffff",
+                      "outline-variant": "#d0c5af",
+                      "surface-dim": "#e1d8d4",
+                      "secondary": "#605e58",
+                      "on-primary-fixed": "#241a00",
+                      "inverse-primary": "#e9c349",
+                      "background": "#fff8f5",
+                      "on-background": "#1e1b18",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f8efea",
+                      "primary-fixed": "#ffe088",
+                      "on-surface": "#1e1b18",
+                      "surface": "#fff8f5",
+                      "on-secondary-fixed-variant": "#484740",
+                      "error": "#ba1a1a",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed": "#fbdbde",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#e6e2d9",
+                      "tertiary-fixed-dim": "#debfc2",
+                      "surface-tint": "#735c00",
+                      "on-primary-container": "#554300",
+                      "primary-container": "#d4af37",
+                      "on-secondary-container": "#66645d",
+                      "primary-fixed-dim": "#e9c349",
+                      "tertiary": "#70585b",
+                      "error-container": "#ffdad6",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#1c1c16",
+                      "on-primary-fixed-variant": "#574500",
+                      "surface-container": "#f5ece7",
+                      "primary": "#735c00",
+                      "on-tertiary-container": "#554042",
+                      "surface-variant": "#e9e1dc",
+                      "on-surface-variant": "#4d4635",
+                      "inverse-surface": "#34302c",
+                      "secondary-fixed": "#e6e2d9",
+                      "surface-container-high": "#efe6e2",
+                      "surface-container-low": "#fbf2ed"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "element-gap": "16px",
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "panel-padding": "24px",
+                      "container-margin": "48px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Noto Serif"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Noto Serif"
+                      ],
+                      "headline-xl": [
+                              "Noto Serif"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-outline/10 shadow-sm flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-element-gap">
+<span class="font-headline-md text-headline-md text-primary tracking-tight">EternalUnion Editor</span>
+</div>
+<div class="flex items-center gap-4 border-l border-r border-outline/10 px-6">
+<button aria-label="undo" class="text-on-surface-variant hover:text-primary transition-colors duration-300 scale-95 active:scale-90">
+<span class="material-symbols-outlined">undo</span>
+</button>
+<button aria-label="redo" class="text-on-surface-variant hover:text-primary transition-colors duration-300 scale-95 active:scale-90">
+<span class="material-symbols-outlined">redo</span>
+</button>
+<div class="w-px h-6 bg-outline/20 mx-2"></div>
+<button aria-label="zoom out" class="text-on-surface-variant hover:text-primary transition-colors duration-300 scale-95 active:scale-90">
+<span class="material-symbols-outlined">zoom_out</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant w-12 text-center">100%</span>
+<button aria-label="zoom in" class="text-on-surface-variant hover:text-primary transition-colors duration-300 scale-95 active:scale-90">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+<div class="flex items-center gap-4">
+<button aria-label="share" class="text-on-surface-variant hover:text-primary transition-colors duration-300 scale-95 active:scale-90 flex items-center gap-2">
+<span class="material-symbols-outlined">share</span>
+</button>
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-300 px-4 py-2 border border-primary/20 rounded-lg hover:border-primary">
+                Save
+            </button>
+<button class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-6 py-2 rounded-lg hover:bg-primary hover:text-on-primary transition-colors duration-300 flex items-center gap-2">
+                Download
+                <span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-6 top-24 bottom-6 w-24 rounded-xl bg-surface/40 backdrop-blur-2xl border border-outline/20 shadow-xl shadow-secondary/5 flex flex-col items-center py-panel-padding gap-element-gap z-40 overflow-y-auto">
+<div class="flex flex-col items-center gap-1 mb-4 text-center">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-primary">Elements</span>
+</div>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg">
+<span class="material-symbols-outlined">dashboard_customize</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Templates</span>
+</button>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 bg-primary-container text-on-primary-container rounded-lg shadow-sm hover:-translate-y-1 transition-transform duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">palette</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Theme</span>
+</button>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg">
+<span class="material-symbols-outlined">format_size</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Typography</span>
+</button>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg">
+<span class="material-symbols-outlined">filter_frames</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Frames</span>
+</button>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg">
+<span class="material-symbols-outlined">image_search</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Photo</span>
+</button>
+<button class="w-16 h-16 flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="text-[10px] uppercase tracking-wider font-semibold">Icons</span>
+</button>
+</nav>
+<!-- Main Canvas Area -->
+<main class="absolute inset-0 pt-16 pl-36 pr-80 pb-6 bg-surface-variant/30 overflow-auto flex justify-center items-center">
+<!-- A4 Paper Preview -->
+<div class="bg-surface-container-lowest w-[794px] h-[1123px] shrink-0 shadow-2xl shadow-primary/5 border border-outline/5 relative overflow-hidden flex flex-col">
+<!-- Floral Gold Border Overlay -->
+<div class="absolute inset-4 border-2 border-primary-container/40 rounded-lg pointer-events-none"></div>
+<div class="absolute inset-5 border border-primary/20 rounded-lg pointer-events-none"></div>
+<!-- Decorative Corners -->
+<div class="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-primary-container rounded-tl-lg pointer-events-none"></div>
+<div class="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-primary-container rounded-tr-lg pointer-events-none"></div>
+<div class="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 border-primary-container rounded-bl-lg pointer-events-none"></div>
+<div class="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-primary-container rounded-br-lg pointer-events-none"></div>
+<div class="p-12 flex flex-col h-full z-10 relative">
+<!-- Header -->
+<div class="text-center mb-10 flex flex-col items-center cursor-pointer hover:bg-primary/5 p-4 rounded-lg transition-colors border border-transparent hover:border-primary/20">
+<span class="material-symbols-outlined text-primary-container text-4xl mb-2">favorite</span>
+<h1 class="font-headline-xl text-headline-xl text-primary mb-2">Marriage Biodata</h1>
+<p class="font-headline-md text-headline-md text-on-surface-variant">Arjun Sharma</p>
+</div>
+<div class="flex gap-10">
+<!-- Left Column (Photo & Quick Details) -->
+<div class="w-1/3 flex flex-col items-center">
+<div class="w-48 h-64 rounded-t-full bg-surface-container-high border-4 border-primary-container/30 overflow-hidden mb-6 shadow-md relative group cursor-pointer">
+<img alt="Handsome Indian man wearing traditional attire, soft studio lighting" class="w-full h-full object-cover" data-alt="A portrait of a handsome Indian man wearing elegant traditional attire in soft studio lighting. The backdrop is a seamless, warm ivory tone that complements the luxurious feel of the image. The lighting is high-key and flattering, casting gentle, diffused shadows that emphasize the premium, editorial aesthetic of the composition. The overall mood is poised, sophisticated, and deeply romantic, fitting for a high-end marriage biodata." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjl3KIxy0NjLzCDJDXUj_z_9B-gD5S29ygpD098lf0CWD5E7dDDr-RS38VG9otNn3OfP50sXE7N8qrJUzNk8jZyDVjCeLw2cCM2NHi4HC5DBIT_5X9ZIhF6ZwklMZAABU7TrnLopytfhJLtxDvd1uWPY3KRQFlQiflQfTwnp2onGxNUtHqVCboIVsyNb6nFNQtgca5Ls9NqRdKHFpO94KUAHjtSdfMPoDalQiPBVLucuW8BYbiJEf6b54BAd2HUALW9qklgR4ft8ed"/>
+<!-- Selection Ring -->
+<div class="absolute inset-0 border-2 border-tertiary opacity-0 group-hover:opacity-100 transition-opacity rounded-t-full pointer-events-none"></div>
+</div>
+<div class="w-full cursor-pointer hover:bg-primary/5 p-3 rounded-lg transition-colors border border-transparent hover:border-primary/20">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 border-b border-primary/20 pb-2 text-center">About</h2>
+<ul class="space-y-3 font-body-md text-body-md text-on-surface">
+<li class="flex justify-between border-b border-outline/10 pb-1">
+<span class="text-on-surface-variant">Age</span>
+<span>28 Years</span>
+</li>
+<li class="flex justify-between border-b border-outline/10 pb-1">
+<span class="text-on-surface-variant">Height</span>
+<span>5' 10"</span>
+</li>
+<li class="flex justify-between border-b border-outline/10 pb-1">
+<span class="text-on-surface-variant">Complexion</span>
+<span>Fair</span>
+</li>
+<li class="flex justify-between border-b border-outline/10 pb-1">
+<span class="text-on-surface-variant">Religion</span>
+<span>Hindu - Brahmin</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Right Column (Details) -->
+<div class="w-2/3 flex flex-col gap-8">
+<!-- Education & Career -->
+<div class="cursor-pointer bg-primary/5 p-4 rounded-lg border-2 border-primary-container shadow-sm relative">
+<!-- Active Selection Indicator -->
+<div class="absolute -top-3 -right-3 bg-surface border border-outline/20 shadow-sm rounded-full p-1 flex gap-1">
+<button class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">school</span>
+                                Education &amp; Profession
+                            </h2>
+<div class="grid grid-cols-3 gap-y-4 font-body-md text-body-md text-on-surface">
+<div class="col-span-1 text-on-surface-variant">Education</div>
+<div class="col-span-2 font-medium">B.Tech in Computer Science<br/><span class="text-sm font-normal text-on-surface-variant">IIT Delhi</span></div>
+<div class="col-span-1 text-on-surface-variant">Profession</div>
+<div class="col-span-2 font-medium">Senior Software Engineer<br/><span class="text-sm font-normal text-on-surface-variant">Google, Bangalore</span></div>
+<div class="col-span-1 text-on-surface-variant">Income</div>
+<div class="col-span-2 font-medium">35 LPA</div>
+</div>
+</div>
+<!-- Family Details -->
+<div class="cursor-pointer hover:bg-primary/5 p-4 rounded-lg transition-colors border border-transparent hover:border-primary/20">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">diversity_1</span>
+                                Family Details
+                            </h2>
+<div class="grid grid-cols-3 gap-y-4 font-body-md text-body-md text-on-surface">
+<div class="col-span-1 text-on-surface-variant">Father</div>
+<div class="col-span-2">Mr. Rajesh Sharma<br/><span class="text-sm text-on-surface-variant">Retired Bank Manager (SBI)</span></div>
+<div class="col-span-1 text-on-surface-variant">Mother</div>
+<div class="col-span-2">Mrs. Anita Sharma<br/><span class="text-sm text-on-surface-variant">Homemaker</span></div>
+<div class="col-span-1 text-on-surface-variant">Siblings</div>
+<div class="col-span-2">1 Elder Sister (Married, Settled in USA)</div>
+</div>
+</div>
+<!-- Horoscope Details -->
+<div class="cursor-pointer hover:bg-primary/5 p-4 rounded-lg transition-colors border border-transparent hover:border-primary/20">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">flare</span>
+                                Horoscope Details
+                            </h2>
+<div class="grid grid-cols-4 gap-y-4 font-body-md text-body-md text-on-surface">
+<div class="col-span-1 text-on-surface-variant">Date of Birth</div>
+<div class="col-span-1">15 Aug 1995</div>
+<div class="col-span-1 text-on-surface-variant">Time</div>
+<div class="col-span-1">10:30 AM</div>
+<div class="col-span-1 text-on-surface-variant">Place</div>
+<div class="col-span-1">New Delhi</div>
+<div class="col-span-1 text-on-surface-variant">Manglik</div>
+<div class="col-span-1">No</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6 border-t border-primary/20 text-center font-body-md text-body-md text-on-surface-variant">
+<p>9876543210 • arjun.sharma.matrimony@email.com</p>
+</div>
+</div>
+</div>
+</main>
+<!-- NavigationDrawer (Properties Panel) -->
+<aside class="fixed right-6 top-24 bottom-6 w-72 rounded-xl bg-surface/60 backdrop-blur-lg border border-outline/10 shadow-2xl flex flex-col p-panel-padding overflow-y-auto slide-in-right duration-500 z-40">
+<div class="flex items-center gap-3 mb-8 pb-4 border-b border-outline/10">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">style</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Properties</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Contextual Styling</p>
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<!-- Selected Element Info -->
+<div class="bg-surface-container rounded-lg p-3 flex items-center gap-3 border border-outline/10">
+<span class="material-symbols-outlined text-on-surface-variant">subject</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Section Group</span>
+</div>
+<!-- Typography Section -->
+<div class="flex flex-col gap-3">
+<h3 class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Typography</h3>
+<div class="flex flex-col gap-2">
+<label class="text-sm text-on-surface-variant">Font Family</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline/20 rounded-lg px-3 py-2 appearance-none text-on-surface font-headline-lg text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Noto Serif (Theme)</option>
+<option>Inter (Theme)</option>
+<option>Playfair Display</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
+</div>
+<div class="flex gap-2">
+<div class="flex-1 flex flex-col gap-2">
+<label class="text-sm text-on-surface-variant">Weight</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline/20 rounded-lg px-3 py-2 appearance-none text-on-surface text-sm focus:outline-none focus:border-primary">
+<option>Medium</option>
+<option>Regular</option>
+<option>Bold</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
+</div>
+<div class="w-20 flex flex-col gap-2">
+<label class="text-sm text-on-surface-variant">Size</label>
+<input class="w-full bg-surface border border-outline/20 rounded-lg px-2 py-2 text-on-surface text-sm text-center focus:outline-none focus:border-primary" type="number" value="16"/>
+</div>
+</div>
+<!-- Alignment -->
+<div class="flex flex-col gap-2 mt-2">
+<label class="text-sm text-on-surface-variant">Alignment</label>
+<div class="flex bg-surface border border-outline/20 rounded-lg overflow-hidden">
+<button class="flex-1 py-1.5 hover:bg-surface-container-high text-on-surface-variant border-r border-outline/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">format_align_left</span>
+</button>
+<button class="flex-1 py-1.5 bg-primary-container/20 text-primary border-r border-outline/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">format_align_center</span>
+</button>
+<button class="flex-1 py-1.5 hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">format_align_right</span>
+</button>
+</div>
+</div>
+</div>
+<hr class="border-outline/10"/>
+<!-- Color Section -->
+<div class="flex flex-col gap-3">
+<h3 class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Color</h3>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#d4af37] border-2 border-surface shadow-[0_0_0_1px_rgba(115,92,0,0.2)] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+<div class="flex-1 bg-surface border border-outline/20 rounded-lg px-3 py-1.5 text-sm text-on-surface flex justify-between items-center">
+<span>#D4AF37</span>
+<span class="text-on-surface-variant text-xs">100%</span>
+</div>
+</div>
+<!-- Swatches -->
+<div class="flex gap-2 mt-2">
+<button class="w-6 h-6 rounded-full bg-[#1e1b18] border border-outline/20 hover:scale-110 transition-transform"></button>
+<button class="w-6 h-6 rounded-full bg-[#735c00] border border-outline/20 hover:scale-110 transition-transform"></button>
+<button class="w-6 h-6 rounded-full bg-[#e9c349] border border-outline/20 hover:scale-110 transition-transform"></button>
+<button class="w-6 h-6 rounded-full bg-[#70585b] border border-outline/20 hover:scale-110 transition-transform"></button>
+<button class="w-6 h-6 rounded-full flex items-center justify-center border border-dashed border-outline/40 hover:border-primary text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+</div>
+<hr class="border-outline/10"/>
+<!-- Spacing & Layout -->
+<div class="flex flex-col gap-3">
+<h3 class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Spacing</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">padding</span>Padding</label>
+<div class="flex bg-surface border border-outline/20 rounded-lg overflow-hidden h-8">
+<span class="bg-surface-container-high px-2 flex items-center text-xs text-on-surface-variant border-r border-outline/20">All</span>
+<input class="w-full bg-transparent px-2 text-sm text-on-surface focus:outline-none" type="number" value="16"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">rounded_corner</span>Radius</label>
+<div class="flex bg-surface border border-outline/20 rounded-lg overflow-hidden h-8">
+<input class="w-full bg-transparent px-2 text-sm text-on-surface focus:outline-none border-r border-outline/20 text-center" type="number" value="8"/>
+<button class="px-2 hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">link</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</body></html>

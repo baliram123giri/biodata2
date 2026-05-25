@@ -1,27 +1,29 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
+import { motion } from "framer-motion";
 
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Pencil, Globe } from "lucide-react";
+import { CompanyAutocomplete } from "./CompanyAutocomplete";
+import { ImageUpload } from "@/components/ImageUpload";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 
 export function BiodataForm() {
-  const { register, setValue, getValues } = useFormContext<BiodataFormValues>();
-  const [currentLang, setCurrentLang] = useState("English");
+  const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
+  const watchLang = useWatch({ control, name: "language" });
+  const currentLang = watchLang || "English";
 
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
-    setCurrentLang(newLang);
     setValue("language", newLang);
     const t = translations[newLang];
     if (!t) return;
@@ -50,14 +52,14 @@ export function BiodataForm() {
   const t = translations[currentLang] || translations["English"];
 
   return (
-    <form className="space-y-6 pb-20">
+    <form className="space-y-6 pb-0">
       {/* Language Selector */}
       <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
         <div className="flex items-center gap-2 text-primary font-semibold">
           <Globe className="w-5 h-5" />
-          <span>Select Language</span>
+          <span>Language</span>
         </div>
-        <Select value={currentLang} onValueChange={handleLanguageChange}>
+        <Select value={currentLang} onValueChange={handleLanguageChange} modal={false}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
@@ -69,40 +71,75 @@ export function BiodataForm() {
         </Select>
       </div>
 
-      <Accordion type="multiple" defaultValue={["personal", "education", "family", "contact", "customization"]} className="w-full">
+      <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
         
-        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} />
-        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} />
-        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} />
-        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} />
-
         {/* CUSTOMIZATION */}
-        <AccordionItem value="customization" className="bg-card px-4 rounded-lg border">
-          <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{t.photoCustom || "Photo & Customization"}</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="mantra">Mantra / Heading</Label>
-              <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
+        <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+          <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Palette className="w-5 h-5" />
+              </div>
+              {t.photoCustom || "Photo & Customization"}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="title">Biodata Title</Label>
-              <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} />
+          </AccordionTrigger>
+          <AccordionContent className="space-y-6 pt-4">
+            <div className="space-y-4">
+               <Label className="text-base font-semibold">Profile Photo</Label>
+               <Controller
+                 name="photo"
+                 control={control}
+                 render={({ field }) => (
+                   <ImageUpload 
+                     value={field.value} 
+                     onChange={field.onChange} 
+                     aspect={3 / 4} 
+                   />
+                 )}
+               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mantra">Mantra / Heading</Label>
+                <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="title">Biodata Title</Label>
+                <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} />
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} />
+        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
+        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
+        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
       </Accordion>
     </form>
   );
 }
 
-function FieldSection({ name, title, currentLang }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string }) {
+const FieldSection = memo(function FieldSection({ name, title, currentLang, icon }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string, icon: React.ReactNode }) {
   const { control, register } = useFormContext<BiodataFormValues>();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, swap } = useFieldArray({
     control,
     name,
   });
-  const liveFields = useWatch({ control, name }) || [];
+
+  // Watch ONLY the labels of the fields to prevent typing in values from causing re-renders
+  const watchedLabels = useWatch({
+    control,
+    name: fields.map((_, idx) => `${name}.${idx}.label` as const)
+  });
+
+  // Watch ONLY the options of the fields to prevent typing in values from causing re-renders
+  const watchedOptions = useWatch({
+    control,
+    name: fields.map((_, idx) => `${name}.${idx}.options` as const)
+  });
 
   const [dialogState, setDialogState] = useState<{ isOpen: boolean; index: number; options: string[]; label: string } | null>(null);
   const [customInput, setCustomInput] = useState("");
@@ -113,22 +150,36 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
   const addMoreFieldLabel = t.addMoreField || "Add More Field";
 
   return (
-    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4">
-      <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">{title}</AccordionTrigger>
-      <AccordionContent className="space-y-4 pt-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+      <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            {icon}
+          </div>
+          {title}
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="space-y-4 pt-2 overflow-hidden">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
             if (field.type === "hidden") return null;
-            const liveLabel = liveFields[index]?.label || field.label;
+            const liveLabel = watchedLabels[index] || field.label;
             return (
-            <div key={field.id} className={`flex flex-col gap-1 relative group ${field.type === 'textarea' ? 'col-span-1 sm:col-span-2' : ''}`}>
+            <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
               <div className="flex items-center justify-between mb-1">
-                <EditableLabel name={`${name}.${index}.label`} />
+                <EditableLabel name={`${name}.${index}.label`} value={liveLabel} />
                 
-                {/* Delete Icon for ALL fields */}
-                <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-0.5">
+                  <button type="button" disabled={index === 0} onClick={() => swap(index, index - 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Up">
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" disabled={index === fields.length - 1} onClick={() => swap(index, index + 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Down">
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {field.type === "select" ? (
@@ -136,7 +187,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                   name={`${name}.${index}.value` as const}
                   control={control}
                   render={({ field: selectField }) => {
-                    const liveOptions = liveFields[index]?.options || field.options;
+                    const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options;
                     return (
                     <Select onValueChange={(val) => {
                       if (val === "Other") {
@@ -145,7 +196,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                       } else {
                         selectField.onChange(val);
                       }
-                    }} value={selectField.value}>
+                    }} value={selectField.value} modal={false}>
                       <SelectTrigger>
                         <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
                           {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
@@ -163,33 +214,32 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                 <Controller
                   name={`${name}.${index}.value` as const}
                   control={control}
-                  render={({ field: compField }) => (
-                    <CompanyAutocomplete 
-                      value={compField.value} 
-                      onChange={(val, logo) => {
-                         compField.onChange(val);
-                         const logoIndex = fields.findIndex(f => f.id === "companyLogo");
-                         if (logoIndex !== -1) {
-                            // Update the hidden companyLogo field value properly
-                            // @ts-ignore
-                            setValue(`${name}.${logoIndex}.value`, logo || "");
-                         }
-                      }} 
-                      placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
-                    />
-                  )}
+                  render={({ field: compField }) => {
+                    return (
+                      <CompanyAutocomplete 
+                        value={compField.value} 
+                        onChange={(val, logo) => {
+                           compField.onChange(val);
+                           const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                           if (logoIndex !== -1) {
+                               setValue(`${name}.${logoIndex}.value`, logo || "");
+                           }
+                        }} 
+                        placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
+                      />
+                    );
+                  }}
                 />
               ) : field.type === "time12" ? (
                 <Controller
                   name={`${name}.${index}.value` as const}
                   control={control}
                   render={({ field: timeField }) => {
-                    // Extract HH, MM, and Period from current value
-                    // Expected format: "10:30 (Morning)"
-                    const parts = timeField.value.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
-                    const hhPart = parts?.[1] || "10";
-                    const mmPart = parts?.[2] || "00";
-                    const periodPart = parts?.[3] || "Morning";
+                    const timeValue = timeField.value || "10:00 (Morning)";
+                    const parts = timeValue.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
+                    const hhPart: string = (parts?.[1] ?? "10");
+                    const mmPart: string = (parts?.[2] ?? "00");
+                    const periodPart: string = (parts?.[3] ?? "Morning");
 
                     const updateValue = (h: string, m: string, p: string) => {
                       timeField.onChange(`${h}:${m} (${p})`);
@@ -201,7 +251,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                     return (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Select value={hhPart} onValueChange={(val) => updateValue(val, mmPart, periodPart)}>
+                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)} modal={false}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
@@ -209,7 +259,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                               {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val, periodPart)}>
+                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)} modal={false}>
                             <SelectTrigger className="flex-1">
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
@@ -218,7 +268,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
                             </SelectContent>
                           </Select>
                         </div>
-                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val)}>
+                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")} modal={false}>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={t.select || "Select Period"}>
                               {periodPart ? (t[periodPart] || periodPart) : undefined}
@@ -241,7 +291,7 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
               ) : (
                 <Input type={field.type} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
               )}
-            </div>
+            </motion.div>
             );
           })}
         </div>
@@ -312,12 +362,11 @@ function FieldSection({ name, title, currentLang }: { name: "personalDetails" | 
         </DialogContent>
       </Dialog>
     </AccordionItem>
-  )
-}
+  );
+});
 
-function EditableLabel({ name }: { name: string }) {
-  const { register, watch } = useFormContext();
-  const value = watch(name);
+const EditableLabel = memo(function EditableLabel({ name, value }: { name: string, value: string }) {
+  const { register } = useFormContext();
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -360,6 +409,62 @@ function EditableLabel({ name }: { name: string }) {
     >
       <span className="text-sm font-semibold truncate text-foreground">{value || "Label"}</span>
       <Pencil className="w-3 h-3 text-muted-foreground/50 group-hover/label:text-primary transition-colors shrink-0" />
+    </div>
+  );
+});
+
+const COMPANY_OPTIONS = [
+  "Google",
+  "Microsoft",
+  "Amazon",
+  "Meta",
+  "Apple",
+  "Netflix",
+  "TCS (Tata Consultancy Services)",
+  "Infosys",
+  "Wipro",
+  "Cognizant",
+  "Accenture",
+  "Capgemini",
+  "Tech Mahindra",
+  "HCL Technologies",
+  "IBM",
+  "Oracle",
+  "Cisco",
+  "Adobe",
+  "Salesforce",
+  "Deloitte",
+  "PwC",
+  "EY (Ernst & Young)",
+  "KPMG",
+  "J.P. Morgan",
+  "Morgan Stanley",
+  "Goldman Sachs",
+  "Other"
+];
+
+interface PremiumSelectProps {
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder: string;
+}
+
+function PremiumSelect({ value, onChange, options, placeholder }: PremiumSelectProps) {
+  return (
+    <div className="relative w-full">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white border border-input text-sm rounded-md h-9 pl-3 pr-10 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%237C726C%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[position:right_12px_center] bg-no-repeat transition-all text-foreground"
+      >
+        <option value="" disabled className="text-muted-foreground">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt} className="text-sm text-foreground bg-white">
+            {opt}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
