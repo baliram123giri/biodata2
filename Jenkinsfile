@@ -59,6 +59,12 @@ pipeline {
           # Install deps silently — suppresses package names from log
           npm ci --silent 2>&1 | grep -v "added"
 
+          # Generate Prisma Client
+          npx prisma generate
+
+          # Apply pending database migrations securely
+          npx prisma migrate deploy
+
           # Build silently — no env values echoed
           NODE_ENV=production npm run build --silent
 
