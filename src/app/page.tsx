@@ -22,11 +22,16 @@ export default async function Home() {
   // Fetch active hero template slides from the database
   let slides: typeof fallbackSlides = [];
   try {
-    slides = await prisma.heroSlide.findMany({
+    const dbSlides = await prisma.heroSlide.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
       take: 3,
     });
+    slides = dbSlides.map(slide => ({
+      id: slide.id,
+      imageUrl: slide.imageUrl,
+      title: slide.title || ""
+    }));
   } catch {
     // DB unreachable — use fallback silently
   }
