@@ -398,92 +398,92 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         payload.frameFile = formState.frameFile;
       }
 
-      // Automatically capture the live SVG preview as a high-fidelity PNG thumbnail
-      try {
-        const svgElement = document.getElementById("template-preview-svg");
-        if (svgElement) {
-          // Clone the SVG element
-          const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
+      // If a custom thumbnail was manually uploaded, use it directly. Otherwise, capture automatically.
+      if (formState.thumbnailFile) {
+        payload.thumbnailFile = formState.thumbnailFile;
+      } else {
+        try {
+          const svgElement = document.getElementById("template-preview-svg");
+          if (svgElement) {
+            // Clone the SVG element
+            const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
 
-          // Inline any external images (like Cloudinary frames) to prevent canvas staining and security blockers
-          const imageElements = svgClone.getElementsByTagName("image");
-          const fetchPromises: Promise<void>[] = [];
-          
-          for (let i = 0; i < imageElements.length; i++) {
-            const img = imageElements[i];
-            const href = img.getAttribute("href") || img.getAttribute("xlink:href");
-            if (href && href.startsWith("http")) {
-              const promise = fetch(href)
-                .then(res => res.blob())
-                .then(blob => {
-                  return new Promise<void>((resolveBlob) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      img.setAttribute("href", reader.result as string);
-                      resolveBlob();
-                    };
-                    reader.readAsDataURL(blob);
+            // Inline any external images (like Cloudinary frames) to prevent canvas staining and security blockers
+            const imageElements = svgClone.getElementsByTagName("image");
+            const fetchPromises: Promise<void>[] = [];
+            
+            for (let i = 0; i < imageElements.length; i++) {
+              const img = imageElements[i];
+              const href = img.getAttribute("href") || img.getAttribute("xlink:href");
+              if (href && href.startsWith("http")) {
+                const promise = fetch(href)
+                  .then(res => res.blob())
+                  .then(blob => {
+                    return new Promise<void>((resolveBlob) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        img.setAttribute("href", reader.result as string);
+                        resolveBlob();
+                      };
+                      reader.readAsDataURL(blob);
+                    });
+                  })
+                  .catch(err => {
+                    console.error("Failed to inline image in thumbnail generator:", href, err);
                   });
-                })
-                .catch(err => {
-                  console.error("Failed to inline image in thumbnail generator:", href, err);
-                });
-              fetchPromises.push(promise);
+                fetchPromises.push(promise);
+              }
             }
-          }
-          
-          await Promise.all(fetchPromises);
+            
+            await Promise.all(fetchPromises);
 
-          // Convert cloned SVG to string
-          const svgString = new XMLSerializer().serializeToString(svgClone);
-          const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-          const URL = window.URL || window.webkitURL || window;
-          const blobURL = URL.createObjectURL(svgBlob);
-          
-          const pngThumbnail = await new Promise<string | null>((resolve) => {
-            const image = new Image();
-            image.onload = () => {
-              try {
-                const canvas = document.createElement("canvas");
-                canvas.width = 595;
-                canvas.height = 842;
-                const context = canvas.getContext("2d");
-                if (context) {
-                  // White background
-                  context.fillStyle = "#ffffff";
-                  context.fillRect(0, 0, canvas.width, canvas.height);
-                  
-                  context.drawImage(image, 0, 0, 595, 842);
-                  const pngBase64 = canvas.toDataURL("image/png");
-                  URL.revokeObjectURL(blobURL);
-                  resolve(pngBase64);
-                } else {
+            // Convert cloned SVG to string
+            const svgString = new XMLSerializer().serializeToString(svgClone);
+            const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+            const URL = window.URL || window.webkitURL || window;
+            const blobURL = URL.createObjectURL(svgBlob);
+            
+            const pngThumbnail = await new Promise<string | null>((resolve) => {
+              const image = new Image();
+              image.onload = () => {
+                try {
+                  const canvas = document.createElement("canvas");
+                  canvas.width = 595;
+                  canvas.height = 842;
+                  const context = canvas.getContext("2d");
+                  if (context) {
+                    // White background
+                    context.fillStyle = "#ffffff";
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    context.drawImage(image, 0, 0, 595, 842);
+                    const pngBase64 = canvas.toDataURL("image/png");
+                    URL.revokeObjectURL(blobURL);
+                    resolve(pngBase64);
+                  } else {
+                    URL.revokeObjectURL(blobURL);
+                    resolve(null);
+                  }
+                } catch (err) {
+                  console.error("Canvas rendering error:", err);
                   URL.revokeObjectURL(blobURL);
                   resolve(null);
                 }
-              } catch (err) {
-                console.error("Canvas rendering error:", err);
+              };
+              image.onerror = () => {
                 URL.revokeObjectURL(blobURL);
                 resolve(null);
-              }
-            };
-            image.onerror = () => {
-              URL.revokeObjectURL(blobURL);
-              resolve(null);
-            };
-            image.src = blobURL;
-          });
+              };
+              image.src = blobURL;
+            });
 
-          if (pngThumbnail) {
-            payload.thumbnailFile = pngThumbnail;
+            if (pngThumbnail) {
+              payload.thumbnailFile = pngThumbnail;
+            }
           }
+        } catch (thumbnailErr) {
+          console.error("Automatic thumbnail generation failed:", thumbnailErr);
         }
-      } catch (thumbnailErr) {
-        console.error("Automatic thumbnail generation failed:", thumbnailErr);
-      }
-
-      if (!payload.thumbnailFile && formState.thumbnailFile) {
-        payload.thumbnailFile = formState.thumbnailFile;
       }
 
       const url = isEdit && template
@@ -1203,16 +1203,82 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               </div>
             </div>
 
-            {/* Automatic Thumbnail generation info notice */}
+            {/* Template Thumbnail Settings */}
             <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Thumbnail</h3>
-              <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-primary">Smart Auto-Thumbnail Enabled</p>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    You don't need to manually upload a thumbnail! On save/update, the system will automatically render a high-fidelity, pixel-perfect PNG thumbnail directly from your live preview layout above and upload it to the cloud.
-                  </p>
+              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Template Thumbnail</h3>
+              <div className="space-y-3.5">
+                {/* Auto thumbnail notice */}
+                <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-primary">Smart Auto-Thumbnail Active</p>
+                    <p className="text-xs text-muted-foreground leading-normal">
+                      By default, the builder will automatically capture your live SVG layout. However, you can choose to upload a custom high-quality cover thumbnail below to override it.
+                    </p>
+                  </div>
+                </div>
+
+                {/* File Upload Control */}
+                <div className="space-y-2.5 p-4 border border-border rounded-xl bg-muted/10">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground">Upload Custom Mockup / Cover Image (JPEG/PNG)</Label>
+                    <div className="flex flex-col gap-2.5">
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                        id="custom-thumbnail-input"
+                        onChange={(e) => handleFileChange(e, "thumbnailFile")}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById("custom-thumbnail-input")?.click()}
+                          className="text-xs gap-1.5 h-9 cursor-pointer hover:bg-muted"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          Choose Image
+                        </Button>
+                        <span className="text-xs text-muted-foreground truncate max-w-[240px]">
+                          {formState.thumbnailFile ? "✓ Custom image loaded" : "No file selected"}
+                        </span>
+                      </div>
+                      
+                      {/* Live Selected Thumbnail Preview */}
+                      {formState.thumbnailFile && (
+                        <div className="relative w-28 aspect-[3/4] border border-primary/30 rounded-lg overflow-hidden bg-muted shadow-sm mt-1">
+                          <img
+                            src={formState.thumbnailFile}
+                            alt="Custom uploaded thumbnail preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormState({ ...formState, thumbnailFile: "" })}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600/90 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-700 transition-colors"
+                            title="Remove custom thumbnail"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Display existing db thumbnail if editing and no new one selected */}
+                      {!formState.thumbnailFile && template?.thumbnailUrl && (
+                        <div className="space-y-1 mt-1">
+                          <p className="text-[10px] text-muted-foreground">Current active thumbnail in database:</p>
+                          <div className="relative w-28 aspect-[3/4] border border-border rounded-lg overflow-hidden bg-muted shadow-sm">
+                            <img
+                              src={template.thumbnailUrl}
+                              alt="Current template thumbnail"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -8,7 +8,7 @@ export const WATERMARK_CONFIG = {
   opacity: 0.18,
   rotation: -30,
   // Set to true to show the watermark
-  isEnabled: true,
+  isEnabled: false,
 };
 
 export function getWatermarkCoordinates(pageWidth: number, pageHeight: number) {

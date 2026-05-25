@@ -108,14 +108,14 @@ export function useDownloadBiodata() {
       }),
     }).catch((err) => console.error("Failed to log download:", err));
 
-    // ── JPG Export: fully client-side via Konva canvas ──────────────
+    // ── JPEG Export: fully client-side via Konva canvas ──────────────
     if (format === "jpg") {
       try {
         const dataUrl = await generateJpgDataUrl();
 
         const link = document.createElement("a");
         link.href = dataUrl;
-        link.download = `${nameField}.jpg`;
+        link.download = `${nameField}.jpeg`;
         link.click();
       } catch (err) {
         console.error("JPG Export Error:", err);

@@ -304,13 +304,13 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
   );
 }
 
-export function TemplatesGrid() {
-  const [dbTemplates, setDbTemplates] = useState<any[]>([]);
+export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }) {
+  const [dbTemplates, setDbTemplates] = useState<any[]>(initialTemplates || []);
   const [selectedTpl, setSelectedTpl] = useState<Template | null>(null);
   const [customColor, setCustomColor] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(!initialTemplates || initialTemplates.length === 0);
   const observerTargetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

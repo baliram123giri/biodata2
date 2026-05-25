@@ -450,9 +450,12 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           },
             React.createElement(Text, { style: styles.label as any }, f.displayLabel),
             React.createElement(Text, { style: styles.colon as any }, ":"),
-            React.createElement(View, { style: { width: f.valueW, flexDirection: 'row', flexWrap: 'wrap' } as any },
-              f.logoUrl && React.createElement(Image, { src: f.logoUrl, style: styles.logo as any }),
-              React.createElement(Text, { style: styles.value as any }, f.logoUrl ? `(${f.displayValue})` : f.displayValue)
+            React.createElement(View, { style: { width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
+              f.logoUrl && React.createElement(Image, { 
+                src: f.logoUrl.startsWith("/") ? path.join(process.cwd(), 'public', f.logoUrl) : f.logoUrl, 
+                style: styles.logo as any 
+              }),
+              React.createElement(Text, { style: styles.value as any }, f.displayValue)
             )
           ))
         )),

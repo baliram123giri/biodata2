@@ -108,8 +108,8 @@ export function DownloadDropdown({
           <ImageIcon className="w-4 h-4 text-green-600" />
         </div>
         <div className="flex flex-col">
-          <span>JPG Image</span>
-          <span className="text-[10px] font-medium text-muted-foreground">Save as picture</span>
+          <span>JPEG Image (High Quality)</span>
+          <span className="text-[10px] font-medium text-muted-foreground">Ultra-high resolution picture</span>
         </div>
       </button>
 

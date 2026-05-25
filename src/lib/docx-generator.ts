@@ -748,6 +748,26 @@ export async function generateDocxBuffer(opts: {
 
     if (fields.length === 0) continue;
 
+    // Pre-resolve and fetch any logo buffers for the fields in this section
+    const logoBuffers = new Map<string, Buffer>();
+    for (const f of fields) {
+      if (f.logoUrl) {
+        try {
+          if (f.logoUrl.startsWith("/")) {
+            const localPath = path.join(process.cwd(), 'public', f.logoUrl);
+            if (fs.existsSync(localPath)) {
+              logoBuffers.set(f.id, fs.readFileSync(localPath));
+            }
+          } else {
+            const buf = await fetchWithCache(f.logoUrl);
+            logoBuffers.set(f.id, buf);
+          }
+        } catch (err) {
+          console.error(`Failed to fetch logo for field ${f.id}:`, err);
+        }
+      }
+    }
+
     // Section Title with accent bar — spacing matches Konva's section gap
     docChildren.push(
       new Paragraph({
@@ -822,6 +842,19 @@ export async function generateDocxBuffer(opts: {
                 new Paragraph({
                   spacing: { before: rowSpacingBefore, after: rowSpacingAfter, line: Math.round(fSize * 1.1 * 20) },
                   children: [
+                    ...(logoBuffers.has(f.id) ? [
+                      new ImageRun({
+                        data: logoBuffers.get(f.id)!,
+                        type: "png",
+                        transformation: {
+                          width: 14,
+                          height: 14,
+                        },
+                      }),
+                      new TextRun({
+                        text: "  ",
+                      }),
+                    ] : []),
                     new TextRun({
                       text: String(f.displayValue),
                       size: docxFontSize,

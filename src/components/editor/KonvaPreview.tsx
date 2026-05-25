@@ -584,21 +584,21 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       stage.position({ x: 0, y: 0 });
       stage.size({ width: A4_W, height: A4_H });
 
-      // Programmatically show the watermark node for the export capture
+      // Programmatically hide the watermark node for the export capture
       const watermarkNode = stage.findOne("#watermark");
       if (watermarkNode) {
-        watermarkNode.show();
+        watermarkNode.hide();
       }
 
       stage.batchDraw();
 
       const dataUrl = stage.toDataURL({
         mimeType: "image/jpeg",
-        quality: 0.95,
-        pixelRatio: 2, // 2× = ~1190×1684px — crisp on mobile
+        quality: 1.0, // Maximum lossless quality
+        pixelRatio: 3, // 3x pixel ratio for extremely high resolution and crispness
       });
 
-      // Programmatically hide the watermark node again to keep editor preview clean
+      // Keep it hidden to maintain clean editor view
       if (watermarkNode) {
         watermarkNode.hide();
       }

@@ -27,6 +27,11 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   title: {
     default: "Free Online Biodata Maker for Marriage | biodata99.com",
     template: "%s | biodata99.com"

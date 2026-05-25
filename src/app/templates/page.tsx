@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { TemplatesGrid } from "@/components/templates/TemplatesGrid";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Premium Marriage Biodata Templates | biodata99.com",
@@ -12,7 +13,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function TemplatesPage() {
+export default async function TemplatesPage() {
+  const templates = await prisma.template.findMany({
+    where: { active: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
       {/* Background Ornaments */}
@@ -35,7 +41,7 @@ export default function TemplatesPage() {
         </div>
 
         {/* Templates Grid Component */}
-        <TemplatesGrid />
+        <TemplatesGrid initialTemplates={JSON.parse(JSON.stringify(templates))} />
 
         {/* Footer Info Block */}
         <div className="bg-card border border-[#C9A84C]/20 rounded-2xl p-8 max-w-4xl mx-auto shadow-md text-center space-y-4">
