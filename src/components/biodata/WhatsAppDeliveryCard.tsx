@@ -196,7 +196,7 @@ export function WhatsAppDeliveryCard({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-black text-[#062B36] tracking-tight mb-1">
-            Get your biodata on WhatsApp
+            Get Your Marriage Biodata Delivered on WhatsApp — Instantly
           </h3>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
@@ -209,13 +209,13 @@ export function WhatsAppDeliveryCard({
               <div className="w-4 h-4 rounded-full bg-[#E8F8EF] flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 text-[#25D366]" />
               </div>
-              Payment reminders
+              No quality loss
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
               <div className="w-4 h-4 rounded-full bg-[#E8F8EF] flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 text-[#25D366]" />
               </div>
-              Quick support
+              Works on all phones
             </div>
           </div>
         </div>
@@ -322,7 +322,7 @@ export function WhatsAppDeliveryCard({
         <div className="bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 flex items-start gap-2.5">
           <Lock className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-stone-500 font-semibold leading-normal">
-            Your privacy is protected. Number used only for biodata delivery and order updates.
+            Your number is used only to send your biodata. We never share it or store it after delivery.
           </p>
         </div>
       </form>

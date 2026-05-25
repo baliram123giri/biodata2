@@ -204,10 +204,10 @@ export default async function Home() {
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <StepCard number="01" title="Fill In Details" description="Enter your name, family, education, and contact details." icon="📝" />
-            <StepCard number="02" title="Pick a Template" description="Browse beautiful designs and choose one that fits you." icon="🎨" />
-            <StepCard number="03" title="Customize" description="Add your photo, pick a color theme and religious symbols." icon="✨" />
-            <StepCard number="04" title="Download" description="Download as high-quality PDF instantly. Share anywhere." icon="📥" />
+            <StepCard number="01" title="Fill In Your Details" description="Enter your personal info, family background, education, and contact details — step by step." icon="📝" />
+            <StepCard number="02" title="Pick a Biodata Format" description="Browse stylish marriage biodata templates — traditional, modern, or community-specific for boy or girl." icon="🎨" />
+            <StepCard number="03" title="Add Photo & Customise" description="Upload your photo, choose a colour theme, and add your religious mantra or heading." icon="✨" />
+            <StepCard number="04" title="Download & Share Free" description="Download as PDF or editable Word. Share directly on WhatsApp, email, or matrimony sites." icon="📥" />
           </div>
 
           {/* CTA */}
