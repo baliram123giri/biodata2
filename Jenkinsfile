@@ -63,10 +63,6 @@ pipeline {
           echo "🗄️ Generating Prisma Client"
           npx prisma generate
 
-          # Apply pending database migrations
-          echo "🗄️ Applying Migrations"
-          npx prisma migrate deploy
-
           # Build silently — no env values echoed
           echo "🏗 Building Next.js"
           NODE_ENV=production npm run build --silent
