@@ -185,23 +185,35 @@ export default async function Home() {
       </section>
 
       {/* Steps Section */}
-      <section className="py-20 bg-muted px-4">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Create Your Marriage Biodata Online</h2>
-            <p className="text-lg text-muted-foreground">From blank form to downloaded PDF in under 5 minutes.</p>
+      <section className="py-24 bg-muted relative px-4 overflow-hidden">
+        <div className="container mx-auto max-w-6xl">
+
+          {/* Header */}
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-primary mb-4">How It Works</p>
+            <h2 className="text-3xl md:text-5xl font-black text-foreground leading-tight mb-4">
+              Make Your Biodata in{" "}
+              <span className="text-primary">
+                4 Simple Steps
+              </span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              From blank form to a downloaded PDF — in under 5 minutes, on any device.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            <StepCard number="1" title="Fill In Details" description="Enter your name, family background, education, and contact details." />
-            <StepCard number="2" title="Pick a Template" description="Browse designs and choose one that fits your style." />
-            <StepCard number="3" title="Customize" description="Add your photo, select a color theme, and pick religious symbols." />
-            <StepCard number="4" title="Download" description="Download as a high-quality PDF — instantly. Share anywhere." />
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <StepCard number="01" title="Fill In Details" description="Enter your name, family, education, and contact details." icon="📝" />
+            <StepCard number="02" title="Pick a Template" description="Browse beautiful designs and choose one that fits you." icon="🎨" />
+            <StepCard number="03" title="Customize" description="Add your photo, pick a color theme and religious symbols." icon="✨" />
+            <StepCard number="04" title="Download" description="Download as high-quality PDF instantly. Share anywhere." icon="📥" />
           </div>
 
-          <div className="mt-16 text-center">
-            <Button size="lg" className="rounded-full text-lg px-8 py-6 bg-gradient-primary border-0" asChild>
-              <a href="#builder">Start Creating Free</a>
+          {/* CTA */}
+          <div className="mt-14 text-center">
+            <Button size="lg" className="rounded-full px-10 py-6 bg-gradient-primary border-0 hover:scale-105 active:scale-95 transition-all duration-300" asChild>
+              <a href="#builder">Start Creating — It&apos;s Free</a>
             </Button>
           </div>
         </div>
@@ -223,14 +235,19 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
   );
 }
 
-function StepCard({ number, title, description }: { number: string, title: string, description: string }) {
+function StepCard({ number, title, description, icon }: { number: string, title: string, description: string, icon: string }) {
   return (
-    <div className="text-center space-y-4 relative group">
-      <div className="w-16 h-16 mx-auto bg-gradient-primary text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg z-10 relative group-hover:scale-110 transition-transform border-0">
+    <div className="premium-gold-border premium-gold-card group relative rounded-2xl p-7 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+      {/* Number chip */}
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-white text-xs font-black mb-5 group-hover:scale-110 transition-transform duration-300">
         {number}
-      </div>
-      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+      </span>
+
+      {/* Emoji icon */}
+      <div className="text-3xl mb-4">{icon}</div>
+
+      <h3 className="text-base font-bold text-foreground mb-2 tracking-tight group-hover:text-primary transition-colors">{title}</h3>
+      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
     </div>
   );
 }

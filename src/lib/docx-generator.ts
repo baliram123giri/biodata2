@@ -753,13 +753,18 @@ export async function generateDocxBuffer(opts: {
     for (const f of fields) {
       if (f.logoUrl) {
         try {
-          if (f.logoUrl.startsWith("/")) {
-            const localPath = path.join(process.cwd(), 'public', f.logoUrl);
+          let resolvedLogoUrl = f.logoUrl;
+          if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
+            resolvedLogoUrl = decodeURIComponent(f.logoUrl.split("?url=")[1]);
+          }
+
+          if (resolvedLogoUrl.startsWith("/")) {
+            const localPath = path.join(process.cwd(), 'public', resolvedLogoUrl);
             if (fs.existsSync(localPath)) {
               logoBuffers.set(f.id, fs.readFileSync(localPath));
             }
           } else {
-            const buf = await fetchWithCache(f.logoUrl);
+            const buf = await fetchWithCache(resolvedLogoUrl);
             logoBuffers.set(f.id, buf);
           }
         } catch (err) {

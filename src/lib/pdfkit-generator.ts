@@ -451,10 +451,18 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             React.createElement(Text, { style: styles.label as any }, f.displayLabel),
             React.createElement(Text, { style: styles.colon as any }, ":"),
             React.createElement(View, { style: { width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
-              f.logoUrl && React.createElement(Image, { 
-                src: f.logoUrl.startsWith("/") ? path.join(process.cwd(), 'public', f.logoUrl) : f.logoUrl, 
-                style: styles.logo as any 
-              }),
+              f.logoUrl && (() => {
+                let resolvedSrc = f.logoUrl;
+                if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
+                  resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
+                } else if (f.logoUrl.startsWith("/")) {
+                  resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
+                }
+                return React.createElement(Image, { 
+                  src: resolvedSrc, 
+                  style: styles.logo as any 
+                });
+              })(),
               React.createElement(Text, { style: styles.value as any }, f.displayValue)
             )
           ))

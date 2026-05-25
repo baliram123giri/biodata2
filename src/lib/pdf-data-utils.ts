@@ -52,7 +52,14 @@ export const processPDFField = (
 
   // 4. Handle Company Logo
   if (field.type === "company" || field.id === "companyName") {
-    logoUrl = data.educationDetails?.find(f => f.id === "companyLogo")?.value || "/org_icon.png";
+    const rawLogo = data.educationDetails?.find(f => f.id === "companyLogo")?.value;
+    if (rawLogo) {
+      logoUrl = rawLogo.startsWith("http")
+        ? `/api/proxy-logo?url=${encodeURIComponent(rawLogo)}`
+        : rawLogo;
+    } else {
+      logoUrl = "/org_icon.png";
+    }
   }
 
   // 5. Date formatting
