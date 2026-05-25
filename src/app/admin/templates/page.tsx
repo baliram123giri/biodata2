@@ -305,7 +305,7 @@ export default function AdminTemplates() {
                     {temp.thumbnailUrl ? (
                       <img 
                         src={temp.thumbnailUrl.includes("res.cloudinary.com") && temp.thumbnailUrl.includes("/image/upload/")
-                          ? temp.thumbnailUrl.replace("/image/upload/", "/image/upload/w_300,h_400,c_fill,q_100/")
+                          ? temp.thumbnailUrl.replace("/image/upload/", "/image/upload/w_300,h_424,c_fit,q_100/")
                           : temp.thumbnailUrl
                         } 
                         alt={temp.name} 

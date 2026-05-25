@@ -268,6 +268,7 @@ export function HomeBiodataBuilder() {
 
   // Get current template for the box preview
   const currentTemplate = getTemplateConfig(storedTemplate);
+  const activeTemplate = customTemplates.find((t) => t.id === storedTemplate) || currentTemplate;
 
   return (
     <FormProvider {...methods}>
@@ -292,7 +293,7 @@ export function HomeBiodataBuilder() {
           <SheetTrigger
             render={
               <button
-                className="group flex flex-col items-center gap-2.5 p-3.5 bg-white/80 backdrop-blur-xl border border-stone-300/80 border-r-0 rounded-l-2xl shadow-[-4px_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[-6px_6px_28px_rgba(0,0,0,0.12)] hover:bg-white/90 hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
+                className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
               />
             }
           >
@@ -301,7 +302,14 @@ export function HomeBiodataBuilder() {
             </div>
 
             <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
-              {currentTemplate.frame.type === "image" ? (
+              {activeTemplate.thumbnailUrl ? (
+                <img
+                  src={activeTemplate.thumbnailUrl}
+                  alt={activeTemplate.name}
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                  loading="lazy"
+                />
+              ) : currentTemplate.frame.type === "image" ? (
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{
@@ -346,14 +354,13 @@ export function HomeBiodataBuilder() {
               <Wand2 className="w-4 h-4" />
               Start Building Now
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
               Create Your Biodata <span className="text-gradient-primary">Right Here</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl">
+            <p className="text-base md:text-lg text-muted-foreground font-semibold max-w-2xl">
               Fill in your details below, pick a template, and download your professional marriage biodata — all without leaving this page.
             </p>
           </div>
-          {/* Quick Action Bar Removed */}
         </div>
 
         {/* Builder Content */}
@@ -362,7 +369,7 @@ export function HomeBiodataBuilder() {
           <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
             {/* Form Side */}
-            <div className="md:col-span-6 flex flex-col w-full">
+            <div className="md:col-span-6 flex flex-col w-full premium-gold-border p-6 md:p-8 shadow-xl">
               <BiodataForm />
             </div>
 

@@ -384,3 +384,79 @@ textarea::placeholder,
 [data-placeholder] {
   opacity: 0.5 !important;
 }
+
+/* ─────────────────────────────────────────────
+   PREMIUM LIQUID GOLD GRADIENT BORDER SYSTEM
+───────────────────────────────────────────── */
+.premium-gold-border {
+  position: relative;
+  background: #ffffff;
+  border-radius: 1rem; /* rounded-2xl equivalent */
+  z-index: 1;
+}
+
+.dark .premium-gold-border {
+  background: #120508;
+}
+
+.premium-gold-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 3px; /* Border thickness */
+  background: linear-gradient(135deg, #FFD700 0%, #F4D03F 35%, #CA9815 70%, #F4D03F 85%, #FFD700 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Specific styling for feature cards on homepage */
+.premium-gold-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2.25rem 2rem;
+  height: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-gold-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(252, 224, 104, 0.55);
+}
+
+/* ─────────────────────────────────────────────
+   PREMIUM LIQUID GOLD DOCKED SIDE TAB SYSTEM
+───────────────────────────────────────────── */
+.premium-gold-docked-tab {
+  position: relative;
+  background: #ffffff;
+  border-radius: 1rem 0 0 1rem !important; /* rounded-l-2xl equivalent */
+  z-index: 1;
+}
+
+.dark .premium-gold-docked-tab {
+  background: #120508;
+}
+
+.premium-gold-docked-tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: -3px; /* Extends past right edge to hide border stroke on screen edge */
+  border-radius: 1rem 0 0 1rem;
+  padding: 3px; /* Border thickness */
+  padding-right: 0; /* Flat right edge */
+  background: linear-gradient(135deg, #FFD700 0%, #F4D03F 35%, #CA9815 70%, #F4D03F 85%, #FFD700 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}

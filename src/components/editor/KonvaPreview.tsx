@@ -66,7 +66,7 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
 });
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
-  const [image] = useImage(src);
+  const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 

@@ -437,7 +437,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {tpl.thumbnailUrl ? (
                     <img
                       src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
-                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_600,c_fill,q_100/")
+                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
                         : tpl.thumbnailUrl
                       }
                       alt={tpl.name}
@@ -562,11 +562,11 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.thumbnailUrl ? (
                     <img
                       src={selectedTpl.thumbnailUrl.includes("res.cloudinary.com") && selectedTpl.thumbnailUrl.includes("/image/upload/")
-                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_600,c_fill,q_100/")
+                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
                         : selectedTpl.thumbnailUrl
                       }
                       alt={selectedTpl.name}
-                      className="w-full h-full object-cover bg-white"
+                      className="w-full h-full object-contain bg-white"
                     />
                   ) : (
                     <MiniTemplatePreview id={selectedTpl.id} color={customColor} scale={0.9} />

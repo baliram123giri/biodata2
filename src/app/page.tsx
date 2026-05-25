@@ -2,10 +2,16 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown } from "lucide-react";
+import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2 } from "lucide-react";
 import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { prisma } from "@/lib/prisma";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Free Marriage Biodata Format with Photo - PDF & Word",
+  description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, editable in Word or PDF. Ready to share on WhatsApp instantly.",
+};
 
 export default async function Home() {
   // Fetch active hero template slides from the database
@@ -31,60 +37,64 @@ export default async function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4 border-b border-border/40">
-        {/* Background Premium Glow Shapes */}
-        <div className="absolute top-[-25%] left-[-15%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#9B1B30]/10 to-[#C9A84C]/10 blur-[130px] pointer-events-none" />
-        <div className="absolute bottom-[-15%] right-[-15%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-[#C9A84C]/10 to-[#9B1B30]/10 blur-[130px] pointer-events-none" />
-        
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
-        {/* Concentric Rotating Orbits (Concentric dashed rings) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-dashed border-[#C9A84C]/10 animate-orbit-cw pointer-events-none hidden lg:block" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-dashed border-[#9B1B30]/8 animate-orbit-ccw pointer-events-none hidden lg:block" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-dashed border-[#C9A84C]/8 animate-orbit-cw pointer-events-none hidden lg:block" />
-
-        {/* Decorative Floating Spheres */}
-        <div className="absolute top-1/4 left-12 w-28 h-28 rounded-full border border-[#C9A84C]/25 bg-gradient-to-br from-[#FBF5E6]/40 to-transparent backdrop-blur-sm pointer-events-none hidden xl:block animate-float-slow" />
-        <div className="absolute bottom-24 left-[22%] w-20 h-20 rounded-full border border-[#9B1B30]/15 bg-gradient-to-tr from-[#FAEAED]/50 to-transparent backdrop-blur-sm pointer-events-none hidden xl:block animate-float-slower" />
-        <div className="absolute top-16 right-[18%] w-24 h-24 rounded-full border border-[#C9A84C]/20 bg-gradient-to-bl from-[#FBF5E6]/40 to-transparent backdrop-blur-sm pointer-events-none hidden xl:block animate-float" />
-
         <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 relative z-10">
           {/* Left Text Column */}
-          <div className="flex-1 text-center lg:text-left space-y-7">
+          <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 text-xs font-extrabold text-[#8A7233] dark:text-[#E6C97A] backdrop-blur-sm shadow-md transition-all duration-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
-              Free Online Matrimonial Biodata Builder
+              <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] animate-pulse" />
+              100% Free Online Biodata Maker
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6.5xl font-black tracking-tight text-foreground leading-[1.08] font-sans">
-              Create Premium <span className="text-gradient-primary">Marriage Biodata</span> Online
+            <h1 className="text-4xl md:text-5xl lg:text-6.25xl font-black tracking-tight text-stone-900 dark:text-white leading-[1.12] font-sans">
+              Your <span className="text-gradient-primary">Marriage Biodata</span> with Photo - Ready in Minutes, Free to Download
             </h1>
             
-            <p className="text-base md:text-xl text-muted-foreground/90 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-sans font-medium">
-              Design a beautiful, traditional biodata in just 2 minutes. Pick from our premium templates, customize in multiple languages, and download an instant PDF. No registration required.
+            <p className="text-stone-600 dark:text-stone-300 text-sm md:text-base lg:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
+              Pick a stylish format, fill your details, add your photo and download as a print-ready PDF or editable Word file. No account needed. Your data stays on your device.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4.5 justify-center lg:justify-start pt-2">
-              <Button size="lg" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto bg-gradient-primary border-0 font-bold tracking-wide shadow-xl shadow-[#9B1B30]/25 hover:scale-105 active:scale-95 transition-all duration-200" asChild>
+            <div className="flex flex-col sm:flex-row gap-4.5 justify-center lg:justify-start pt-1">
+              <Button size="lg" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto bg-gradient-primary border-0 font-bold tracking-wide shadow-xl shadow-[#9B1B30]/25 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer" asChild>
                 <a href="#builder">
                   Start Creating Free
-                  <ArrowDown className="w-5 h-5 ml-2 animate-bounce" />
+                  <ArrowDown className="w-4 h-4 ml-2 animate-bounce" />
                 </a>
               </Button>
-              <Button size="lg" variant="outline" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200" asChild>
+              <Button size="lg" variant="outline" className="rounded-full text-lg px-9 py-6.5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200 cursor-pointer" asChild>
                 <Link href="/templates">View Templates</Link>
               </Button>
             </div>
             
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4.5 md:gap-7.5 text-sm font-semibold text-muted-foreground pt-4">
-              <div className="flex items-center gap-2 bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-2.5 shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-[#C9A84C]" /> No Account Required
+            {/* Features & Formats Metadata Stack */}
+            <div className="space-y-3.5 pt-3">
+              {/* Trust Badges */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] font-extrabold">
+                <span className="text-stone-400 dark:text-stone-500 uppercase tracking-wider text-[9px] mr-1 shrink-0">Features:</span>
+                {[
+                  "With photo",
+                  "PDF & Word",
+                  "WhatsApp-ready",
+                  "No data stored",
+                  "Boy & Girl formats"
+                ].map((badge) => (
+                  <div key={badge} className="flex items-center gap-1.5 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 rounded-none px-3 py-1.5 text-stone-700 dark:text-stone-300 shadow-xs hover:border-[#C9A84C]/50 transition-colors">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
+                    <span>{badge}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2 bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-2.5 shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-[#C9A84C]" /> 100% Secure &amp; Private
-              </div>
-              <div className="flex items-center gap-2 bg-card/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-2.5 shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-[#C9A84C]" /> Instant High-Res PDF
+
+              {/* Community formats line (SEO + user signal) */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 text-[11px] font-extrabold">
+                <span className="text-[#8A7233] dark:text-[#E6C97A] uppercase tracking-wider text-[9px] mr-1 shrink-0">Formats:</span>
+                {["Hindu", "Muslim", "Christian", "Sikh", "Jain", "NRI"].map((community) => (
+                  <span key={community} className="px-2.5 py-1 border border-stone-200/50 dark:border-stone-800/80 bg-white/50 dark:bg-stone-900/50 text-stone-600 dark:text-stone-400 rounded-none text-[10px] tracking-wide hover:text-[#C9A84C] hover:border-[#C9A84C]/45 transition-colors cursor-default shadow-2xs">
+                    {community}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -123,7 +133,7 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          BIODATA BUILDER — Full create experience embedded on homepage
+          BIODATA BUILDER - Full create experience embedded on homepage
           ═══════════════════════════════════════════════════════════════════ */}
       <HomeBiodataBuilder />
 
@@ -131,40 +141,44 @@ export default async function Home() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Everything you need to create a professional marriage biodata</h2>
-            <p className="text-lg text-muted-foreground">In one simple tool. No design skills required. Just fill your details and download.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
+              Why Families Use Our <span className="text-gradient-primary">Free Marriage Biodata Maker</span>
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground font-semibold max-w-2xl mx-auto">
+              No design skills needed. Fill your details, pick a stylish biodata format, and download as PDF or Word - all in under 5 minutes.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon={<FileText className="w-8 h-8 text-primary" />}
-              title="Beautiful Templates"
-              description="Pick from professionally designed biodata formats — traditional designs with religious symbols to modern clean layouts."
+              title="50+ Biodata Templates"
+              description="Traditional designs with religious symbols to modern clean layouts - for every Indian community."
             />
             <FeatureCard
-              icon={<Smartphone className="w-8 h-8 text-primary" />}
-              title="Simple to Use"
-              description="No design experience needed. Open the form, type in your details, pick a template, and your biodata is ready."
+              icon={<Wand2 className="w-8 h-8 text-primary" />}
+              title="No Design Skills Needed"
+              description="Just open the form, fill your details, pick a template and your biodata is ready."
             />
             <FeatureCard
               icon={<Monitor className="w-8 h-8 text-primary" />}
               title="Live Preview as You Type"
-              description="Watch your biodata update with every keystroke. You see the final result on screen before you download."
+              description="See your final biodata update in real time before you download."
             />
             <FeatureCard
               icon={<Download className="w-8 h-8 text-primary" />}
-              title="Free PDF Download"
-              description="Download your finished biodata as a high-quality PDF instantly. Share on WhatsApp or print on A4 paper."
+              title="Free PDF &amp; Word Download"
+              description="Download as print-ready PDF or editable Word file. Share on WhatsApp or print on A4."
             />
             <FeatureCard
-              icon={<span className="text-2xl font-bold text-white">Aअ</span>}
-              title="Regional Indian Languages"
-              description="Create your biodata in Hindi, Tamil, Telugu, Marathi, Gujarati, Kannada, Bengali, Punjabi, Urdu, or English."
+              icon={<span className="text-2xl font-bold text-white font-sans">Aअ</span>}
+              title="10+ Indian Languages"
+              description="Hindi, Tamil, Telugu, Marathi, Gujarati, Kannada, Bengali, Punjabi, Urdu &amp; English."
             />
             <FeatureCard
               icon={<Lock className="w-8 h-8 text-primary" />}
-              title="100% Private"
-              description="Your name, photo, and personal details never leave your device. No login required. Nothing stored on our servers."
+              title="100% Private - No Login"
+              description="Your name, photo &amp; personal details never leave your device. Nothing stored on our servers."
             />
           </div>
         </div>
@@ -198,16 +212,14 @@ export default async function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <Card className="border-none shadow-md hover:shadow-lg transition-all hover:-translate-y-1 bg-card h-full group">
-      <CardContent className="pt-8 space-y-4 h-full flex flex-col items-center text-center">
-        <div className="bg-gradient-primary w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-md group-hover:scale-110 transition-transform">
-          {/* Override the text-primary class passed from props to be white */}
-          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-8 h-8 text-white" })}
-        </div>
-        <h3 className="text-xl font-bold">{title}</h3>
-        <p className="text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="premium-gold-border premium-gold-card group">
+      <div className="bg-gradient-primary w-16 h-16 rounded-full flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
+        {/* Override the text-primary class passed from props to be white */}
+        {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-8 h-8 text-white" })}
+      </div>
+      <h3 className="text-xl font-bold tracking-tight text-stone-900 dark:text-white mb-3">{title}</h3>
+      <p className="text-stone-600 dark:text-stone-300 text-sm leading-relaxed">{description}</p>
+    </div>
   );
 }
 
@@ -217,8 +229,8 @@ function StepCard({ number, title, description }: { number: string, title: strin
       <div className="w-16 h-16 mx-auto bg-gradient-primary text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lg z-10 relative group-hover:scale-110 transition-transform border-0">
         {number}
       </div>
-      <h3 className="text-lg font-bold">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }
