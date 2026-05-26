@@ -34,13 +34,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("=== Premium Contact Form Submission ===");
-    console.log(`Name: ${name}`);
-    console.log(`Email: ${email}`);
-    console.log(`Topic: ${topic}`);
-    console.log(`Message: ${message}`);
-    console.log("======================================");
-
     // If SMTP_PASS is not configured (e.g. in local development), log it and return success
     if (!smtpPass) {
       console.warn("SMTP Password (EMAIL_PASS) is not configured in env. Skipping real email dispatch.");
@@ -140,7 +133,7 @@ export async function POST(req: NextRequest) {
           
           <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 15px; text-align: center; font-size: 12px; color: #888888;">
             <p style="margin: 0 0 5px 0;">Have an urgent question? You can also message us directly on WhatsApp!</p>
-            <a href="https://wa.me/${process.env.WHATSAPP_NUMMBER}" style="color: #25d366; font-weight: bold; text-decoration: none;">Chat with Support on WhatsApp</a>
+            <a href="https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMMBER}" style="color: #25d366; font-weight: bold; text-decoration: none;">Chat with Support on WhatsApp</a>
           </div>
         </div>
       `,
