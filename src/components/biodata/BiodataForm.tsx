@@ -60,7 +60,7 @@ export function BiodataForm() {
           <span>Language</span>
         </div>
         <Select value={currentLang} onValueChange={handleLanguageChange} modal={false}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" aria-label="Select Language">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
@@ -74,7 +74,7 @@ export function BiodataForm() {
       <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
         
         {/* CUSTOMIZATION */}
-        <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+        <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border-0 mb-4 shadow-sm hover:shadow-md transition-shadow premium-gold-border">
           <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -150,7 +150,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
   const addMoreFieldLabel = t.addMoreField || "Add More Field";
 
   return (
-    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border mb-4 shadow-sm hover:shadow-md transition-shadow">
+    <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border-0 mb-4 shadow-sm hover:shadow-md transition-shadow premium-gold-border">
       <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -197,7 +197,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                         selectField.onChange(val);
                       }
                     }} value={selectField.value} modal={false}>
-                      <SelectTrigger>
+                      <SelectTrigger aria-label={`Select ${liveLabel}`}>
                         <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
                           {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
                         </SelectValue>
@@ -252,7 +252,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
                           <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)} modal={false}>
-                            <SelectTrigger className="flex-1">
+                            <SelectTrigger className="flex-1" aria-label="Select Hour">
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
                             <SelectContent>
@@ -260,7 +260,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                             </SelectContent>
                           </Select>
                           <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)} modal={false}>
-                            <SelectTrigger className="flex-1">
+                            <SelectTrigger className="flex-1" aria-label="Select Minute">
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
                             <SelectContent>
@@ -269,7 +269,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                           </Select>
                         </div>
                         <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")} modal={false}>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-full" aria-label="Select AM/PM Period">
                             <SelectValue placeholder={t.select || "Select Period"}>
                               {periodPart ? (t[periodPart] || periodPart) : undefined}
                             </SelectValue>

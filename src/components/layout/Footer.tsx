@@ -170,10 +170,10 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/8">
           <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-slate-500 text-center sm:text-left" suppressHydrationWarning>
+            <p className="text-xs text-slate-400 text-center sm:text-left" suppressHydrationWarning>
               © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
             </p>
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
               Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for Happy Marriages
               <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 ml-1" />
             </p>

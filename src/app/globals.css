@@ -1,7 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+.font-devanagari {
+  font-family: var(--font-noto-sans-devanagari), 'Noto Sans Devanagari', sans-serif;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -399,18 +402,20 @@ textarea::placeholder,
   background: #120508;
 }
 
-.premium-gold-border::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 1rem;
-  padding: 3px; /* Border thickness */
-  background: linear-gradient(135deg, #FFD700 0%, #F4D03F 35%, #CA9815 70%, #F4D03F 85%, #FFD700 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: -1;
+@media (max-width: 767px) {
+  .premium-gold-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 3px; /* Border thickness */
+    background: linear-gradient(135deg, #FFD700 0%, #F4D03F 35%, #CA9815 70%, #F4D03F 85%, #FFD700 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
 }
 
 /* Specific styling for feature cards on homepage */
@@ -459,4 +464,29 @@ textarea::placeholder,
   mask-composite: exclude;
   pointer-events: none;
   z-index: -1;
+}
+
+@media (min-width: 768px) {
+  .md\:premium-gold-border {
+    position: relative;
+    background: #ffffff;
+    border-radius: 1rem;
+    z-index: 1;
+  }
+  .dark .md\:premium-gold-border {
+    background: #120508;
+  }
+  .md\:premium-gold-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 3px;
+    background: linear-gradient(135deg, #FFD700 0%, #F4D03F 35%, #CA9815 70%, #F4D03F 85%, #FFD700 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
 }

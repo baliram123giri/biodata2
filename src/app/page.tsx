@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2 } from "lucide-react";
 import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
-import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,46 +11,23 @@ export const metadata: Metadata = {
   description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, editable in Word or PDF. Ready to share on WhatsApp instantly.",
 };
 
-export default async function Home() {
-  const fallbackSlides = [
-    { id: "1", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/royal_gold.png", title: "Royal Gold Premium" },
-    { id: "2", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/ornate_grandeur.png", title: "Ornate Grandeur Emerald" },
-    { id: "3", imageUrl: "https://res.cloudinary.com/dap9gah1y/image/upload/v1716584666/elegant_peacock.png", title: "Elegant Peacock Royal" }
+export default function Home() {
+  const finalSlides = [
+    { id: "1", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779698835/biodata/hero_slides/vwqpwpwy72u2xnnwlc0x.jpg", title: "Royal Gold Premium" },
+    { id: "2", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779697868/biodata/hero_slides/rslwwcxq7e8hdcsz0vbk.jpg", title: "Ornate Grandeur Emerald" },
+    { id: "3", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779697769/biodata/hero_slides/umpd0mqssairpwfzpytk.jpg", title: "Elegant Peacock Royal" }
   ];
-
-  // Fetch active hero template slides from the database
-  let slides: typeof fallbackSlides = [];
-  try {
-    const dbSlides = await prisma.heroSlide.findMany({
-      where: { active: true },
-      orderBy: { order: "asc" },
-      take: 3,
-    });
-    slides = dbSlides.map(slide => ({
-      id: slide.id,
-      imageUrl: slide.imageUrl,
-      title: slide.title || ""
-    }));
-  } catch {
-    // DB unreachable — use fallback silently
-  }
-
-  const activeSlides = slides.length > 0 ? slides : fallbackSlides;
-  const finalSlides = [...activeSlides];
-  while (finalSlides.length < 3) {
-    finalSlides.push(fallbackSlides[finalSlides.length % fallbackSlides.length]);
-  }
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-4 pb-8 px-4 border-b border-border/40">
+      <section className="relative overflow-hidden bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-2 pb-4 md:pt-4 md:pb-8 px-4 border-b border-border/40">
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
-        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-start gap-12 lg:gap-20 relative z-10">
+        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-start gap-6 lg:gap-20 relative z-10">
           {/* Left Text Column */}
-          <div className="flex-1 text-center lg:text-left space-y-5">
+          <div className="flex-1 text-center lg:text-left space-y-3 md:space-y-5">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 text-xs font-extrabold text-[#8A7233] dark:text-[#E6C97A] backdrop-blur-sm shadow-md transition-all duration-300">
               <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] animate-pulse" />
               100% Free Online Biodata Maker
@@ -78,7 +54,7 @@ export default async function Home() {
             </div>
 
             {/* Features & Formats Metadata Stack */}
-            <div className="space-y-2.5 pt-2">
+            <div className="hidden md:block space-y-2.5 pt-2">
               {/* Trust Badges */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] font-extrabold">
                 <span className="text-stone-400 dark:text-stone-500 uppercase tracking-wider text-[9px] mr-1 shrink-0">Features:</span>
@@ -147,9 +123,9 @@ export default async function Home() {
       <HomeBiodataBuilder />
 
       {/* Features Section */}
-      <section className="py-20 px-4">
+      <section className="py-10 md:py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16 space-y-4">
+          <div className="text-center mb-8 md:mb-16 space-y-4">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
               Why Families Use Our <span className="text-gradient-primary">Free Marriage Biodata Maker</span>
             </h2>
@@ -158,7 +134,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             <FeatureCard
               icon={<FileText className="w-8 h-8 text-primary" />}
               title="50+ Biodata Templates"
@@ -194,11 +170,11 @@ export default async function Home() {
       </section>
 
       {/* Steps Section */}
-      <section className="py-24 bg-muted relative px-4 overflow-hidden">
+      <section className="py-12 md:py-24 bg-muted relative px-4 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
 
           {/* Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-8 md:mb-16">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-primary mb-4">How It Works</p>
             <h2 className="text-3xl md:text-5xl font-black text-foreground leading-tight mb-4">
               Make Your Biodata in{" "}
@@ -212,7 +188,7 @@ export default async function Home() {
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
             <StepCard number="01" title="Fill In Your Details" description="Enter your personal info, family background, education, and contact details — step by step." icon="📝" />
             <StepCard number="02" title="Pick a Biodata Format" description="Browse stylish marriage biodata templates — traditional, modern, or community-specific for boy or girl." icon="🎨" />
             <StepCard number="03" title="Add Photo & Customise" description="Upload your photo, choose a colour theme, and add your religious mantra or heading." icon="✨" />
@@ -220,13 +196,52 @@ export default async function Home() {
           </div>
 
           {/* CTA */}
-          <div className="mt-14 text-center">
+          <div className="mt-8 md:mt-14 text-center">
             <Button size="lg" className="rounded-full px-10 py-6 bg-gradient-primary border-0 hover:scale-105 active:scale-95 transition-all duration-300" asChild>
               <a href="#builder">Start Creating — It&apos;s Free</a>
             </Button>
           </div>
         </div>
       </section>
+
+      {/* Structured Data (HowTo Schema) for Search Crawlers */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            "name": "How to Create a Marriage Biodata Online",
+            "description": "Learn how to make a beautiful matrimonial biodata with photo in 4 simple steps using our free online builder.",
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Fill In Your Details",
+                "text": "Enter your personal details, family background, education, and contact info step by step in the simple form."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Pick a Biodata Format",
+                "text": "Browse and select from over 50 traditional, modern, or community-specific marriage templates."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Add Photo & Customize",
+                "text": "Upload a professional portrait photo, select a premium gold or color theme, and add your religious symbol or heading."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Download & Share",
+                "text": "Download the final print-ready PDF or editable Word document. Share it instantly on WhatsApp or other matrimonial sites."
+              }
+            ]
+          })
+        }}
+      />
     </div>
   );
 }

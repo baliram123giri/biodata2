@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sparkles, Heart, Eye, ArrowRight, Palette, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface Template {
   id: string;
@@ -435,13 +436,16 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
               <div className="h-56 relative overflow-hidden bg-muted flex items-center justify-center p-3 select-none">
                 <div className="w-full h-full relative flex items-center justify-center transform scale-[0.95] group-hover:scale-100 transition-transform duration-500">
                   {tpl.thumbnailUrl ? (
-                    <img
+                    <Image
                       src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
                         ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
                         : tpl.thumbnailUrl
                       }
                       alt={tpl.name}
-                      className="h-full w-auto object-contain rounded-md border border-border/80 bg-white shadow-lg"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 30vw"
+                      className="object-contain rounded-md border border-border/80 bg-white shadow-lg"
+                      loading="lazy"
                     />
                   ) : (
                     <MiniTemplatePreview id={tpl.id} color={tpl.color} />
@@ -560,13 +564,16 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   style={{ width: 200, height: 265 }}
                 >
                   {selectedTpl.thumbnailUrl ? (
-                    <img
+                    <Image
                       src={selectedTpl.thumbnailUrl.includes("res.cloudinary.com") && selectedTpl.thumbnailUrl.includes("/image/upload/")
                         ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
                         : selectedTpl.thumbnailUrl
                       }
                       alt={selectedTpl.name}
-                      className="w-full h-full object-contain bg-white"
+                      fill
+                      sizes="200px"
+                      className="object-contain bg-white"
+                      loading="lazy"
                     />
                   ) : (
                     <MiniTemplatePreview id={selectedTpl.id} color={customColor} scale={0.9} />

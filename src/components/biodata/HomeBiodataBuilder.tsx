@@ -2,6 +2,7 @@
 
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
 
@@ -303,9 +304,11 @@ export function HomeBiodataBuilder() {
 
             <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
               {activeTemplate.thumbnailUrl ? (
-                <img
+                <Image
                   src={activeTemplate.thumbnailUrl}
                   alt={activeTemplate.name}
+                  fill
+                  sizes="36px"
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
                   loading="lazy"
                 />
@@ -369,12 +372,12 @@ export function HomeBiodataBuilder() {
           <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
             {/* Form Side */}
-            <div className="md:col-span-6 flex flex-col w-full premium-gold-border p-6 md:p-8 shadow-xl">
+            <div className="md:col-span-6 flex flex-col w-full md:premium-gold-border md:p-8 md:shadow-xl p-0 shadow-none bg-transparent">
               <BiodataForm />
             </div>
 
             {/* Mobile Preview — shown AFTER the form on small screens (mobile only) */}
-            <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-28">
+            <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-2">
               <EmbeddedPreviewSection storedTemplate={storedTemplate} />
               <Button
                 onClick={handleNavigateToEdit}
@@ -439,7 +442,7 @@ export function HomeBiodataBuilder() {
           </div>
           
           {/* Get on WhatsApp Widget (Matching mockup) */}
-          <div className="mt-12 pt-4 px-4 w-full flex justify-center">
+          <div className="mt-3 px-2 sm:px-4 w-full flex justify-center">
             <WhatsAppDeliveryCard
               onTriggerDownload={handleDownload}
               isGenerating={isGenerating}

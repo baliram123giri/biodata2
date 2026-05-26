@@ -134,7 +134,7 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
             ${isDragActive ? "border-primary bg-primary/5 scale-[0.99]" : "border-gray-200 hover:border-primary/50 hover:bg-gray-50"}
           `}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps({ "aria-label": "Upload profile photo" })} />
           <div className="p-3 rounded-full bg-primary/10 text-primary">
             <Upload className="w-6 h-6" />
           </div>

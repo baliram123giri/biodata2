@@ -185,7 +185,7 @@ export function WhatsAppDeliveryCard({
   return (
     <div
       className={cn(
-        "bg-white border border-stone-200/80 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)]",
+        "bg-white border border-stone-200/80 rounded-[24px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)]",
         className
       )}
     >
@@ -224,7 +224,7 @@ export function WhatsAppDeliveryCard({
       <form onSubmit={handleSend} className="space-y-4">
         {/* Input Row */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black tracking-widest text-muted-foreground/80 uppercase block">
+          <label htmlFor="whatsapp-number-input" className="text-[10px] font-black tracking-widest text-stone-600 uppercase block">
             WhatsApp Number
           </label>
           <div className="flex gap-2">
@@ -232,6 +232,7 @@ export function WhatsAppDeliveryCard({
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
+                aria-label="Country Code Select"
                 className="h-11 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm font-bold text-stone-700 focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none pr-8 cursor-pointer select-none"
               >
                 <option value="+91">IN +91</option>
@@ -248,6 +249,7 @@ export function WhatsAppDeliveryCard({
             </div>
             <div className="flex-1 relative">
               <input
+                id="whatsapp-number-input"
                 type="tel"
                 placeholder="9999999999"
                 value={phoneNumber}

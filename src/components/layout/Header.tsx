@@ -27,7 +27,27 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-12 md:h-14 items-center justify-between mx-auto px-4">
-        <div className="flex items-center gap-2">
+        {/* Left side: Logo */}
+        <Link href="/">
+          <Logo />
+        </Link>
+        
+        {/* Right side: Nav + Hamburger */}
+        <div className="flex items-center gap-4">
+          <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-xs font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`transition-colors hover:text-primary ${
+                  pathname === link.href ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
           {/* Mobile Hamburger Menu */}
           <div className="md:hidden">
              <Sheet open={open} onOpenChange={setOpen}>
@@ -39,7 +59,7 @@ export function Header() {
                   </Button>
                 }
               />
-              <SheetContent side="left" className="w-[280px]">
+              <SheetContent side="right" className="w-[280px]">
                 <SheetHeader className="mb-6 text-left">
                   <SheetTitle>
                     <Link href="/" onClick={() => setOpen(false)}>
@@ -60,32 +80,11 @@ export function Header() {
                       {link.label}
                     </Link>
                   ))}
-                  {/* Removed Create Biodata button from mobile menu */}
                 </nav>
               </SheetContent>
              </Sheet>
           </div>
-
-          <Link href="/">
-            <Logo />
-          </Link>
         </div>
-        
-        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-xs font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`transition-colors hover:text-primary ${
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Removed Create Biodata button from desktop header */}
       </div>
     </header>
   );

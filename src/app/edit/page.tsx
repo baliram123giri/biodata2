@@ -550,12 +550,6 @@ export default function EditPage() {
             active={isRightOpen && activeTab === "stickers"}
             onClick={() => handleTabClick("stickers")}
           />
-          <ToolButton
-            icon={<WhatsAppIcon className="w-5 h-5" />}
-            label="WhatsApp"
-            active={isRightOpen && activeTab === "whatsapp"}
-            onClick={() => handleTabClick("whatsapp")}
-          />
         </nav>
 
         {/* Canvas Area */}
@@ -604,12 +598,6 @@ export default function EditPage() {
                 label="Stickers"
                 active={isRightOpen && activeTab === "stickers"}
                 onClick={() => handleTabClick("stickers")}
-              />
-              <ToolButton
-                icon={<WhatsAppIcon className="w-5 h-5" />}
-                label="WhatsApp"
-                active={isRightOpen && activeTab === "whatsapp"}
-                onClick={() => handleTabClick("whatsapp")}
               />
             </nav>
           )}

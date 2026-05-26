@@ -6,18 +6,27 @@ import { TemplatesGrid } from "@/components/templates/TemplatesGrid";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Premium Marriage Biodata Templates | biodata99.com",
-  description: "Browse beautiful, traditional, and modern marriage biodata formats. Choose your template, select a language, customize colors, and download instantly.",
+  title: "Edit Your Marriage Biodata Online Free | biodata99.com",
+  description: "Edit your marriage biodata anytime — update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
   alternates: {
-    canonical: "https://biodata99.com/templates",
+    canonical: "https://biodata99.com/edit",
   },
 };
 
+import { Template } from "@/generated/prisma";
+
+export const dynamic = "force-dynamic";
+
 export default async function TemplatesPage() {
-  const templates = await prisma.template.findMany({
-    where: { active: true },
-    orderBy: { createdAt: "desc" },
-  });
+  let templates: Template[] = [];
+  try {
+    templates = await prisma.template.findMany({
+      where: { active: true },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Templates database query failed, falling back to empty list:", error);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">

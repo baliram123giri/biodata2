@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Inter, Noto_Serif, Playfair_Display } from "next/font/google";
+import { Inter, Noto_Serif, Playfair_Display, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,10 +20,15 @@ const playfair = Playfair_Display({
   weight: ["400", "700"],
 });
 
+const notoDevanagari = Noto_Sans_Devanagari({
+  variable: "--font-noto-sans-devanagari",
+  subsets: ["devanagari", "latin"],
+  weight: ["400", "700"],
+});
+
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { PageProgressBar } from "@/components/layout/PageProgressBar";
-import { Toaster } from "sonner";
+import { ClientLayoutProviders } from "@/components/layout/ClientLayoutProviders";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
@@ -92,7 +97,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${notoSerif.variable} ${playfair.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSerif.variable} ${playfair.variable} ${notoDevanagari.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
@@ -122,15 +127,12 @@ export default function RootLayout({
             })
           }}
         />
-        <Suspense fallback={null}>
-          <PageProgressBar />
-        </Suspense>
+        <ClientLayoutProviders />
         <Header />
         <main className="flex-1">
           {children}
         </main>
         <Footer />
-        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );

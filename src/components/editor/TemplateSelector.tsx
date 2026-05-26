@@ -5,6 +5,7 @@ import { useThemeStore } from "@/store/useThemeStore";
 import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import Image from "next/image";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   royal: "Royal Gold",
@@ -144,14 +145,16 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
               style={!tpl.thumbnailUrl ? cardStyle : undefined}
             >
               {tpl.thumbnailUrl && (
-                <img
+                <Image
                   src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
                     ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,q_100/")
                     : tpl.thumbnailUrl
                   }
                   alt={tpl.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 30vw"
                   className={cn(
-                    "absolute w-full h-full object-contain select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out",
+                    "absolute object-contain select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out",
                     isSelected ? "inset-[3px] rounded-[9px]" : "inset-0"
                   )}
                   loading="lazy"
