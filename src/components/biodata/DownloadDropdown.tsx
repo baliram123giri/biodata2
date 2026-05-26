@@ -125,15 +125,15 @@ export function DownloadDropdown({
           <button
             onClick={handleWhatsAppShare}
             disabled={isSharing}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left text-sm font-semibold text-stitch-on-surface hover:bg-[#25D366]/10 hover:text-[#128C7E] transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left text-sm font-semibold text-stitch-on-surface hover:bg-[#075E54]/10 hover:text-[#075E54] transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center group-hover:bg-[#25D366]/20 transition-colors">
-              <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
+            <div className="w-8 h-8 rounded-lg bg-[#075E54]/10 flex items-center justify-center group-hover:bg-[#075E54]/20 transition-colors">
+              <WhatsAppIcon className="w-4 h-4 text-[#075E54]" />
             </div>
             <div className="flex flex-col flex-1">
               <span className="flex items-center gap-1.5">
                 WhatsApp
-                <span className="text-[8px] font-black uppercase tracking-wider text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full leading-none">
+                <span className="text-[8px] font-black uppercase tracking-wider text-[#075E54] bg-[#075E54]/10 px-1.5 py-0.5 rounded-full leading-none">
                   Quick
                 </span>
               </span>

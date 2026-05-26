@@ -269,7 +269,7 @@ export function WhatsAppDeliveryCard({
             id="opt-in"
             checked={optIn}
             onCheckedChange={(checked) => setOptIn(checked === true)}
-            className="w-4.5 h-4.5 rounded bg-stone-100 border border-stone-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer data-[state=checked]:bg-[#25D366] data-[state=checked]:border-[#25D366] transition-colors mt-0.5"
+            className="w-4.5 h-4.5 rounded bg-stone-100 border border-stone-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer data-[state=checked]:bg-[#075E54] data-[state=checked]:border-[#075E54] transition-colors mt-0.5"
           >
             <Checkbox.Indicator>
               <Check className="w-3 h-3 text-white stroke-[3.5]" />
@@ -290,8 +290,8 @@ export function WhatsAppDeliveryCard({
           className={cn(
             "w-full h-11 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] border-0 cursor-pointer relative overflow-hidden",
             status === "success"
-              ? "bg-[#128C7E]"
-              : "bg-[#25D366] hover:bg-[#20BD5A] hover:shadow-[#25D366]/20"
+              ? "bg-[#0b5249]"
+              : "bg-[#075E54] hover:bg-[#054C44] hover:shadow-[#075E54]/20"
           )}
         >
           <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent w-1/2 h-full animate-shine pointer-events-none" />

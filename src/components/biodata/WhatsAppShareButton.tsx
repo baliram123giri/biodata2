@@ -183,8 +183,8 @@ export function WhatsAppShareButton({
           className={cn(
             "relative overflow-hidden rounded-2xl shadow-lg font-bold text-xs h-10 px-4 flex items-center gap-1.5 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0 text-white transition-all active:scale-95",
             status === "done"
-              ? "bg-[#128C7E]"
-              : "bg-[#25D366] hover:bg-[#20BD5A]",
+              ? "bg-[#0b5249]"
+              : "bg-[#075E54] hover:bg-[#054C44]",
             className
           )}
         >
@@ -232,8 +232,8 @@ export function WhatsAppShareButton({
         className={cn(
           "relative overflow-hidden text-xs font-semibold h-9 px-4 md:px-5 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-md border-0 text-white transition-all active:scale-95",
           status === "done"
-            ? "bg-[#128C7E]"
-            : "bg-[#25D366] hover:bg-[#20BD5A]",
+            ? "bg-[#0b5249]"
+            : "bg-[#075E54] hover:bg-[#054C44]",
           className
         )}
       >
@@ -326,8 +326,8 @@ function DesktopShareDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#25D366]/10 flex items-center justify-center">
-              <WhatsAppIcon className="w-4.5 h-4.5 text-[#25D366]" />
+            <div className="w-8 h-8 rounded-full bg-[#075E54]/10 flex items-center justify-center">
+              <WhatsAppIcon className="w-4.5 h-4.5 text-[#075E54]" />
             </div>
             Share on WhatsApp
           </DialogTitle>
@@ -365,7 +365,7 @@ function DesktopShareDialog({
               className={cn(
                 "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all duration-300",
                 step >= 1 || imageDownloaded
-                  ? "bg-[#25D366] text-white shadow-sm scale-100"
+                  ? "bg-[#075E54] text-white shadow-sm scale-100"
                   : "bg-stone-100 text-stone-400 scale-95"
               )}
             >
@@ -381,7 +381,7 @@ function DesktopShareDialog({
           <div className="flex-1 h-px bg-stone-200 relative overflow-hidden rounded-full">
             <div
               className={cn(
-                "absolute inset-y-0 left-0 bg-[#25D366] transition-all duration-500",
+                "absolute inset-y-0 left-0 bg-[#075E54] transition-all duration-500",
                 step >= 2 ? "w-full" : "w-0"
               )}
             />
@@ -397,7 +397,7 @@ function DesktopShareDialog({
               className={cn(
                 "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all duration-300",
                 step >= 2
-                  ? "bg-[#25D366] text-white shadow-sm scale-100"
+                  ? "bg-[#075E54] text-white shadow-sm scale-100"
                   : "bg-stone-100 text-stone-400 scale-95"
               )}
             >
@@ -422,7 +422,7 @@ function DesktopShareDialog({
             <div className="flex flex-col gap-2 w-full">
               <Button
                 onClick={openWhatsAppWeb}
-                className="hidden sm:flex flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white border-0 rounded-full font-bold text-sm h-11 items-center justify-center gap-2 cursor-pointer w-full"
+                className="hidden sm:flex flex-1 bg-[#075E54] hover:bg-[#054C44] text-white border-0 rounded-full font-bold text-sm h-11 items-center justify-center gap-2 cursor-pointer w-full"
               >
                 <WhatsAppIcon className="w-4 h-4" />
                 Open WhatsApp Web
@@ -430,7 +430,7 @@ function DesktopShareDialog({
               </Button>
               <Button
                 onClick={openWhatsAppMobile}
-                className="sm:hidden flex flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white border-0 rounded-full font-bold text-sm h-11 items-center justify-center gap-2 cursor-pointer w-full"
+                className="sm:hidden flex flex-1 bg-[#075E54] hover:bg-[#054C44] text-white border-0 rounded-full font-bold text-sm h-11 items-center justify-center gap-2 cursor-pointer w-full"
               >
                 <WhatsAppIcon className="w-4 h-4" />
                 Open WhatsApp
