@@ -201,14 +201,12 @@ export default function AdminHeroSlides() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger
-            render={
-              <Button className="rounded-lg bg-gradient-primary border-0 font-bold tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer">
-                <Plus className="w-4 h-4 mr-2" />
-                Upload Hero Template
-              </Button>
-            }
-          />
+          <DialogTrigger asChild>
+            <Button className="rounded-lg bg-gradient-primary border-0 font-bold tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer">
+              <Plus className="w-4 h-4 mr-2" />
+              Upload Hero Template
+            </Button>
+          </DialogTrigger>
           <DialogContent className="sm:max-w-[480px] bg-card border border-border rounded-xl shadow-xl">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold flex items-center gap-2">

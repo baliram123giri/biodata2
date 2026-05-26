@@ -51,14 +51,12 @@ export function Header() {
           {/* Mobile Hamburger Menu */}
           <div className="md:hidden">
              <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger
-                render={
-                  <Button variant="ghost" size="icon" className="h-10 w-10 px-0">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                }
-              />
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 px-0">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
               <SheetContent side="right" className="w-[280px]">
                 <SheetHeader className="mb-6 text-left">
                   <SheetTitle>

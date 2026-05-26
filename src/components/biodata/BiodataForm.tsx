@@ -59,7 +59,7 @@ export function BiodataForm() {
           <Globe className="w-5 h-5" />
           <span>Language</span>
         </div>
-        <Select value={currentLang} onValueChange={handleLanguageChange} modal={false}>
+        <Select value={currentLang} onValueChange={handleLanguageChange}>
           <SelectTrigger className="w-[180px]" aria-label="Select Language">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
@@ -196,7 +196,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       } else {
                         selectField.onChange(val);
                       }
-                    }} value={selectField.value} modal={false}>
+                    }} value={selectField.value}>
                       <SelectTrigger aria-label={`Select ${liveLabel}`}>
                         <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
                           {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
@@ -251,7 +251,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                     return (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)} modal={false}>
+                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
                             <SelectTrigger className="flex-1" aria-label="Select Hour">
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
@@ -259,7 +259,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                               {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)} modal={false}>
+                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
                             <SelectTrigger className="flex-1" aria-label="Select Minute">
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
@@ -268,7 +268,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                             </SelectContent>
                           </Select>
                         </div>
-                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")} modal={false}>
+                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
                           <SelectTrigger className="w-full" aria-label="Select AM/PM Period">
                             <SelectValue placeholder={t.select || "Select Period"}>
                               {periodPart ? (t[periodPart] || periodPart) : undefined}

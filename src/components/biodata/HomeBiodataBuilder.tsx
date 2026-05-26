@@ -291,13 +291,10 @@ export function HomeBiodataBuilder() {
         isBuilderVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
       )}>
         <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <SheetTrigger
-            render={
-              <button
-                className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
-              />
-            }
-          >
+          <SheetTrigger asChild>
+            <button
+              className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
+            >
             <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
               <LayoutDashboard className="w-4 h-4" />
             </div>
@@ -336,6 +333,7 @@ export function HomeBiodataBuilder() {
             <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
               Themes
             </span>
+            </button>
           </SheetTrigger>
           <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto px-6">
             <SheetHeader className="mb-6">
@@ -462,13 +460,11 @@ export function HomeBiodataBuilder() {
 
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-                <SheetTrigger
-                  render={
-                    <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11" />
-                  }
-                >
-                  <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
-                  <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Themes</span>
+                <SheetTrigger asChild>
+                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11">
+                    <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
+                    <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Themes</span>
+                  </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
                   <SheetHeader className="mb-6">

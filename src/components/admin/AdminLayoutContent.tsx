@@ -339,14 +339,12 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
             {/* Mobile Sheet Trigger */}
             <div className="lg:hidden">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger
-                  render={
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer">
-                      <Menu className="h-5 w-5" />
-                      <span className="sr-only">Toggle Sidebar</span>
-                    </Button>
-                  }
-                />
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle Sidebar</span>
+                  </Button>
+                </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64 border-r border-border bg-card">
                   <SheetHeader className="sr-only">
                     <SheetTitle>Admin Navigation Menu</SheetTitle>
@@ -407,20 +405,18 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
             {/* Notification Popover */}
             <Popover>
-              <PopoverTrigger
-                render={
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 relative cursor-pointer">
-                    <Bell className="h-4.5 w-4.5" />
-                    {hasUnread && (
-                      <span className="absolute top-2 right-2 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                      </span>
-                    )}
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-                }
-              />
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 relative cursor-pointer">
+                  <Bell className="h-4.5 w-4.5" />
+                  {hasUnread && (
+                    <span className="absolute top-2 right-2 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                  )}
+                  <span className="sr-only">Notifications</span>
+                </Button>
+              </PopoverTrigger>
               <PopoverContent className="w-80 p-0 border border-border bg-popover text-popover-foreground shadow-2xl rounded-xl">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                   <h3 className="font-bold text-sm text-foreground">Notifications</h3>
@@ -461,14 +457,12 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
             {/* Quick Actions Panel */}
             <Popover>
-              <PopoverTrigger
-                render={
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer">
-                    <Plus className="h-4.5 w-4.5 text-primary" />
-                    <span className="sr-only">Quick Actions</span>
-                  </Button>
-                }
-              />
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer">
+                  <Plus className="h-4.5 w-4.5 text-primary" />
+                  <span className="sr-only">Quick Actions</span>
+                </Button>
+              </PopoverTrigger>
               <PopoverContent className="w-56 p-2.5 border border-border bg-popover text-popover-foreground shadow-2xl rounded-lg">
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-2.5 py-1.5 mb-1">
                   Quick Actions
@@ -494,15 +488,13 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
             {/* Profile Dropdown */}
             <Popover>
-              <PopoverTrigger
-                render={
-                  <button className="flex items-center gap-2 hover:opacity-85 focus:outline-none cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#9B1B30] to-[#C9A84C] flex items-center justify-center font-bold text-white text-xs shadow-md border border-[#C9A84C]/30">
-                      {getInitials(session?.user?.name, "AD")}
-                    </div>
-                  </button>
-                }
-              />
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-2 hover:opacity-85 focus:outline-none cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#9B1B30] to-[#C9A84C] flex items-center justify-center font-bold text-white text-xs shadow-md border border-[#C9A84C]/30">
+                    {getInitials(session?.user?.name, "AD")}
+                  </div>
+                </button>
+              </PopoverTrigger>
               <PopoverContent className="w-56 p-1 border border-border bg-popover text-popover-foreground shadow-2xl rounded-lg">
                 <div className="px-3 py-2 border-b border-border/60">
                   <p className="text-xs font-semibold text-foreground">{session?.user?.name || "Administrator"}</p>

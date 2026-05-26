@@ -1335,11 +1335,11 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             </div>
             
             <Dialog>
-              <DialogTrigger render={
+              <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="text-xs h-8 cursor-pointer gap-1">
                   Full View
                 </Button>
-              } />
+              </DialogTrigger>
               <DialogContent className="max-w-2xl bg-card border border-border p-6 rounded-xl overflow-hidden">
                 <DialogHeader>
                   <DialogTitle className="text-lg font-black text-primary">Full Template Mockup</DialogTitle>

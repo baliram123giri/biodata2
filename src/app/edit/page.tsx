@@ -466,11 +466,9 @@ export default function EditPage() {
           <div className="hidden md:flex items-center gap-1 h-full">
             <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
             <Dialog>
-              <DialogTrigger
-                render={
-                  <ToolbarItem icon={<RefreshCcw />} label="Reset" />
-                }
-              />
+              <DialogTrigger asChild>
+                <ToolbarItem icon={<RefreshCcw />} label="Reset" />
+              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Reset Layout Positions?</DialogTitle>
@@ -479,18 +477,15 @@ export default function EditPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0 mt-4">
-                  <DialogClose render={<Button variant="outline" />}>
-                    Cancel
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
                   </DialogClose>
-                  <DialogClose
-                    onClick={() => useBiodataStore.getState().resetStore()}
-                    render={
-                      <Button className="relative overflow-hidden bg-gradient-primary text-white border-0">
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-                        <span className="relative">Reset Layout</span>
-                      </Button>
-                    }
-                  />
+                  <DialogClose asChild onClick={() => useBiodataStore.getState().resetStore()}>
+                    <Button className="relative overflow-hidden bg-gradient-primary text-white border-0">
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+                      <span className="relative">Reset Layout</span>
+                    </Button>
+                  </DialogClose>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

@@ -357,13 +357,11 @@ export default function AdminBiodatas() {
                           <td className="p-4 align-middle text-right">
                             <div className="flex justify-end items-center gap-1">
                               <Popover>
-                                <PopoverTrigger
-                                  render={
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
-                                      <Info className="w-3.5 h-3.5" />
-                                    </Button>
-                                  }
-                                />
+                                <PopoverTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
+                                    <Info className="w-3.5 h-3.5" />
+                                  </Button>
+                                </PopoverTrigger>
                                 <PopoverContent className="w-72 p-3 border border-border bg-popover text-popover-foreground shadow-2xl rounded-lg text-xs space-y-2">
                                   <h4 className="font-bold text-foreground uppercase tracking-wide text-[10px]">User Agent Details</h4>
                                   <div className="p-2 rounded bg-muted/60 font-mono text-[10px] break-all max-h-24 overflow-y-auto leading-relaxed text-muted-foreground border border-border/40">

@@ -98,17 +98,14 @@ export function CompanyAutocomplete({ value, onChange, placeholder }: { value: s
   }, [open])
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
-      <PopoverTrigger 
-        render={
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between font-normal text-left px-3 shadow-none border-input hover:bg-transparent"
-          />
-        }
-      >
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal text-left px-3 shadow-none border-input hover:bg-transparent"
+        >
         <span className="flex items-center truncate">
           {value ? (
             logoMap[value] ? (
@@ -121,6 +118,7 @@ export function CompanyAutocomplete({ value, onChange, placeholder }: { value: s
           {value || <span className="text-muted-foreground">{placeholder || "Select Company..."}</span>}
         </span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1 bg-popover text-popover-foreground rounded-lg border shadow-md max-h-72 overflow-hidden flex flex-col z-[9999]" align="start">
         {/* Branded search box input */}
