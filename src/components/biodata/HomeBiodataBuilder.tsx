@@ -442,7 +442,7 @@ export function HomeBiodataBuilder() {
           </div>
           
           {/* Get on WhatsApp Widget (Matching mockup) */}
-          <div className="mt-3 px-2 sm:px-4 w-full flex justify-center">
+          <div className="mt-6 md:mt-32 px-2 sm:px-4 w-full flex justify-center">
             <WhatsAppDeliveryCard
               onTriggerDownload={handleDownload}
               isGenerating={isGenerating}

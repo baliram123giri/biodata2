@@ -61,18 +61,15 @@ export function FeedbackModal({
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A84C]/10 rounded-full blur-2xl" />
           <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[#D4627A]/10 rounded-full blur-2xl" />
 
-          <div className="absolute top-4 right-4 z-20">
-            <DialogClose
-              render={
-                <Button
-                  variant="ghost"
-                  className="h-8 w-8 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/15 border-0"
-                />
-              }
-            >
-              <X className="h-4.5 w-4.5" />
+            <DialogClose asChild>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 rounded-full text-white/70 hover:text-white hover:bg-white/15 border-0 cursor-pointer"
+              >
+                <X className="h-4.5 w-4.5" />
+                <span className="sr-only">Close</span>
+              </Button>
             </DialogClose>
-          </div>
 
           <div className="relative z-10 text-center flex flex-col items-center gap-2">
             <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-inner mb-2 animate-bounce">

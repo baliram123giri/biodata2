@@ -266,6 +266,13 @@ export default function AdminUsers() {
     }
   });
 
+  const getColumnResponsiveClass = (colId: string) => {
+    if (colId === "id") return "hidden md:table-cell";
+    if (colId === "email") return "hidden sm:table-cell";
+    if (colId === "createdAt") return "hidden lg:table-cell";
+    return "";
+  };
+
   return (
     <div className="space-y-6 text-foreground relative">
       {/* Title Header */}
@@ -337,7 +344,7 @@ export default function AdminUsers() {
                   {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
                       {headerGroup.headers.map(header => (
-                        <th key={header.id} className="p-4">
+                        <th key={header.id} className={cn("sticky top-0 z-10 bg-muted/95 backdrop-blur-xs p-4 align-middle", getColumnResponsiveClass(header.column.id))}>
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -354,7 +361,7 @@ export default function AdminUsers() {
                     table.getRowModel().rows.map(row => (
                       <tr key={row.id} className="hover:bg-muted/10 transition-colors">
                         {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="p-4">
+                          <td key={cell.id} className={cn("p-4 align-middle", getColumnResponsiveClass(cell.column.id))}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}

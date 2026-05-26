@@ -108,12 +108,12 @@ export function WhatsAppDeliveryCard({
         setStatus("uploading");
 
         let downloadUrl = "";
-        
+
         // 1. Try uploading to tmpfiles.org (high rate limits, CORS supported)
         try {
           const body = new FormData();
           body.append("file", pdfBlob, `${nameField}.pdf`);
-          
+
           const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
             method: "POST",
             body: body,

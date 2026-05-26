@@ -101,6 +101,32 @@ async function deleteFromCloudinary(url: string) {
   }
 }
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser || (sessionUser.role !== "admin" && sessionUser.role !== "superadmin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const template = await prisma.template.findUnique({
+      where: { id },
+    });
+
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, template });
+  } catch (error: any) {
+    console.error("Get template error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

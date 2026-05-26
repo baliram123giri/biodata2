@@ -16,19 +16,13 @@ export default function AdminTemplateEdit() {
   React.useEffect(() => {
     if (!id) return;
 
-    fetch(`/api/admin/templates`)
+    fetch(`/api/admin/templates/${id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.templates) {
-          const found = data.templates.find((t: any) => t.id === id);
-          if (found) {
-            setTemplate(found);
-          } else {
-            toast.error("Template not found");
-            router.push("/admin/templates");
-          }
+        if (data.template) {
+          setTemplate(data.template);
         } else {
-          toast.error("Failed to load template");
+          toast.error(data.error || "Template not found");
           router.push("/admin/templates");
         }
       })

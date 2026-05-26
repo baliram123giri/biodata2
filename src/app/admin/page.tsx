@@ -15,48 +15,74 @@ import {
   CheckCircle,
   Database,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const [timeRange, setTimeRange] = React.useState("7d");
+  const [data, setData] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  // Mock data for the dashboard
+  const fetchDashboardStats = async (bypass = false) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/dashboard-stats${bypass ? "?bypass=true" : ""}`);
+      if (res.ok) {
+        const json = await res.json();
+        setData(json);
+      } else {
+        toast.error("Failed to load dashboard metrics");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred fetching dashboard metrics");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDashboardStats(false);
+  }, []);
+
+  // Stats Card data mapped dynamically
   const stats = [
     {
       title: "Total Registered Users",
-      value: "12,450",
-      change: "+12.4%",
+      value: isLoading ? "..." : (data?.totalUsers?.toLocaleString() || "0"),
+      change: isLoading ? "" : `+${data?.newUsersToday || 0}`,
       trend: "up",
       icon: Users,
-      description: "240 new signups today",
+      description: isLoading ? "Loading users..." : `${data?.newUsersToday || 0} new signups today`,
       color: "from-cyan-500/10 to-transparent",
       borderColor: "border-border",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(6,182,212,0.1)]"
     },
     {
       title: "Biodatas Generated",
-      value: "45,820",
-      change: "+18.2%",
+      value: isLoading ? "..." : (data?.totalDownloads?.toLocaleString() || "0"),
+      change: isLoading ? "" : `+${data?.downloadsThisWeek || 0}`,
       trend: "up",
       icon: FileText,
-      description: "1,208 generated this week",
+      description: isLoading ? "Loading logs..." : `${data?.downloadsThisWeek || 0} downloads this week`,
       color: "from-primary/10 to-transparent",
       borderColor: "border-primary/20",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(155,27,48,0.1)]"
     },
     {
       title: "Premium Downloads",
-      value: "3,420",
-      change: "+8.3%",
-      trend: "up",
+      value: isLoading ? "..." : (data?.totalDownloads?.toLocaleString() || "0"),
+      change: "Conversion: 100%",
+      trend: "stable",
       icon: Sparkles,
-      description: "Conversion rate: 7.4%",
+      description: "All custom themes are free",
       color: "from-secondary/10 to-transparent",
       borderColor: "border-secondary/20",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(201,168,76,0.1)]"
@@ -74,13 +100,32 @@ export default function AdminDashboard() {
     }
   ];
 
-  const recentBiodatas = [
-    { id: "b1", name: "Rahul S. Deshmukh", community: "Maratha", language: "Marathi", template: "Royal Crimson", status: "Completed", time: "2 min ago" },
-    { id: "b2", name: "Priya V. Patel", community: "Patidar", language: "Gujarati", template: "Warm Sand", status: "Completed", time: "14 min ago" },
-    { id: "b3", name: "Amit K. Sharma", community: "Brahmin", language: "Hindi", template: "Deep Teal", status: "Completed", time: "28 min ago" },
-    { id: "b4", name: "Sneha R. Iyer", community: "Iyer", language: "English", template: "Royal Purple", status: "Completed", time: "1 hour ago" },
-    { id: "b5", name: "Vikram S. Giri", community: "Goswami", language: "Hindi", template: "Classic Gold", status: "Draft", time: "2 hours ago" },
-  ];
+  // Dynamic Recent Biodatas list with formatted relative time-ago strings
+  const recentBiodatas = React.useMemo(() => {
+    if (!data?.recentDownloads) return [];
+    
+    return data.recentDownloads.map((log: any) => {
+      const minutes = Math.floor((Date.now() - new Date(log.createdAt).getTime()) / 60000);
+      let timeStr = "Just now";
+      if (minutes > 0 && minutes < 60) {
+        timeStr = `${minutes} min ago`;
+      } else if (minutes >= 60 && minutes < 1440) {
+        timeStr = `${Math.floor(minutes / 60)} hours ago`;
+      } else if (minutes >= 1440) {
+        timeStr = `${Math.floor(minutes / 1440)} days ago`;
+      }
+
+      return {
+        id: log.id,
+        name: log.name,
+        community: log.location || "General / Matrimonial",
+        language: log.format?.toUpperCase() || "PDF",
+        template: log.templateName || "Default Theme",
+        status: "Completed",
+        time: timeStr
+      };
+    });
+  }, [data]);
 
   const systemServices = [
     { name: "PDF Rendering Engine", status: "Healthy", type: "success", uptime: "99.99%", load: "12%" },
@@ -89,21 +134,37 @@ export default function AdminDashboard() {
     { name: "Database PostgreSQL Node", status: "Healthy", type: "success", uptime: "100%", load: "8%" },
   ];
 
-  const templatePopularity = [
-    { name: "Royal Crimson", count: 18450, percentage: 40.2, color: "bg-[#9B1B30]" },
-    { name: "Classic Gold", count: 12830, percentage: 28.0, color: "bg-[#C9A84C]" },
-    { name: "Deep Teal", count: 8250, percentage: 18.0, color: "bg-cyan-600" },
-    { name: "Royal Purple", count: 6290, percentage: 13.8, color: "bg-purple-600" },
-  ];
+  // Template Popularity Mappings with visual HSL colors
+  const templatePopularity = React.useMemo(() => {
+    if (!data?.templatePopularity) return [];
+    const colors = ["bg-[#9B1B30]", "bg-[#C9A84C]", "bg-cyan-600", "bg-purple-600", "bg-emerald-600", "bg-pink-600"];
+    
+    return data.templatePopularity.map((temp: any, index: number) => ({
+      name: temp.name,
+      count: temp.count,
+      percentage: temp.percentage,
+      color: colors[index % colors.length]
+    }));
+  }, [data]);
 
-  // SVG Chart path calculators
-  const chartPoints = [35, 45, 30, 65, 55, 80, 95];
+  // SVG Chart path calculators based on live daily traffic data
+  const chartPoints = React.useMemo(() => {
+    return data?.dailyTraffic?.map((t: any) => t.count) || [0, 0, 0, 0, 0, 0, 0];
+  }, [data]);
+
+  const chartLabels = React.useMemo(() => {
+    return data?.dailyTraffic?.map((t: any) => t.day) || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  }, [data]);
+
   const chartWidth = 500;
   const chartHeight = 120;
-  const chartMax = 100;
+  
+  const chartMax = React.useMemo(() => {
+    return Math.max(...chartPoints, 5);
+  }, [chartPoints]);
 
   const getSvgPath = () => {
-    const points = chartPoints.map((val, idx) => {
+    const points = chartPoints.map((val: number, idx: number) => {
       const x = (idx / (chartPoints.length - 1)) * chartWidth;
       const y = chartHeight - (val / chartMax) * chartHeight;
       return `${x},${y}`;
@@ -112,7 +173,7 @@ export default function AdminDashboard() {
   };
 
   const getSvgLinePath = () => {
-    const points = chartPoints.map((val, idx) => {
+    const points = chartPoints.map((val: number, idx: number) => {
       const x = (idx / (chartPoints.length - 1)) * chartWidth;
       const y = chartHeight - (val / chartMax) * chartHeight;
       return `${x},${y}`;
@@ -133,23 +194,17 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Date Filter Selection */}
-        <div className="flex items-center gap-2 self-start sm:self-auto bg-card p-1.5 rounded-lg border border-border">
-          <span className="text-muted-foreground text-xs px-2 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-primary" />
-            Range:
-          </span>
-          <Select defaultValue="7d" onValueChange={(val) => setTimeRange(val || "7d")}>
-            <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted/50 text-foreground text-xs py-0 pl-1">
-              <SelectValue placeholder="Select Range" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border border-border text-popover-foreground text-xs">
-              <SelectItem value="24h">Last 24 Hours</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-              <SelectItem value="12m">Last 12 Months</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Refresh button */}
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => fetchDashboardStats(true)} 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-xs border border-border text-foreground hover:bg-muted/50 cursor-pointer flex gap-1 items-center"
+          >
+            {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
+            Refresh Stats
+          </Button>
         </div>
       </div>
 
@@ -187,12 +242,14 @@ export default function AdminDashboard() {
                     <span className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                       {stat.value}
                     </span>
-                    <span className={cn(
-                      "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
-                      stat.trend === "up" ? "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400" : "bg-muted text-muted-foreground"
-                    )}>
-                      {stat.change}
-                    </span>
+                    {!isLoading && stat.change && (
+                      <span className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
+                        stat.trend === "up" ? "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400" : "bg-muted text-muted-foreground"
+                      )}>
+                        {stat.change}
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground font-medium">
                     {stat.description}
@@ -216,13 +273,12 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  Matrimonial Biodata Traffic
+                  Matrimonial Biodata Volume
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Weekly volume of generated document templates</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Weekly traffic volume of generated document templates</p>
               </div>
               <div className="flex items-center gap-2 bg-muted/50 border border-border/50 rounded-lg p-1">
                 <Button variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold uppercase px-3 bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer">Volume</Button>
-                <Button variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold uppercase px-3 text-muted-foreground hover:text-foreground cursor-pointer">Conversions</Button>
               </div>
             </div>
 
@@ -252,13 +308,9 @@ export default function AdminDashboard() {
 
               {/* Data tooltips inside chart */}
               <div className="absolute bottom-2 inset-x-0 px-2 flex justify-between text-[9px] text-muted-foreground/60 font-bold uppercase tracking-wider">
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
-                <span>Sun</span>
+                {chartLabels.map((lbl: string) => (
+                  <span key={lbl}>{lbl}</span>
+                ))}
               </div>
             </div>
           </Card>
@@ -283,62 +335,90 @@ export default function AdminDashboard() {
                     <thead>
                       <tr className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
                         <th className="p-4">Name</th>
-                        <th className="p-4">Community</th>
-                        <th className="p-4">Language</th>
+                        <th className="p-4">Location</th>
+                        <th className="p-4">Format</th>
                         <th className="p-4">Template</th>
                         <th className="p-4">Time</th>
                         <th className="p-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30 text-foreground/90">
-                      {recentBiodatas.map((bio) => (
-                        <tr key={bio.id} className="hover:bg-muted/20 transition-colors">
-                          <td className="p-4 font-bold text-foreground flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                            {bio.name}
-                          </td>
-                          <td className="p-4">{bio.community}</td>
-                          <td className="p-4">
-                            <span className="bg-muted border border-border text-muted-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
-                              {bio.language}
-                            </span>
-                          </td>
-                          <td className="p-4 text-muted-foreground font-medium">{bio.template}</td>
-                          <td className="p-4 text-muted-foreground/70 font-medium">{bio.time}</td>
-                          <td className="p-4 text-right">
-                            <Button variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-1 cursor-pointer">
-                              Preview <ArrowUpRight className="w-3 h-3" />
-                            </Button>
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-muted-foreground font-semibold">
+                            <Loader2 className="w-6 h-6 animate-spin text-primary inline mr-2" />
+                            Loading dynamic logs...
                           </td>
                         </tr>
-                      ))}
+                      ) : recentBiodatas.length > 0 ? (
+                        recentBiodatas.map((bio: any, idx: number) => (
+                          <tr key={bio.id || idx} className="hover:bg-muted/20 transition-colors">
+                            <td className="p-4 font-bold text-foreground flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              {bio.name}
+                            </td>
+                            <td className="p-4">{bio.community}</td>
+                            <td className="p-4">
+                              <span className="bg-muted border border-border text-muted-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {bio.language}
+                              </span>
+                            </td>
+                            <td className="p-4 text-muted-foreground font-medium">{bio.template}</td>
+                            <td className="p-4 text-muted-foreground/70 font-medium">{bio.time}</td>
+                            <td className="p-4 text-right">
+                              <Button asChild variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-1 cursor-pointer">
+                                <Link href="/admin/biodatas">
+                                  View Audit <ArrowUpRight className="w-3 h-3" />
+                                </Link>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-muted-foreground italic">
+                            No download logs captured in database yet.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
                 <div className="p-4 border-t border-border text-center bg-muted/20">
                   <Link href="/admin/biodatas" className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1">
-                    Manage all biodatas <ChevronRight className="w-3.5 h-3.5" />
+                    Manage all downloaded logs <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </TabsContent>
 
               <TabsContent value="templates" className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {templatePopularity.map((temp) => (
-                    <div key={temp.name} className="p-4 bg-muted/30 border border-border/50 rounded-lg space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-foreground">{temp.name}</span>
-                        <span className="font-bold text-primary">{temp.percentage}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", temp.color)} style={{ width: `${temp.percentage}%` }} />
-                      </div>
-                      <div className="text-[10px] text-muted-foreground flex items-center justify-between">
-                        <span>Usage volume:</span>
-                        <span className="font-semibold text-foreground/90">{temp.count.toLocaleString()} shares</span>
-                      </div>
+                  {isLoading ? (
+                    <div className="col-span-2 py-8 text-center text-muted-foreground font-semibold">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary inline mr-2" />
+                      Loading popularity analysis...
                     </div>
-                  ))}
+                  ) : templatePopularity.length > 0 ? (
+                    templatePopularity.map((temp: any) => (
+                      <div key={temp.name} className="p-4 bg-muted/30 border border-border/50 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-foreground">{temp.name}</span>
+                          <span className="font-bold text-primary">{temp.percentage}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full", temp.color)} style={{ width: `${temp.percentage}%` }} />
+                        </div>
+                        <div className="text-[10px] text-muted-foreground flex items-center justify-between">
+                          <span>Usage volume:</span>
+                          <span className="font-semibold text-foreground/90">{temp.count.toLocaleString()} downloads</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center text-muted-foreground italic py-4">
+                      No popularity logs found.
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
