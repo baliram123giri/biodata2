@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | biodata99.com",
+  title: "Privacy Policy",
   description: "Read our privacy policy to understand how biodata99.com processes and protects your matrimonial details completely inside your browser.",
   alternates: {
     canonical: "https://biodata99.com/privacy-policy",
+  },
+  openGraph: {
+    title: "Privacy Policy",
+    description: "Read our privacy policy to understand how biodata99.com processes and protects your matrimonial details completely inside your browser.",
+    url: "https://biodata99.com/privacy-policy",
   },
 };
 
@@ -12,7 +17,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
       <div className="container mx-auto max-w-3xl relative z-10 space-y-10 text-muted-foreground leading-relaxed">
-        
+
         {/* Title */}
         <div className="text-center space-y-4 max-w-xl mx-auto mb-6">
           <h1 className="text-4xl font-black tracking-tight text-foreground">
@@ -63,7 +68,7 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-xl font-bold text-foreground font-sans">5. Contact Information</h2>
           <p>
             If you have any questions or suggestions regarding this privacy policy, please contact us at:
-            <a href="mailto:hello@biodata99.com" className="ml-1 text-primary font-bold hover:underline">hello@biodata99.com</a>.
+            <a href="mailto:support@biodata99.com" className="ml-1 text-primary font-bold hover:underline">support@biodata99.com</a>.
           </p>
         </section>
 

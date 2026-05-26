@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms and Conditions | biodata99.com",
+  title: "Terms and Conditions",
   description: "Read the terms and conditions of using biodata99.com to build and download your matrimonial biodata.",
   alternates: {
     canonical: "https://biodata99.com/terms-conditions",
+  },
+  openGraph: {
+    title: "Terms and Conditions",
+    description: "Read the terms and conditions of using biodata99.com to build and download your matrimonial biodata.",
+    url: "https://biodata99.com/terms-conditions",
   },
 };
 

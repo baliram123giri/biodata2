@@ -29,6 +29,8 @@ const notoDevanagari = Noto_Sans_Devanagari({
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ClientLayoutProviders } from "@/components/layout/ClientLayoutProviders";
+import { webApplicationSchema } from "@/lib/seo-schemas";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
@@ -101,32 +103,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "biodata99.com",
-              "url": "https://biodata99.com",
-              "description": "Create professional marriage biodata online for FREE. Beautiful templates, multiple languages.",
-              "applicationCategory": "MultimediaApplication",
-              "operatingSystem": "All",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "INR"
-              },
-              "featureList": [
-                "Premium Templates",
-                "Multiple Indian Languages",
-                "No Login Required",
-                "Instant PDF Download",
-                "100% Private"
-              ]
-            })
-          }}
-        />
+        <JsonLd schema={webApplicationSchema} />
         <ClientLayoutProviders />
         <Header />
         <main className="flex-1">

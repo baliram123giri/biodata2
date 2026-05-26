@@ -1,6 +1,6 @@
 export const WATERMARK_CONFIG = {
   // SVG logo used for browser preview watermark
-  url: "/new_logo.svg",
+  url: "/logo.svg",
   // PNG fallback logo used for PDF/DOCX server-side export watermarks
   fallbackPngPath: "public/logo.png",
   width: 680,

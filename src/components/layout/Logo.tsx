@@ -12,16 +12,16 @@ interface LogoProps {
 
 export function Logo({ className, iconClassName, onClick, disableShine = false }: LogoProps) {
   return (
-    <div 
+    <div
       className={cn(
         !disableShine && "logo-shine-container",
-        "flex items-center cursor-pointer select-none rounded-lg group", 
+        "flex items-center cursor-pointer select-none rounded-lg group",
         className
-      )} 
+      )}
       onClick={onClick}
     >
       <Image
-        src="/new_logo.svg"
+        src="/logo.svg"
         alt="biodata99.com Logo"
         width={180}
         height={48}

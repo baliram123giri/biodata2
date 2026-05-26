@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Heart, Shield, Users, Compass } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About Us | biodata99.com",
+  title: "About Us",
   description: "Learn about the mission behind biodata99.com - helping families create beautiful, private, and traditional marriage biodatas online for free.",
   alternates: {
     canonical: "https://biodata99.com/about-us",
+  },
+  openGraph: {
+    title: "About Us",
+    description: "Learn about the mission behind biodata99.com - helping families create beautiful, private, and traditional marriage biodatas online for free.",
+    url: "https://biodata99.com/about-us",
   },
 };
 

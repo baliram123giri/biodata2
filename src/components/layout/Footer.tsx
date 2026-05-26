@@ -157,10 +157,10 @@ export function Footer() {
               <div className="mt-6 flex items-center gap-2 text-slate-400 group">
                 <Mail className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                 <a
-                  href="mailto:hello@biodata99.com"
+                  href="mailto:support@biodata99.com"
                   className="text-xs hover:text-cyan-400 transition-colors"
                 >
-                  hello@biodata99.com
+                  support@biodata99.com
                 </a>
               </div>
             </div>

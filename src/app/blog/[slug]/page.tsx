@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { blogPosts } from "@/lib/blog-data";
-import { ArrowLeft, Calendar, Clock, User, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { generateArticleSchema } from "@/lib/seo-schemas";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -20,7 +22,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const post = blogPosts.find((p) => p.slug === slug);
-  
+
   if (!post) {
     return {
       title: "Article Not Found | biodata99.com",
@@ -28,10 +30,15 @@ export async function generateMetadata(
   }
 
   return {
-    title: `${post.title} | biodata99.com`,
+    title: post.title,
     description: post.description,
     alternates: {
       canonical: `https://biodata99.com/blog/${post.slug}`,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      url: `https://biodata99.com/blog/${post.slug}`,
     },
   };
 }
@@ -44,44 +51,24 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
     notFound();
   }
 
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": post.title,
-    "description": post.description,
-    "datePublished": "2026-05-20",
-    "author": {
-      "@type": "Person",
-      "name": post.author,
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "biodata99.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://biodata99.com/logo.png",
-      },
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": `https://biodata99.com/blog/${post.slug}`,
-    },
-  };
+  const articleSchema = generateArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    author: post.author,
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
       {/* JSON-LD Article Schema */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
+      <JsonLd schema={articleSchema} />
 
       {/* Decorative Ornaments */}
       <div className="absolute top-0 right-0 w-[40%] h-[40%] rounded-full bg-gradient-to-tr from-[#9B1B30]/5 to-[#C9A84C]/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#C9A84C]/5 to-[#9B1B30]/5 blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto max-w-3xl relative z-10 space-y-8">
-        
+
         {/* Back Link */}
         <Button variant="ghost" size="sm" className="rounded-full gap-1.5 hover:bg-muted text-muted-foreground hover:text-foreground" asChild>
           <Link href="/blog">
@@ -95,7 +82,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#8A7233] dark:text-[#E6C97A] border border-[#C9A84C]/20 w-fit">
             {post.category}
           </div>
-          
+
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-tight">
             {post.title}
           </h1>
@@ -117,7 +104,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
         </div>
 
         {/* Article Body Content */}
-        <article 
+        <article
           className="prose max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-black prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-ul:list-disc prose-ul:pl-6 space-y-6 pt-4 pb-12 border-b border-border/40"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />

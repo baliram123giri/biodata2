@@ -5,6 +5,8 @@ import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown,
 import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { Metadata } from "next";
+import { howToSchema } from "@/lib/seo-schemas";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF & Word",
@@ -205,43 +207,7 @@ export default function Home() {
       </section>
 
       {/* Structured Data (HowTo Schema) for Search Crawlers */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "HowTo",
-            "name": "How to Create a Marriage Biodata Online",
-            "description": "Learn how to make a beautiful matrimonial biodata with photo in 4 simple steps using our free online builder.",
-            "step": [
-              {
-                "@type": "HowToStep",
-                "position": 1,
-                "name": "Fill In Your Details",
-                "text": "Enter your personal details, family background, education, and contact info step by step in the simple form."
-              },
-              {
-                "@type": "HowToStep",
-                "position": 2,
-                "name": "Pick a Biodata Format",
-                "text": "Browse and select from over 50 traditional, modern, or community-specific marriage templates."
-              },
-              {
-                "@type": "HowToStep",
-                "position": 3,
-                "name": "Add Photo & Customize",
-                "text": "Upload a professional portrait photo, select a premium gold or color theme, and add your religious symbol or heading."
-              },
-              {
-                "@type": "HowToStep",
-                "position": 4,
-                "name": "Download & Share",
-                "text": "Download the final print-ready PDF or editable Word document. Share it instantly on WhatsApp or other matrimonial sites."
-              }
-            ]
-          })
-        }}
-      />
+      <JsonLd schema={howToSchema} />
     </div>
   );
 }

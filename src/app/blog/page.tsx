@@ -6,10 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Marriage Biodata Guides & Matrimonial Tips | biodata99.com",
+  title: "Marriage Biodata Guides & Matrimonial Tips",
   description: "Learn how to write a professional marriage biodata. Read expert tips on profiles, layout formats, regional customs, and matrimonial resume structures.",
   alternates: {
     canonical: "https://biodata99.com/blog",
+  },
+  openGraph: {
+    title: "Marriage Biodata Guides & Matrimonial Tips",
+    description: "Learn how to write a professional marriage biodata. Read expert tips on profiles, layout formats, regional customs, and matrimonial resume structures.",
+    url: "https://biodata99.com/blog",
   },
 };
 

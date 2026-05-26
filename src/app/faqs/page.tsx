@@ -5,10 +5,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions (FAQs) | biodata99.com",
+  title: "Frequently Asked Questions (FAQs)",
   description: "Get answers to common questions about creating, editing, translating, and downloading marriage biodatas on biodata99.com.",
   alternates: {
     canonical: "https://biodata99.com/faqs",
+  },
+  openGraph: {
+    title: "Frequently Asked Questions (FAQs)",
+    description: "Get answers to common questions about creating, editing, translating, and downloading marriage biodatas on biodata99.com.",
+    url: "https://biodata99.com/faqs",
   },
 };
 

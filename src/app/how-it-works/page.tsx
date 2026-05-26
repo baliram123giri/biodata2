@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ChevronRight, FileText, Palette, Download, Share2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "How It Works | Free Marriage Biodata Creator | biodata99.com",
+  title: "How It Works | Free Marriage Biodata Creator",
   description: "Learn how to make a beautiful, traditional matrimonial biodata in 4 easy steps. Select themes, add profiles, select languages, and download PDF instantly.",
   alternates: {
     canonical: "https://biodata99.com/how-it-works",
+  },
+  openGraph: {
+    title: "How It Works | Free Marriage Biodata Creator",
+    description: "Learn how to make a beautiful, traditional matrimonial biodata in 4 easy steps. Select themes, add profiles, select languages, and download PDF instantly.",
+    url: "https://biodata99.com/how-it-works",
   },
 };
 
