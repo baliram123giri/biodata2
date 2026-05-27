@@ -4,13 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Users, 
-  FileText, 
-  Sparkles, 
-  Activity, 
-  TrendingUp, 
-  ArrowUpRight, 
+import {
+  Users,
+  FileText,
+  Sparkles,
+  Activity,
+  TrendingUp,
+  ArrowUpRight,
   Calendar,
   CheckCircle,
   Database,
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
   // Dynamic Recent Biodatas list with formatted relative time-ago strings
   const recentBiodatas = React.useMemo(() => {
     if (!data?.recentDownloads) return [];
-    
+
     return data.recentDownloads.map((log: any) => {
       const minutes = Math.floor((Date.now() - new Date(log.createdAt).getTime()) / 60000);
       let timeStr = "Just now";
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
   const templatePopularity = React.useMemo(() => {
     if (!data?.templatePopularity) return [];
     const colors = ["bg-[#9B1B30]", "bg-[#C9A84C]", "bg-cyan-600", "bg-purple-600", "bg-emerald-600", "bg-pink-600"];
-    
+
     return data.templatePopularity.map((temp: any, index: number) => ({
       name: temp.name,
       count: temp.count,
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
 
   const chartWidth = 500;
   const chartHeight = 120;
-  
+
   const chartMax = React.useMemo(() => {
     return Math.max(...chartPoints, 5);
   }, [chartPoints]);
@@ -196,10 +196,10 @@ export default function AdminDashboard() {
 
         {/* Refresh button */}
         <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => fetchDashboardStats(true)} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={() => fetchDashboardStats(true)}
+            variant="outline"
+            size="sm"
             className="h-8 text-xs border border-border text-foreground hover:bg-muted/50 cursor-pointer flex gap-1 items-center"
           >
             {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
               )}>
                 {/* Accent top glow */}
                 <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-primary/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-muted-foreground tracking-wide uppercase">{stat.title}</span>
                   <div className="p-2 rounded-lg bg-muted/60 border border-border/80 text-primary group-hover:scale-110 transition-transform duration-300">
@@ -263,10 +263,10 @@ export default function AdminDashboard() {
 
       {/* Main Grid: Graph, Templates, Activity, Services */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Col: Area Chart & Recent Activity */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Chart Card */}
           <Card className="p-5 sm:p-6 bg-card border border-border rounded-xl relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -296,8 +296,8 @@ export default function AdminDashboard() {
               <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-[120px] sm:h-[140px] z-10 overflow-visible" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.00" />
+                    <stop offset="0%" stopColor="var( -primary)" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="var( -primary)" stopOpacity="0.00" />
                   </linearGradient>
                 </defs>
                 {/* Area path */}
@@ -433,7 +433,7 @@ export default function AdminDashboard() {
               <Database className="w-4 h-4 text-primary" />
               Infrastructure Node Status
             </h3>
-            
+
             <div className="space-y-4">
               {systemServices.map((service) => (
                 <div key={service.name} className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-2">
@@ -451,9 +451,9 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-            
+
             <Separator className="my-5 bg-border/80" />
-            
+
             {/* Quick stats grid */}
             <div className="grid grid-cols-2 gap-3 text-center text-xs">
               <div className="p-2.5 bg-muted/20 border border-border/40 rounded-lg">
@@ -471,7 +471,7 @@ export default function AdminDashboard() {
           <Card className="p-5 sm:p-6 bg-card border border-primary/20 rounded-xl relative overflow-hidden shadow-sm">
             {/* Ambient light pulse */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-xl pointer-events-none" />
-            
+
             <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2 mb-3">
               <AlertTriangle className="w-4 h-4 text-primary" />
               Pending Admin Tasks

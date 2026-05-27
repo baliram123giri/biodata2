@@ -43,28 +43,28 @@ export const howToSchema = {
   "description": "Learn how to make a beautiful matrimonial biodata with photo in 4 simple steps using our free online builder.",
   "step": [
     {
-      "@type": "HowToStep",
+      "@type": "HowToStep" as const,
       "position": 1,
-      "name": "Fill In Your Details",
-      "text": "Enter your personal details, family background, education, and contact info step by step in the simple form."
+      "name": "Fill in Your Details",
+      "text": "Start by entering your information into the editor. The form is organised into clear sections so nothing feels overwhelming."
     },
     {
-      "@type": "HowToStep",
+      "@type": "HowToStep" as const,
       "position": 2,
-      "name": "Pick a Biodata Format",
-      "text": "Browse and select from over 50 traditional, modern, or community-specific marriage templates."
+      "name": "Choose a Template",
+      "text": "Pick a design that matches your family's taste. Each template is built around the sections families actually look for in a marriage biodata."
     },
     {
-      "@type": "HowToStep",
+      "@type": "HowToStep" as const,
       "position": 3,
-      "name": "Add Photo & Customize",
-      "text": "Upload a professional portrait photo, select a premium gold or color theme, and add your religious symbol or heading."
+      "name": "Add a Photo (Optional)",
+      "text": "Upload a photo directly from your phone or computer. You can crop and position it to fit cleanly within the template layout."
     },
     {
-      "@type": "HowToStep",
+      "@type": "HowToStep" as const,
       "position": 4,
-      "name": "Download & Share",
-      "text": "Download the final print-ready PDF or editable Word document. Share it instantly on WhatsApp or other matrimonial sites."
+      "name": "Download and Share",
+      "text": "When you are happy with how it looks, click Download. Your biodata is generated instantly as PDF, JPG, or DOCX formats."
     }
   ]
 };
@@ -199,4 +199,34 @@ export const localBusinessSchema = {
       "closes": "18:00"
     }
   ]
+};
+
+// 7. RefundPolicy WebPage Schema
+export const refundPolicySchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "WebPage" as const,
+  "name": "Refund Policy",
+  "description": "Biodata99 offers free and premium biodata templates. Read our refund policy to understand what is covered and how to request a refund if something goes wrong.",
+  "url": "https://biodata99.com/refund-policy",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Biodata99",
+    "url": "https://biodata99.com",
+    "logo": "https://biodata99.com/logo.svg"
+  }
+};
+
+// 8. TermsConditions WebPage Schema
+export const termsConditionsSchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "WebPage" as const,
+  "name": "Terms and Conditions",
+  "description": "Read the terms and conditions for using Biodata99. Covers free and paid templates, your content rights, privacy, payments, and how we operate.",
+  "url": "https://biodata99.com/terms-conditions",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Biodata99",
+    "url": "https://biodata99.com",
+    "logo": "https://biodata99.com/logo.svg"
+  }
 };

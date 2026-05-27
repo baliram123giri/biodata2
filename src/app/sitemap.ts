@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/about-us',
     '/contact-us',
     '/privacy-policy',
+    '/refund-policy',
     '/terms-conditions',
     '/blog',
     '/blog/how-to-write-matrimonial-biodata',

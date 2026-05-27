@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { 
+import {
   Loader2,
   Upload,
   Paintbrush,
@@ -15,21 +15,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   DialogFooter,
-  DialogDescription 
+  DialogDescription
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
@@ -290,8 +290,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameType: template.frameType,
         frameBgType: template.frameBgType || "solid",
         frameBgColor: template.frameBgColor || "#ffffff",
-        frameBgGradientColors: template.frameBgGradientColors 
-          ? template.frameBgGradientColors.join(",") 
+        frameBgGradientColors: template.frameBgGradientColors
+          ? template.frameBgGradientColors.join(",")
           : "#ffffff,#f9e8e8",
         frameOuterInset: template.frameOuterInset ? String(template.frameOuterInset) : "10",
         frameOuterStrokeWidth: template.frameOuterStrokeWidth ? String(template.frameOuterStrokeWidth) : "2",
@@ -411,7 +411,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             // Inline any external images (like Cloudinary frames) to prevent canvas staining and security blockers
             const imageElements = svgClone.getElementsByTagName("image");
             const fetchPromises: Promise<void>[] = [];
-            
+
             for (let i = 0; i < imageElements.length; i++) {
               const img = imageElements[i];
               const href = img.getAttribute("href") || img.getAttribute("xlink:href");
@@ -434,7 +434,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                 fetchPromises.push(promise);
               }
             }
-            
+
             await Promise.all(fetchPromises);
 
             // Convert cloned SVG to string
@@ -442,7 +442,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
             const URL = window.URL || window.webkitURL || window;
             const blobURL = URL.createObjectURL(svgBlob);
-            
+
             const pngThumbnail = await new Promise<string | null>((resolve) => {
               const image = new Image();
               image.onload = () => {
@@ -455,7 +455,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                     // White background
                     context.fillStyle = "#ffffff";
                     context.fillRect(0, 0, canvas.width, canvas.height);
-                    
+
                     context.drawImage(image, 0, 0, 595, 842);
                     const pngBase64 = canvas.toDataURL("image/png");
                     URL.revokeObjectURL(blobURL);
@@ -517,9 +517,9 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
     <div className="space-y-4 text-foreground max-w-7xl mx-auto">
       {/* Header Panel */}
       <div className="flex items-center gap-3">
-        <Button 
-          variant="outline" 
-          size="icon" 
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => router.push("/admin/templates")}
           className="rounded-lg cursor-pointer"
         >
@@ -540,848 +540,848 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         {/* Left Column: Form Settings */}
         <div className="lg:col-span-7 space-y-6">
           <Card className="border border-border bg-card rounded-xl shadow-sm overflow-hidden">
-        <CardContent className="p-4">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            {/* General Settings */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">1. General Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="tpl-name" className="text-xs font-bold text-muted-foreground">Template Name *</Label>
-                  <div className="relative flex items-center">
-                    <Input
-                      id="tpl-name"
-                      type="text"
-                      required
-                      value={formState.name}
-                      onChange={e => setFormState({ ...formState, name: e.target.value })}
-                      placeholder="e.g. Royal Heritage"
-                      className="pr-10 focus-visible:ring-primary rounded-lg w-full"
-                    />
-                    <Button 
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleGenerateName}
-                      disabled={isNameGenerating}
-                      className="absolute right-1 w-8 h-8 rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
-                      title="Stream generate name using Gemini"
-                    >
-                      {isNameGenerating ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+            <CardContent className="p-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Template Language *</Label>
-                  <Select
-                    value={formState.language}
-                    onValueChange={value => setFormState({ ...formState, language: value || "English" })}
-                  >
-                    <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                      <SelectValue placeholder="Select Language" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                      {LANGUAGES.map((lang) => (
-                        <SelectItem key={lang} value={lang} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
-                          {lang}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description</Label>
-                  <div className="relative flex items-start">
-                    <Textarea
-                      id="tpl-desc"
-                      value={formState.description}
-                      onChange={e => setFormState({ ...formState, description: e.target.value })}
-                      placeholder="e.g. Traditional gold ornaments, crimson borders"
-                      className="focus-visible:ring-primary rounded-lg min-h-[80px] pr-10"
-                      rows={3}
-                    />
-                    <Button 
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleGenerateDescription}
-                      disabled={isDescGenerating}
-                      className="absolute right-1 top-1 w-8 h-8 rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
-                      title="Stream generate description using Gemini"
-                    >
-                      {isDescGenerating ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Primary Color Theme *</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formState.defaultPrimary}
-                      onChange={e => setFormState({ ...formState, defaultPrimary: e.target.value })}
-                      className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
-                    />
-                    <Input
-                      type="text"
-                      required
-                      value={formState.defaultPrimary}
-                      onChange={e => setFormState({ ...formState, defaultPrimary: e.target.value })}
-                      className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Secondary Color Theme *</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formState.defaultSecondary}
-                      onChange={e => setFormState({ ...formState, defaultSecondary: e.target.value })}
-                      className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
-                    />
-                    <Input
-                      type="text"
-                      required
-                      value={formState.defaultSecondary}
-                      onChange={e => setFormState({ ...formState, defaultSecondary: e.target.value })}
-                      className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Accent Color Theme *</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formState.defaultAccent}
-                      onChange={e => setFormState({ ...formState, defaultAccent: e.target.value })}
-                      className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
-                    />
-                    <Input
-                      type="text"
-                      required
-                      value={formState.defaultAccent}
-                      onChange={e => setFormState({ ...formState, defaultAccent: e.target.value })}
-                      className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SliderInput
-                  label="Page X-Padding"
-                  id="tpl-padding"
-                  min={0}
-                  max={150}
-                  value={formState.defaultPadding}
-                  onChange={val => setFormState({ ...formState, defaultPadding: val })}
-                />
-                <SliderInput
-                  label="Page Y-Padding (optional)"
-                  id="tpl-ypadding"
-                  min={0}
-                  max={150}
-                  value={formState.defaultYPadding}
-                  onChange={val => setFormState({ ...formState, defaultYPadding: val })}
-                  placeholder="Same as X-padding if blank"
-                />
-              </div>
-            </div>
-
-            {/* Photo Settings */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">2. Photo Layout Configuration</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SliderInput
-                  label="Photo X Coordinate"
-                  id="photo-x"
-                  min={0}
-                  max={595}
-                  value={formState.photoX}
-                  onChange={val => setFormState({ ...formState, photoX: val })}
-                />
-                <SliderInput
-                  label="Photo Y Coordinate"
-                  id="photo-y"
-                  min={0}
-                  max={842}
-                  value={formState.photoY}
-                  onChange={val => setFormState({ ...formState, photoY: val })}
-                />
-                <SliderInput
-                  label="Photo Width"
-                  id="photo-w"
-                  min={10}
-                  max={400}
-                  value={formState.photoWidth}
-                  onChange={val => setFormState({ ...formState, photoWidth: val })}
-                />
-                <SliderInput
-                  label="Photo Height"
-                  id="photo-h"
-                  min={10}
-                  max={500}
-                  value={formState.photoHeight}
-                  onChange={val => setFormState({ ...formState, photoHeight: val })}
-                />
-                <SliderInput
-                  label="Photo Corner Radius"
-                  id="photo-radius"
-                  min={0}
-                  max={100}
-                  value={formState.photoCornerRadius}
-                  onChange={val => setFormState({ ...formState, photoCornerRadius: val })}
-                  className="md:col-span-2"
-                />
-              </div>
-            </div>
-
-            {/* Frame Settings */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">3. Frame Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Frame Rendering Type</Label>
-                  <Select
-                    value={formState.frameType}
-                    onValueChange={value => setFormState({ ...formState, frameType: value || "" })}
-                  >
-                    <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                      <SelectValue placeholder="Select frame type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                      <SelectItem value="image" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Image (PNG / SVG asset with dynamic tinting)</SelectItem>
-                      <SelectItem value="svg" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Classic SVG (Border with double/single line frames)</SelectItem>
-                      <SelectItem value="gradient" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Gradient Border</SelectItem>
-                      <SelectItem value="custom" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Custom Component (SVG dome arch, etc.)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Background Style</Label>
-                  <Select
-                    value={formState.frameBgType}
-                    onValueChange={value => setFormState({ ...formState, frameBgType: value || "solid" })}
-                  >
-                    <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                      <SelectValue placeholder="Select background style" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                      <SelectItem value="solid" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Solid Color</SelectItem>
-                      <SelectItem value="linear" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Linear Gradient</SelectItem>
-                      <SelectItem value="radial" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Radial Gradient</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Background Color Config */}
-              <div className="border border-border rounded-xl p-4 bg-muted/10">
-                {formState.frameBgType === "solid" ? (
+                {/* General Settings */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider">1. General Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-muted-foreground">Solid Background Color</Label>
+                      <Label htmlFor="tpl-name" className="text-xs font-bold text-muted-foreground">Template Name *</Label>
+                      <div className="relative flex items-center">
+                        <Input
+                          id="tpl-name"
+                          type="text"
+                          required
+                          value={formState.name}
+                          onChange={e => setFormState({ ...formState, name: e.target.value })}
+                          placeholder="e.g. Royal Heritage"
+                          className="pr-10 focus-visible:ring-primary rounded-lg w-full"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleGenerateName}
+                          disabled={isNameGenerating}
+                          className="absolute right-1 w-8 h-8 rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
+                          title="Stream generate name using Gemini"
+                        >
+                          {isNameGenerating ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Template Language *</Label>
+                      <Select
+                        value={formState.language}
+                        onValueChange={value => setFormState({ ...formState, language: value || "English" })}
+                      >
+                        <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                          <SelectValue placeholder="Select Language" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                          {LANGUAGES.map((lang) => (
+                            <SelectItem key={lang} value={lang} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
+                              {lang}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description</Label>
+                      <div className="relative flex items-start">
+                        <Textarea
+                          id="tpl-desc"
+                          value={formState.description}
+                          onChange={e => setFormState({ ...formState, description: e.target.value })}
+                          placeholder="e.g. Traditional gold ornaments, crimson borders"
+                          className="focus-visible:ring-primary rounded-lg min-h-[80px] pr-10"
+                          rows={3}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleGenerateDescription}
+                          disabled={isDescGenerating}
+                          className="absolute right-1 top-1 w-8 h-8 rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
+                          title="Stream generate description using Gemini"
+                        >
+                          {isDescGenerating ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Primary Color Theme *</Label>
                       <div className="flex gap-2">
                         <input
                           type="color"
-                          value={formState.frameBgColor}
-                          onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                          value={formState.defaultPrimary}
+                          onChange={e => setFormState({ ...formState, defaultPrimary: e.target.value })}
                           className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
                         />
                         <Input
                           type="text"
-                          value={formState.frameBgColor}
-                          onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                          required
+                          value={formState.defaultPrimary}
+                          onChange={e => setFormState({ ...formState, defaultPrimary: e.target.value })}
+                          className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Secondary Color Theme *</Label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={formState.defaultSecondary}
+                          onChange={e => setFormState({ ...formState, defaultSecondary: e.target.value })}
+                          className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
+                        />
+                        <Input
+                          type="text"
+                          required
+                          value={formState.defaultSecondary}
+                          onChange={e => setFormState({ ...formState, defaultSecondary: e.target.value })}
+                          className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Accent Color Theme *</Label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={formState.defaultAccent}
+                          onChange={e => setFormState({ ...formState, defaultAccent: e.target.value })}
+                          className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
+                        />
+                        <Input
+                          type="text"
+                          required
+                          value={formState.defaultAccent}
+                          onChange={e => setFormState({ ...formState, defaultAccent: e.target.value })}
                           className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
                         />
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
-                      <Input
-                        type="text"
-                        value={formState.frameBgGradientColors}
-                        onChange={e => setFormState({ ...formState, frameBgGradientColors: e.target.value })}
-                        placeholder="e.g. #ffffff,#f9e8e8"
-                        className="font-mono focus-visible:ring-primary rounded-lg w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {formState.frameBgType === "linear" ? "Renders as a top-to-bottom linear gradient." : "Renders as a center-outwards radial gradient."}
-                      </p>
-                    </div>
 
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Select Gradient Background Color Palette</Label>
-                      <div className="flex flex-wrap gap-2 max-h-[220px] overflow-y-auto p-2 border border-border/80 rounded-xl bg-muted/20 shadow-inner">
-                        {(() => {
-                          const basePresets = GRADIENT_PRESETS.map(preset => {
-                            const colorsArr = preset.colors.split(",");
-                            const c1 = colorsArr[0]?.trim();
-                            const c2 = colorsArr[1]?.trim() || c1;
-                            const c3 = colorsArr[2]?.trim();
-                            
-                            let bgStyle = "";
-                            if (formState.frameBgType === "linear") {
-                              bgStyle = c3 
-                                ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
-                                : `linear-gradient(to bottom, ${c1}, ${c2})`;
-                            } else {
-                              bgStyle = c3 
-                                ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
-                                : `radial-gradient(circle, ${c1}, ${c2})`;
-                            }
-                            
-                            return {
-                              name: preset.name,
-                              colors: preset.colors,
-                              style: { background: bgStyle }
-                            };
-                          });
-
-                          const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
-                          const activeNormalized = normalizeColors(formState.frameBgGradientColors || "");
-                          const isAlreadyInPresets = GRADIENT_PRESETS.some(p => normalizeColors(p.colors) === activeNormalized);
-
-                          let finalPresets = [...basePresets];
-
-                          if (!isAlreadyInPresets && activeNormalized) {
-                            const colorsArr = formState.frameBgGradientColors.split(",");
-                            if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
-                              const c1 = colorsArr[0].trim();
-                              const c2 = colorsArr[1]?.trim() || c1;
-                              const c3 = colorsArr[2]?.trim();
-                              
-                              let bgStyle = "";
-                              if (formState.frameBgType === "linear") {
-                                bgStyle = c3 
-                                  ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
-                                  : `linear-gradient(to bottom, ${c1}, ${c2})`;
-                              } else {
-                                bgStyle = c3 
-                                  ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
-                                  : `radial-gradient(circle, ${c1}, ${c2})`;
-                              }
-                              
-                              finalPresets.push({
-                                name: "Custom Gradient",
-                                colors: formState.frameBgGradientColors,
-                                style: { background: bgStyle }
-                              });
-                            }
-                          }
-
-                          return finalPresets.map((preset, idx) => {
-                            const isPresetActive = normalizeColors(formState.frameBgGradientColors) === normalizeColors(preset.colors);
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setFormState({ ...formState, frameBgGradientColors: preset.colors })}
-                                className={cn(
-                                  "w-8 h-8 rounded-full border shadow-sm transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 bg-background relative cursor-pointer",
-                                  isPresetActive 
-                                    ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md z-10"
-                                    : "border-border/80 hover:border-foreground"
-                                )}
-                                style={preset.style}
-                                title={preset.name}
-                              >
-                                {isPresetActive && (
-                                  <span className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white shadow-sm ring-1 ring-black/10" />
-                                )}
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SliderInput
+                      label="Page X-Padding"
+                      id="tpl-padding"
+                      min={0}
+                      max={150}
+                      value={formState.defaultPadding}
+                      onChange={val => setFormState({ ...formState, defaultPadding: val })}
+                    />
+                    <SliderInput
+                      label="Page Y-Padding (optional)"
+                      id="tpl-ypadding"
+                      min={0}
+                      max={150}
+                      value={formState.defaultYPadding}
+                      onChange={val => setFormState({ ...formState, defaultYPadding: val })}
+                      placeholder="Same as X-padding if blank"
+                    />
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Conditional Frame Fields */}
-              {formState.frameType === "image" && (
-                <div className="space-y-3.5 border border-border rounded-xl p-4 bg-muted/10">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Upload Frame Image File *</Label>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById("frame-file-input")?.click()}
-                        className="text-xs font-bold gap-1.5 cursor-pointer rounded-lg h-10"
+                {/* Photo Settings */}
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider">2. Photo Layout Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SliderInput
+                      label="Photo X Coordinate"
+                      id="photo-x"
+                      min={0}
+                      max={595}
+                      value={formState.photoX}
+                      onChange={val => setFormState({ ...formState, photoX: val })}
+                    />
+                    <SliderInput
+                      label="Photo Y Coordinate"
+                      id="photo-y"
+                      min={0}
+                      max={842}
+                      value={formState.photoY}
+                      onChange={val => setFormState({ ...formState, photoY: val })}
+                    />
+                    <SliderInput
+                      label="Photo Width"
+                      id="photo-w"
+                      min={10}
+                      max={400}
+                      value={formState.photoWidth}
+                      onChange={val => setFormState({ ...formState, photoWidth: val })}
+                    />
+                    <SliderInput
+                      label="Photo Height"
+                      id="photo-h"
+                      min={10}
+                      max={500}
+                      value={formState.photoHeight}
+                      onChange={val => setFormState({ ...formState, photoHeight: val })}
+                    />
+                    <SliderInput
+                      label="Photo Corner Radius"
+                      id="photo-radius"
+                      min={0}
+                      max={100}
+                      value={formState.photoCornerRadius}
+                      onChange={val => setFormState({ ...formState, photoCornerRadius: val })}
+                      className="md:col-span-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Frame Settings */}
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider">3. Frame Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Frame Rendering Type</Label>
+                      <Select
+                        value={formState.frameType}
+                        onValueChange={value => setFormState({ ...formState, frameType: value || "" })}
                       >
-                        <Upload className="w-4 h-4" />
-                        Choose PNG/SVG Frame
-                      </Button>
-                      <input
-                        id="frame-file-input"
-                        type="file"
-                        accept="image/png, image/svg+xml"
-                        className="hidden"
-                        onChange={e => handleFileChange(e, "frameFile")}
-                      />
-                      {formState.frameFile ? (
-                        <span className="text-xs text-green-600 font-semibold">✓ Frame loaded (ready to upload)</span>
-                      ) : template?.frameUrlTemplate ? (
-                        <span className="text-xs text-muted-foreground truncate max-w-xs">Current: {template.frameUrlTemplate?.slice(0, 50)}...</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No frame file selected</span>
-                      )}
+                        <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                          <SelectValue placeholder="Select frame type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                          <SelectItem value="image" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Image (PNG / SVG asset with dynamic tinting)</SelectItem>
+                          <SelectItem value="svg" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Classic SVG (Border with double/single line frames)</SelectItem>
+                          <SelectItem value="gradient" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Gradient Border</SelectItem>
+                          <SelectItem value="custom" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Custom Component (SVG dome arch, etc.)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      Tip: Upload a grayscale/white transparent PNG or an SVG frame. Cloudinary can automatically tint these using your theme colors.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {(formState.frameType === "svg" || formState.frameType === "gradient") && (
-                <div className="space-y-4 border border-border rounded-xl p-4 bg-muted/10">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <SliderInput
-                      label="Outer Frame Inset"
-                      id="outer-inset"
-                      min={0}
-                      max={100}
-                      value={formState.frameOuterInset}
-                      onChange={val => setFormState({ ...formState, frameOuterInset: val })}
-                    />
-                    <SliderInput
-                      label="Outer Stroke Width"
-                      id="outer-stroke"
-                      min={0}
-                      max={20}
-                      value={formState.frameOuterStrokeWidth}
-                      onChange={val => setFormState({ ...formState, frameOuterStrokeWidth: val })}
-                    />
-                    <SliderInput
-                      label="Outer Corner Radius"
-                      id="outer-radius"
-                      min={0}
-                      max={100}
-                      value={formState.frameOuterCornerRadius}
-                      onChange={val => setFormState({ ...formState, frameOuterCornerRadius: val })}
-                    />
-                    <SliderInput
-                      label="Inner Frame Inset"
-                      id="inner-inset"
-                      min={0}
-                      max={100}
-                      value={formState.frameInnerInset}
-                      onChange={val => setFormState({ ...formState, frameInnerInset: val })}
-                    />
-                    <SliderInput
-                      label="Inner Stroke Width"
-                      id="inner-stroke"
-                      min={0}
-                      max={20}
-                      value={formState.frameInnerStrokeWidth}
-                      onChange={val => setFormState({ ...formState, frameInnerStrokeWidth: val })}
-                    />
-                    <SliderInput
-                      label="Inner Corner Radius"
-                      id="inner-radius"
-                      min={0}
-                      max={100}
-                      value={formState.frameInnerCornerRadius}
-                      onChange={val => setFormState({ ...formState, frameInnerCornerRadius: val })}
-                    />
-                  </div>
-
-                  {formState.frameType === "svg" && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="checkbox"
-                        id="has-corner-curves"
-                        checked={formState.frameHasCornerCurves}
-                        onChange={e => setFormState({ ...formState, frameHasCornerCurves: e.target.checked })}
-                        className="w-4 h-4 accent-primary rounded border-border"
-                      />
-                      <Label htmlFor="has-corner-curves" className="text-xs font-bold text-muted-foreground cursor-pointer select-none">
-                        Include traditional corner loop curves in SVG outline
-                      </Label>
-                    </div>
-                  )}
-
-                  {formState.frameType === "gradient" && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="gradient-colors" className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
-                      <Input
-                        id="gradient-colors"
-                        type="text"
-                        value={formState.frameGradientColors}
-                        onChange={e => setFormState({ ...formState, frameGradientColors: e.target.value })}
-                        placeholder="e.g. #4F46E5,#06B6D4,#10B981"
-                        className="font-mono focus-visible:ring-primary rounded-lg"
-                      />
+                      <Label className="text-xs font-bold text-muted-foreground">Background Style</Label>
+                      <Select
+                        value={formState.frameBgType}
+                        onValueChange={value => setFormState({ ...formState, frameBgType: value || "solid" })}
+                      >
+                        <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                          <SelectValue placeholder="Select background style" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                          <SelectItem value="solid" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Solid Color</SelectItem>
+                          <SelectItem value="linear" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Linear Gradient</SelectItem>
+                          <SelectItem value="radial" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Radial Gradient</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {formState.frameType === "custom" && (
-                <div className="space-y-3 border border-border rounded-xl p-4 bg-muted/10">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Custom Renderer Component ID</Label>
-                    <Select
-                      value={formState.frameComponentId}
-                      onValueChange={value => setFormState({ ...formState, frameComponentId: value || "" })}
-                    >
-                      <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                        <SelectValue placeholder="Select custom design theme" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                        <SelectItem value="new-generation-arch" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">New Generation Arch (Dome shape)</SelectItem>
-                        <SelectItem value="ornate-grandeur" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ornate Grandeur Scroll</SelectItem>
-                        <SelectItem value="green-shapes" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Green Leaves Motif</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Background Watermark Image settings */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Background Watermark SVG</h3>
-              <p className="text-xs text-muted-foreground leading-normal">
-                Optionally upload an SVG file to render as a background watermark graphic behind the biodata text.
-              </p>
-              <div className="space-y-3">
-                <div className="space-y-3 p-4 border border-border rounded-xl bg-muted/10">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Select from Uploaded Backgrounds Library</Label>
-                    <Select
-                      value={formState.bgImageUrl || "none"}
-                      onValueChange={(url: string | null) => {
-                        if (!url || url === "none") {
-                          setFormState({
-                            ...formState,
-                            bgImageUrl: "",
-                            bgImageFile: ""
-                          });
-                        } else {
-                          setFormState({
-                            ...formState,
-                            bgImageUrl: url,
-                            bgImageFile: ""
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3 cursor-pointer">
-                        <SelectValue placeholder="-- Select background SVG --" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border border-border rounded-lg shadow-md max-h-[250px] overflow-y-auto">
-                        <SelectItem value="none" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">-- None (No Watermark) --</SelectItem>
-                        {dbBackgrounds.map((bg) => (
-                          <SelectItem key={bg.id} value={bg.url || ""} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
-                            {bg.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
 
-                  <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-border/80"></div>
-                    <span className="flex-shrink mx-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">or upload new one-off SVG</span>
-                    <div className="flex-grow border-t border-border/80"></div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Upload Custom SVG Watermark</Label>
-                    <Input
-                      type="file"
-                      accept="image/svg+xml"
-                      onChange={(e) => handleFileChange(e, "bgImageFile")}
-                      className="cursor-pointer focus-visible:ring-primary rounded-lg bg-background"
-                    />
-                    {formState.bgImageUrl && (
-                      <p className="text-[10px] text-green-600 font-medium truncate mt-1">
-                        Active Watermark: <a href={formState.bgImageUrl} target="_blank" rel="noreferrer" className="underline font-mono">{formState.bgImageUrl.substring(formState.bgImageUrl.lastIndexOf('/') + 1)}</a>
-                      </p>
-                    )}
-                    {formState.bgImageFile && (
-                      <p className="text-[10px] text-primary font-bold mt-1">
-                        ✓ New SVG uploaded (base64 payload ready)
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SliderInput
-                    label="Background X Position"
-                    id="bg-x"
-                    min={-200}
-                    max={595}
-                    value={formState.bgImageX}
-                    onChange={(val) => setFormState({ ...formState, bgImageX: val })}
-                  />
-                  <SliderInput
-                    label="Background Y Position"
-                    id="bg-y"
-                    min={-200}
-                    max={842}
-                    value={formState.bgImageY}
-                    onChange={(val) => setFormState({ ...formState, bgImageY: val })}
-                  />
-                  <SliderInput
-                    label="Background Width"
-                    id="bg-w"
-                    min={10}
-                    max={1200}
-                    value={formState.bgImageWidth}
-                    onChange={(val) => setFormState({ ...formState, bgImageWidth: val })}
-                  />
-                  <SliderInput
-                    label="Background Height"
-                    id="bg-h"
-                    min={10}
-                    max={1600}
-                    value={formState.bgImageHeight}
-                    onChange={(val) => setFormState({ ...formState, bgImageHeight: val })}
-                  />
-                  <div className="md:col-span-2 space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
-                      <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={formState.bgImageOpacity}
-                      onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
-                      className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                </div>
-
-                {(formState.bgImageUrl || formState.bgImageFile) && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setFormState({
-                      ...formState,
-                      bgImageUrl: "",
-                      bgImageFile: "",
-                      bgImageX: "0",
-                      bgImageY: "0",
-                      bgImageWidth: "595",
-                      bgImageHeight: "842",
-                      bgImageOpacity: "1.0",
-                    })}
-                    className="w-full text-xs h-8 rounded-lg mt-1 cursor-pointer"
-                  >
-                    Clear Background Image
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Template Thumbnail Settings */}
-            <div className="space-y-4 pt-4 border-t border-border">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Template Thumbnail</h3>
-              <div className="space-y-3.5">
-                {/* Auto thumbnail notice */}
-                <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold text-primary">Smart Auto-Thumbnail Active</p>
-                    <p className="text-xs text-muted-foreground leading-normal">
-                      By default, the builder will automatically capture your live SVG layout. However, you can choose to upload a custom high-quality cover thumbnail below to override it.
-                    </p>
-                  </div>
-                </div>
-
-                {/* File Upload Control */}
-                <div className="space-y-2.5 p-4 border border-border rounded-xl bg-muted/10">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground">Upload Custom Mockup / Cover Image (JPEG/PNG)</Label>
-                    <div className="flex flex-col gap-2.5">
-                      <input
-                        type="file"
-                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                        id="custom-thumbnail-input"
-                        onChange={(e) => handleFileChange(e, "thumbnailFile")}
-                        className="hidden"
-                      />
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("custom-thumbnail-input")?.click()}
-                          className="text-xs gap-1.5 h-9 cursor-pointer hover:bg-muted"
-                        >
-                          <Upload className="w-3.5 h-3.5" />
-                          Choose Image
-                        </Button>
-                        <span className="text-xs text-muted-foreground truncate max-w-[240px]">
-                          {formState.thumbnailFile ? "✓ Custom image loaded" : "No file selected"}
-                        </span>
-                      </div>
-                      
-                      {/* Live Selected Thumbnail Preview */}
-                      {formState.thumbnailFile && (
-                        <div className="relative w-28 aspect-[3/4] border border-primary/30 rounded-lg overflow-hidden bg-muted shadow-sm mt-1">
-                          <img
-                            src={formState.thumbnailFile}
-                            alt="Custom uploaded thumbnail preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormState({ ...formState, thumbnailFile: "" })}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600/90 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-700 transition-colors"
-                            title="Remove custom thumbnail"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Display existing db thumbnail if editing and no new one selected */}
-                      {!formState.thumbnailFile && template?.thumbnailUrl && (
-                        <div className="space-y-1 mt-1">
-                          <p className="text-[10px] text-muted-foreground">Current active thumbnail in database:</p>
-                          <div className="relative w-28 aspect-[3/4] border border-border rounded-lg overflow-hidden bg-muted shadow-sm">
-                            <img
-                              src={template.thumbnailUrl}
-                              alt="Current template thumbnail"
-                              className="w-full h-full object-cover"
+                  {/* Background Color Config */}
+                  <div className="border border-border rounded-xl p-4 bg-muted/10">
+                    {formState.frameBgType === "solid" ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Solid Background Color</Label>
+                          <div className="flex gap-2">
+                            <input
+                              type="color"
+                              value={formState.frameBgColor}
+                              onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                              className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
+                            />
+                            <Input
+                              type="text"
+                              value={formState.frameBgColor}
+                              onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                              className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
                             />
                           </div>
                         </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
+                          <Input
+                            type="text"
+                            value={formState.frameBgGradientColors}
+                            onChange={e => setFormState({ ...formState, frameBgGradientColors: e.target.value })}
+                            placeholder="e.g. #ffffff,#f9e8e8"
+                            className="font-mono focus-visible:ring-primary rounded-lg w-full"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {formState.frameBgType === "linear" ? "Renders as a top-to-bottom linear gradient." : "Renders as a center-outwards radial gradient."}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2.5">
+                          <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Select Gradient Background Color Palette</Label>
+                          <div className="flex flex-wrap gap-2 max-h-[220px] overflow-y-auto p-2 border border-border/80 rounded-xl bg-muted/20 shadow-inner">
+                            {(() => {
+                              const basePresets = GRADIENT_PRESETS.map(preset => {
+                                const colorsArr = preset.colors.split(",");
+                                const c1 = colorsArr[0]?.trim();
+                                const c2 = colorsArr[1]?.trim() || c1;
+                                const c3 = colorsArr[2]?.trim();
+
+                                let bgStyle = "";
+                                if (formState.frameBgType === "linear") {
+                                  bgStyle = c3
+                                    ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                    : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                                } else {
+                                  bgStyle = c3
+                                    ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                    : `radial-gradient(circle, ${c1}, ${c2})`;
+                                }
+
+                                return {
+                                  name: preset.name,
+                                  colors: preset.colors,
+                                  style: { background: bgStyle }
+                                };
+                              });
+
+                              const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
+                              const activeNormalized = normalizeColors(formState.frameBgGradientColors || "");
+                              const isAlreadyInPresets = GRADIENT_PRESETS.some(p => normalizeColors(p.colors) === activeNormalized);
+
+                              let finalPresets = [...basePresets];
+
+                              if (!isAlreadyInPresets && activeNormalized) {
+                                const colorsArr = formState.frameBgGradientColors.split(",");
+                                if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
+                                  const c1 = colorsArr[0].trim();
+                                  const c2 = colorsArr[1]?.trim() || c1;
+                                  const c3 = colorsArr[2]?.trim();
+
+                                  let bgStyle = "";
+                                  if (formState.frameBgType === "linear") {
+                                    bgStyle = c3
+                                      ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                      : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                                  } else {
+                                    bgStyle = c3
+                                      ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                      : `radial-gradient(circle, ${c1}, ${c2})`;
+                                  }
+
+                                  finalPresets.push({
+                                    name: "Custom Gradient",
+                                    colors: formState.frameBgGradientColors,
+                                    style: { background: bgStyle }
+                                  });
+                                }
+                              }
+
+                              return finalPresets.map((preset, idx) => {
+                                const isPresetActive = normalizeColors(formState.frameBgGradientColors) === normalizeColors(preset.colors);
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setFormState({ ...formState, frameBgGradientColors: preset.colors })}
+                                    className={cn(
+                                      "w-8 h-8 rounded-full border shadow-sm transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 bg-background relative cursor-pointer",
+                                      isPresetActive
+                                        ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md z-10"
+                                        : "border-border/80 hover:border-foreground"
+                                    )}
+                                    style={preset.style}
+                                    title={preset.name}
+                                  >
+                                    {isPresetActive && (
+                                      <span className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white shadow-sm ring-1 ring-black/10" />
+                                    )}
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Conditional Frame Fields */}
+                  {formState.frameType === "image" && (
+                    <div className="space-y-3.5 border border-border rounded-xl p-4 bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Upload Frame Image File *</Label>
+                        <div className="flex items-center gap-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById("frame-file-input")?.click()}
+                            className="text-xs font-bold gap-1.5 cursor-pointer rounded-lg h-10"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Choose PNG/SVG Frame
+                          </Button>
+                          <input
+                            id="frame-file-input"
+                            type="file"
+                            accept="image/png, image/svg+xml"
+                            className="hidden"
+                            onChange={e => handleFileChange(e, "frameFile")}
+                          />
+                          {formState.frameFile ? (
+                            <span className="text-xs text-green-600 font-semibold">✓ Frame loaded (ready to upload)</span>
+                          ) : template?.frameUrlTemplate ? (
+                            <span className="text-xs text-muted-foreground truncate max-w-xs">Current: {template.frameUrlTemplate?.slice(0, 50)}...</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No frame file selected</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Tip: Upload a grayscale/white transparent PNG or an SVG frame. Cloudinary can automatically tint these using your theme colors.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(formState.frameType === "svg" || formState.frameType === "gradient") && (
+                    <div className="space-y-4 border border-border rounded-xl p-4 bg-muted/10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <SliderInput
+                          label="Outer Frame Inset"
+                          id="outer-inset"
+                          min={0}
+                          max={100}
+                          value={formState.frameOuterInset}
+                          onChange={val => setFormState({ ...formState, frameOuterInset: val })}
+                        />
+                        <SliderInput
+                          label="Outer Stroke Width"
+                          id="outer-stroke"
+                          min={0}
+                          max={20}
+                          value={formState.frameOuterStrokeWidth}
+                          onChange={val => setFormState({ ...formState, frameOuterStrokeWidth: val })}
+                        />
+                        <SliderInput
+                          label="Outer Corner Radius"
+                          id="outer-radius"
+                          min={0}
+                          max={100}
+                          value={formState.frameOuterCornerRadius}
+                          onChange={val => setFormState({ ...formState, frameOuterCornerRadius: val })}
+                        />
+                        <SliderInput
+                          label="Inner Frame Inset"
+                          id="inner-inset"
+                          min={0}
+                          max={100}
+                          value={formState.frameInnerInset}
+                          onChange={val => setFormState({ ...formState, frameInnerInset: val })}
+                        />
+                        <SliderInput
+                          label="Inner Stroke Width"
+                          id="inner-stroke"
+                          min={0}
+                          max={20}
+                          value={formState.frameInnerStrokeWidth}
+                          onChange={val => setFormState({ ...formState, frameInnerStrokeWidth: val })}
+                        />
+                        <SliderInput
+                          label="Inner Corner Radius"
+                          id="inner-radius"
+                          min={0}
+                          max={100}
+                          value={formState.frameInnerCornerRadius}
+                          onChange={val => setFormState({ ...formState, frameInnerCornerRadius: val })}
+                        />
+                      </div>
+
+                      {formState.frameType === "svg" && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <input
+                            type="checkbox"
+                            id="has-corner-curves"
+                            checked={formState.frameHasCornerCurves}
+                            onChange={e => setFormState({ ...formState, frameHasCornerCurves: e.target.checked })}
+                            className="w-4 h-4 accent-primary rounded border-border"
+                          />
+                          <Label htmlFor="has-corner-curves" className="text-xs font-bold text-muted-foreground cursor-pointer select-none">
+                            Include traditional corner loop curves in SVG outline
+                          </Label>
+                        </div>
                       )}
+
+                      {formState.frameType === "gradient" && (
+                        <div className="space-y-1.5">
+                          <Label htmlFor="gradient-colors" className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
+                          <Input
+                            id="gradient-colors"
+                            type="text"
+                            value={formState.frameGradientColors}
+                            onChange={e => setFormState({ ...formState, frameGradientColors: e.target.value })}
+                            placeholder="e.g. #4F46E5,#06B6D4,#10B981"
+                            className="font-mono focus-visible:ring-primary rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {formState.frameType === "custom" && (
+                    <div className="space-y-3 border border-border rounded-xl p-4 bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Custom Renderer Component ID</Label>
+                        <Select
+                          value={formState.frameComponentId}
+                          onValueChange={value => setFormState({ ...formState, frameComponentId: value || "" })}
+                        >
+                          <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                            <SelectValue placeholder="Select custom design theme" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                            <SelectItem value="new-generation-arch" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">New Generation Arch (Dome shape)</SelectItem>
+                            <SelectItem value="ornate-grandeur" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ornate Grandeur Scroll</SelectItem>
+                            <SelectItem value="green-shapes" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Green Leaves Motif</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Background Watermark Image settings */}
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Background Watermark SVG</h3>
+                  <p className="text-xs text-muted-foreground leading-normal">
+                    Optionally upload an SVG file to render as a background watermark graphic behind the biodata text.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="space-y-3 p-4 border border-border rounded-xl bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Select from Uploaded Backgrounds Library</Label>
+                        <Select
+                          value={formState.bgImageUrl || "none"}
+                          onValueChange={(url: string | null) => {
+                            if (!url || url === "none") {
+                              setFormState({
+                                ...formState,
+                                bgImageUrl: "",
+                                bgImageFile: ""
+                              });
+                            } else {
+                              setFormState({
+                                ...formState,
+                                bgImageUrl: url,
+                                bgImageFile: ""
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3 cursor-pointer">
+                            <SelectValue placeholder=" - Select background SVG  -" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border border-border rounded-lg shadow-md max-h-[250px] overflow-y-auto">
+                            <SelectItem value="none" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm"> - None (No Watermark)  -</SelectItem>
+                            {dbBackgrounds.map((bg) => (
+                              <SelectItem key={bg.id} value={bg.url || ""} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
+                                {bg.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-border/80"></div>
+                        <span className="flex-shrink mx-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">or upload new one-off SVG</span>
+                        <div className="flex-grow border-t border-border/80"></div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Upload Custom SVG Watermark</Label>
+                        <Input
+                          type="file"
+                          accept="image/svg+xml"
+                          onChange={(e) => handleFileChange(e, "bgImageFile")}
+                          className="cursor-pointer focus-visible:ring-primary rounded-lg bg-background"
+                        />
+                        {formState.bgImageUrl && (
+                          <p className="text-[10px] text-green-600 font-medium truncate mt-1">
+                            Active Watermark: <a href={formState.bgImageUrl} target="_blank" rel="noreferrer" className="underline font-mono">{formState.bgImageUrl.substring(formState.bgImageUrl.lastIndexOf('/') + 1)}</a>
+                          </p>
+                        )}
+                        {formState.bgImageFile && (
+                          <p className="text-[10px] text-primary font-bold mt-1">
+                            ✓ New SVG uploaded (base64 payload ready)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <SliderInput
+                        label="Background X Position"
+                        id="bg-x"
+                        min={-200}
+                        max={595}
+                        value={formState.bgImageX}
+                        onChange={(val) => setFormState({ ...formState, bgImageX: val })}
+                      />
+                      <SliderInput
+                        label="Background Y Position"
+                        id="bg-y"
+                        min={-200}
+                        max={842}
+                        value={formState.bgImageY}
+                        onChange={(val) => setFormState({ ...formState, bgImageY: val })}
+                      />
+                      <SliderInput
+                        label="Background Width"
+                        id="bg-w"
+                        min={10}
+                        max={1200}
+                        value={formState.bgImageWidth}
+                        onChange={(val) => setFormState({ ...formState, bgImageWidth: val })}
+                      />
+                      <SliderInput
+                        label="Background Height"
+                        id="bg-h"
+                        min={10}
+                        max={1600}
+                        value={formState.bgImageHeight}
+                        onChange={(val) => setFormState({ ...formState, bgImageHeight: val })}
+                      />
+                      <div className="md:col-span-2 space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
+                          <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={formState.bgImageOpacity}
+                          onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {(formState.bgImageUrl || formState.bgImageFile) && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setFormState({
+                          ...formState,
+                          bgImageUrl: "",
+                          bgImageFile: "",
+                          bgImageX: "0",
+                          bgImageY: "0",
+                          bgImageWidth: "595",
+                          bgImageHeight: "842",
+                          bgImageOpacity: "1.0",
+                        })}
+                        className="w-full text-xs h-8 rounded-lg mt-1 cursor-pointer"
+                      >
+                        Clear Background Image
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Template Thumbnail Settings */}
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Template Thumbnail</h3>
+                  <div className="space-y-3.5">
+                    {/* Auto thumbnail notice */}
+                    <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-primary">Smart Auto-Thumbnail Active</p>
+                        <p className="text-xs text-muted-foreground leading-normal">
+                          By default, the builder will automatically capture your live SVG layout. However, you can choose to upload a custom high-quality cover thumbnail below to override it.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* File Upload Control */}
+                    <div className="space-y-2.5 p-4 border border-border rounded-xl bg-muted/10">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Upload Custom Mockup / Cover Image (JPEG/PNG)</Label>
+                        <div className="flex flex-col gap-2.5">
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/jpg, image/webp"
+                            id="custom-thumbnail-input"
+                            onChange={(e) => handleFileChange(e, "thumbnailFile")}
+                            className="hidden"
+                          />
+                          <div className="flex items-center gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => document.getElementById("custom-thumbnail-input")?.click()}
+                              className="text-xs gap-1.5 h-9 cursor-pointer hover:bg-muted"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              Choose Image
+                            </Button>
+                            <span className="text-xs text-muted-foreground truncate max-w-[240px]">
+                              {formState.thumbnailFile ? "✓ Custom image loaded" : "No file selected"}
+                            </span>
+                          </div>
+
+                          {/* Live Selected Thumbnail Preview */}
+                          {formState.thumbnailFile && (
+                            <div className="relative w-28 aspect-[3/4] border border-primary/30 rounded-lg overflow-hidden bg-muted shadow-sm mt-1">
+                              <img
+                                src={formState.thumbnailFile}
+                                alt="Custom uploaded thumbnail preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setFormState({ ...formState, thumbnailFile: "" })}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600/90 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-700 transition-colors"
+                                title="Remove custom thumbnail"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Display existing db thumbnail if editing and no new one selected */}
+                          {!formState.thumbnailFile && template?.thumbnailUrl && (
+                            <div className="space-y-1 mt-1">
+                              <p className="text-[10px] text-muted-foreground">Current active thumbnail in database:</p>
+                              <div className="relative w-28 aspect-[3/4] border border-border rounded-lg overflow-hidden bg-muted shadow-sm">
+                                <img
+                                  src={template.thumbnailUrl}
+                                  alt="Current template thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Submit Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-border">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/templates")}
-                disabled={isSubmitLoading}
-                className="cursor-pointer rounded-lg"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitLoading}
-                className="font-bold cursor-pointer rounded-lg"
-              >
-                {isSubmitLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Template"
-                )}
-              </Button>
-            </div>
+                {/* Submit Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push("/admin/templates")}
+                    disabled={isSubmitLoading}
+                    className="cursor-pointer rounded-lg"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitLoading}
+                    className="font-bold cursor-pointer rounded-lg"
+                  >
+                    {isSubmitLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Template"
+                    )}
+                  </Button>
+                </div>
 
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
-    {/* Right Column: Sticky Live Preview */}
-    <div className="lg:col-span-5 relative">
-      <div className="sticky top-6 space-y-4">
-        <Card className="border border-border bg-card rounded-xl shadow-md overflow-hidden">
-          <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                Live Mockup Preview
-              </h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Real-time A4 rendering simulator (595x842 ratio)
-              </p>
-            </div>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-xs h-8 cursor-pointer gap-1">
-                  Full View
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-card border border-border p-6 rounded-xl overflow-hidden">
-                <DialogHeader>
-                  <DialogTitle className="text-lg font-black text-primary">Full Template Mockup</DialogTitle>
-                  <DialogDescription className="text-xs">
-                    High fidelity simulated rendering of "{formState.name || 'Untitled Template'}" layout.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="flex justify-center py-4 bg-muted/10 rounded-lg border border-border">
-                  <div className="h-[48vh] max-w-full aspect-[595/842] shadow-lg rounded-md overflow-hidden bg-white flex items-center justify-center border border-border/40 transition-all duration-300">
+        {/* Right Column: Sticky Live Preview */}
+        <div className="lg:col-span-5 relative">
+          <div className="sticky top-6 space-y-4">
+            <Card className="border border-border bg-card rounded-xl shadow-md overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                      </span>
+                      Live Mockup Preview
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Real-time A4 rendering simulator (595x842 ratio)
+                    </p>
+                  </div>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-xs h-8 cursor-pointer gap-1">
+                        Full View
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl bg-card border border-border p-6 rounded-xl overflow-hidden">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg font-black text-primary">Full Template Mockup</DialogTitle>
+                        <DialogDescription className="text-xs">
+                          High fidelity simulated rendering of "{formState.name || 'Untitled Template'}" layout.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="flex justify-center py-4 bg-muted/10 rounded-lg border border-border">
+                        <div className="h-[48vh] max-w-full aspect-[595/842] shadow-lg rounded-md overflow-hidden bg-white flex items-center justify-center border border-border/40 transition-all duration-300">
+                          <TemplateSvgPreview formState={formState} template={template} />
+                        </div>
+                      </div>
+
+                      <DialogFooter showCloseButton />
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {/* SVG Preview container */}
+                <div className="bg-muted/30 border border-border/60 rounded-xl p-4 flex justify-center items-center shadow-inner">
+                  <div className="w-full max-w-[340px] aspect-[595/842] shadow-lg rounded-lg overflow-hidden bg-white border border-border/40 transition-all duration-300">
                     <TemplateSvgPreview formState={formState} template={template} />
                   </div>
                 </div>
-                
-                <DialogFooter showCloseButton />
-              </DialogContent>
-            </Dialog>
-          </div>
 
-          {/* SVG Preview container */}
-          <div className="bg-muted/30 border border-border/60 rounded-xl p-4 flex justify-center items-center shadow-inner">
-            <div className="w-full max-w-[340px] aspect-[595/842] shadow-lg rounded-lg overflow-hidden bg-white border border-border/40 transition-all duration-300">
-              <TemplateSvgPreview formState={formState} template={template} />
-            </div>
+                <div className="text-[11px] text-muted-foreground bg-muted/20 border border-border/40 rounded-lg p-3 space-y-1.5">
+                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                    <span className="text-xs">💡</span> Handy Tips:
+                  </div>
+                  <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                    <li>Adjust <strong>Photo X & Y</strong> to move the profile photo.</li>
+                    <li>Toggle between <strong>Classic SVG</strong>, <strong>Gradient</strong>, or <strong>Custom component</strong> to see frame changes instantly.</li>
+                    <li>Verify that titles and mantras do not overlap with the photo box coordinates.</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-
-          <div className="text-[11px] text-muted-foreground bg-muted/20 border border-border/40 rounded-lg p-3 space-y-1.5">
-            <div className="font-semibold text-foreground flex items-center gap-1.5">
-              <span className="text-xs">💡</span> Handy Tips:
-            </div>
-            <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-              <li>Adjust <strong>Photo X & Y</strong> to move the profile photo.</li>
-              <li>Toggle between <strong>Classic SVG</strong>, <strong>Gradient</strong>, or <strong>Custom component</strong> to see frame changes instantly.</li>
-              <li>Verify that titles and mantras do not overlap with the photo box coordinates.</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
       </div>
     </div>
-  </div>
-</div>
   );
 }
 
@@ -1431,9 +1431,9 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
       viewBox="0 0 595 842"
       width="100%"
       height="100%"
-      style={{ 
-        backgroundColor: formState.frameBgType === "solid" ? bgColor : "transparent", 
-        display: "block" 
+      style={{
+        backgroundColor: formState.frameBgType === "solid" ? bgColor : "transparent",
+        display: "block"
       }}
       className="select-none"
     >
@@ -1441,10 +1441,10 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         {/* Gradient for frame border type */}
         <linearGradient id="live-preview-grad" x1="0%" y1="0%" x2="100%" y2="100%">
           {gradientColors.map((color, idx, arr) => (
-            <stop 
-              key={idx} 
-              offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`} 
-              stopColor={color || "#4F46E5"} 
+            <stop
+              key={idx}
+              offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`}
+              stopColor={color || "#4F46E5"}
             />
           ))}
         </linearGradient>
@@ -1453,10 +1453,10 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         {formState.frameBgType === "linear" && (
           <linearGradient id="bg-linear-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             {bgGradientColors.map((color, idx, arr) => (
-              <stop 
-                key={idx} 
-                offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`} 
-                stopColor={color || "#ffffff"} 
+              <stop
+                key={idx}
+                offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`}
+                stopColor={color || "#ffffff"}
               />
             ))}
           </linearGradient>
@@ -1466,10 +1466,10 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         {formState.frameBgType === "radial" && (
           <radialGradient id="bg-radial-grad" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
             {bgGradientColors.map((color, idx, arr) => (
-              <stop 
-                key={idx} 
-                offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`} 
-                stopColor={color || "#ffffff"} 
+              <stop
+                key={idx}
+                offset={`${(idx / Math.max(1, arr.length - 1)) * 100}%`}
+                stopColor={color || "#ffffff"}
               />
             ))}
           </radialGradient>
@@ -1482,14 +1482,14 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
       </defs>
 
       {/* Page Base Background */}
-      <rect 
-        width="595" 
-        height="842" 
+      <rect
+        width="595"
+        height="842"
         fill={
-          formState.frameBgType === "linear" ? "url(#bg-linear-grad)" : 
-          formState.frameBgType === "radial" ? "url(#bg-radial-grad)" : 
-          bgColor
-        } 
+          formState.frameBgType === "linear" ? "url(#bg-linear-grad)" :
+            formState.frameBgType === "radial" ? "url(#bg-radial-grad)" :
+              bgColor
+        }
       />
 
       {/* Background Watermark Image rendering */}
@@ -1538,11 +1538,11 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
               {/* Top-Left Corner */}
               <path d={`M ${innerInset + 10} ${innerInset} A 10,10 0 0,0 ${innerInset} ${innerInset + 10}`} />
               <circle cx={innerInset + 8} cy={innerInset + 8} r="3" fill={accentColor} />
-              
+
               {/* Top-Right Corner */}
               <path d={`M ${595 - innerInset - 10} ${innerInset} A 10,10 0 0,1 ${595 - innerInset} ${innerInset + 10}`} />
               <circle cx={595 - innerInset - 8} cy={innerInset + 8} r="3" fill={accentColor} />
-              
+
               {/* Bottom-Left Corner */}
               <path d={`M ${innerInset + 10} ${842 - innerInset} A 10,10 0 0,1 ${innerInset} ${842 - innerInset - 10}`} />
               <circle cx={innerInset + 8} cy={842 - innerInset - 8} r="3" fill={accentColor} />
@@ -1588,12 +1588,12 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         <g>
           {frameImageSrc ? (
             /* Render active PNG image frame overlay scaled and tinted via SVG styling */
-            <image 
-              href={frameImageSrc} 
-              x="0" 
-              y="0" 
-              width="595" 
-              height="842" 
+            <image
+              href={frameImageSrc}
+              x="0"
+              y="0"
+              width="595"
+              height="842"
               preserveAspectRatio="none"
               style={{ filter: `drop-shadow(0px 0px 1px ${primaryColor})` }}
             />
@@ -1613,14 +1613,14 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
           {formState.frameComponentId === "new-generation-arch" && (
             <g stroke={primaryColor} fill="none">
               {/* Elegant dome outline */}
-              <path 
-                d="M 30,120 L 30,802 A 15,15 0 0,0 45,817 L 550,817 A 15,15 0 0,0 565,802 L 565,120 C 565,80 500,40 297,40 C 94,40 30,80 30,120 Z" 
-                strokeWidth="3" 
+              <path
+                d="M 30,120 L 30,802 A 15,15 0 0,0 45,817 L 550,817 A 15,15 0 0,0 565,802 L 565,120 C 565,80 500,40 297,40 C 94,40 30,80 30,120 Z"
+                strokeWidth="3"
               />
-              <path 
-                d="M 40,125 L 40,792 A 10,10 0 0,0 50,802 L 545,802 A 10,10 0 0,0 555,792 L 555,125 C 555,90 495,52 297,52 C 99,52 40,90 40,125 Z" 
-                stroke={accentColor} 
-                strokeWidth="1.5" 
+              <path
+                d="M 40,125 L 40,792 A 10,10 0 0,0 50,802 L 545,802 A 10,10 0 0,0 555,792 L 555,125 C 555,90 495,52 297,52 C 99,52 40,90 40,125 Z"
+                stroke={accentColor}
+                strokeWidth="1.5"
                 strokeDasharray="4,2"
               />
               {/* Dome crest decoration */}
@@ -1628,12 +1628,12 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
               <path d="M 297,21 L 297,12 M 294,15 L 300,15" stroke={accentColor} strokeWidth="1.5" />
             </g>
           )}
-          
+
           {formState.frameComponentId === "ornate-grandeur" && (
             <g stroke={primaryColor} fill="none">
               <rect x="25" y="25" width="545" height="792" rx="4" strokeWidth="2.5" />
               <rect x="33" y="33" width="529" height="776" rx="2" strokeWidth="1" stroke={accentColor} />
-              
+
               {/* Detailed Scroll accents in corners */}
               <path d={`M 25 65 C 45 65, 45 45, 65 45`} strokeWidth="2" stroke={accentColor} />
               <path d={`M 570 65 C 550 65, 550 45, 530 45`} strokeWidth="2" stroke={accentColor} />
@@ -1646,7 +1646,7 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
             <g fill="none">
               <rect x="20" y="20" width="555" height="802" rx="6" stroke="#2E7D32" strokeWidth="2" />
               <rect x="28" y="28" width="539" height="786" rx="4" stroke={accentColor} strokeWidth="1" strokeDasharray="3, 3" />
-              
+
               {/* Leaf motifs at corners */}
               <path d="M 20 20 Q 40 30, 30 50 Q 20 40, 20 20 Z" fill="#2E7D32" opacity="0.8" />
               <path d="M 575 20 Q 555 30, 565 50 Q 575 40, 575 20 Z" fill="#2E7D32" opacity="0.8" />
@@ -1659,11 +1659,11 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
 
       {/* Decorative Mantra Header */}
       <g textAnchor="middle">
-        <text 
-          x="297" 
-          y={paddingY + 15} 
-          fill={primaryColor} 
-          fontSize="14" 
+        <text
+          x="297"
+          y={paddingY + 15}
+          fill={primaryColor}
+          fontSize="14"
           fontWeight="bold"
           fontFamily="Georgia, serif"
         >
@@ -1677,67 +1677,67 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
       {/* Profile Photo Placeholder Area */}
       <g>
         {/* Shadow card background behind photo */}
-        <rect 
-          x={px - 2} 
-          y={py - 2} 
-          width={pw + 4} 
-          height={ph + 4} 
-          fill="none" 
-          stroke={accentColor} 
-          strokeWidth="1.5" 
-          rx={pr + 1} 
-          ry={pr + 1} 
+        <rect
+          x={px - 2}
+          y={py - 2}
+          width={pw + 4}
+          height={ph + 4}
+          fill="none"
+          stroke={accentColor}
+          strokeWidth="1.5"
+          rx={pr + 1}
+          ry={pr + 1}
         />
         {/* Main photo container */}
-        <rect 
-          x={px} 
-          y={py} 
-          width={pw} 
-          height={ph} 
-          fill="#FFFBF8" 
-          rx={pr} 
-          ry={pr} 
+        <rect
+          x={px}
+          y={py}
+          width={pw}
+          height={ph}
+          fill="#FFFBF8"
+          rx={pr}
+          ry={pr}
         />
-        
+
         {/* Clip-pathed simulated image */}
         <g clipPath="url(#photo-clip)">
           {/* Background pattern */}
           <rect x={px} y={py} width={pw} height={ph} fill="rgba(201, 168, 76, 0.08)" />
           {/* Avatar representation inside the photo box */}
-          <path 
-            d={`M ${px + pw/2} ${py + ph*0.4} A ${pw*0.2} ${pw*0.2} 0 1 0 ${px + pw/2} ${py + ph*0.4001}`} 
-            fill="none" 
-            stroke={primaryColor} 
+          <path
+            d={`M ${px + pw / 2} ${py + ph * 0.4} A ${pw * 0.2} ${pw * 0.2} 0 1 0 ${px + pw / 2} ${py + ph * 0.4001}`}
+            fill="none"
+            stroke={primaryColor}
             strokeWidth="3.5"
             opacity="0.4"
           />
-          <path 
-            d={`M ${px + pw*0.2} ${py + ph*0.9} C ${px + pw*0.2} ${py + ph*0.65}, ${px + pw*0.8} ${py + ph*0.65}, ${px + pw*0.8} ${py + ph*0.9}`} 
-            fill="none" 
-            stroke={primaryColor} 
-            strokeWidth="3.5" 
+          <path
+            d={`M ${px + pw * 0.2} ${py + ph * 0.9} C ${px + pw * 0.2} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.9}`}
+            fill="none"
+            stroke={primaryColor}
+            strokeWidth="3.5"
             opacity="0.4"
           />
           {/* Overlay Border inside */}
-          <rect 
-            x={px} 
-            y={py} 
-            width={pw} 
-            height={ph} 
-            fill="none" 
-            stroke={primaryColor} 
-            strokeWidth="1" 
-            opacity="0.25" 
+          <rect
+            x={px}
+            y={py}
+            width={pw}
+            height={ph}
+            fill="none"
+            stroke={primaryColor}
+            strokeWidth="1"
+            opacity="0.25"
           />
         </g>
 
         {/* Caption */}
-        <text 
-          x={px + pw/2} 
-          y={py + ph - 10} 
-          textAnchor="middle" 
-          fill={primaryColor} 
-          fontSize="10" 
+        <text
+          x={px + pw / 2}
+          y={py + ph - 10}
+          textAnchor="middle"
+          fill={primaryColor}
+          fontSize="10"
           fontWeight="bold"
           opacity="0.7"
         >
@@ -1747,12 +1747,12 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
 
       {/* Main Document Title */}
       <g>
-        <text 
-          x={paddingX} 
-          y={paddingY + 95} 
-          fill={primaryColor} 
-          fontSize="24" 
-          fontWeight="900" 
+        <text
+          x={paddingX}
+          y={paddingY + 95}
+          fill={primaryColor}
+          fontSize="24"
+          fontWeight="900"
           fontFamily="Georgia, serif"
           letterSpacing="2"
         >
@@ -1764,7 +1764,7 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
 
       {/* Simulated Biodata Details Text */}
       <g fill={secondaryColor} fontSize="11" fontFamily="system-ui, -apple-system, sans-serif">
-        
+
         {/* Section 1: Personal Details */}
         <text x={paddingX} y={cursorY} fill={primaryColor} fontSize="12" fontWeight="bold" letterSpacing="0.5">
           PERSONAL DETAILS
@@ -1837,7 +1837,7 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         <text x={paddingX + 105} y={cursorY + 551} opacity="0.95">: 402, Royal Palms, Bandra West, Mumbai</text>
 
       </g>
-      
+
       {/* Decorative footer elements */}
       <line x1={paddingX - 15} y1={842 - paddingY - 10} x2={595 - paddingX + 15} y2={842 - paddingY - 10} stroke={primaryColor} strokeWidth="0.5" opacity="0.3" />
     </svg>
@@ -1857,7 +1857,7 @@ interface SliderInputProps {
 
 function SliderInput({ label, id, min, max, value, onChange, placeholder, className }: SliderInputProps) {
   const numValue = parseFloat(value) || 0;
-  
+
   return (
     <div className={cn("space-y-1.5 bg-muted/5 border border-border/20 p-2.5 rounded-lg", className)}>
       <div className="flex items-center justify-between">

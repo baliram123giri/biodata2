@@ -5,9 +5,6 @@ import { usePathname } from "next/navigation";
 import { Logo } from "@/components/layout/Logo";
 import {
   Heart,
-  FileText,
-  Download,
-  Sparkles,
   Mail,
   MapPin,
   ArrowRight,
@@ -16,11 +13,6 @@ import {
 } from "lucide-react";
 
 const footerLinks = {
-  product: [
-    { label: "Build Biodata", href: "/#builder", icon: FileText },
-    { label: "Designer Studio", href: "/edit", icon: Sparkles },
-    { label: "Download Free", href: "/#builder", icon: Download },
-  ],
   company: [
     { label: "Our Blog", href: "/blog" },
     { label: "About Us", href: "/about-us" },
@@ -79,7 +71,7 @@ export function Footer() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
 
             {/* Brand Column */}
-            <div className="md:col-span-4 flex flex-col gap-5">
+            <div className="md:col-span-5 flex flex-col gap-5">
               <Logo iconClassName="h-10 md:h-12" disableShine />
               <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
@@ -110,29 +102,8 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Product Links */}
-            <div className="md:col-span-3">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5 flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                Product
-              </h3>
-              <ul className="space-y-3">
-                {footerLinks.product.map(({ label, href, icon: Icon }) => (
-                  <li key={label}>
-                    <Link
-                      href={href}
-                      className="group flex items-center gap-2.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors duration-200"
-                    >
-                      <Icon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
             {/* Company Links */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-3">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5">
                 Company
               </h3>
@@ -152,7 +123,7 @@ export function Footer() {
             </div>
 
             {/* Legal Links */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-4">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5">
                 Legal
               </h3>

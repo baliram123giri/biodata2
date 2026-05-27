@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { 
-  BarChart3, 
-  Calendar, 
+import {
+  BarChart3,
+  Calendar,
   Sparkles,
   Download,
   Activity
@@ -14,11 +14,11 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 export default function AdminAnalytics() {
   // Chart calculation metrics
   const languageData = [
-    { name: "Hindi", percentage: 42, color: "fill-[var(--chart-1)]" },
-    { name: "Marathi", percentage: 28, color: "fill-[var(--chart-2)]" },
-    { name: "Gujarati", percentage: 15, color: "fill-[var(--chart-3)]" },
-    { name: "English", percentage: 10, color: "fill-[var(--chart-4)]" },
-    { name: "Others", percentage: 5, color: "fill-[var(--chart-5)]" },
+    { name: "Hindi", percentage: 42, color: "fill-[var( -chart-1)]" },
+    { name: "Marathi", percentage: 28, color: "fill-[var( -chart-2)]" },
+    { name: "Gujarati", percentage: 15, color: "fill-[var( -chart-3)]" },
+    { name: "English", percentage: 10, color: "fill-[var( -chart-4)]" },
+    { name: "Others", percentage: 5, color: "fill-[var( -chart-5)]" },
   ];
 
   const communityData = [
@@ -105,7 +105,7 @@ export default function AdminAnalytics() {
 
       {/* SVG Charts section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* Language Popularity Doughnut / Polar Chart */}
         <Card className="p-5 sm:p-6 bg-card border border-border rounded-xl space-y-6 shadow-sm">
           <div>
@@ -118,15 +118,15 @@ export default function AdminAnalytics() {
             <div className="relative w-40 h-40">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                 {/* 42% Hindi */}
-                <circle cx="50" cy="50" r="40" stroke="var(--chart-1)" strokeWidth="15" strokeDasharray="105.5 251.2" strokeDashoffset="0" fill="none" />
+                <circle cx="50" cy="50" r="40" stroke="var( -chart-1)" strokeWidth="15" strokeDasharray="105.5 251.2" strokeDashoffset="0" fill="none" />
                 {/* 28% Marathi */}
-                <circle cx="50" cy="50" r="40" stroke="var(--chart-2)" strokeWidth="15" strokeDasharray="70.3 251.2" strokeDashoffset="-105.5" fill="none" />
+                <circle cx="50" cy="50" r="40" stroke="var( -chart-2)" strokeWidth="15" strokeDasharray="70.3 251.2" strokeDashoffset="-105.5" fill="none" />
                 {/* 15% Gujarati */}
-                <circle cx="50" cy="50" r="40" stroke="var(--chart-3)" strokeWidth="15" strokeDasharray="37.7 251.2" strokeDashoffset="-175.8" fill="none" />
+                <circle cx="50" cy="50" r="40" stroke="var( -chart-3)" strokeWidth="15" strokeDasharray="37.7 251.2" strokeDashoffset="-175.8" fill="none" />
                 {/* 10% English */}
-                <circle cx="50" cy="50" r="40" stroke="var(--chart-4)" strokeWidth="15" strokeDasharray="25.1 251.2" strokeDashoffset="-213.5" fill="none" />
+                <circle cx="50" cy="50" r="40" stroke="var( -chart-4)" strokeWidth="15" strokeDasharray="25.1 251.2" strokeDashoffset="-213.5" fill="none" />
                 {/* 5% Others */}
-                <circle cx="50" cy="50" r="40" stroke="var(--chart-5)" strokeWidth="15" strokeDasharray="12.6 251.2" strokeDashoffset="-238.6" fill="none" />
+                <circle cx="50" cy="50" r="40" stroke="var( -chart-5)" strokeWidth="15" strokeDasharray="12.6 251.2" strokeDashoffset="-238.6" fill="none" />
               </svg>
               <div className="absolute inset-0 flex flex-col justify-center items-center">
                 <span className="text-xl font-extrabold text-foreground">42%</span>
