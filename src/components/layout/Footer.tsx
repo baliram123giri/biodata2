@@ -9,7 +9,6 @@ import {
   Download,
   Sparkles,
   Mail,
-  Globe,
   MessageCircle,
   Camera,
   ArrowRight,
@@ -38,7 +37,6 @@ const footerLinks = {
 const socialLinks = [
   { icon: MessageCircle, href: "https://twitter.com", label: "Twitter" },
   { icon: Camera, href: "https://instagram.com", label: "Instagram" },
-  { icon: Globe, href: "https://facebook.com", label: "Facebook" },
 ];
 
 export function Footer() {

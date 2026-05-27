@@ -89,6 +89,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://biodata99.com",
   },
+  other: {
+    "p:domain_verify": "259c0a9accc44c5fd0b0fe527fa56d4d",
+  },
 };
 
 export default function RootLayout({

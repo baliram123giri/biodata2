@@ -273,7 +273,7 @@ export function ContactFormSection() {
         </div>
 
         <Tooltip.Provider delayDuration={200}>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* Instagram */}
             <Tooltip.Root>
@@ -302,38 +302,6 @@ export function ContactFormSection() {
                   sideOffset={6}
                 >
                   Follow us on Instagram for daily template previews!
-                  <Tooltip.Arrow className="fill-border" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-
-            {/* Facebook */}
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <a
-                  id="social-facebook"
-                  href="https://facebook.com/biodata99"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative flex flex-col items-center gap-3 p-5 rounded-2xl border border-blue-600/20 bg-blue-600/5 hover:border-blue-600/50 hover:bg-blue-600/10 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(37,99,235,0.2)] active:scale-95 cursor-pointer"
-                >
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[#1877F2] shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-black text-foreground">Facebook</p>
-                    <p className="text-xs text-blue-500 dark:text-blue-400 font-semibold">biodata99</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-tight">Updates & support</p>
-                  <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-blue-400 transition-colors" />
-                </a>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="z-50 rounded-lg bg-popover border border-border px-3 py-1.5 text-xs text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
-                  sideOffset={6}
-                >
-                  Like our page for announcements & community Q&A!
                   <Tooltip.Arrow className="fill-border" />
                 </Tooltip.Content>
               </Tooltip.Portal>
