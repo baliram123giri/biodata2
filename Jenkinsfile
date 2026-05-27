@@ -35,15 +35,15 @@ pipeline {
 
           # Sync source only - explicitly exclude secrets and build artifacts
           rsync -a \
-             -exclude=node_modules \
-             -exclude=.next \
-             -exclude=.git \
-             -exclude=.env \
-             -exclude=.env.local \
-             -exclude=.env.production \
-             -exclude=.env.development \
-             -exclude="*.pem" \
-             -exclude="*.key" \
+             --exclude=node_modules \
+             --exclude=.next \
+             --exclude=.git \
+             --exclude=.env \
+             --exclude=.env.local \
+             --exclude=.env.production \
+             --exclude=.env.development \
+             --exclude="*.pem" \
+             --exclude="*.key" \
             ./ "$RELEASE/"
 
           # Lock down release directory permissions immediately
@@ -68,7 +68,7 @@ pipeline {
 
           # Build silently - no env values echoed
           echo "🏗 Building Next.js"
-          NODE_ENV=production npm run build  -silent
+          NODE_ENV=production npm run build --silent
 
           # Atomic symlink swap (no downtime window)
           echo "🔗 Swapping 'current' symlink"
@@ -77,10 +77,10 @@ pipeline {
           # Zero-downtime PM2 reload
           echo "🔄 Gracefully restarting PM2"
           cd "$PROD_BASE/current"
-          pm2 reload ecosystem.config.js  -only "$APP_NAME"  -silent \
-            || pm2 start ecosystem.config.js  -only "$APP_NAME"  -silent
+          pm2 reload ecosystem.config.js --only "$APP_NAME" --silent \
+            || pm2 start ecosystem.config.js --only "$APP_NAME" --silent
 
-          pm2 save  -force 2>/dev/null
+          pm2 save --force 2>/dev/null
 
           # Prune old releases
           echo "🧹 Cleaning up old releases"
