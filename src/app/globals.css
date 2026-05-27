@@ -535,3 +535,93 @@ textarea::placeholder,
   background-color: rgba(37, 211, 102, 0.05);
   border-color: rgba(37, 211, 102, 0.15);
 }
+
+/* ─────────────────────────────────────────────
+   WYSIWYG TIPTAP & READER SYNC STYLES
+───────────────────────────────────────────── */
+.tiptap-content-canvas,
+.prose {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif !important;
+}
+
+.tiptap-content-canvas strong,
+.tiptap-content-canvas b,
+.prose strong,
+.prose b {
+  font-weight: 800 !important; /* Bold, crisp text matching high-fidelity highlight */
+  color: var(--foreground) !important;
+}
+
+.tiptap-content-canvas h2,
+.prose h2 {
+  font-size: 1.5rem !important; /* 24px */
+  font-weight: 900 !important;  /* Ultra black headings */
+  line-height: 1.35 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.75rem !important;
+  color: var(--foreground) !important;
+  letter-spacing: -0.025em !important;
+}
+
+.tiptap-content-canvas h3,
+.prose h3 {
+  font-size: 1.25rem !important; /* 20px */
+  font-weight: 850 !important;  /* Heavy heading */
+  line-height: 1.4 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+  color: var(--foreground) !important;
+  letter-spacing: -0.02em !important;
+}
+
+.tiptap-content-canvas p,
+.prose p {
+  font-size: 0.925rem !important; /* 14.8px - clean readable font size */
+  line-height: 1.7 !important;
+  margin-bottom: 1rem !important;
+  color: var(--muted-foreground) !important;
+}
+
+.tiptap-content-canvas ul,
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.tiptap-content-canvas ol,
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.tiptap-content-canvas li,
+.prose li {
+  margin-bottom: 0.35rem !important;
+  font-size: 0.925rem !important;
+  line-height: 1.7 !important;
+  color: var(--muted-foreground) !important;
+}
+
+.tiptap-content-canvas blockquote,
+.prose blockquote {
+  border-left: 4px solid var(--primary) !important;
+  background-color: var(--muted) !important;
+  padding: 0.75rem 1rem !important;
+  margin: 1.25rem 0 !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  font-style: italic !important;
+}
+
+.tiptap-content-canvas a,
+.prose a {
+  color: var(--primary) !important;
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+}
+
+.tiptap-content-canvas a:hover,
+.prose a:hover {
+  opacity: 0.8 !important;
+}

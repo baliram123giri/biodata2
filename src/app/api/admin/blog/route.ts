@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, slug, publishDate, readTime, category, author, content } = body;
+    const { title, description, slug, publishDate, readTime, category, language, thumbnailUrl, author, content } = body;
 
     if (!title || !description || !content) {
       return NextResponse.json({ error: "Title, description, and content are required fields" }, { status: 400 });
@@ -74,9 +74,11 @@ export async function POST(req: Request) {
         title,
         description,
         slug: finalSlug,
+        thumbnailUrl: thumbnailUrl || null,
         publishDate: finalPublishDate,
         readTime: finalReadTime,
         category: category || "Biodata Tips",
+        language: language || "English",
         author: author || sessionUser.name || "Admin",
         content,
       },

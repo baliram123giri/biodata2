@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import NextImage from "next/image";
 import { 
   BookOpen, 
   Plus, 
@@ -20,7 +21,9 @@ import {
   ListOrdered,
   Quote,
   Eye,
-  Sparkles
+  Sparkles,
+  Image as ImageIcon,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,15 +57,18 @@ import Link from "next/link";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import ImageExtension from "@tiptap/extension-image";
 
 interface BlogPost {
   id: string;
   slug: string;
   title: string;
   description: string;
+  thumbnailUrl?: string | null;
   publishDate: string;
   readTime: string;
   category: string;
+  language: string;
   author: string;
   content: string;
   createdAt: string;
@@ -85,12 +91,17 @@ export default function AdminBlogPosts() {
   const [description, setDescription] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [category, setCategory] = React.useState("Biodata Tips");
+  const [language, setLanguage] = React.useState("English");
+  const [thumbnailUrl, setThumbnailUrl] = React.useState("");
+  const [isThumbnailUploading, setIsThumbnailUploading] = React.useState(false);
   const [author, setAuthor] = React.useState("");
   const [content, setContent] = React.useState("");
   const [publishDate, setPublishDate] = React.useState("");
   const [readTime, setReadTime] = React.useState("");
 
   const categories = ["Biodata Tips", "Cultural Guide", "Style & Grooming"];
+  const languages = ["English", "Marathi (मराठी)", "Hindi (हिंदी)", "Gujarati (ગુજરાતી)"];
+  const [languageFilter, setLanguageFilter] = React.useState("All");
 
   // Initialize Tiptap WYSIWYG editor with Placeholder and custom typography styling
   const editor = useEditor({
@@ -103,6 +114,11 @@ export default function AdminBlogPosts() {
       Placeholder.configure({
         placeholder: "Start writing your matrimonial guide here... Select headings, bold highlights, quotes, or custom alerts from the toolbar above to style your content in real-time.",
         emptyNodeClass: "is-editor-empty",
+      }),
+      ImageExtension.configure({
+        HTMLAttributes: {
+          class: "rounded-lg max-w-full my-4 mx-auto block border border-border shadow-sm",
+        },
       }),
     ],
     content: "",
@@ -145,6 +161,8 @@ export default function AdminBlogPosts() {
       setDescription(editingPost.description);
       setSlug(editingPost.slug);
       setCategory(editingPost.category);
+      setLanguage(editingPost.language || "English");
+      setThumbnailUrl(editingPost.thumbnailUrl || "");
       setAuthor(editingPost.author);
       setContent(editingPost.content);
       setPublishDate(editingPost.publishDate);
@@ -157,6 +175,8 @@ export default function AdminBlogPosts() {
       setDescription("");
       setSlug("");
       setCategory("Biodata Tips");
+      setLanguage("English");
+      setThumbnailUrl("");
       setAuthor("");
       setContent("");
       setPublishDate("");
@@ -192,6 +212,8 @@ export default function AdminBlogPosts() {
         description,
         slug,
         category,
+        language,
+        thumbnailUrl: thumbnailUrl || null,
         author,
         content,
         publishDate: publishDate || undefined,
@@ -253,8 +275,9 @@ export default function AdminBlogPosts() {
       post.description.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = categoryFilter === "All" || post.category === categoryFilter;
+    const matchesLanguage = languageFilter === "All" || post.language === languageFilter;
 
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesLanguage;
   });
 
   return (
@@ -400,7 +423,7 @@ export default function AdminBlogPosts() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-muted-foreground">Category *</Label>
                       <Select value={category} onValueChange={setCategory}>
@@ -410,6 +433,20 @@ export default function AdminBlogPosts() {
                         <SelectContent>
                           {categories.map((cat) => (
                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Language *</Label>
+                      <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger className="focus:ring-primary rounded-lg">
+                          <SelectValue placeholder="Select Language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {languages.map((lang) => (
+                            <SelectItem key={lang} value={lang}>{lang}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -450,6 +487,103 @@ export default function AdminBlogPosts() {
                       placeholder="Summarise the article for search results and social previews..."
                       className="focus-visible:ring-primary rounded-lg resize-none min-h-[60px]"
                     />
+                  </div>
+
+                  {/* Thumbnail Image Uploader */}
+                  <div className="border border-border/60 bg-muted/20 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div className="space-y-1 w-full">
+                      <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5 text-primary" /> Blog Post Thumbnail Image
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        Upload a thumbnail image to represent this blog post in the article grids, search engines, and social share cards. Max size 2MB.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      {thumbnailUrl && (
+                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-card shadow-xs group">
+                          <NextImage
+                            src={thumbnailUrl}
+                            alt="Post thumbnail"
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                            loading="lazy"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setThumbnailUrl("")}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white font-bold cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="relative">
+                        <input
+                          id="thumbnail-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              toast.error("File size exceeds 2MB limit");
+                              return;
+                            }
+                            setIsThumbnailUploading(true);
+                            try {
+                              const reader = new FileReader();
+                              reader.onloadend = async () => {
+                                try {
+                                  const res = await fetch("/api/admin/upload", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ file: reader.result, folder: "blog" }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setThumbnailUrl(data.url);
+                                    toast.success("Thumbnail uploaded successfully!");
+                                  } else {
+                                    toast.error(data.error || "Failed to upload thumbnail");
+                                  }
+                                } catch (err) {
+                                  toast.error("An error occurred during upload");
+                                } finally {
+                                  setIsThumbnailUploading(false);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            } catch (err) {
+                              setIsThumbnailUploading(false);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={isThumbnailUploading}
+                          className="h-10 text-xs font-bold rounded-lg border-border/80 bg-card hover:bg-muted/50 cursor-pointer"
+                          onClick={() => document.getElementById("thumbnail-upload")?.click()}
+                        >
+                          {isThumbnailUploading ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-primary" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5 mr-2" />
+                              {thumbnailUrl ? "Change Image" : "Upload Image"}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* WYSIWYG HTML Content & Toolbar */}
@@ -524,6 +658,49 @@ export default function AdminBlogPosts() {
                             }`}
                           >
                             <Quote className="w-3.5 h-3.5" /> Quote
+                          </button>
+                          
+                          <input
+                            id="rich-image-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              toast.info("Uploading image to content editor...");
+                              try {
+                                const reader = new FileReader();
+                                reader.onloadend = async () => {
+                                  try {
+                                    const res = await fetch("/api/admin/upload", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ file: reader.result, folder: "blog" }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      editor.chain().focus().setImage({ src: data.url }).run();
+                                      toast.success("Image inserted successfully!");
+                                    } else {
+                                      toast.error(data.error || "Failed to upload image");
+                                    }
+                                  } catch (err) {
+                                    toast.error("An error occurred during upload");
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              } catch (err) {
+                                toast.error("An error occurred reading image");
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById("rich-image-upload")?.click()}
+                            className="p-1.5 rounded text-xs font-bold flex items-center gap-1 cursor-pointer transition-all bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5" /> Insert Image
                           </button>
                           
                           <button
@@ -620,19 +797,36 @@ export default function AdminBlogPosts() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Category:</Label>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px] h-9 text-xs focus:ring-primary rounded-lg">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Category:</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[150px] h-9 text-xs focus:ring-primary rounded-lg">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-bold text-muted-foreground whitespace-nowrap">Filter Language:</Label>
+            <Select value={languageFilter} onValueChange={setLanguageFilter}>
+              <SelectTrigger className="w-[150px] h-9 text-xs focus:ring-primary rounded-lg">
+                <SelectValue placeholder="All Languages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Languages</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -666,44 +860,68 @@ export default function AdminBlogPosts() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="border border-border bg-card rounded-xl shadow-md flex flex-col justify-between overflow-hidden group hover:shadow-lg transition-all duration-200">
-              <div className="p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                    {post.category}
-                  </span>
-                  
-                  <Link 
-                    href={`/blog/${post.slug}`} 
-                    target="_blank" 
-                    className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 text-[10px] font-bold"
-                  >
-                    View Post <ExternalLink className="w-3 h-3" />
-                  </Link>
+            <Card key={post.id} className="pt-0 pb-0 border border-border bg-card rounded-xl shadow-md flex flex-col justify-between overflow-hidden group hover:shadow-lg transition-all duration-200">
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  {post.thumbnailUrl && (
+                    <div className="relative aspect-video w-full overflow-hidden border-b border-border bg-muted">
+                      <NextImage
+                        src={post.thumbnailUrl}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-1.5">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                          {post.category}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#9B1B30]/10 text-[#9B1B30] border border-[#9B1B30]/20">
+                          {post.language || "English"}
+                        </span>
+                      </div>
+                      
+                      <Link 
+                        href={`/blog/${post.slug}`} 
+                        target="_blank" 
+                        className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 text-[10px] font-bold"
+                      >
+                        View Post <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="text-base font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors" title={post.title}>
+                        {post.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                        {post.description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors" title={post.title}>
-                    {post.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                    {post.description}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-muted-foreground font-semibold pt-2 border-t border-border/40">
-                  <span className="flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-primary" />
-                    {post.author}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-primary" />
-                    {post.publishDate}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-primary" />
-                    {post.readTime}
-                  </span>
+                <div className="px-5 pb-5">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-muted-foreground font-semibold pt-4 border-t border-border/40">
+                    <span className="flex items-center gap-1">
+                      <User className="w-3.5 h-3.5 text-primary" />
+                      {post.author}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-primary" />
+                      {post.publishDate}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      {post.readTime}
+                    </span>
+                  </div>
                 </div>
               </div>
 

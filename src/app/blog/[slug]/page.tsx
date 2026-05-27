@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import NextImage from "next/image";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
@@ -102,6 +103,20 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
             </span>
           </div>
         </div>
+
+        {/* Thumbnail Image Cover */}
+        {post.thumbnailUrl && (
+          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-[#C9A84C]/15 bg-muted shadow-md">
+            <NextImage
+              src={post.thumbnailUrl}
+              alt={post.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 800px"
+              priority={true} // Priority loading on the main detail cover page for LCP optimization
+              className="object-cover"
+            />
+          </div>
+        )}
 
         {/* Article Body Content */}
         <article
