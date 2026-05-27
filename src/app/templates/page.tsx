@@ -4,16 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { TemplatesGrid } from "@/components/templates/TemplatesGrid";
 import { prisma } from "@/lib/prisma";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { templatesPageSchema } from "@/lib/seo-schemas";
 
 export const metadata: Metadata = {
-  title: "Edit Your Marriage Biodata Online Free",
-  description: "Edit your marriage biodata anytime - update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
+  title: "Marriage Biodata Templates – Biodata99",
+  description: "Browse free and premium marriage biodata templates designed for Indian families. Pick a style, customise your details, and download as a PDF in minutes.",
   alternates: {
     canonical: "https://biodata99.com/templates",
   },
   openGraph: {
-    title: "Edit Your Marriage Biodata Online Free",
-    description: "Edit your marriage biodata anytime - update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
+    title: "Marriage Biodata Templates – Biodata99",
+    description: "Browse free and premium marriage biodata templates designed for Indian families. Pick a style, customise your details, and download as a PDF in minutes.",
     url: "https://biodata99.com/templates",
   },
 };
@@ -68,6 +70,7 @@ export default async function TemplatesPage() {
           </Button>
         </div>
       </div>
+      <JsonLd schema={templatesPageSchema} />
     </div>
   );
 }

@@ -2,26 +2,24 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { blogPosts } from "@/lib/blog-data";
+import { prisma } from "@/lib/prisma";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { generateArticleSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 
+export const dynamic = "force-dynamic";
+
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
-}
-
-export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
-    slug: post.slug,
-  }));
 }
 
 export async function generateMetadata(
   props: BlogPostPageProps
 ): Promise<Metadata> {
   const { slug } = await props.params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await prisma.blogPost.findUnique({
+    where: { slug }
+  });
 
   if (!post) {
     return {
@@ -45,7 +43,9 @@ export async function generateMetadata(
 
 export default async function BlogPostPage(props: BlogPostPageProps) {
   const { slug } = await props.params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await prisma.blogPost.findUnique({
+    where: { slug }
+  });
 
   if (!post) {
     notFound();

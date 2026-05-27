@@ -230,3 +230,18 @@ export const termsConditionsSchema = {
     "logo": "https://biodata99.com/logo.svg"
   }
 };
+
+// 9. Templates WebPage Schema
+export const templatesPageSchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "WebPage" as const,
+  "name": "Marriage Biodata Templates",
+  "description": "Browse free and premium marriage biodata templates designed for Indian families. Pick a style, customise your details, and download as a PDF in minutes.",
+  "url": "https://biodata99.com/templates",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Biodata99",
+    "url": "https://biodata99.com",
+    "logo": "https://biodata99.com/logo.svg"
+  }
+};

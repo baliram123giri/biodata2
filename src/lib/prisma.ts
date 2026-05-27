@@ -16,8 +16,8 @@ if (typeof window === "undefined") {
   if (process.env.NODE_ENV === "production") {
     prismaInstance = new PrismaClient({ adapter });
   } else {
-    // Invalidate dev cache if global Prisma Client lacks newly generated models (e.g. heroSlide)
-    if (globalForPrisma.prisma && !("heroSlide" in globalForPrisma.prisma)) {
+    // Invalidate dev cache if global Prisma Client lacks newly generated models (e.g. heroSlide, blogPost)
+    if (globalForPrisma.prisma && (!("heroSlide" in globalForPrisma.prisma) || !("blogPost" in globalForPrisma.prisma))) {
       console.log("Regenerated schema detected - invalidating global Prisma client cache...");
       delete (globalForPrisma as any).prisma;
     }

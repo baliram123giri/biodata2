@@ -23,7 +23,8 @@ import {
   Moon,
   Sun,
   Laptop,
-  Sparkles
+  Sparkles,
+  BookOpen
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const sidebarItems: SidebarItem[] = [
   { name: "User Directory", href: "/admin/users", icon: Users },
   { name: "Templates Config", href: "/admin/templates", icon: LayoutGrid },
   { name: "Hero Section", href: "/admin/hero-slides", icon: Sparkles },
+  { name: "Blog Posts", href: "/admin/blog", icon: BookOpen },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
