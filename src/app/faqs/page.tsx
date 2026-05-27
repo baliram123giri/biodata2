@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle } from "lucide-react";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { generateFaqSchema } from "@/lib/seo-schemas";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions (FAQs)",
@@ -51,6 +53,8 @@ const faqsList = [
 export default function FAQsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
+      {/* JSON-LD Schema */}
+      <JsonLd schema={generateFaqSchema(faqsList)} />
       <div className="container mx-auto max-w-4xl relative z-10 space-y-12">
         
         {/* Header Title */}

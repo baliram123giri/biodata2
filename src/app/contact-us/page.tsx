@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { contactPageSchema } from "@/lib/seo-schemas";
+import { contactPageSchema, generateFaqSchema, localBusinessSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ContactFormSection } from "@/components/contact/ContactFormSection";
+import { faqs } from "@/lib/faqs";
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +25,8 @@ export default function ContactUsPage() {
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
       {/* JSON-LD Schema */}
       <JsonLd schema={contactPageSchema} />
+      <JsonLd schema={generateFaqSchema(faqs)} />
+      <JsonLd schema={localBusinessSchema} />
       <div className="container mx-auto max-w-4xl relative z-10 space-y-16">
 
         {/* Header Block */}

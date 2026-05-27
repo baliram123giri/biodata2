@@ -71,6 +71,10 @@ export function BiodataForm() {
         </Select>
       </div>
 
+      <p className="privacy-note">
+        🔒 Your details stay on your device. We never store your biodata on our servers.
+      </p>
+
       <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
         
         {/* CUSTOMIZATION */}

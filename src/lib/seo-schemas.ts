@@ -150,3 +150,53 @@ export function generateArticleSchema({
     }
   };
 }
+
+interface FaqItem {
+  q?: string;
+  a?: string;
+  question?: string;
+  answer?: string;
+}
+
+// 5. Dynamic FAQPage Schema Generator
+export function generateFaqSchema(faqs: FaqItem[]) {
+  return {
+    "@context": "https://schema.org" as const,
+    "@type": "FAQPage" as const,
+    "mainEntity": faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.q || faq.question || "",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a || faq.answer || "",
+      },
+    })),
+  };
+}
+
+// 6. LocalBusiness Schema representing the business location and details
+export const localBusinessSchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "LocalBusiness" as const,
+  "name": "biodata99.com",
+  "image": "https://biodata99.com/og-image.png",
+  "@id": "https://biodata99.com/#localbusiness",
+  "url": "https://biodata99.com",
+  "email": "support@biodata99.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jadhav Nagar Dhayri",
+    "addressLocality": "Pune",
+    "addressRegion": "Maharashtra",
+    "postalCode": "411041",
+    "addressCountry": "IN"
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      "opens": "09:00",
+      "closes": "18:00"
+    }
+  ]
+};
