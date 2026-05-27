@@ -55,6 +55,9 @@ pipeline {
           echo "🔗 Linking .env file"
           ln -sfn "$PROD_BASE/.env" ./.env
 
+          echo "Cleaning old cache"
+          rm -rf .next || true
+          
           # Install deps
           echo "📦 Installing dependencies"
           npm ci
