@@ -74,10 +74,14 @@ pipeline {
           echo "🔗 Swapping 'current' symlink"
           ln -sfn "$RELEASE" "$PROD_BASE/current"
 
-          # Zero-downtime PM2 reload
+          # Sync PM2 in-memory daemon to local CLI version
+          echo "🔄 Syncing PM2 Daemon"
+          pm2 update || true
+
+          # Zero-downtime PM2 restart/reload with updated environment and symlinks
           echo "🔄 Gracefully restarting PM2"
           cd "$PROD_BASE/current"
-          pm2 reload ecosystem.config.js --only "$APP_NAME" --silent \
+          pm2 restart ecosystem.config.js --only "$APP_NAME" --update-env --silent \
             || pm2 start ecosystem.config.js --only "$APP_NAME" --silent
 
           pm2 save --force 2>/dev/null

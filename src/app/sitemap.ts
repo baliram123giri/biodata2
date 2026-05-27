@@ -15,9 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/refund-policy',
     '/terms-conditions',
     '/blog',
-    '/blog/how-to-write-matrimonial-biodata',
-    '/blog/significance-of-cultural-symbols-marriage-biodata',
-    '/blog/matrimonial-biodata-photo-tips',
   ]
 
   return routes.map((route) => ({

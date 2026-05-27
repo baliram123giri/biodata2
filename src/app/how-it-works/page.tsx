@@ -54,7 +54,7 @@ export default function HowItWorksPage() {
           {/* Step 1 */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 bg-card border border-[#C9A84C]/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex flex-col items-center shrink-0">
-              <span className="text-5xl font-black text-[#C9A84C]/55 mb-2 leading-none">01</span>
+              <span className="text-5xl font-black text-[#9B1B30]/30 dark:text-[#E6C97A]/40 mb-2 leading-none">01</span>
               <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-md">
                 <FileText className="w-6 h-6 text-white" />
               </div>
@@ -103,7 +103,7 @@ export default function HowItWorksPage() {
           {/* Step 2 */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 bg-card border border-[#C9A84C]/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex flex-col items-center shrink-0">
-              <span className="text-5xl font-black text-[#C9A84C]/55 mb-2 leading-none">02</span>
+              <span className="text-5xl font-black text-[#9B1B30]/30 dark:text-[#E6C97A]/40 mb-2 leading-none">02</span>
               <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-md">
                 <Palette className="w-6 h-6 text-white" />
               </div>
@@ -144,7 +144,7 @@ export default function HowItWorksPage() {
           {/* Step 3 */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 bg-card border border-[#C9A84C]/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex flex-col items-center shrink-0">
-              <span className="text-5xl font-black text-[#C9A84C]/55 mb-2 leading-none">03</span>
+              <span className="text-5xl font-black text-[#9B1B30]/30 dark:text-[#E6C97A]/40 mb-2 leading-none">03</span>
               <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-md">
                 <Camera className="w-6 h-6 text-white" />
               </div>
@@ -181,7 +181,7 @@ export default function HowItWorksPage() {
           {/* Step 4 */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 bg-card border border-[#C9A84C]/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex flex-col items-center shrink-0">
-              <span className="text-5xl font-black text-[#C9A84C]/55 mb-2 leading-none">04</span>
+              <span className="text-5xl font-black text-[#9B1B30]/30 dark:text-[#E6C97A]/40 mb-2 leading-none">04</span>
               <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-md">
                 <Download className="w-6 h-6 text-white" />
               </div>
@@ -270,7 +270,7 @@ export default function HowItWorksPage() {
 
             {/* Feature 4 */}
             <div className="bg-card border border-border/60 rounded-2xl p-6 space-y-3 hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-[#FBF5E6] dark:bg-[#8A7233]/30 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A]">
+              <div className="w-10 h-10 rounded-xl bg-[#FBF5E6] dark:bg-[#8A7233]/30 flex items-center justify-center text-[#9B1B30] dark:text-[#E6C97A]">
                 <Smartphone className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-foreground">Works on any device</h3>
