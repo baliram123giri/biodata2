@@ -126,7 +126,7 @@ export function BlogListWrapper({ posts }: BlogListWrapperProps) {
                     </div>
 
                     <div className="absolute bottom-3 left-3">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#8A7233] border border-[#C9A84C]/20 shadow-xs">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20 shadow-xs">
                         {post.category}
                       </span>
                     </div>

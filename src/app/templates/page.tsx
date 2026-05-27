@@ -44,7 +44,7 @@ export default async function TemplatesPage() {
       <div className="container mx-auto max-w-6xl relative z-10 space-y-16">
         {/* Header Block */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-1.5 text-xs font-black text-[#8A7233] dark:text-[#E6C97A]">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-1.5 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
             <Sparkles className="w-3.5 h-3.5" />
             Premium Design Collection
           </div>

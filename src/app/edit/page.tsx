@@ -424,6 +424,7 @@ export default function EditPage() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col bg-stitch-surface font-sans selection:bg-stitch-primary-container selection:text-stitch-on-primary-container">
+      <h1 className="sr-only">Biodata Maker & Matrimonial Profile Creator Studio</h1>
       {/* Top Navigation Bar */}
       <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-4 md:px-6 h-16">
         <div className="flex items-center gap-2 md:gap-4">
@@ -654,7 +655,7 @@ export default function EditPage() {
               <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
                 {activeTab}
               </h2>
-              <p className="text-[11px] text-stitch-on-surface-variant/60 font-bold uppercase tracking-widest mt-1">
+              <p className="text-[11px] text-stitch-on-surface-variant font-bold uppercase tracking-widest mt-1">
                 Customize Design Properties
               </p>
 

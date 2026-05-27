@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
         
         {/* Title & Header block */}
         <div className="text-center space-y-4 max-w-xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#8A7233] dark:text-[#E6C97A]">
+          <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
             <Shield className="w-3.5 h-3.5" />
             100% Privacy Promised
           </div>
@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
               When you use the Biodata99 editor, everything you type — your name, date of birth, family details, photo, and any other information — is processed entirely within your own browser. None of this is sent to our servers at any point.
             </p>
             <div className="bg-[#FFFBF8] dark:bg-[#1A0A0E]/30 rounded-xl p-4 border border-border/40 my-3">
-              <div className="text-xs font-black uppercase text-[#8A7233] dark:text-[#E6C97A] tracking-wider mb-2">This means:</div>
+              <div className="text-xs font-black uppercase text-[#9B1B30] dark:text-[#E6C97A] tracking-wider mb-2">This means:</div>
               <ul className="space-y-1.5 text-sm">
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />

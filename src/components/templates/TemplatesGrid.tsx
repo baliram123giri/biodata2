@@ -92,6 +92,12 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
   const observerTargetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (initialTemplates && initialTemplates.length > 0) {
+      setDbTemplates(initialTemplates);
+      setIsLoadingInitial(false);
+      return;
+    }
+
     // 1. Try to load from session storage cache first
     try {
       const cached = sessionStorage.getItem("biodata_templates_cache");
@@ -124,7 +130,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
         console.error("Error loading templates in grid:", err);
         setIsLoadingInitial(false);
       });
-  }, []);
+  }, [initialTemplates]);
 
   const handleOpenDialog = (tpl: Template) => {
     setSelectedTpl(tpl);
@@ -212,7 +218,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {tpl.thumbnailUrl ? (
                     <Image
                       src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
-                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
+                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_80,f_auto/")
                         : tpl.thumbnailUrl
                       }
                       alt={tpl.name}
@@ -253,7 +259,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                     {tpl.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#8A7233] dark:text-[#E6C97A] border border-[#C9A84C]/20"
+                        className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20"
                       >
                         {tag}
                       </span>
@@ -294,7 +300,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
               <div className="absolute w-12 h-12 rounded-full border border-primary/20 border-t-transparent animate-pulse" />
             </div>
-            <p className="text-xs font-black text-[#8A7233] dark:text-[#E6C97A] uppercase tracking-widest animate-pulse">
+            <p className="text-xs font-black text-[#9B1B30] dark:text-[#E6C97A] uppercase tracking-widest animate-pulse">
               Loading Premium Formats...
             </p>
           </div>
@@ -339,7 +345,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.thumbnailUrl ? (
                     <Image
                       src={selectedTpl.thumbnailUrl.includes("res.cloudinary.com") && selectedTpl.thumbnailUrl.includes("/image/upload/")
-                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_100/")
+                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_80,f_auto/")
                         : selectedTpl.thumbnailUrl
                       }
                       alt={selectedTpl.name}
@@ -368,7 +374,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#8A7233] dark:text-[#E6C97A] border border-[#C9A84C]/25"
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/25"
                     >
                       {tag}
                     </span>

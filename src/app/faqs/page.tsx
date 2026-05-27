@@ -71,7 +71,7 @@ export default function FAQsPage() {
         
         {/* Header Title */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#8A7233] dark:text-[#E6C97A]">
+          <div className="inline-flex items-center gap-1 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
             <HelpCircle className="w-3.5 h-3.5" />
             Help &amp; Support
           </div>
@@ -85,6 +85,7 @@ export default function FAQsPage() {
 
         {/* Radix Accordion FAQ list */}
         <div className="bg-card border border-[#C9A84C]/25 rounded-2xl p-6 md:p-8 shadow-md">
+          <h2 className="sr-only">Answers to Common Questions</h2>
           <Accordion type="single" collapsible className="w-full space-y-2">
             {faqsList.map((faq, idx) => (
               <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">

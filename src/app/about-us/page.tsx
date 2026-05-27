@@ -50,7 +50,7 @@ export default function AboutUsPage() {
 
         {/* Hero Section */}
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#8A7233] dark:text-[#E6C97A]">
+          <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
             <Sparkles className="w-3.5 h-3.5" />
             Our Mission &amp; Vision
           </div>
@@ -168,7 +168,7 @@ export default function AboutUsPage() {
 
             {/* Stat 2 */}
             <div className="space-y-2 flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-[#FBF5E6] dark:bg-[#8A7233]/30 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] mb-1">
+              <div className="w-10 h-10 rounded-full bg-[#FBF5E6] dark:bg-[#8A7233]/30 flex items-center justify-center text-[#9B1B30] dark:text-[#E6C97A] mb-1">
                 <FileDown className="w-5 h-5" />
               </div>
               <div className="text-2xl font-black text-foreground">PDF Ready</div>

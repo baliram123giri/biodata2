@@ -200,7 +200,7 @@ export function ContactFormSection() {
                 value={formData.topic}
                 onValueChange={(value) => setFormData({ ...formData, topic: value || "General Feedback" })}
               >
-                <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                <SelectTrigger aria-label="Select subject topic" className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
                   <SelectValue placeholder="Select a topic" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border border-border rounded-lg shadow-md z-50">
@@ -288,7 +288,7 @@ export function ContactFormSection() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-sm font-black text-foreground">Instagram</p>
-                    <p className="text-xs text-pink-500 dark:text-pink-400 font-semibold">@officialbiodata99</p>
+                    <p className="text-xs text-pink-700 dark:text-pink-400 font-semibold">@officialbiodata99</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-tight">Templates & reels</p>
                   <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-pink-400 transition-colors" />
@@ -320,7 +320,7 @@ export function ContactFormSection() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-sm font-black text-foreground">YouTube</p>
-                    <p className="text-xs text-red-500 dark:text-red-400 font-semibold">@biodata99</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 font-semibold">@biodata99</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-tight">How-to tutorials</p>
                   <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-red-400 transition-colors" />
@@ -352,7 +352,7 @@ export function ContactFormSection() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-sm font-black text-foreground">Twitter / X</p>
-                    <p className="text-xs text-foreground/60 font-semibold">@biodata99com</p>
+                    <p className="text-xs text-foreground/80 font-semibold">@biodata99com</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-tight">News & updates</p>
                   <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-foreground/60 transition-colors" />
@@ -384,7 +384,7 @@ export function ContactFormSection() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-sm font-black text-foreground">Pinterest</p>
-                    <p className="text-xs text-red-500 dark:text-red-400 font-semibold">biodata99</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 font-semibold">biodata99</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-tight">Ideas & inspiration</p>
                   <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-red-400 transition-colors" />
@@ -429,7 +429,7 @@ export function ContactFormSection() {
       {/* ── Strict Privacy Shield Note ── */}
       <div className="bg-[#FBF5E6]/40 border border-[#C9A84C]/20 rounded-2xl p-6 text-center max-w-2xl mx-auto flex flex-col md:flex-row items-center gap-4 justify-center">
         <div className="w-10 h-10 rounded-full bg-[#C9A84C]/10 flex items-center justify-center shrink-0">
-          <Shield className="w-5 h-5 text-[#8A7233]" />
+          <Shield className="w-5 h-5 text-[#9B1B30]" />
         </div>
         <p className="text-xs md:text-sm text-muted-foreground leading-relaxed text-left">
           <strong>Privacy Shield Active:</strong> Since we respect your privacy and **do not store any user details or biodatas on our servers**, we cannot retrieve or recover downloaded PDFs or editing details. Any updates must be done directly through the app on the same device.
