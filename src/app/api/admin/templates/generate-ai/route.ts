@@ -6,15 +6,15 @@ import { streamText } from "ai";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { 
+    const {
       type, // "name" or "description"
       name, // optional (passed when generating description)
-      frameType, 
+      frameType,
       frameBgType = "solid",
-      frameBgColor, 
+      frameBgColor,
       frameBgGradientColors,
-      defaultPrimary, 
-      defaultSecondary, 
+      defaultPrimary,
+      defaultSecondary,
       defaultAccent,
       frameOuterInset,
       frameOuterStrokeWidth,
@@ -128,11 +128,11 @@ Please strictly follow these guidelines:
 
 1. LEADS with the primary keyword in the first sentence. Always include phrases like "marriage biodata template", "biodata for marriage", "wedding biodata A4", or "shaadi biodata format" naturally in the first 2 lines.
 
-2. MENTIONS the design style and mood in human, emotional language — parents and families are the buyers, so speak to them warmly (e.g., "elegant", "traditional", "modern", "minimal", "royal"). Adapt the vocabulary specifically to match the visual details: if the colors/shapes are royal red/gold arch, use majestic, heritage, and imperial tones; if pastel, use breezy, serene, and soft romantic tones; if minimal, use clean, modern, and understated elegance.
+2. MENTIONS the design style and mood in human, emotional language - parents and families are the buyers, so speak to them warmly (e.g., "elegant", "traditional", "modern", "minimal", "royal"). Adapt the vocabulary specifically to match the visual details: if the colors/shapes are royal red/gold arch, use majestic, heritage, and imperial tones; if pastel, use breezy, serene, and soft romantic tones; if minimal, use clean, modern, and understated elegance.
 
 3. LISTS what is included or customizable in plain language: editable fields, photo placeholder, A4 size, print-ready, etc.
 
-4. INCLUDES long-tail keyword phrases naturally — do not stuff. Dynamically choose 2-3 from this list and weave them in seamlessly:
+4. INCLUDES long-tail keyword phrases naturally - do not stuff. Dynamically choose 2-3 from this list and weave them in seamlessly:
    - "Hindu marriage biodata format"
    - "printable biodata template A4"
    - "editable biodata in Word / Canva"
@@ -143,7 +143,7 @@ Please strictly follow these guidelines:
 
 6. LENGTH: 80 to 120 words. No bullet points. Pure flowing paragraph format.
 
-7. TONE: Warm, trustworthy, slightly formal — like a helpful wedding planner speaking to a family.
+7. TONE: Warm, trustworthy, slightly formal - like a helpful wedding planner speaking to a family.
 
 8. UNIQUE STYLE DIVERSITY: To ensure that different templates do not have the same repetitive rhythm, format, or exact phrasing:
    - Vary the sentence length and order of points.

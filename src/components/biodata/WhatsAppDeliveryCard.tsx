@@ -196,7 +196,7 @@ export function WhatsAppDeliveryCard({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-black text-[#062B36] tracking-tight mb-1">
-            Get Your Marriage Biodata Delivered on WhatsApp — Instantly
+            Get Your Marriage Biodata Delivered on WhatsApp - Instantly
           </h3>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">

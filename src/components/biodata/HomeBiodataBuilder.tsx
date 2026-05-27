@@ -46,7 +46,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 
-// Konva uses canvas — must be client-only
+// Konva uses canvas - must be client-only
 const KonvaPreview = dynamic(
   () => import("@/components/editor/KonvaPreview").then((mod) => mod.KonvaPreview),
   {
@@ -56,7 +56,7 @@ const KonvaPreview = dynamic(
 );
 
 /**
- * HomeBiodataBuilder — The full biodata creation experience embedded on the homepage.
+ * HomeBiodataBuilder - The full biodata creation experience embedded on the homepage.
  * Includes form, live preview, template picker, and download/export actions.
  */
 export function HomeBiodataBuilder() {
@@ -152,7 +152,7 @@ export function HomeBiodataBuilder() {
     const configKey = `${storedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;
     if (configKey !== prevTemplateRef.current) {
       prevTemplateRef.current = configKey;
-      
+
       // Resolve background colors
       let bgColors: string[] = ["#ffffff"];
       if (config.bgGradientColors && config.bgGradientColors.length > 0) {
@@ -285,7 +285,7 @@ export function HomeBiodataBuilder() {
         }
       `}} />
 
-      {/* Desktop Floating Sticky Template Trigger — only visible when builder section is in view */}
+      {/* Desktop Floating Sticky Template Trigger - only visible when builder section is in view */}
       <div className={cn(
         "hidden lg:flex fixed right-0 top-1/2 z-40 animate-gentle-float transition-all duration-500",
         isBuilderVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
@@ -295,44 +295,44 @@ export function HomeBiodataBuilder() {
             <button
               className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
             >
-            <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-              <LayoutDashboard className="w-4 h-4" />
-            </div>
+              <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <LayoutDashboard className="w-4 h-4" />
+              </div>
 
-            <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
-              {activeTemplate.thumbnailUrl ? (
-                <Image
-                  src={activeTemplate.thumbnailUrl}
-                  alt={activeTemplate.name}
-                  fill
-                  sizes="36px"
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-                  loading="lazy"
-                />
-              ) : currentTemplate.frame.type === "image" ? (
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
-                    backgroundColor: currentTemplate.frame.bgColor
-                  }}
-                />
-              ) : currentTemplate.frame.type === "gradient" ? (
-                <div
-                  className="absolute inset-0"
-                  style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
-                />
-              ) : (
-                <div
-                  className="absolute inset-0"
-                  style={{ backgroundColor: currentTemplate.defaultPrimary }}
-                />
-              )}
-            </div>
+              <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
+                {activeTemplate.thumbnailUrl ? (
+                  <Image
+                    src={activeTemplate.thumbnailUrl}
+                    alt={activeTemplate.name}
+                    fill
+                    sizes="36px"
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                    loading="lazy"
+                  />
+                ) : currentTemplate.frame.type === "image" ? (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
+                      backgroundColor: currentTemplate.frame.bgColor
+                    }}
+                  />
+                ) : currentTemplate.frame.type === "gradient" ? (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0"
+                    style={{ backgroundColor: currentTemplate.defaultPrimary }}
+                  />
+                )}
+              </div>
 
-            <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
-              Themes
-            </span>
+              <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
+                Themes
+              </span>
             </button>
           </SheetTrigger>
           <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto px-6">
@@ -359,7 +359,7 @@ export function HomeBiodataBuilder() {
               Create Your Biodata <span className="text-gradient-primary">Right Here</span>
             </h2>
             <p className="text-base md:text-lg text-muted-foreground font-semibold max-w-2xl">
-              Fill in your details below, pick a template, and download your professional marriage biodata — all without leaving this page.
+              Fill in your details below, pick a template, and download your professional marriage biodata - all without leaving this page.
             </p>
           </div>
         </div>
@@ -374,7 +374,7 @@ export function HomeBiodataBuilder() {
               <BiodataForm />
             </div>
 
-            {/* Mobile Preview — shown AFTER the form on small screens (mobile only) */}
+            {/* Mobile Preview - shown AFTER the form on small screens (mobile only) */}
             <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-2">
               <EmbeddedPreviewSection storedTemplate={storedTemplate} />
               <Button
@@ -438,7 +438,7 @@ export function HomeBiodataBuilder() {
               </div>
             </div>
           </div>
-          
+
           {/* Get on WhatsApp Widget (Matching mockup) */}
           <div className="mt-6 md:mt-32 px-2 sm:px-4 w-full flex justify-center">
             <WhatsAppDeliveryCard

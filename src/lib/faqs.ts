@@ -1,7 +1,7 @@
 export const faqs = [
   {
     q: "Is biodata99.com free to use?",
-    a: "Yes — Biodata99 is completely free to use. You can build, customise, and download your marriage biodata as a PDF at no cost. No account, no subscription, and no hidden charges.",
+    a: "Yes - Biodata99 is completely free to use. You can build, customise, and download your marriage biodata as a PDF at no cost. No account, no subscription, and no hidden charges.",
   },
   {
     q: "What information is included in a marriage biodata?",
@@ -25,6 +25,6 @@ export const faqs = [
   },
   {
     q: "What is the difference between a resume and a marriage biodata?",
-    a: "A resume focuses on professional qualifications and work experience. A marriage biodata is used for matrimonial purposes and includes personal details, family background, religious and cultural information, and contact details for the family — sections that are not part of a professional resume. Biodata99 is designed specifically for the marriage biodata format used in Indian families.",
+    a: "A resume focuses on professional qualifications and work experience. A marriage biodata is used for matrimonial purposes and includes personal details, family background, religious and cultural information, and contact details for the family - sections that are not part of a professional resume. Biodata99 is designed specifically for the marriage biodata format used in Indian families.",
   },
 ];

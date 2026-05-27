@@ -21,7 +21,7 @@ export default function AdminLayout({
 }>) {
   return (
     <>
-      {/* Theme initialiser — must run before paint to avoid flash. 
+      {/* Theme initialiser - must run before paint to avoid flash. 
           Placed here (server component) so Next.js emits it as real HTML. */}
       <Script
         id="admin-theme-init"

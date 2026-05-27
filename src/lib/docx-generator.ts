@@ -92,7 +92,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         const format = formatMatch ? formatMatch[1] : "png";
         const base64Content = url.substring(url.indexOf(",") + 1);
         const buffer = Buffer.from(base64Content, "base64");
-        
+
         if (format.includes("svg") || url.includes("svg")) {
           imgBuffer = await sharp(buffer, { density: 300 }).png().toBuffer();
         } else {
@@ -103,14 +103,14 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       } else {
         const filePath = path.join(process.cwd(), 'public', url);
         if (fs.existsSync(filePath)) {
-           imgBuffer = fs.readFileSync(filePath);
+          imgBuffer = fs.readFileSync(filePath);
         }
       }
 
       if (imgBuffer) {
         let bgBuffer: Buffer;
         const isGradient = theme.bgColors && theme.bgColors.length > 1;
-        
+
         if (isGradient) {
           const stops = theme.bgColors.map((c: string, idx: number) => `<stop offset="${Math.round((idx / (theme.bgColors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
           const bgSvg = `
@@ -233,7 +233,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         sharpImg = sharpImg.composite(compositeOps);
       }
       let buf = await sharpImg.png().toBuffer();
-      
+
       if (WATERMARK_CONFIG.isEnabled) {
         try {
           const coords = getWatermarkCoordinates(595, 842);
@@ -271,13 +271,13 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 
       return Buffer.from(buf);
     }
-    
+
     let svgBody = `<rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" />`;
 
     if (config.frame.type === "gradient") {
-       const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
-       let stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
-       svgBody = `
+      const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
+      let stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+      svgBody = `
          <defs>
            <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
              ${stops}
@@ -294,7 +294,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const iI = config.frame.innerInset * scale;
       const iSW = config.frame.innerStrokeWidth * scale;
       const iCR = config.frame.innerCornerRadius * scale;
-      
+
       const innerOpacity = config.frame.type === "gradient" ? 0.3 : 0.6;
       svgBody += `
         <rect x="${oI}" y="${oI}" width="${A4_W - oI * 2}" height="${A4_H - oI * 2}" stroke="${primaryColor}" stroke-width="${oSW}" rx="${oCR}" fill="none" />
@@ -423,7 +423,7 @@ export async function generateDocxBuffer(opts: {
   if (config && config.frame && config.frame.type === "image") {
     const primaryColor = theme?.primaryColor || config.defaultPrimary || "#800000";
     const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);
-    
+
     if (finalUrl && finalUrl.startsWith("data:image/svg+xml")) {
       try {
         const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
@@ -433,11 +433,11 @@ export async function generateDocxBuffer(opts: {
         } else {
           svgXml = decodeURIComponent(base64Content);
         }
-        
+
         const pngBuffer = await sharp(Buffer.from(svgXml), { density: 300 })
           .png()
           .toBuffer();
-          
+
         theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
       } catch (rasterError) {
         console.error("Failed to rasterize base64 SVG frame for Word:", rasterError);
@@ -455,7 +455,7 @@ export async function generateDocxBuffer(opts: {
   } else if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== "None") {
     bgColor = getLightBgColor(primary).replace("#", "");
   }
-  
+
   const currentLang = data.language || "English";
   const t = translations[currentLang] || translations["English"];
 
@@ -555,7 +555,7 @@ export async function generateDocxBuffer(opts: {
 
           const sX = sticker.scaleX ?? 1;
           const sY = sticker.scaleY ?? 1;
-          
+
           const sW = Math.round(100 * sX);
           const sH = Math.round(100 * sY);
 
@@ -696,7 +696,7 @@ export async function generateDocxBuffer(opts: {
       const mimeTypeMatch = data.photo.match(/^data:image\/(\w+);base64,/);
       imageType = (mimeTypeMatch ? mimeTypeMatch[1] : "png") === "jpeg" ? "jpg" : "png";
     }
-    
+
     // In docx, we anchor the photo to the top right of the page margin
     docChildren.push(
       new Paragraph({
@@ -773,7 +773,7 @@ export async function generateDocxBuffer(opts: {
       }
     }
 
-    // Section Title with accent bar — spacing matches Konva's section gap
+    // Section Title with accent bar - spacing matches Konva's section gap
     docChildren.push(
       new Paragraph({
         spacing: { before: sectionGapTwips, after: lineSpacingTwips },
@@ -793,7 +793,7 @@ export async function generateDocxBuffer(opts: {
       })
     );
 
-    // Field rows as a table — spacing matches Konva's LINE_SPACING
+    // Field rows as a table - spacing matches Konva's LINE_SPACING
     const rowSpacingBefore = Math.round(lineSpacingTwips * 0.3);
     const rowSpacingAfter = Math.round(lineSpacingTwips * 0.7);
 

@@ -20,7 +20,7 @@ pipeline {
        ======================= */
     stage('Deploy PROD') {
       steps {
-        // Prevent shell command echoing — no secrets leak into logs
+        // Prevent shell command echoing - no secrets leak into logs
         sh '''
           set -e
           set +x
@@ -33,7 +33,7 @@ pipeline {
           echo "📂 Creating new release folder: $RELEASE"
           mkdir -p "$RELEASE"
 
-          # Sync source only — explicitly exclude secrets and build artifacts
+          # Sync source only - explicitly exclude secrets and build artifacts
           rsync -a \
             --exclude=node_modules \
             --exclude=.next \
@@ -63,7 +63,7 @@ pipeline {
           echo "🗄️ Generating Prisma Client"
           npx prisma generate
 
-          # Build silently — no env values echoed
+          # Build silently - no env values echoed
           echo "🏗 Building Next.js"
           NODE_ENV=production npm run build --silent
 

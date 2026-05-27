@@ -185,14 +185,14 @@ export default function Home() {
               </span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              From blank form to a downloaded PDF — in under 5 minutes, on any device.
+              From blank form to a downloaded PDF - in under 5 minutes, on any device.
             </p>
           </div>
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            <StepCard number="01" title="Fill In Your Details" description="Enter your personal info, family background, education, and contact details — step by step." icon="📝" />
-            <StepCard number="02" title="Pick a Biodata Format" description="Browse stylish marriage biodata templates — traditional, modern, or community-specific for boy or girl." icon="🎨" />
+            <StepCard number="01" title="Fill In Your Details" description="Enter your personal info, family background, education, and contact details - step by step." icon="📝" />
+            <StepCard number="02" title="Pick a Biodata Format" description="Browse stylish marriage biodata templates - traditional, modern, or community-specific for boy or girl." icon="🎨" />
             <StepCard number="03" title="Add Photo & Customise" description="Upload your photo, choose a colour theme, and add your religious mantra or heading." icon="✨" />
             <StepCard number="04" title="Download & Share Free" description="Download as PDF or editable Word. Share directly on WhatsApp, email, or matrimony sites." icon="📥" />
           </div>
@@ -200,7 +200,7 @@ export default function Home() {
           {/* CTA */}
           <div className="mt-8 md:mt-14 text-center">
             <Button size="lg" className="rounded-full px-10 py-6 bg-gradient-primary border-0 hover:scale-105 active:scale-95 transition-all duration-300" asChild>
-              <a href="#builder">Start Creating — It&apos;s Free</a>
+              <a href="#builder">Start Creating - It&apos;s Free</a>
             </Button>
           </div>
         </div>

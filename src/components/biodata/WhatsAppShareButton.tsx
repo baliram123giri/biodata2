@@ -63,7 +63,7 @@ function dataUrlToFile(dataUrl: string, name: string): File {
  * A premium WhatsApp share button that:
  * 1. Captures the Konva biodata preview as a JPG
  * 2. On mobile (Web Share API available): uses navigator.share() with the file
- * 3. On desktop: opens a guided dialog — download image, then open WhatsApp
+ * 3. On desktop: opens a guided dialog - download image, then open WhatsApp
  */
 export function WhatsAppShareButton({
   onGenerateImage,
@@ -96,7 +96,7 @@ export function WhatsAppShareButton({
         navigator.canShare({ files: [file] });
 
       if (canShareFile) {
-        // Mobile: use native share sheet — sends image directly
+        // Mobile: use native share sheet - sends image directly
         try {
           await navigator.share({
             files: [file],
@@ -273,7 +273,7 @@ export function WhatsAppShareButton({
 
 
 // ═══════════════════════════════════════════════════════════════════════
-// Desktop Share Dialog — a polished 2-step guided flow
+// Desktop Share Dialog - a polished 2-step guided flow
 // ═══════════════════════════════════════════════════════════════════════
 
 function DesktopShareDialog({

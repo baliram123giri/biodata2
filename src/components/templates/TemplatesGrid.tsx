@@ -72,12 +72,12 @@ const templatesList: Template[] = [
 function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: string; scale?: number }) {
   if (id === "royal") {
     return (
-      <div 
+      <div
         className="absolute inset-0 bg-[#FFFBF8] p-4 flex flex-col justify-between border-[10px] border-double rounded-lg shadow-inner transition-colors duration-300"
         style={{ borderColor: `${color}cc` }}
       >
         <div className="absolute inset-2 border border-dashed rounded" style={{ borderColor: `${color}55` }} />
-        
+
         {/* Header Symbol */}
         <div className="flex flex-col items-center gap-1 z-10" style={{ transform: `scale(${scale})` }}>
           <div className="w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold bg-[#FBF5E6]" style={{ borderColor: color, color }}>
@@ -97,7 +97,7 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
             <div className="h-2 w-5/6 bg-muted-foreground/20 rounded-full" />
             <div className="h-2 w-4/6 bg-muted-foreground/20 rounded-full" />
           </div>
-          
+
           <div className="h-px my-3" style={{ backgroundColor: `${color}30` }} />
 
           <div className="flex justify-between items-center">
@@ -120,12 +120,12 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 
   if (id === "ivory-elegance") {
     return (
-      <div 
+      <div
         className="absolute inset-0 bg-[#FCFBF7] p-4 flex flex-col justify-between border-2 rounded-lg shadow-inner transition-colors duration-300"
         style={{ borderColor: color }}
       >
         <div className="absolute inset-1.5 border rounded" style={{ borderColor: `${color}30` }} />
-        
+
         {/* Header Symbol */}
         <div className="flex flex-col items-center gap-1 z-10" style={{ transform: `scale(${scale})` }}>
           <div className="w-5 h-5 flex items-center justify-center text-[9px] font-bold border rounded-sm" style={{ borderColor: `${color}60`, color }}>
@@ -160,16 +160,16 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 
   if (id === "modern-gradient") {
     return (
-      <div 
+      <div
         className="absolute inset-0 p-4 flex flex-col justify-between border rounded-lg shadow-inner transition-all duration-300"
-        style={{ 
+        style={{
           background: `linear-gradient(135deg, ${color}20 0%, ${color}40 100%)`,
           borderColor: `${color}40`
         }}
       >
         {/* Soft Background Cards */}
         <div className="absolute inset-3 bg-white/80 dark:bg-black/40 backdrop-blur-xs rounded-md border" style={{ borderColor: `${color}25` }} />
-        
+
         {/* Header Symbol */}
         <div className="flex flex-col items-center gap-1.5 z-10 mt-1" style={{ transform: `scale(${scale})` }}>
           <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] text-white shadow-md" style={{ backgroundColor: color }}>
@@ -200,7 +200,7 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 
   if (id === "new-generation") {
     return (
-      <div 
+      <div
         className="absolute inset-0 bg-[#FDFBF7] p-4 flex flex-col justify-between border rounded-lg shadow-inner transition-colors duration-300"
         style={{ borderColor: `${color}50` }}
       >
@@ -236,7 +236,7 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 
   if (id === "ornate-grandeur") {
     return (
-      <div 
+      <div
         className="absolute inset-0 bg-[#FFF9ED] p-4 flex flex-col justify-between border-4 rounded-lg shadow-inner transition-colors duration-300"
         style={{ borderColor: color }}
       >
@@ -271,14 +271,14 @@ function MiniTemplatePreview({ id, color, scale = 1 }: { id: string; color: stri
 
   // Default green-shapes
   return (
-    <div 
+    <div
       className="absolute inset-0 bg-[#F4FBF7] p-4 flex flex-col justify-between border rounded-lg shadow-inner transition-colors duration-300"
       style={{ borderColor: `${color}70` }}
     >
       {/* Leaves Motif corners */}
       <div className="absolute top-2 left-2 text-[11px] select-none" style={{ color: `${color}a0` }}>🍃</div>
       <div className="absolute top-2 right-2 text-[11px] select-none" style={{ color: `${color}a0` }}>🍃</div>
-      
+
       {/* Header Symbol */}
       <div className="flex flex-col items-center gap-1 z-10" style={{ transform: `scale(${scale})` }}>
         <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: `${color}15`, color }}>❀</div>
@@ -451,18 +451,18 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                     <MiniTemplatePreview id={tpl.id} color={tpl.color} />
                   )}
                 </div>
-                
+
                 {/* Blur Action Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-xs">
-                  <DialogTrigger 
+                  <DialogTrigger
                     className="inline-flex shrink-0 items-center justify-center border border-[#C9A84C]/25 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-full font-bold text-xs h-9 px-3.5 shadow-md hover:scale-105 transition-all duration-200 cursor-pointer"
                     onClick={() => handleOpenDialog(tpl)}
                   >
                     <Eye className="w-4 h-4 mr-1.5" />
                     Quick View
                   </DialogTrigger>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="rounded-full bg-gradient-primary border-0 text-white font-bold shadow-md hover:scale-105 transition-transform"
                     asChild
                   >
@@ -495,9 +495,9 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                     <span className="font-bold text-foreground">{tpl.accent}</span>
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    className="rounded-full border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 text-foreground font-bold px-5 py-2 transition-colors duration-200" 
+                  <Button
+                    variant="outline"
+                    className="rounded-full border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 text-foreground font-bold px-5 py-2 transition-colors duration-200"
                     asChild
                   >
                     <Link href={`/edit?template=${tpl.id}`}>
@@ -623,7 +623,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.description || "A premium matrimonial biodata template with elegant design and comprehensive fields."}
                 </p>
 
-                {/* Color Customizer — only when no thumbnail */}
+                {/* Color Customizer - only when no thumbnail */}
                 {!selectedTpl.thumbnailUrl && (
                   <div className="mb-6 space-y-2.5">
                     <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">

@@ -36,7 +36,7 @@ interface DownloadDropdownProps {
   /** Style variant */
   variant?: "primary" | "compact";
   className?: string;
-  /** Optional: callback for WhatsApp share — if provided, shows the share option */
+  /** Optional: callback for WhatsApp share - if provided, shows the share option */
   onWhatsAppShare?: () => void;
   /** Whether sharing is in progress */
   isSharing?: boolean;
@@ -44,7 +44,7 @@ interface DownloadDropdownProps {
 
 /**
  * A download button with a Radix UI popover dropdown to choose
- * between PDF, Word, JPG formats — plus an integrated WhatsApp share option.
+ * between PDF, Word, JPG formats - plus an integrated WhatsApp share option.
  */
 export function DownloadDropdown({
   onDownload,

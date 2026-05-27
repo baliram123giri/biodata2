@@ -7,13 +7,13 @@ import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Edit Your Marriage Biodata Online Free",
-  description: "Edit your marriage biodata anytime — update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
+  description: "Edit your marriage biodata anytime - update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
   alternates: {
     canonical: "https://biodata99.com/templates",
   },
   openGraph: {
     title: "Edit Your Marriage Biodata Online Free",
-    description: "Edit your marriage biodata anytime — update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
+    description: "Edit your marriage biodata anytime - update personal details, switch templates, change language, and download as PDF or Word. Fast, free & easy on biodata99.com.",
     url: "https://biodata99.com/templates",
   },
 };

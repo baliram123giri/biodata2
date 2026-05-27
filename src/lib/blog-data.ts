@@ -84,7 +84,7 @@ export const blogPosts: BlogPost[] = [
     content: `
       <h2>The Tradition of Auspicious Beginnings</h2>
       <p>
-        In Indian culture, any major life event—be it a wedding, purchasing a new home, or starting a business—begins with seeking blessings from the divine. Matrimonial biodatas, representing the first step toward marriage, carry these blessings through traditional motifs and symbols.
+        In Indian culture, any major life event -be it a wedding, purchasing a new home, or starting a business -begins with seeking blessings from the divine. Matrimonial biodatas, representing the first step toward marriage, carry these blessings through traditional motifs and symbols.
       </p>
 
       <h2>Common Symbols and Their Meanings</h2>

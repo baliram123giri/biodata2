@@ -224,7 +224,7 @@ export default function EditPage() {
 
     const searchParams = new URLSearchParams(window.location.search);
     const templateParam = searchParams.get('template');
-    
+
     useBiodataStore.getState().fetchCustomTemplates().then(() => {
       const currentTemplates = useBiodataStore.getState().customTemplates;
       if (templateParam) {
@@ -260,7 +260,7 @@ export default function EditPage() {
     const configKey = `${selectedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;
     if (configKey !== prevTemplateRef.current) {
       prevTemplateRef.current = configKey;
-      
+
       // Resolve background colors
       let bgColors: string[] = ["#ffffff"];
       if (config.bgGradientColors && config.bgGradientColors.length > 0) {
@@ -555,7 +555,7 @@ export default function EditPage() {
             <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
           )}
 
-          {/* Floating Left Toolbar — Desktop only, overlaid on the canvas */}
+          {/* Floating Left Toolbar - Desktop only, overlaid on the canvas */}
           {isLeftOpen && (
             <nav className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center py-4 px-2 gap-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-black/5">
               <ToolButton
@@ -698,7 +698,7 @@ export default function EditPage() {
                         Text Themes
                       </TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="bg" className="flex flex-col gap-4 animate-in fade-in duration-200">
                       <div className="flex flex-col gap-3">
                         <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
@@ -740,9 +740,9 @@ export default function EditPage() {
                           {(() => {
                             const activeTemplateId = useBiodataStore.getState().selectedTemplate;
                             const dbTpl = useBiodataStore.getState().customTemplates?.find(t => t.id === activeTemplateId);
-                            
-                            const bgType = dbTpl 
-                              ? dbTpl.bgType 
+
+                            const bgType = dbTpl
+                              ? dbTpl.bgType
                               : getTemplateConfig(activeTemplateId)?.bgType || getTemplateConfig(activeTemplateId)?.frame?.type;
 
                             const isGradient = bgType === "linear" || bgType === "radial" || bgType === "gradient";
@@ -753,25 +753,25 @@ export default function EditPage() {
                                 const c1 = colorsArr[0]?.trim();
                                 const c2 = colorsArr[1]?.trim() || c1;
                                 const c3 = colorsArr[2]?.trim();
-                                
+
                                 let bgStyle = "";
                                 if (bgType === "linear" || bgType === "gradient") {
-                                  bgStyle = c3 
+                                  bgStyle = c3
                                     ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
                                     : `linear-gradient(to bottom, ${c1}, ${c2})`;
                                 } else {
-                                  bgStyle = c3 
+                                  bgStyle = c3
                                     ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
                                     : `radial-gradient(circle, ${c1}, ${c2})`;
                                 }
-                                
+
                                 const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
                                 const activeBgColors = theme.bgColors || [];
                                 const activeNormalized = activeBgColors.map(c => normalizeColors(c)).join(",");
                                 const presetNormalized = colorsArr.map(c => normalizeColors(c)).join(",");
-                                
+
                                 const isSelected = activeNormalized === presetNormalized;
-                                
+
                                 return (
                                   <button
                                     key={preset.name}
@@ -868,15 +868,15 @@ export default function EditPage() {
                     <TabsContent value="text" className="flex flex-col gap-4 animate-in fade-in duration-200">
                       <div className="flex flex-col gap-4">
                         <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Colors</Label>
-                        
+
                         <div className="flex flex-col gap-3">
                           {/* Primary Color Picker */}
                           <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
                             <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
-                              <input 
-                                type="color" 
-                                value={theme.primaryColor} 
-                                onChange={(e) => theme.setPrimaryColor(e.target.value)} 
+                              <input
+                                type="color"
+                                value={theme.primaryColor}
+                                onChange={(e) => theme.setPrimaryColor(e.target.value)}
                                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                               />
                               <Sparkles className="w-4 h-4 text-white drop-shadow" />
@@ -905,10 +905,10 @@ export default function EditPage() {
                           {/* Secondary Color Picker */}
                           <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
                             <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
-                              <input 
-                                type="color" 
-                                value={theme.secondaryColor} 
-                                onChange={(e) => theme.setSecondaryColor(e.target.value)} 
+                              <input
+                                type="color"
+                                value={theme.secondaryColor}
+                                onChange={(e) => theme.setSecondaryColor(e.target.value)}
                                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                               />
                               <Sparkles className="w-4 h-4 text-white drop-shadow" />
@@ -937,10 +937,10 @@ export default function EditPage() {
                           {/* Accent Color Picker */}
                           <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
                             <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
-                              <input 
-                                type="color" 
-                                value={theme.accentColor} 
-                                onChange={(e) => theme.setAccentColor(e.target.value)} 
+                              <input
+                                type="color"
+                                value={theme.accentColor}
+                                onChange={(e) => theme.setAccentColor(e.target.value)}
                                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                               />
                               <Sparkles className="w-4 h-4 text-white drop-shadow" />
