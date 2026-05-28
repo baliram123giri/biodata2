@@ -51,22 +51,26 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
   return (
     <Group>
       <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} />
-      <Rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        cornerRadius={cornerRadius}
-        stroke={borderColor}
-        strokeWidth={2}
-        listening={false}
-      />
+      {borderColor && (
+        <Rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          cornerRadius={cornerRadius}
+          stroke={borderColor}
+          strokeWidth={2}
+          listening={false}
+        />
+      )}
     </Group>
   );
 });
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
-  const [image] = useImage(src, "anonymous");
+  // Add cache-busting to bypass browser CORS cache conflicts between img and canvas tags
+  const cacheBustedSrc = src.includes("?") ? `${src}&canvas=true` : `${src}?canvas=true`;
+  const [image] = useImage(cacheBustedSrc);
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 
@@ -218,7 +222,7 @@ const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPho
   return (
     <Group>
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
-      {hasPhoto && photoConfig && (
+      {hasPhoto && photoConfig && photoConfig.showBorder !== false && (
         <Rect x={photoConfig.x - 2} y={photoConfig.y - 2} width={photoConfig.width + 4} height={photoConfig.height + 4} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
       )}
     </Group>
@@ -652,19 +656,21 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const hasPhoto = !!formData.photo;
   const photoConfig = templateConfig.photo;
 
+  const detailsLayout = templateConfig.detailsLayout || "classic";
+  const titleShape = templateConfig.titleShape || "simple";
+
   const layout = useMemo(() => {
     const calculateForSize = (fSize: number) => {
       let cursorY = paddingY + 20; // Extra room for Mantra
       
       // 1. Calculate Mantra & Title Height
       if (formData.mantra) cursorY += fSize * 2;
-      if (formData.title) cursorY += fSize * 2.5;
+      if (formData.title) cursorY += fSize * 2.8;
 
       const LABEL_WIDTH = 130;
       const COLON_WIDTH = 20;
       const LINE_SPACING = fSize * 0.5 + 2;
       const contentWidth = A4_W - padding * 2 - 10;
-      const valueWidth = contentWidth - LABEL_WIDTH - COLON_WIDTH;
       const sectionLayouts: any[] = [];
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -676,26 +682,85 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
       for (const sec of sections as any[]) {
         const titleY = cursorY;
-        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 6;
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12; // Extra padding for beautiful headings
         const fieldLayouts: any[] = [];
-        for (const field of sec.fields) {
+        
+        let i = 0;
+        while (i < sec.fields.length) {
+          const field = sec.fields[i];
           const valText = String(field.displayValue);
           
           let rowWidth = contentWidth;
           if (hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15) {
              rowWidth = photoConfig.x - padding - 20; // Prevent photo overlap
           }
-          let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
-          if (field.logoUrl) {
-            valueW -= (fSize + 4);
-          }
           
-          const valW = measure(valText, fSize);
-          const lines = Math.ceil(valW / valueW) || 1;
-          const rowHeight = Math.max(fSize, lines * fSize * 1.1);
-          fieldLayouts.push({ id: field.id, label: field.displayLabel, value: valText, logoUrl: field.logoUrl, y: cursorY, availableWidth: valueW });
-          cursorY += rowHeight + LINE_SPACING;
+          // Decide if we should render this field as two-column side-by-side grid
+          const nextField = sec.fields[i + 1];
+          const isTwoCol = detailsLayout === "two-column";
+          
+          // Pair fields if we are in two-column mode, both values are short, and we are not in the photo Y range
+          const canPair = isTwoCol && nextField && 
+                          (valText.length < 16 && String(field.displayLabel).length < 13) && 
+                          (String(nextField.displayValue).length < 16 && String(nextField.displayLabel).length < 13) &&
+                          !(hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15);
+                          
+          if (canPair) {
+            const halfW = (rowWidth - 12) / 2;
+            const labelW = Math.round(halfW * 0.45);
+            const valueW = halfW - labelW - 10;
+            
+            fieldLayouts.push({
+              id: field.id,
+              label: field.displayLabel,
+              value: valText,
+              logoUrl: field.logoUrl,
+              y: cursorY,
+              availableWidth: valueW,
+              isHalf: true,
+              colIndex: 0,
+              halfW,
+              labelW,
+            });
+            
+            fieldLayouts.push({
+              id: nextField.id,
+              label: nextField.displayLabel,
+              value: String(nextField.displayValue),
+              logoUrl: nextField.logoUrl,
+              y: cursorY,
+              availableWidth: valueW,
+              isHalf: true,
+              colIndex: 1,
+              halfW,
+              labelW,
+            });
+            
+            cursorY += fSize * 1.35 + LINE_SPACING;
+            i += 2;
+          } else {
+            let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+            if (field.logoUrl) {
+              valueW -= (fSize + 4);
+            }
+            
+            const valW = measure(valText, fSize);
+            const lines = Math.ceil(valW / valueW) || 1;
+            const rowHeight = Math.max(fSize, lines * fSize * 1.1);
+            fieldLayouts.push({
+              id: field.id,
+              label: field.displayLabel,
+              value: valText,
+              logoUrl: field.logoUrl,
+              y: cursorY,
+              availableWidth: valueW,
+              isHalf: false,
+            });
+            cursorY += rowHeight + LINE_SPACING;
+            i += 1;
+          }
         }
+        
         sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
         cursorY += fSize * 1.5;
       }
@@ -712,7 +777,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
     }
     return { ...finalLayout, fSize: bestSize };
-  }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig]);
+  }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -837,34 +902,224 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 )}
 
                 {/* Title Rendering */}
-                {formData.title && (
-                  <Text
-                    x={A4_W / 2}
-                    y={paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0)}
-                    text={formData.title}
-                    fontSize={layout.fSize * 2}
-                    fontFamily={fontFamily}
-                    fontStyle="bold"
-                    fill={primaryColor}
-                    align="center"
-                    width={A4_W}
-                    offsetX={A4_W / 2}
-                  />
-                )}
+                {formData.title && (() => {
+                  const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
+                  const titleHeight = layout.fSize * 2;
+                  
+                  if (titleShape === "ribbon") {
+                    const ribbonW = 320;
+                    const ribbonH = layout.fSize * 2.8;
+                    const ribbonX = (A4_W - ribbonW) / 2;
+                    const ribbonY = titleY - 4;
+                    const tailW = 30;
+                    const tailH = ribbonH;
+                    
+                    return (
+                      <Group>
+                        {/* Ribbon Left Tail (polygon) */}
+                        <Line
+                          points={[
+                            ribbonX - tailW + 10, ribbonY + 8,
+                            ribbonX, ribbonY + 2,
+                            ribbonX, ribbonY + tailH - 2,
+                            ribbonX - tailW + 10, ribbonY + tailH + 4,
+                            ribbonX - tailW + 2, ribbonY + (tailH / 2) + 5
+                          ]}
+                          fill={primaryColor}
+                          opacity={0.8}
+                          closed
+                        />
+                        {/* Ribbon Right Tail (polygon) */}
+                        <Line
+                          points={[
+                            ribbonX + ribbonW + tailW - 10, ribbonY + 8,
+                            ribbonX + ribbonW, ribbonY + 2,
+                            ribbonX + ribbonW, ribbonY + tailH - 2,
+                            ribbonX + ribbonW + tailW - 10, ribbonY + tailH + 4,
+                            ribbonX + ribbonW + tailW - 2, ribbonY + (tailH / 2) + 5
+                          ]}
+                          fill={primaryColor}
+                          opacity={0.8}
+                          closed
+                        />
+                        {/* Ribbon Main Banner */}
+                        <Rect
+                          x={ribbonX}
+                          y={ribbonY}
+                          width={ribbonW}
+                          height={ribbonH}
+                          fill={primaryColor}
+                          cornerRadius={6}
+                          stroke={accentColor || primaryColor}
+                          strokeWidth={2}
+                          shadowColor="#000000"
+                          shadowBlur={4}
+                          shadowOffset={{ x: 0, y: 2 }}
+                          shadowOpacity={0.15}
+                        />
+                        <Text
+                          x={ribbonX}
+                          y={ribbonY + (ribbonH - titleHeight) / 2}
+                          text={formData.title}
+                          fontSize={layout.fSize * 1.8}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill="#ffffff"
+                          align="center"
+                          width={ribbonW}
+                        />
+                      </Group>
+                    );
+                  } else if (titleShape === "arch") {
+                    return (
+                      <Group>
+                        {/* Traditional Temple Dome Arch */}
+                        <Path
+                          data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
+                          stroke={accentColor || primaryColor}
+                          strokeWidth={2.5}
+                          lineCap="round"
+                        />
+                        <Path
+                          data={`M ${A4_W / 2 - 100},${titleY - 4} C ${A4_W / 2 - 70},${titleY - 18} ${A4_W / 2 - 25},${titleY - 24} ${A4_W / 2},${titleY - 24} C ${A4_W / 2 + 25},${titleY - 24} ${A4_W / 2 + 70},${titleY - 18} ${A4_W / 2 + 100},${titleY - 4}`}
+                          stroke={primaryColor}
+                          strokeWidth={1}
+                          opacity={0.6}
+                          lineCap="round"
+                        />
+                        <Text
+                          x={A4_W / 2}
+                          y={titleY}
+                          text={formData.title}
+                          fontSize={layout.fSize * 2}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill={primaryColor}
+                          align="center"
+                          width={A4_W}
+                          offsetX={A4_W / 2}
+                        />
+                      </Group>
+                    );
+                  } else if (titleShape === "ornament") {
+                    return (
+                      <Group>
+                        {/* Elegant Decorative Side Mandalas */}
+                        <Path
+                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                          fill={accentColor || primaryColor}
+                          x={A4_W / 2 - 170}
+                          y={titleY - 2}
+                          scale={{ x: 0.8, y: 0.8 }}
+                        />
+                        <Path
+                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                          fill={accentColor || primaryColor}
+                          x={A4_W / 2 + 140}
+                          y={titleY - 2}
+                          scale={{ x: 0.8, y: 0.8 }}
+                        />
+                        {/* Title Text */}
+                        <Text
+                          x={A4_W / 2}
+                          y={titleY}
+                          text={formData.title}
+                          fontSize={layout.fSize * 2}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill={primaryColor}
+                          align="center"
+                          width={A4_W}
+                          offsetX={A4_W / 2}
+                        />
+                        {/* Ornamental Underline */}
+                        <Line
+                          points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
+                          stroke={accentColor || primaryColor}
+                          strokeWidth={1.5}
+                        />
+                        <Line
+                          points={[A4_W / 2 - 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 1.5, A4_W / 2 + 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 6.5]}
+                          fill={accentColor || primaryColor}
+                          closed
+                        />
+                      </Group>
+                    );
+                  } else {
+                    // Standard Simple Text
+                    return (
+                      <Text
+                        x={A4_W / 2}
+                        y={titleY}
+                        text={formData.title}
+                        fontSize={layout.fSize * 2}
+                        fontFamily={fontFamily}
+                        fontStyle="bold"
+                        fill={primaryColor}
+                        align="center"
+                        width={A4_W}
+                        offsetX={A4_W / 2}
+                      />
+                    );
+                  }
+                })()}
 
                 {layout.sectionLayouts.map((sec: any) => (
                   <Group key={sec.titleText}>
+                    {/* Modern Boxed Card Background Rendering */}
+                    {detailsLayout === "modern-boxed" && (() => {
+                      const lastField = sec.fields[sec.fields.length - 1];
+                      const boxHeight = lastField ? (lastField.y + layout.fSize * 1.45 - sec.titleY + 12) : 50;
+                      return (
+                        <Rect
+                          x={padding - 8}
+                          y={sec.titleY - 8}
+                          width={A4_W - padding * 2 + 16}
+                          height={boxHeight}
+                          fill={primaryColor + "06"} // Light primary color tint (opacity ~3%)
+                          stroke={primaryColor + "1a"} // Soft primary color stroke (opacity ~10%)
+                          strokeWidth={1.2}
+                          cornerRadius={10}
+                        />
+                      );
+                    })()}
+
+                    {/* Section Header */}
                     <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
                     <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
-                    {sec.fields.map((field: any) => (
-                      <Group key={field.id}>
-                        <Text x={padding + 10} y={field.y} width={130} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
-                        <Text x={padding + 140} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                        {field.logoUrl ? (
-                          <>
-                            <LogoImage src={field.logoUrl} x={padding + 155} y={field.y + (layout.fSize * 0.05)} size={layout.fSize} />
+                    
+                    {/* Section Fields */}
+                    {sec.fields.map((field: any) => {
+                      const colX = field.isHalf 
+                        ? (field.colIndex === 0 
+                            ? (padding + 10) 
+                            : (padding + 10 + field.halfW + 10))
+                        : (padding + 10);
+                      const lblW = field.isHalf ? field.labelW : 130;
+                      const valX = colX + lblW + 15;
+                      const colonX = colX + lblW + 5;
+                      
+                      return (
+                        <Group key={field.id}>
+                          <Text x={colX} y={field.y} width={lblW} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
+                          <Text x={colonX} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
+                          {field.logoUrl ? (
+                            <>
+                              <LogoImage src={field.logoUrl} x={valX} y={field.y + (layout.fSize * 0.05)} size={layout.fSize} />
+                              <Text
+                                x={valX + layout.fSize + 4}
+                                y={field.y}
+                                width={field.availableWidth}
+                                text={field.value}
+                                fontSize={layout.fSize}
+                                fontFamily={fontFamily}
+                                fill={secondaryColor}
+                                lineHeight={1.1}
+                              />
+                            </>
+                          ) : (
                             <Text
-                              x={padding + 155 + layout.fSize + 4}
+                              x={valX}
                               y={field.y}
                               width={field.availableWidth}
                               text={field.value}
@@ -873,21 +1128,23 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                               fill={secondaryColor}
                               lineHeight={1.1}
                             />
-                          </>
-                        ) : (
-                          <Text
-                            x={padding + 155}
-                            y={field.y}
-                            width={field.availableWidth}
-                            text={field.value}
-                            fontSize={layout.fSize}
-                            fontFamily={fontFamily}
-                            fill={secondaryColor}
-                            lineHeight={1.1}
-                          />
-                        )}
-                      </Group>
-                    ))}
+                          )}
+
+                          {/* Elegant Divider underline */}
+                          {detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
+                            <Line
+                              points={[
+                                colX, field.y + layout.fSize * 1.35 + 2,
+                                colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + layout.fSize * 1.35 + 2
+                              ]}
+                              stroke={secondaryColor + "15"} // Ultra-soft opacity
+                              strokeWidth={0.8}
+                              dash={[2, 2]}
+                            />
+                          )}
+                        </Group>
+                      );
+                    })}
                   </Group>
                 ))}
 
@@ -901,7 +1158,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 width={photoConfig.width}
                 height={photoConfig.height}
                 cornerRadius={photoConfig.cornerRadius}
-                borderColor={primaryColor}
+                borderColor={photoConfig.showBorder !== false ? primaryColor : ""}
               />
             )}
 

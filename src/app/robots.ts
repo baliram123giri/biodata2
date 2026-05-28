@@ -35,7 +35,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
 
-    sitemap: 'https://biodata99.com/sitemap.xml',
-    host: 'https://biodata99.com',
+    sitemap: 'https://biodata99.com/sitemap.xml'
   }
 }

@@ -33,7 +33,7 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "occupation", label: "Occupation/Job", value: "Software Engineer", type: "select", options: ["Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", "Defense / Police", "Private Job", "Not Working", "Other"], isDefault: true },
     { id: "annualIncome", label: "Annual Income", value: "10-15 LPA", type: "select", options: ["0-5 LPA", "5-10 LPA", "10-15 LPA", "15-20 LPA", "20-25 LPA", "25-30 LPA", "30-35 LPA", "35-40 LPA", "40-45 LPA", "45-50 LPA", "50+ LPA"], isDefault: true },
     { id: "companyName", label: "Company Name", value: "Google", type: "company", isDefault: true },
-    { id: "companyLogo", label: "Company Logo", value: "", type: "hidden", isDefault: false },
+    { id: "companyLogo", label: "Company Logo", value: "https://icon.horse/icon/google.com", type: "hidden", isDefault: false },
   ],
   familyDetails: [
     { id: "fatherName", label: "Father's Name", value: "Shankar Giri", type: "text", isDefault: true },
