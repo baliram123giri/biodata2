@@ -184,102 +184,122 @@ export function BlogListWrapper({ posts }: BlogListWrapperProps) {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           <AnimatePresence mode="popLayout">
-            {filteredPosts.map((post) => (
-              <motion.div
-                key={post.id}
-                layout
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.25 }}
-              >
-                <Card className="pt-0 pb-0 border border-[#C9A84C]/25 bg-card overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group h-full justify-between">
-                  {/* Thumbnail Cover or Decorative Header Preview */}
-                  {post.thumbnailUrl ? (
-                    <div className="h-44 relative overflow-hidden bg-muted border-b border-[#C9A84C]/15">
-                      <NextImage
-                        src={post.thumbnailUrl}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20 shadow-xs">
-                          {getPostTopic(post)}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#9B1B30] text-white dark:bg-[#E6C97A] dark:text-[#1A0A0E] border border-transparent shadow-xs">
-                          {getPostLanguage(post).split(" ")[0]}
-                        </span>
+            {filteredPosts.map((post) => {
+              const rawLang = post.language || "";
+              const normalized = rawLang.toLowerCase();
+              let postLangCode = "en";
+              if (normalized.includes("marathi")) {
+                postLangCode = "mr";
+              } else if (normalized.includes("hindi")) {
+                postLangCode = "hi";
+              } else if (normalized.includes("gujarati")) {
+                postLangCode = "gu";
+              } else {
+                // Fallback check on category
+                const cat = post.category.toLowerCase();
+                if (cat.includes("marathi")) postLangCode = "mr";
+                else if (cat.includes("hindi")) postLangCode = "hi";
+                else if (cat.includes("gujarati")) postLangCode = "gu";
+              }
+              const postUrl = `/blog/${postLangCode}/${post.slug}`;
+
+              return (
+                <motion.div
+                  key={post.id}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <Card className="pt-0 pb-0 border border-[#C9A84C]/25 bg-card overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group h-full justify-between">
+                    {/* Thumbnail Cover or Decorative Header Preview */}
+                    {post.thumbnailUrl ? (
+                      <div className="h-44 relative overflow-hidden bg-muted border-b border-[#C9A84C]/15">
+                        <NextImage
+                          src={post.thumbnailUrl}
+                          alt={post.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+                          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20 shadow-xs">
+                            {getPostTopic(post)}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#9B1B30] text-white dark:bg-[#E6C97A] dark:text-[#1A0A0E] border border-transparent shadow-xs">
+                            {getPostLanguage(post).split(" ")[0]}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div 
-                      className="h-44 relative overflow-hidden bg-muted flex items-center justify-center p-3"
-                      style={{
-                        background: `linear-gradient(135deg, #FFFBF8 0%, #FBF5E6 100%)`,
-                        borderBottom: `1px solid rgba(201,168,76,0.15)`
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.08)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-                      
-                      <div className="w-16 h-16 rounded-full border border-dashed border-[#C9A84C]/45 flex items-center justify-center bg-card shadow-inner transition-transform duration-700 group-hover:rotate-12">
-                        <span className="text-[#C9A84C] text-2xl font-serif">📖</span>
+                    ) : (
+                      <div 
+                        className="h-44 relative overflow-hidden bg-muted flex items-center justify-center p-3"
+                        style={{
+                          background: `linear-gradient(135deg, #FFFBF8 0%, #FBF5E6 100%)`,
+                          borderBottom: `1px solid rgba(201,168,76,0.15)`
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.08)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+                        
+                        <div className="w-16 h-16 rounded-full border border-dashed border-[#C9A84C]/45 flex items-center justify-center bg-card shadow-inner transition-transform duration-700 group-hover:rotate-12">
+                          <span className="text-[#C9A84C] text-2xl font-serif">📖</span>
+                        </div>
+
+                        <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+                          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20 shadow-xs">
+                            {getPostTopic(post)}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#9B1B30] text-white dark:bg-[#E6C97A] dark:text-[#1A0A0E] border border-transparent shadow-xs">
+                            {getPostLanguage(post).split(" ")[0]}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <CardContent className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-3">
+                        {/* Meta Details */}
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground font-semibold">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-[#C9A84C]" />
+                            {post.publishDate}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#C9A84C]" />
+                            {post.readTime}
+                          </span>
+                        </div>
+
+                        <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                          <Link href={postUrl}>
+                            {post.title}
+                          </Link>
+                        </h3>
+                        
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                          {post.description}
+                        </p>
                       </div>
 
-                      <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-card text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/20 shadow-xs">
-                          {getPostTopic(post)}
+                      <div className="pt-4 border-t border-border/40 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground font-bold flex items-center gap-1">
+                          <User className="w-3.5 h-3.5 text-[#C9A84C]" />
+                          By {post.author}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#9B1B30] text-white dark:bg-[#E6C97A] dark:text-[#1A0A0E] border border-transparent shadow-xs">
-                          {getPostLanguage(post).split(" ")[0]}
-                        </span>
+                        
+                        <Button variant="link" className="p-0 text-primary font-black hover:no-underline flex items-center gap-1 text-sm" asChild>
+                          <Link href={postUrl}>
+                            Read Article <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                          </Link>
+                        </Button>
                       </div>
-                    </div>
-                  )}
-
-                  <CardContent className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                    <div className="space-y-3">
-                      {/* Meta Details */}
-                      <div className="flex items-center gap-4 text-[11px] text-muted-foreground font-semibold">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-[#C9A84C]" />
-                          {post.publishDate}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-[#C9A84C]" />
-                          {post.readTime}
-                        </span>
-                      </div>
-
-                      <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                        <Link href={`/blog/${post.slug}`}>
-                          {post.title}
-                        </Link>
-                      </h3>
-                      
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                        {post.description}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-border/40 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground font-bold flex items-center gap-1">
-                        <User className="w-3.5 h-3.5 text-[#C9A84C]" />
-                        By {post.author}
-                      </span>
-                      
-                      <Button variant="link" className="p-0 text-primary font-black hover:no-underline flex items-center gap-1 text-sm" asChild>
-                        <Link href={`/blog/${post.slug}`}>
-                          Read Article <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </motion.div>
       ) : (

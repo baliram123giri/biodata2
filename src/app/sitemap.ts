@@ -1,26 +1,71 @@
 import { MetadataRoute } from 'next'
- 
-export default function sitemap(): MetadataRoute.Sitemap {
+import { prisma } from '@/lib/prisma'
+
+export const revalidate = 86400; // Cache and revalidate sitemap every 24 hours
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://biodata99.com'
   
-  const routes = [
-    '',
-    '/edit',
-    '/templates',
-    '/how-it-works',
-    '/faqs',
-    '/about-us',
-    '/contact-us',
-    '/privacy-policy',
-    '/refund-policy',
-    '/terms-conditions',
-    '/blog',
+  const staticRoutes = [
+    { path: '', changeFrequency: 'daily' as const, priority: 1.0 },
+    { path: '/edit', changeFrequency: 'daily' as const, priority: 0.9 },
+    { path: '/templates', changeFrequency: 'monthly' as const, priority: 0.8 },
+    { path: '/how-it-works', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/faqs', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/about-us', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/contact-us', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/privacy-policy', changeFrequency: 'monthly' as const, priority: 0.5 },
+    { path: '/refund-policy', changeFrequency: 'monthly' as const, priority: 0.5 },
+    { path: '/terms-conditions', changeFrequency: 'monthly' as const, priority: 0.5 },
+    { path: '/blog', changeFrequency: 'daily' as const, priority: 0.8 },
   ]
 
-  return routes.map((route) => ({
-    url: `${baseUrl}${route}`,
+  const mappedStatic = staticRoutes.map((route) => ({
+    url: `${baseUrl}${route.path}`,
     lastModified: new Date(),
-    changeFrequency: route === '' || route === '/edit' || route.startsWith('/blog') ? 'daily' : 'monthly',
-    priority: route === '' ? 1.0 : route === '/edit' ? 0.9 : route.startsWith('/blog') ? 0.8 : 0.7,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
   }))
+
+  try {
+    const posts = await prisma.blogPost.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+        language: true,
+      },
+    })
+
+    const dynamicRoutes = posts.flatMap((post) => {
+      const lastMod = post.updatedAt ? new Date(post.updatedAt) : new Date();
+      const rawLang = post.language || "English";
+      
+      // Map post.language to the exact BCP 47 code
+      let langCode = "en";
+      const normalized = rawLang.toLowerCase();
+      if (normalized.includes("marathi")) {
+        langCode = "mr";
+      } else if (normalized.includes("hindi")) {
+        langCode = "hi";
+      } else if (normalized.includes("gujarati")) {
+        langCode = "gu";
+      }
+
+      const routes = [
+        {
+          url: `${baseUrl}/blog/${langCode}/${post.slug}`,
+          lastModified: lastMod,
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }
+      ];
+
+      return routes;
+    })
+
+    return [...mappedStatic, ...dynamicRoutes]
+  } catch (error) {
+    console.error("Error generating sitemap dynamic routes:", error)
+    return mappedStatic
+  }
 }

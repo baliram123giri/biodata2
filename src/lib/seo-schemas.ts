@@ -245,3 +245,22 @@ export const templatesPageSchema = {
     "logo": "https://biodata99.com/logo.svg"
   }
 };
+
+// 10. Dynamic BreadcrumbList Schema Generator
+interface BreadcrumbItem {
+  name: string;
+  item: string;
+}
+
+export function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org" as const,
+    "@type": "BreadcrumbList" as const,
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem" as const,
+      "position": index + 1,
+      "name": item.name,
+      "item": item.item
+    }))
+  };
+}

@@ -3,11 +3,10 @@ import { MetadataRoute } from 'next'
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      // Block AI model training crawlers
+      // 1. Block training/scraping crawlers that don't drive direct search value
       {
         userAgent: [
           'GPTBot',
-          'ClaudeBot',
           'Google-Extended',
           'CCBot',
           'Bytespider',
@@ -15,13 +14,20 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
 
-      // Allow AI assistants that can drive traffic
+      // 2. Allow traffic-driving conversational AI search assistants
       {
-        userAgent: ['ChatGPT-User', 'PerplexityBot'],
+        userAgent: [
+          'ClaudeBot',
+          'Claude-User',
+          'Claude-SearchBot',
+          'ChatGPT-User',
+          'PerplexityBot',
+        ],
         allow: '/',
+        disallow: ['/admin/', '/api/'],
       },
 
-      // General rules for search engines
+      // 3. General rules for Google Search, standard search engines, and normal users
       {
         userAgent: '*',
         allow: '/',
@@ -30,7 +36,6 @@ export default function robots(): MetadataRoute.Robots {
     ],
 
     sitemap: 'https://biodata99.com/sitemap.xml',
-
     host: 'https://biodata99.com',
   }
 }
