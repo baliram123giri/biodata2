@@ -26,6 +26,98 @@ export function generateJpgDataUrl(): Promise<string> {
 }
 
 /**
+ * Pre-fetch and convert any company logo to a Base64 data URL client-side.
+ * This guarantees the server receives offline-ready data for perfect PDF/DOCX rendering.
+ */
+async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
+  if (!formData) return formData;
+  try {
+    const cloned = JSON.parse(JSON.stringify(formData));
+    const sections = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"];
+    for (const secKey of sections) {
+      const fields = cloned[secKey];
+      if (fields && Array.isArray(fields)) {
+        for (const field of fields) {
+          if (field.type === "company" || field.id === "companyName") {
+            let rawLogo = field.logo;
+            
+            if (!rawLogo) {
+              const cleanName = (field.value || "").trim().toLowerCase();
+              const popular = [
+                { name: "tcs", domain: "tcs.com" },
+                { name: "tata consultancy services", domain: "tcs.com" },
+                { name: "infosys", domain: "infosys.com" },
+                { name: "wipro", domain: "wipro.com" },
+                { name: "cognizant", domain: "cognizant.com" },
+                { name: "accenture", domain: "accenture.com" },
+                { name: "google", domain: "google.com" },
+                { name: "microsoft", domain: "microsoft.com" },
+                { name: "amazon", domain: "amazon.com" },
+                { name: "flipkart", domain: "flipkart.com" },
+                { name: "reliance", domain: "ril.com" },
+                { name: "tata motors", domain: "tatamotors.com" },
+                { name: "hdfc bank", domain: "hdfcbank.com" },
+                { name: "hdfc", domain: "hdfcbank.com" },
+                { name: "icici bank", domain: "icicibank.com" },
+                { name: "icici", domain: "icicibank.com" },
+                { name: "sbi", domain: "sbi.co.in" },
+                { name: "state bank of india", domain: "sbi.co.in" },
+                { name: "l&t", domain: "larsentoubro.com" },
+                { name: "larsen & toubro", domain: "larsentoubro.com" },
+                { name: "mahindra", domain: "mahindra.com" },
+                { name: "government of india", domain: "india.gov.in" },
+                { name: "meta", domain: "meta.com" },
+                { name: "apple", domain: "apple.com" },
+                { name: "netflix", domain: "netflix.com" },
+              ];
+              const foundPopular = popular.find(p => cleanName.includes(p.name) || p.name.includes(cleanName));
+              if (foundPopular) {
+                rawLogo = `https://icon.horse/icon/${foundPopular.domain}`;
+              }
+            }
+            
+            if (!rawLogo) {
+              rawLogo = fields.find((f: any) => f.id === "companyLogo")?.value;
+              if ((field.value || "").toLowerCase() !== "google" && rawLogo && rawLogo.includes("google.com")) {
+                rawLogo = undefined;
+              }
+            }
+            
+            if (!rawLogo && (field.value || "").includes(".")) {
+              const potentialDomain = (field.value || "").replace(/https?:\/\//, "").split("/")[0].trim();
+              rawLogo = `https://icon.horse/icon/${potentialDomain}`;
+            }
+            
+            if (rawLogo && rawLogo.startsWith("http")) {
+              console.log("Client-side pre-fetching logo for PDF generation:", rawLogo);
+              try {
+                const proxyUrl = `/api/proxy-logo?url=${encodeURIComponent(rawLogo)}`;
+                const res = await fetch(proxyUrl);
+                if (res.ok) {
+                  const blob = await res.blob();
+                  const base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                  });
+                  field.logo = base64;
+                }
+              } catch (err) {
+                console.error("Client logo pre-fetch error:", err);
+              }
+            }
+          }
+        }
+      }
+    }
+    return cloned;
+  } catch (e) {
+    console.error("Error in prepareFormDataWithBase64Logos:", e);
+    return formData;
+  }
+}
+
+/**
  * Generate a PDF Blob directly from the server API.
  */
 export async function generatePdfBlob(
@@ -33,11 +125,12 @@ export async function generatePdfBlob(
   templateId: string,
   theme: any
 ): Promise<Blob> {
+  const preparedData = await prepareFormDataWithBase64Logos(formData);
   const res = await fetch("/api/generate-pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      formData,
+      formData: preparedData,
       templateId,
       theme: {
         fontFamily: theme.fontFamily,
@@ -81,19 +174,21 @@ export function useDownloadBiodata() {
   ) => {
     setIsGenerating(true);
 
+    const preparedData = await prepareFormDataWithBase64Logos(formData);
+
     const getFieldVal = (details: any[], id: string) => {
       return details?.find((f: any) => f.id === id)?.value || "";
     };
 
     const nameField =
       customFilename ||
-      getFieldVal(formData.personalDetails, "fullName") ||
+      getFieldVal(preparedData.personalDetails, "fullName") ||
       "biodata";
 
     const locField =
-      getFieldVal(formData.contactDetails, "residentialAddress") ||
-      getFieldVal(formData.familyDetails, "nativePlace") ||
-      getFieldVal(formData.personalDetails, "placeOfBirth") ||
+      getFieldVal(preparedData.contactDetails, "residentialAddress") ||
+      getFieldVal(preparedData.familyDetails, "nativePlace") ||
+      getFieldVal(preparedData.personalDetails, "placeOfBirth") ||
       "Unknown";
 
     // Record download activity in database
@@ -134,7 +229,7 @@ export function useDownloadBiodata() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          formData,
+          formData: preparedData,
           templateId,
           theme: {
             fontFamily: theme.fontFamily,

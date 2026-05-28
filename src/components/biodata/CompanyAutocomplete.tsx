@@ -35,7 +35,7 @@ const POPULAR_COMPANIES: Company[] = [
   { name: "Government of India", domain: "india.gov.in", logo: "https://icon.horse/icon/india.gov.in" },
 ];
 
-export function CompanyAutocomplete({ value, onChange, placeholder }: { value: string; onChange: (v: string, logo?: string) => void; placeholder?: string }) {
+export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { value: string; logo?: string; onChange: (v: string, logo?: string) => void; placeholder?: string }) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [companies, setCompanies] = React.useState<Company[]>([])
@@ -45,8 +45,17 @@ export function CompanyAutocomplete({ value, onChange, placeholder }: { value: s
   const [logoMap, setLogoMap] = React.useState<Record<string, string>>(() => {
     const map: Record<string, string> = {}
     POPULAR_COMPANIES.forEach(c => map[c.name] = c.logo)
+    if (value && logo) {
+      map[value] = logo;
+    }
     return map
   })
+
+  React.useEffect(() => {
+    if (value && logo) {
+      setLogoMap(prev => ({ ...prev, [value]: logo }));
+    }
+  }, [value, logo]);
 
   React.useEffect(() => {
     if (query.trim().length === 0) {
@@ -169,16 +178,11 @@ export function CompanyAutocomplete({ value, onChange, placeholder }: { value: s
                 <div
                   key={company.domain}
                   onClick={() => {
-                    if (company.logo) {
-                      setLogoMap(prev => ({ ...prev, [company.name]: company.logo }))
-                      onChange(company.name, company.logo)
-                    } else if (company.domain) {
-                      const logoUrl = `https://icon.horse/icon/${company.domain}`
-                      setLogoMap(prev => ({ ...prev, [company.name]: logoUrl }))
-                      onChange(company.name, logoUrl)
-                    } else {
-                      onChange(company.name)
-                    }
+                    const domain = company.domain || (company.logo ? company.logo.replace("https://logo.clearbit.com/", "") : "");
+                    const logoUrl = domain ? `https://icon.horse/icon/${domain}` : (company.logo || "");
+                    
+                    setLogoMap(prev => ({ ...prev, [company.name]: logoUrl }))
+                    onChange(company.name, logoUrl)
                     setOpen(false)
                   }}
                   className={cn(
@@ -208,7 +212,9 @@ export function CompanyAutocomplete({ value, onChange, placeholder }: { value: s
               {query && !companies.some(c => c.name.toLowerCase() === query.toLowerCase()) && (
                 <div
                   onClick={() => {
-                    onChange(query)
+                    const potentialDomain = query.includes(".") ? query.replace(/https?:\/\//, "").split("/")[0].trim() : "";
+                    const logoUrl = potentialDomain ? `https://icon.horse/icon/${potentialDomain}` : undefined;
+                    onChange(query, logoUrl)
                     setOpen(false)
                   }}
                   className="flex items-center gap-3 px-2 py-1.5 text-sm rounded-md cursor-pointer transition-colors duration-150 hover:bg-muted text-primary font-medium border-t mt-1"

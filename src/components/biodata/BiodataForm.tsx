@@ -166,7 +166,15 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
       <AccordionContent className="space-y-4 pt-2 overflow-hidden">
         <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
-            if (field.type === "hidden") return null;
+            if (field.type === "hidden") {
+              return (
+                <input
+                  key={field.id}
+                  type="hidden"
+                  {...register(`${name}.${index}.value` as const)}
+                />
+              );
+            }
             const liveLabel = watchedLabels[index] || field.label;
             return (
             <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
@@ -215,25 +223,40 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                   )}}
                 />
               ) : field.type === "company" ? (
-                <Controller
-                  name={`${name}.${index}.value` as const}
-                  control={control}
-                  render={({ field: compField }) => {
-                    return (
-                      <CompanyAutocomplete 
-                        value={compField.value} 
-                        onChange={(val, logo) => {
-                           compField.onChange(val);
-                           const logoIndex = fields.findIndex(f => f.id === "companyLogo");
-                           if (logoIndex !== -1) {
-                               setValue(`${name}.${logoIndex}.value`, logo || "");
-                           }
-                        }} 
-                        placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
-                      />
-                    );
-                  }}
-                />
+                <>
+                  <input type="hidden" {...register(`${name}.${index}.logo` as any)} />
+                  <Controller
+                    name={`${name}.${index}.value` as const}
+                    control={control}
+                    render={({ field: compField }) => {
+                      return (
+                        <CompanyAutocomplete 
+                          value={compField.value} 
+                          logo={getValues(`${name}.${index}.logo` as any)}
+                          onChange={(val, logo) => {
+                             compField.onChange(val);
+                             setValue(`${name}.${index}.logo` as any, logo || "");
+                             
+                             // Backwards compatibility sync for separate hidden logo field
+                             const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                             if (logoIndex !== -1) {
+                                 setValue(`${name}.${logoIndex}.value`, logo || "");
+                             } else {
+                                 setValue(`${name}.${fields.length}`, {
+                                   id: "companyLogo",
+                                   label: "Company Logo",
+                                   value: logo || "",
+                                   type: "hidden",
+                                   isDefault: false
+                                 } as any);
+                             }
+                          }} 
+                          placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
+                        />
+                      );
+                    }}
+                  />
+                </>
               ) : field.type === "time12" ? (
                 <Controller
                   name={`${name}.${index}.value` as const}

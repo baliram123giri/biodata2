@@ -20,17 +20,9 @@ async function getSessionUser() {
   return (session?.user as any) || null;
 }
 
+// Frame images are stored as plain Cloudinary URLs.
+// Dynamic tinting is no longer applied — users manually pick their theme colors.
 function makeColorizableCloudinaryUrl(url: string): string {
-  if (url.includes("res.cloudinary.com") && url.includes("/image/upload/")) {
-    if (url.includes("{color}")) return url;
-    
-    // If it is an SVG, keep it as vector and don't convert to PNG/WebP (avoid f_auto)
-    if (url.toLowerCase().endsWith(".svg") || url.toLowerCase().includes(".svg?")) {
-      return url.replace("/image/upload/", "/image/upload/e_tint:100:rgb:{color}/");
-    }
-    
-    return url.replace("/image/upload/", "/image/upload/f_auto,q_100,e_tint:100:rgb:{color}/");
-  }
   return url;
 }
 
@@ -163,6 +155,8 @@ export async function PATCH(
       "frameComponentId",
       "language",
       "active",
+      "detailsLayout",
+      "titleShape",
     ];
 
     fields.forEach((field) => {
@@ -195,6 +189,10 @@ export async function PATCH(
 
     if (body.frameHasCornerCurves !== undefined) {
       updateData.frameHasCornerCurves = body.frameHasCornerCurves === true;
+    }
+
+    if (body.photoShowBorder !== undefined) {
+      updateData.photoShowBorder = body.photoShowBorder === true;
     }
 
     if (body.frameGradientColors !== undefined) {

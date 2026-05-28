@@ -72,6 +72,7 @@ export interface TemplateConfig {
     width: number;
     height: number;
     cornerRadius: number;
+    showBorder?: boolean;
   };
   frame: FrameConfig;
   thumbnailUrl?: string;
@@ -79,6 +80,8 @@ export interface TemplateConfig {
   bgGradientColors?: string[];
   bgConfig?: BgConfig;
   language?: string;
+  detailsLayout?: string;
+  titleShape?: string;
 }
 
 // ── Registry ───────────────────────────────────────────────────────
@@ -109,9 +112,23 @@ function sanitizeTemplateConfig(config: TemplateConfig): TemplateConfig {
   };
 }
 
-export function getFrameImageUrl(config: FrameImageConfig, hexColor: string): string {
-  const color = hexColor.replace("#", "");
-  return config.urlTemplate.replace("{color}", color);
+export function getFrameImageUrl(config: FrameImageConfig, _hexColor?: string): string {
+  // Return the frame URL without any dynamic color tinting.
+  // Legacy templates stored with e_tint:100:rgb:{color} in the URL need that
+  // transformation segment stripped so the URL is valid and the image loads.
+  let url = config.urlTemplate;
+
+  if (url.includes("{color}")) {
+    // Remove the entire tint transformation segment and clean up double slashes
+    url = url
+      .replace(/f_auto,q_100,e_tint:\d+:rgb:\{color\}\//g, "f_auto,q_100/")
+      .replace(/e_tint:\d+:rgb:\{color\}\//g, "")
+      // Clean up any double-slash that results from removing the segment
+      .replace(/\/\/+/g, "/")
+      .replace("https:/", "https://");
+  }
+
+  return url;
 }
 
 export function getTemplateConfig(templateId: string): TemplateConfig {
@@ -230,6 +247,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
       width: dbTpl.photoWidth,
       height: dbTpl.photoHeight,
       cornerRadius: 0,
+      showBorder: dbTpl.photoShowBorder !== false, // default true when null/undefined
     },
     frame,
     thumbnailUrl: dbTpl.thumbnailUrl || undefined,
@@ -237,5 +255,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     bgGradientColors: dbTpl.frameBgGradientColors || [],
     bgConfig,
     language: dbTpl.language || "English",
+    detailsLayout: dbTpl.detailsLayout || "classic",
+    titleShape: dbTpl.titleShape || "simple",
   });
 }

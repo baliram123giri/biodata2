@@ -74,6 +74,9 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
   const accent = theme.accentColor || config.defaultAccent;
+  const detailsLayout = config.detailsLayout || "classic";
+  const titleShape = config.titleShape || "simple";
+  
   const isTemplateGradient = (config.bgType === "linear" || config.bgType === "radial") && (config.bgGradientColors || []).length > 1;
   const isStaticGradient = config.frame.type === "gradient" && ((config.frame as any).gradientColors || []).length > 1;
   const hasTemplateGradient = isTemplateGradient || isStaticGradient;
@@ -110,7 +113,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           React.createElement(Defs, {},
             React.createElement(LinearGradient, { id: "bg-pdf-gradient", x1: 0, y1: 0, x2: 0, y2: A4_H, gradientUnits: "userSpaceOnUse" },
               bgGradientColors.map((color: string, idx: number, arr: string[]) => 
-                React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color, stopOpacity: 1 })
+                 React.createElement(Stop, { key: idx, offset: idx / (arr.length - 1), stopColor: color, stopOpacity: 1 })
               )
             )
           ),
@@ -176,7 +179,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     }
     if (data.title) {
       headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: fontFamily });
-      cursorY += fSize * 2.5;
+      cursorY += fSize * 2.8;
     }
 
     const LABEL_WIDTH = 130;
@@ -196,27 +199,72 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 6;
+      cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12;
       const fieldRows: any[] = [];
 
-      for (const f of fields) {
-        const fieldY = cursorY;
+      let i = 0;
+      while (i < fields.length) {
+        const f1 = fields[i];
+        const valText = String(f1.displayValue);
         
         let rowWidth = contentWidth;
-        if (data.photo && config.photo && fieldY >= config.photo.y - 15 && fieldY <= config.photo.y + config.photo.height + 15) {
+        if (data.photo && config.photo && cursorY >= config.photo.y - 15 && cursorY <= config.photo.y + config.photo.height + 15) {
            rowWidth = config.photo.x - padding - 20;
         }
-        const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
         
-        const valText = String(f.displayValue);
-        const valW = valText.length * fSize * 0.6;
-        const lines = Math.ceil(valW / valueW) || 1;
-        const rowHeight = Math.max(fSize, lines * fSize * 1.1);
-
-        fieldRows.push({ ...f, y: fieldY, rowWidth, valueW });
-        
-        cursorY += rowHeight + LINE_SPACING;
+        const f2 = fields[i + 1];
+        const isTwoCol = detailsLayout === "two-column";
+        const canPair = isTwoCol && f2 && 
+                        (valText.length < 16 && String(f1.displayLabel).length < 13) && 
+                        (String(f2.displayValue).length < 16 && String(f2.displayLabel).length < 13) &&
+                        !(data.photo && config.photo && cursorY >= config.photo.y - 15 && cursorY <= config.photo.y + config.photo.height + 15);
+                        
+        if (canPair) {
+          const halfW = (rowWidth - 12) / 2;
+          const labelW = Math.round(halfW * 0.45);
+          const valueW = halfW - labelW - 10;
+          
+          fieldRows.push({
+            ...f1,
+            y: cursorY,
+            isHalf: true,
+            colIndex: 0,
+            halfW,
+            labelW,
+            valueW
+          });
+          
+          fieldRows.push({
+            ...f2,
+            y: cursorY,
+            isHalf: true,
+            colIndex: 1,
+            halfW,
+            labelW,
+            valueW
+          });
+          
+          cursorY += fSize * 1.35 + LINE_SPACING;
+          i += 2;
+        } else {
+          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          const valW = valText.length * fSize * 0.6;
+          const lines = Math.ceil(valW / valueW) || 1;
+          const rowHeight = Math.max(fSize, lines * fSize * 1.1);
+          
+          fieldRows.push({
+            ...f1,
+            y: cursorY,
+            isHalf: false,
+            valueW,
+            rowWidth
+          });
+          
+          cursorY += rowHeight + LINE_SPACING;
+          i += 1;
+        }
       }
+      
       sectionLayouts.push({ title: sec.label, titleY, fields: fieldRows });
       cursorY += fSize * 1.5;
     }
@@ -425,47 +473,228 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           style: { width: '100%', height: '100%' } as any
         })),
 
-        layout.headerItems.map((item, i) => React.createElement(Text, {
-          key: i,
-          style: {
-            position: 'absolute',
-            top: item.y,
-            left: 0,
-            width: A4_W,
-            textAlign: 'center',
-            fontSize: item.fontSize,
-            fontFamily: item.font,
-            fontWeight: 'bold',
-            color: primary
-          } as any
-        }, item.text)),
+        layout.headerItems.map((item, i) => {
+          if (item.type === 'title') {
+            if (titleShape === "ribbon") {
+              const ribbonW = 320;
+              const ribbonH = item.fontSize * 2.8;
+              const ribbonX = (A4_W - ribbonW) / 2;
+              const ribbonY = item.y - 4;
+              
+              return React.createElement(View, { key: i, style: { position: 'absolute', top: ribbonY, left: 0, width: A4_W } as any },
+                React.createElement(Svg, { width: A4_W, height: ribbonH, viewBox: `0 0 ${A4_W} ${ribbonH}` },
+                  // Left ribbon tail polygon
+                  React.createElement(Path, {
+                    d: `M ${ribbonX - 20} ${8} L ${ribbonX} ${2} L ${ribbonX} ${ribbonH - 2} L ${ribbonX - 20} ${ribbonH + 4} L ${ribbonX - 28} ${(ribbonH / 2) + 5} Z`,
+                    fill: primary,
+                    opacity: 0.8
+                  }),
+                  // Right ribbon tail polygon
+                  React.createElement(Path, {
+                    d: `M ${ribbonX + ribbonW + 20} ${8} L ${ribbonX + ribbonW} ${2} L ${ribbonX + ribbonW} ${ribbonH - 2} L ${ribbonX + ribbonW + 20} ${ribbonH + 4} L ${ribbonX + ribbonW + 28} ${(ribbonH / 2) + 5} Z`,
+                    fill: primary,
+                    opacity: 0.8
+                  }),
+                  // Center banner
+                  React.createElement(Rect, {
+                    x: ribbonX,
+                    y: 0,
+                    width: ribbonW,
+                    height: ribbonH,
+                    fill: primary,
+                    stroke: accent || primary,
+                    strokeWidth: 2,
+                    rx: 6
+                  })
+                ),
+                React.createElement(Text, {
+                  style: {
+                    position: 'absolute',
+                    top: (ribbonH - item.fontSize * 2) / 2,
+                    left: ribbonX,
+                    width: ribbonW,
+                    textAlign: 'center',
+                    fontSize: item.fontSize * 0.9,
+                    fontFamily: item.font,
+                    fontWeight: 'bold',
+                    color: '#ffffff'
+                  } as any
+                }, item.text)
+              );
+            } else if (titleShape === "arch") {
+              return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
+                React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -28 } as any },
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 - 120} 32 C ${A4_W / 2 - 80} 16 C ${A4_W / 2 - 30} 10 C ${A4_W / 2} 10 C ${A4_W / 2 + 30} 10 C ${A4_W / 2 + 80} 16 C ${A4_W / 2 + 120} 32`,
+                    stroke: accent || primary,
+                    strokeWidth: 2.5,
+                    fill: 'none'
+                  }),
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 - 100} 36 C ${A4_W / 2 - 70} 22 C ${A4_W / 2 - 25} 16 C ${A4_W / 2} 16 C ${A4_W / 2 + 25} 16 C ${A4_W / 2 + 70} 22 C ${A4_W / 2 + 100} 36`,
+                    stroke: primary,
+                    strokeWidth: 1,
+                    opacity: 0.6,
+                    fill: 'none'
+                  })
+                ),
+                React.createElement(Text, {
+                  style: {
+                    textAlign: 'center',
+                    fontSize: item.fontSize,
+                    fontFamily: item.font,
+                    fontWeight: 'bold',
+                    color: primary
+                  } as any
+                }, item.text)
+              );
+            } else if (titleShape === "ornament") {
+              return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
+                React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -2 } as any },
+                  // Left Mandala Path
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 - 170} 15 C ${A4_W / 2 - 162} 15 C ${A4_W / 2 - 155} 21 C ${A4_W / 2 - 155} 30 C ${A4_W / 2 - 155} 38 C ${A4_W / 2 - 162} 45 C ${A4_W / 2 - 170} 45 C ${A4_W / 2 - 178} 45 C ${A4_W / 2 - 185} 38 C ${A4_W / 2 - 185} 30 C ${A4_W / 2 - 185} 21 C ${A4_W / 2 - 178} 15 Z`,
+                    fill: accent || primary,
+                    transform: "scale(0.8)"
+                  }),
+                  // Right Mandala Path
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 + 140} 15 C ${A4_W / 2 + 148} 15 C ${A4_W / 2 + 155} 21 C ${A4_W / 2 + 155} 30 C ${A4_W / 2 + 155} 38 C ${A4_W / 2 + 148} 45 C ${A4_W / 2 + 140} 45 C ${A4_W / 2 + 132} 45 C ${A4_W / 2 + 125} 38 C ${A4_W / 2 + 125} 30 C ${A4_W / 2 + 125} 21 C ${A4_W / 2 + 132} 15 Z`,
+                    fill: accent || primary,
+                    transform: "scale(0.8)"
+                  }),
+                  // Underline line
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 - 90} 38 L ${A4_W / 2 + 90} 38`,
+                    stroke: accent || primary,
+                    strokeWidth: 1.5,
+                    fill: 'none'
+                  }),
+                  // Diamond Center
+                  React.createElement(Path, {
+                    d: `M ${A4_W / 2 - 5} 38 L ${A4_W / 2} 35.5 L ${A4_W / 2 + 5} 38 L ${A4_W / 2} 40.5 Z`,
+                    fill: accent || primary
+                  })
+                ),
+                React.createElement(Text, {
+                  style: {
+                    textAlign: 'center',
+                    fontSize: item.fontSize,
+                    fontFamily: item.font,
+                    fontWeight: 'bold',
+                    color: primary
+                  } as any
+                }, item.text)
+              );
+            }
+          }
+          
+          return React.createElement(Text, {
+            key: i,
+            style: {
+              position: 'absolute',
+              top: item.y,
+              left: 0,
+              width: A4_W,
+              textAlign: 'center',
+              fontSize: item.fontSize,
+              fontFamily: item.font,
+              fontWeight: 'bold',
+              color: primary
+            } as any
+          }, item.text);
+        }),
         data.photo && React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }),
-        data.photo && React.createElement(View, { style: styles.photoBorder as any }),
+        data.photo && config.photo.showBorder !== false && React.createElement(View, { style: styles.photoBorder as any }),
         layout.sectionLayouts.map((sec, si) => React.createElement(View, { key: si, style: { position: 'absolute', top: sec.titleY, left: 0, width: A4_W } as any },
+          
+          // Modern Boxed Card Background Rendering
+          detailsLayout === "modern-boxed" && (() => {
+            const lastField = sec.fields[sec.fields.length - 1];
+            const boxHeight = lastField ? (lastField.y + currentFontSize * 1.45 - sec.titleY + 12) : 50;
+            return React.createElement(Svg, {
+              style: {
+                position: 'absolute',
+                left: padding - 8,
+                top: -8,
+                width: A4_W - padding * 2 + 16,
+                height: boxHeight,
+              } as any
+            },
+              React.createElement(Rect, {
+                x: 0,
+                y: 0,
+                width: A4_W - padding * 2 + 16,
+                height: boxHeight,
+                fill: primary,
+                fillOpacity: 0.04,
+                stroke: primary,
+                strokeOpacity: 0.1,
+                strokeWidth: 1.2,
+                rx: 10
+              })
+            );
+          })(),
+
           React.createElement(View, { style: styles.sectionTitleBar as any }),
           React.createElement(Text, { style: styles.sectionTitleText as any }, sec.title),
-          sec.fields.map((f: any, fi: any) => React.createElement(View, {
-            key: fi,
-            style: { position: 'absolute', top: (f.y - sec.titleY), left: padding + 10, flexDirection: 'row', width: f.rowWidth - 10 } as any
-          },
-            React.createElement(Text, { style: styles.label as any }, f.displayLabel),
-            React.createElement(Text, { style: styles.colon as any }, ":"),
-            React.createElement(View, { style: { width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
-              f.logoUrl && (() => {
-                let resolvedSrc = f.logoUrl;
-                if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
-                  resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
-                } else if (f.logoUrl.startsWith("/")) {
-                  resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
-                }
-                return React.createElement(Image, { 
-                  src: resolvedSrc, 
-                  style: styles.logo as any 
-                });
-              })(),
-              React.createElement(Text, { style: styles.value as any }, f.displayValue)
-            )
-          ))
+          sec.fields.map((f: any, fi: any) => {
+            const colX = f.isHalf 
+              ? (f.colIndex === 0 
+                  ? (padding + 10) 
+                  : (padding + 10 + f.halfW + 10))
+              : (padding + 10);
+            const lblW = f.isHalf ? f.labelW : 130;
+            const colonX = colX + lblW + 5;
+            const valX = colX + lblW + 15;
+            
+            return React.createElement(View, {
+              key: fi,
+              style: { 
+                position: 'absolute', 
+                top: (f.y - sec.titleY), 
+                left: colX, 
+                flexDirection: 'row', 
+                width: f.isHalf ? f.halfW : (f.rowWidth - 10) 
+              } as any
+            },
+              React.createElement(Text, { style: [styles.label, { width: lblW }] as any }, f.displayLabel),
+              React.createElement(Text, { style: [styles.colon, { left: colonX - colX, position: 'absolute' }] as any }, ":"),
+              React.createElement(View, { style: { left: valX - colX, position: 'absolute', width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
+                f.logoUrl && (() => {
+                  let resolvedSrc: any = f.logoUrl;
+                  if (f.logoUrl.startsWith("data:image/")) {
+                    const commaIdx = f.logoUrl.indexOf(",");
+                    const base64Content = f.logoUrl.substring(commaIdx + 1);
+                    resolvedSrc = Buffer.from(base64Content, "base64");
+                  } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
+                    resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
+                  } else if (f.logoUrl.startsWith("/")) {
+                    resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
+                  }
+                  return React.createElement(Image, { 
+                    src: resolvedSrc, 
+                    style: styles.logo as any 
+                  });
+                })(),
+                React.createElement(Text, { style: styles.value as any }, f.displayValue)
+              ),
+              
+              // Divided underline line
+              detailsLayout === "elegant-divided" && (!f.isHalf || f.colIndex === 1) && React.createElement(Svg, {
+                height: 1,
+                width: f.isHalf ? f.halfW : (A4_W - padding * 2 - 20),
+                style: { position: 'absolute', bottom: -4, left: 0 } as any
+              },
+                React.createElement(Path, {
+                  d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padding * 2 - 20)} 0`,
+                  stroke: secondary + "15",
+                  strokeWidth: 0.8,
+                  strokeDasharray: "2,2"
+                } as any)
+              )
+            );
+          })
         )),
         (data.stickers || []).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
@@ -502,9 +731,135 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   );
 };
 
+async function fetchImageAsBase64(url: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (!response.ok) return undefined;
+    const arrayBuffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type") || "image/png";
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    console.error(`Failed to fetch and convert image to base64: ${url}`, error);
+    return undefined;
+  }
+}
+
 export async function generatePDFBuffer(opts: any): Promise<Buffer> {
   const { formData, templateId, theme } = opts;
   try {
+    // Pre-fetch and convert company logo using sharp to guarantee server-side compatibility (PNG conversion)
+    const sectionsToSearch = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"];
+    for (const secKey of sectionsToSearch) {
+      const sectionFields = formData ? formData[secKey] : null;
+      if (sectionFields && Array.isArray(sectionFields)) {
+        for (const field of sectionFields) {
+          if (field.type === "company" || field.id === "companyName") {
+            let rawLogo = field.logo;
+            
+            // Check if it was already proxied and decode it
+            if (rawLogo && rawLogo.startsWith("/api/proxy-logo?url=")) {
+              rawLogo = decodeURIComponent(rawLogo.split("?url=")[1]);
+            }
+            
+            if (!rawLogo) {
+              // Check popular companies
+              const cleanName = (field.value || "").trim().toLowerCase();
+              const popular = [
+                { name: "tcs", domain: "tcs.com" },
+                { name: "tata consultancy services", domain: "tcs.com" },
+                { name: "infosys", domain: "infosys.com" },
+                { name: "wipro", domain: "wipro.com" },
+                { name: "cognizant", domain: "cognizant.com" },
+                { name: "accenture", domain: "accenture.com" },
+                { name: "google", domain: "google.com" },
+                { name: "microsoft", domain: "microsoft.com" },
+                { name: "amazon", domain: "amazon.com" },
+                { name: "flipkart", domain: "flipkart.com" },
+                { name: "reliance", domain: "ril.com" },
+                { name: "tata motors", domain: "tatamotors.com" },
+                { name: "hdfc bank", domain: "hdfcbank.com" },
+                { name: "hdfc", domain: "hdfcbank.com" },
+                { name: "icici bank", domain: "icicibank.com" },
+                { name: "icici", domain: "icicibank.com" },
+                { name: "sbi", domain: "sbi.co.in" },
+                { name: "state bank of india", domain: "sbi.co.in" },
+                { name: "l&t", domain: "larsentoubro.com" },
+                { name: "larsen & toubro", domain: "larsentoubro.com" },
+                { name: "mahindra", domain: "mahindra.com" },
+                { name: "government of india", domain: "india.gov.in" },
+                { name: "meta", domain: "meta.com" },
+                { name: "apple", domain: "apple.com" },
+                { name: "netflix", domain: "netflix.com" },
+              ];
+              const foundPopular = popular.find(p => cleanName.includes(p.name) || p.name.includes(cleanName));
+              if (foundPopular) {
+                rawLogo = `https://icon.horse/icon/${foundPopular.domain}`;
+              }
+            }
+            
+            if (!rawLogo) {
+              rawLogo = sectionFields.find((f: any) => f.id === "companyLogo")?.value;
+              if ((field.value || "").toLowerCase() !== "google" && rawLogo && rawLogo.includes("google.com")) {
+                rawLogo = undefined;
+              }
+            }
+            
+            if (!rawLogo && (field.value || "").includes(".")) {
+              const potentialDomain = (field.value || "").replace(/https?:\/\//, "").split("/")[0].trim();
+              rawLogo = `https://icon.horse/icon/${potentialDomain}`;
+            }
+            
+            let imageBuffer: Buffer | undefined;
+            
+            if (rawLogo && rawLogo.startsWith("http")) {
+              try {
+                console.log(`PDF Generator fetching: ${rawLogo}`);
+                const response = await fetch(rawLogo, {
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                  }
+                });
+                if (response.ok) {
+                  const arrayBuffer = await response.arrayBuffer();
+                  imageBuffer = Buffer.from(arrayBuffer);
+                }
+              } catch (fetchError) {
+                console.error("PDF Generator fetch error:", fetchError);
+              }
+            } else if (rawLogo && rawLogo.startsWith("data:image/")) {
+              try {
+                const commaIdx = rawLogo.indexOf(",");
+                const base64Content = rawLogo.substring(commaIdx + 1);
+                imageBuffer = Buffer.from(base64Content, "base64");
+              } catch (parseError) {
+                console.error("PDF Generator Base64 parse error:", parseError);
+              }
+            }
+            
+            if (imageBuffer) {
+              try {
+                const sharp = require("sharp");
+                const pngBuffer = await sharp(imageBuffer)
+                  .png()
+                  .toBuffer();
+                field.logo = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+                console.log("Successfully converted company logo to standard PNG using sharp!");
+              } catch (sharpError) {
+                console.error("Failed to convert image to PNG using sharp:", sharpError);
+                if (rawLogo && rawLogo.startsWith("data:image/")) {
+                  field.logo = rawLogo;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     // Resolve template dynamically if it is a database template to align module contexts
     const tId = templateId || "royal";
     const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");

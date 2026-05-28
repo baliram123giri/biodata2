@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { LANGUAGES } from "@/lib/translations";
 
 interface Template {
@@ -49,6 +50,7 @@ interface Template {
   photoWidth: number;
   photoHeight: number;
   photoCornerRadius: number;
+  photoShowBorder: boolean;
   frameType: string;
   frameBgType?: string | null;
   frameBgColor: string;
@@ -67,6 +69,8 @@ interface Template {
   active: boolean;
   bgConfig?: any;
   language?: string | null;
+  detailsLayout?: string | null;
+  titleShape?: string | null;
 }
 
 interface TemplateFormProps {
@@ -89,6 +93,7 @@ const initialFormState = {
   photoWidth: "140",
   photoHeight: "175",
   photoCornerRadius: "0",
+  photoShowBorder: true,
   frameType: "image",
   frameBgType: "solid",
   frameBgColor: "#ffffff",
@@ -112,6 +117,8 @@ const initialFormState = {
   bgImageHeight: "842",
   bgImageOpacity: "0.1",
   language: "English",
+  detailsLayout: "classic",
+  titleShape: "simple",
 };
 
 export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
@@ -121,6 +128,21 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
   const [dbBackgrounds, setDbBackgrounds] = React.useState<any[]>([]);
+  // Preview-only photo – stored locally, never sent to server
+  const [previewPhotoFile, setPreviewPhotoFile] = React.useState<string | null>(null);
+  const previewPhotoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handlePreviewPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Preview photo must be under 8 MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewPhotoFile(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   React.useEffect(() => {
     const fetchBgs = async () => {
@@ -287,6 +309,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         photoWidth: String(template.photoWidth),
         photoHeight: String(template.photoHeight),
         photoCornerRadius: String(template.photoCornerRadius),
+        photoShowBorder: template.photoShowBorder !== false,
         frameType: template.frameType,
         frameBgType: template.frameBgType || "solid",
         frameBgColor: template.frameBgColor || "#ffffff",
@@ -312,6 +335,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         bgImageHeight: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).height ?? 842) : "842",
         bgImageOpacity: template.bgConfig ? String((typeof template.bgConfig === "string" ? JSON.parse(template.bgConfig) : template.bgConfig).opacity ?? 1.0) : "1.0",
         language: template.language || "English",
+        detailsLayout: template.detailsLayout || "classic",
+        titleShape: template.titleShape || "simple",
       });
     }
   }, [template]);
@@ -353,11 +378,14 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         photoWidth: parseInt(formState.photoWidth) || 140,
         photoHeight: parseInt(formState.photoHeight) || 175,
         photoCornerRadius: parseInt(formState.photoCornerRadius) || 8,
+        photoShowBorder: formState.photoShowBorder !== false,
         frameType: formState.frameType,
         frameBgType: formState.frameBgType,
         frameBgColor: formState.frameBgColor,
         frameBgGradientColors: formState.frameBgGradientColors.split(",").map(c => c.trim()),
         language: formState.language,
+        detailsLayout: formState.detailsLayout,
+        titleShape: formState.titleShape,
       };
 
       if (formState.bgImageFile || formState.bgImageUrl || formState.bgImageX !== "0" || formState.bgImageY !== "0" || formState.bgImageWidth !== "595" || formState.bgImageHeight !== "842" || formState.bgImageOpacity !== "1") {
@@ -596,6 +624,42 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       </Select>
                     </div>
 
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Details Layout Style *</Label>
+                      <Select
+                        value={formState.detailsLayout}
+                        onValueChange={value => setFormState({ ...formState, detailsLayout: value || "classic" })}
+                      >
+                        <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                          <SelectValue placeholder="Select Layout" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                          <SelectItem value="classic" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Classic Row (Label : Value)</SelectItem>
+                          <SelectItem value="two-column" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Two-Column Grid (Compact)</SelectItem>
+                          <SelectItem value="modern-boxed" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Modern Boxed Cards</SelectItem>
+                          <SelectItem value="elegant-divided" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Elegant Divided Lines</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">Title Banner Shape *</Label>
+                      <Select
+                        value={formState.titleShape}
+                        onValueChange={value => setFormState({ ...formState, titleShape: value || "simple" })}
+                      >
+                        <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                          <SelectValue placeholder="Select Banner" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                          <SelectItem value="simple" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Simple Title Text</SelectItem>
+                          <SelectItem value="ribbon" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ribbon Banner Backing</SelectItem>
+                          <SelectItem value="arch" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Temple Dome Arch Border</SelectItem>
+                          <SelectItem value="ornament" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ornamental Floral Ends</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-1.5 md:col-span-2">
                       <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description</Label>
                       <div className="relative flex items-start">
@@ -749,6 +813,21 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       onChange={val => setFormState({ ...formState, photoCornerRadius: val })}
                       className="md:col-span-2"
                     />
+
+                    {/* Photo Border Toggle */}
+                    <div className="md:col-span-2 flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
+                      <div>
+                        <p className="text-xs font-bold text-foreground">Show Photo Border</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Display a coloured border ring around the profile photo
+                        </p>
+                      </div>
+                      <Switch
+                        id="photo-show-border"
+                        checked={formState.photoShowBorder}
+                        onCheckedChange={(checked: boolean) => setFormState({ ...formState, photoShowBorder: checked })}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1344,13 +1423,13 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       <DialogHeader>
                         <DialogTitle className="text-lg font-black text-primary">Full Template Mockup</DialogTitle>
                         <DialogDescription className="text-xs">
-                          High fidelity simulated rendering of "{formState.name || 'Untitled Template'}" layout.
+                          High fidelity simulated rendering of &quot;{formState.name || 'Untitled Template'}&quot; layout.
                         </DialogDescription>
                       </DialogHeader>
 
                       <div className="flex justify-center py-4 bg-muted/10 rounded-lg border border-border">
                         <div className="h-[48vh] max-w-full aspect-[595/842] shadow-lg rounded-md overflow-hidden bg-white flex items-center justify-center border border-border/40 transition-all duration-300">
-                          <TemplateSvgPreview formState={formState} template={template} />
+                          <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} />
                         </div>
                       </div>
 
@@ -1359,10 +1438,60 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                   </Dialog>
                 </div>
 
+                {/* Preview Photo Upload Strip */}
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/40 bg-primary/[0.03] hover:bg-primary/[0.06] transition-colors">
+                  <input
+                    ref={previewPhotoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    className="hidden"
+                    onChange={handlePreviewPhotoChange}
+                  />
+                  {previewPhotoFile ? (
+                    <>
+                      <div className="relative w-10 h-14 rounded-md overflow-hidden border border-primary/30 shrink-0 shadow-sm">
+                        <img src={previewPhotoFile} alt="Preview photo" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-green-600">✓ Preview photo loaded</p>
+                        <p className="text-[10px] text-muted-foreground">Displayed in template preview only — not saved.</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setPreviewPhotoFile(null); if (previewPhotoInputRef.current) previewPhotoInputRef.current.value = ""; }}
+                        className="text-[10px] h-7 px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer shrink-0"
+                      >
+                        Remove
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-10 h-14 rounded-md border-2 border-dashed border-primary/30 bg-primary/5 flex items-center justify-center shrink-0">
+                        <Upload className="w-4 h-4 text-primary/50" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-foreground">Upload Preview Photo</p>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">See how a real photo looks inside this template frame.</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => previewPhotoInputRef.current?.click()}
+                        className="text-[10px] h-7 px-2.5 cursor-pointer shrink-0 font-bold"
+                      >
+                        Browse
+                      </Button>
+                    </>
+                  )}
+                </div>
+
                 {/* SVG Preview container */}
                 <div className="bg-muted/30 border border-border/60 rounded-xl p-4 flex justify-center items-center shadow-inner">
                   <div className="w-full max-w-[340px] aspect-[595/842] shadow-lg rounded-lg overflow-hidden bg-white border border-border/40 transition-all duration-300">
-                    <TemplateSvgPreview formState={formState} template={template} />
+                    <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} />
                   </div>
                 </div>
 
@@ -1385,7 +1514,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   );
 }
 
-function TemplateSvgPreview({ formState, template }: { formState: typeof initialFormState; template: Template | null | undefined }) {
+function TemplateSvgPreview({ formState, template, previewPhotoFile }: { formState: typeof initialFormState; template: Template | null | undefined; previewPhotoFile?: string | null }) {
   const px = parseFloat(formState.photoX) || 390;
   const py = parseFloat(formState.photoY) || 100;
   const pw = parseFloat(formState.photoWidth) || 140;
@@ -1418,12 +1547,8 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
     ? formState.frameBgGradientColors.split(",").map(c => c.trim())
     : ["#ffffff", "#f9e8e8"];
 
-  // Determine frame image source
+  // Use the stored frame URL as-is — no tint injection
   let frameImageSrc = formState.frameFile || template?.frameUrlTemplate || null;
-  if (frameImageSrc && frameImageSrc.includes("{color}")) {
-    const tint = primaryColor.replace("#", "");
-    frameImageSrc = frameImageSrc.replace("{color}", tint);
-  }
 
   return (
     <svg
@@ -1674,9 +1799,9 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
         <circle cx="297" cy={paddingY + 27} r="3" fill={primaryColor} />
       </g>
 
-      {/* Profile Photo Placeholder Area */}
+      {/* Profile Photo Area */}
       <g>
-        {/* Shadow card background behind photo */}
+        {/* Accent outer glow border */}
         <rect
           x={px - 2}
           y={py - 2}
@@ -1688,7 +1813,7 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
           rx={pr + 1}
           ry={pr + 1}
         />
-        {/* Main photo container */}
+        {/* Photo background */}
         <rect
           x={px}
           y={py}
@@ -1699,50 +1824,74 @@ function TemplateSvgPreview({ formState, template }: { formState: typeof initial
           ry={pr}
         />
 
-        {/* Clip-pathed simulated image */}
+        {/* Clip-pathed content – real photo OR placeholder */}
         <g clipPath="url(#photo-clip)">
-          {/* Background pattern */}
-          <rect x={px} y={py} width={pw} height={ph} fill="rgba(201, 168, 76, 0.08)" />
-          {/* Avatar representation inside the photo box */}
-          <path
-            d={`M ${px + pw / 2} ${py + ph * 0.4} A ${pw * 0.2} ${pw * 0.2} 0 1 0 ${px + pw / 2} ${py + ph * 0.4001}`}
-            fill="none"
-            stroke={primaryColor}
-            strokeWidth="3.5"
-            opacity="0.4"
-          />
-          <path
-            d={`M ${px + pw * 0.2} ${py + ph * 0.9} C ${px + pw * 0.2} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.9}`}
-            fill="none"
-            stroke={primaryColor}
-            strokeWidth="3.5"
-            opacity="0.4"
-          />
-          {/* Overlay Border inside */}
-          <rect
-            x={px}
-            y={py}
-            width={pw}
-            height={ph}
-            fill="none"
-            stroke={primaryColor}
-            strokeWidth="1"
-            opacity="0.25"
-          />
+          {previewPhotoFile ? (
+            /* Render the admin-uploaded preview photo */
+            <image
+              href={previewPhotoFile}
+              x={px}
+              y={py}
+              width={pw}
+              height={ph}
+              preserveAspectRatio="xMidYMid slice"
+            />
+          ) : (
+            /* Placeholder silhouette */
+            <>
+              <rect x={px} y={py} width={pw} height={ph} fill="rgba(201, 168, 76, 0.08)" />
+              <path
+                d={`M ${px + pw / 2} ${py + ph * 0.4} A ${pw * 0.2} ${pw * 0.2} 0 1 0 ${px + pw / 2} ${py + ph * 0.4001}`}
+                fill="none"
+                stroke={primaryColor}
+                strokeWidth="3.5"
+                opacity="0.4"
+              />
+              <path
+                d={`M ${px + pw * 0.2} ${py + ph * 0.9} C ${px + pw * 0.2} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.65}, ${px + pw * 0.8} ${py + ph * 0.9}`}
+                fill="none"
+                stroke={primaryColor}
+                strokeWidth="3.5"
+                opacity="0.4"
+              />
+              <rect
+                x={px}
+                y={py}
+                width={pw}
+                height={ph}
+                fill="none"
+                stroke={primaryColor}
+                strokeWidth="1"
+                opacity="0.25"
+              />
+              <text
+                x={px + pw / 2}
+                y={py + ph - 10}
+                textAnchor="middle"
+                fill={primaryColor}
+                fontSize="10"
+                fontWeight="bold"
+                opacity="0.7"
+              >
+                PROFILE PHOTO
+              </text>
+            </>
+          )}
         </g>
 
-        {/* Caption */}
-        <text
-          x={px + pw / 2}
-          y={py + ph - 10}
-          textAnchor="middle"
-          fill={primaryColor}
-          fontSize="10"
-          fontWeight="bold"
-          opacity="0.7"
-        >
-          PROFILE PHOTO
-        </text>
+        {/* Primary border on top of photo */}
+        <rect
+          x={px}
+          y={py}
+          width={pw}
+          height={ph}
+          fill="none"
+          stroke={primaryColor}
+          strokeWidth="1"
+          rx={pr}
+          ry={pr}
+          opacity="0.4"
+        />
       </g>
 
       {/* Main Document Title */}

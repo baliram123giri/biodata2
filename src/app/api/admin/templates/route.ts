@@ -20,19 +20,9 @@ async function getSessionUser() {
   return (session?.user as any) || null;
 }
 
-// Convert a standard Cloudinary URL to one that supports dynamic tinting color replacements
+// Frame images are stored as plain Cloudinary URLs.
+// Dynamic tinting is no longer applied — users manually pick their theme colors.
 function makeColorizableCloudinaryUrl(url: string): string {
-  if (url.includes("res.cloudinary.com") && url.includes("/image/upload/")) {
-    // Avoid doubling if already format
-    if (url.includes("{color}")) return url;
-    
-    // If it is an SVG, keep it as vector and don't convert to PNG/WebP (avoid f_auto)
-    if (url.toLowerCase().endsWith(".svg") || url.toLowerCase().includes(".svg?")) {
-      return url.replace("/image/upload/", "/image/upload/e_tint:100:rgb:{color}/");
-    }
-    
-    return url.replace("/image/upload/", "/image/upload/f_auto,q_100,e_tint:100:rgb:{color}/");
-  }
   return url;
 }
 
@@ -123,6 +113,9 @@ export async function POST(req: Request) {
       thumbnailFile, // base64 string
       bgConfig, // dynamic bg configuration
       language, // template language e.g. "English", "मराठी", "हिंदी", etc.
+      detailsLayout,
+      titleShape,
+      photoShowBorder,
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -193,6 +186,9 @@ export async function POST(req: Request) {
         thumbnailUrl,
         bgConfig: bgConfigData || undefined,
         language: language || "English",
+        detailsLayout: detailsLayout || "classic",
+        titleShape: titleShape || "simple",
+        photoShowBorder: photoShowBorder !== false, // default true
         active: true,
       },
     });
