@@ -1,3 +1,4 @@
+// Refreshed comment to trigger next.js turbopack compile cache reload
 import { PrismaClient } from "../generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
@@ -9,8 +10,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPool(): pg.Pool {
   const dbUrl =
-    process.env.DATABASE_URL ||
-    "postgresql://postgres:postgres@localhost:5432/biodata";
+    process.env.DATABASE_URL
 
   return new pg.Pool({
     connectionString: dbUrl,

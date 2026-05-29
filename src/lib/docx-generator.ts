@@ -409,6 +409,19 @@ export async function generateDocxBuffer(opts: {
   // Resolve template dynamically if it is a database template to align module contexts
   const tId = templateId || "royal";
   const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");
+  
+  // Fetch and register custom stickers from database
+  try {
+    const { prisma } = require("./prisma");
+    const dbStickers = await prisma.sticker.findMany();
+    if (dbStickers && dbStickers.length > 0) {
+      const { registerDynamicStickers } = require("./sticker-assets");
+      registerDynamicStickers(dbStickers);
+    }
+  } catch (stickerErr) {
+    console.error("Failed to load dynamic stickers for DOCX generation:", stickerErr);
+  }
+
   if (tId && !TEMPLATE_CONFIGS[tId]) {
     const { prisma } = require("./prisma");
     const dbTpl = await prisma.template.findUnique({

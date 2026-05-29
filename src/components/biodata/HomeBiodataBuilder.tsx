@@ -132,6 +132,7 @@ export function HomeBiodataBuilder() {
 
     // Load dynamic templates from database on initial page load
     useBiodataStore.getState().fetchCustomTemplates?.();
+    useBiodataStore.getState().fetchCustomStickers?.();
 
     // Register a listener for when hydration completes
     const unsub = useBiodataStore.persist.onFinishHydration(() => {

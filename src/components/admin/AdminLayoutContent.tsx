@@ -26,7 +26,8 @@ import {
   Sparkles,
   BookOpen,
   Tag,
-  CreditCard
+  CreditCard,
+  Smile
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

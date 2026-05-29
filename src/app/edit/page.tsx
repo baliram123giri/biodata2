@@ -238,6 +238,8 @@ export default function EditPage() {
       }
     });
 
+    useBiodataStore.getState().fetchCustomStickers();
+
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
       setIsRightOpen(false);

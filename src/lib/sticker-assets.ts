@@ -43,6 +43,18 @@ export const STICKER_ASSETS: StickerAsset[] = [
     type: 'image' as const,
     url: item.url
   })),
-
-
 ];
+
+export function registerDynamicStickers(customStickers: any[]) {
+  customStickers.forEach((sticker) => {
+    const exists = STICKER_ASSETS.some((s) => s.id === sticker.id || s.url === sticker.url);
+    if (!exists) {
+      STICKER_ASSETS.push({
+        id: sticker.id,
+        name: sticker.name,
+        type: "image" as const,
+        url: sticker.url,
+      });
+    }
+  });
+}
