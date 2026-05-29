@@ -48,13 +48,62 @@ async function fetchWithCache(url: string): Promise<Buffer> {
   if (networkCache.has(url)) {
     return networkCache.get(url)!;
   }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
-  const arrayBuffer = await res.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  networkCache.set(url, buffer);
-  return buffer;
+  console.log(`[docx-generator fetchWithCache] Fetching remote URL: "${url.substring(0, 150)}..."`);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log(`[docx-generator fetchWithCache] Fetch successful! Buffer size: ${buffer.length} bytes`);
+    networkCache.set(url, buffer);
+    return buffer;
+  } catch (err) {
+    console.error(`[docx-generator fetchWithCache] Failed to fetch remote URL: ${url}`, err);
+    throw err;
+  }
 }
+
+async function resolveBgImageBuffer(url: string): Promise<Buffer | null> {
+  if (!url) {
+    console.log("[docx-generator resolveBgImageBuffer] Empty URL received.");
+    return null;
+  }
+  console.log(`[docx-generator resolveBgImageBuffer] Resolving URL: "${url.substring(0, 100)}..."`);
+  try {
+    if (url.startsWith("data:image/")) {
+      const base64Content = url.substring(url.indexOf(",") + 1);
+      const buffer = Buffer.from(base64Content, "base64");
+      if (url.includes("svg") || url.startsWith("data:image/svg+xml")) {
+        console.log("[docx-generator resolveBgImageBuffer] SVG Data URL detected. Rasterizing with sharp...");
+        return await sharp(buffer, { density: 300 }).png().toBuffer();
+      }
+      console.log(`[docx-generator resolveBgImageBuffer] Resolved Base64 image successfully. Buffer size: ${buffer.length} bytes`);
+      return buffer;
+    } else if (url.startsWith("http://") || url.startsWith("https://")) {
+      return await fetchWithCache(url);
+    } else {
+      const filePath = path.join(process.cwd(), 'public', url);
+      console.log(`[docx-generator resolveBgImageBuffer] Resolving as local file path: "${filePath}"`);
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        console.log(`[docx-generator resolveBgImageBuffer] Read local file successfully. Buffer size: ${buffer.length} bytes`);
+        return buffer;
+      } else {
+        console.warn(`[docx-generator resolveBgImageBuffer] Local file does not exist at: "${filePath}"`);
+      }
+    }
+  } catch (err) {
+    console.error(`[docx-generator resolveBgImageBuffer] Failed to resolve background image buffer for URL: ${url.substring(0, 100)}`, err);
+  }
+  return null;
+}
+
 
 /** Convert hex color like "#800000" to "800000" (docx expects no hash, and strictly 6 digits) */
 function hexColor(hex: string): string {
@@ -137,6 +186,54 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         }
 
         const resizedFrame = await sharp(imgBuffer).resize(A4_W, A4_H).png().toBuffer();
+        
+        // Composite custom background image if present
+        const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
+        if (customBgImgBuffer) {
+          try {
+            const isCustomBg = !!theme?.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+            const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
+            const w = baseW * scaleVal;
+            const h = baseH * scaleVal;
+            const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+            const xOffset = isCustomBg ? (theme.bgImageXOffset ?? 0) : 0;
+            const yOffset = isCustomBg ? (theme.bgImageYOffset ?? 0) : 0;
+            const left = baseLeft + xOffset - (baseW * (scaleVal - 1)) / 2;
+            const top = baseTop + yOffset - (baseH * (scaleVal - 1)) / 2;
+            const opacity = isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0);
+
+            const pdfToDocxScale = A4_W / 595.28;
+            const finalW = Math.max(1, Math.round(w * pdfToDocxScale));
+            const finalH = Math.max(1, Math.round(h * pdfToDocxScale));
+            const finalLeft = Math.round(left * pdfToDocxScale);
+            const finalTop = Math.round(top * pdfToDocxScale);
+
+            const processedBg = await sharp(customBgImgBuffer)
+              .resize(finalW, finalH, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+              .ensureAlpha()
+              .composite([
+                {
+                  input: Buffer.from([255, 255, 255, Math.round(opacity * 255)]),
+                  raw: { width: 1, height: 1, channels: 4 },
+                  blend: 'dest-in',
+                  tile: true
+                }
+              ])
+              .png()
+              .toBuffer();
+
+            bgBuffer = await sharp(bgBuffer)
+              .composite([{ input: processedBg, top: finalTop, left: finalLeft }])
+              .png()
+              .toBuffer();
+          } catch (bgOverlayErr) {
+            console.error("Failed to overlay custom background image for docx", bgOverlayErr);
+          }
+        }
+
         let finalBuffer = await sharp(bgBuffer)
           .composite([{ input: resizedFrame, top: 0, left: 0 }])
           .png()
@@ -269,6 +366,50 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         }
       }
 
+      // Composite custom background watermark if present
+      const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
+      if (customBgImgBuffer) {
+        try {
+          const isCustomBg = !!theme?.bgImageUrl;
+          const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+          const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+          const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
+          const w = baseW * scaleVal;
+          const h = baseH * scaleVal;
+          const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+          const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+          const xOffset = isCustomBg ? (theme.bgImageXOffset ?? 0) : 0;
+          const yOffset = isCustomBg ? (theme.bgImageYOffset ?? 0) : 0;
+          const left = baseLeft + xOffset - (baseW * (scaleVal - 1)) / 2;
+          const top = baseTop + yOffset - (baseH * (scaleVal - 1)) / 2;
+          const opacity = isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0);
+
+          const pdfToDocxScale = A4_W / 595.28;
+          const finalW = Math.max(1, Math.round(w * pdfToDocxScale));
+          const finalH = Math.max(1, Math.round(h * pdfToDocxScale));
+          const finalLeft = Math.round(left * pdfToDocxScale);
+          const finalTop = Math.round(top * pdfToDocxScale);
+
+          const processedBg = await sharp(customBgImgBuffer)
+            .resize(finalW, finalH, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .ensureAlpha()
+            .composite([
+              {
+                input: Buffer.from([255, 255, 255, Math.round(opacity * 255)]),
+                raw: { width: 1, height: 1, channels: 4 },
+                blend: 'dest-in',
+                tile: true
+              }
+            ])
+            .png()
+            .toBuffer();
+
+          buf = await sharp(buf).composite([{ input: processedBg, top: finalTop, left: finalLeft }]).png().toBuffer();
+        } catch (bgOverlayErr) {
+          console.error("Failed to overlay custom background image for docx custom frame", bgOverlayErr);
+        }
+      }
+
       return Buffer.from(buf);
     }
 
@@ -342,6 +483,50 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         buf = await sharp(buf).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
       } catch (fetchErr) {
         console.error("Failed to fetch/process watermark for docx", fetchErr);
+      }
+    }
+
+    // Composite custom background watermark if present
+    const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
+    if (customBgImgBuffer) {
+      try {
+        const isCustomBg = !!theme?.bgImageUrl;
+        const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+        const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+        const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
+        const w = baseW * scaleVal;
+        const h = baseH * scaleVal;
+        const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+        const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+        const xOffset = isCustomBg ? (theme.bgImageXOffset ?? 0) : 0;
+        const yOffset = isCustomBg ? (theme.bgImageYOffset ?? 0) : 0;
+        const left = baseLeft + xOffset - (baseW * (scaleVal - 1)) / 2;
+        const top = baseTop + yOffset - (baseH * (scaleVal - 1)) / 2;
+        const opacity = isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0);
+
+        const pdfToDocxScale = A4_W / 595.28;
+        const finalW = Math.max(1, Math.round(w * pdfToDocxScale));
+        const finalH = Math.max(1, Math.round(h * pdfToDocxScale));
+        const finalLeft = Math.round(left * pdfToDocxScale);
+        const finalTop = Math.round(top * pdfToDocxScale);
+
+        const processedBg = await sharp(customBgImgBuffer)
+          .resize(finalW, finalH, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .ensureAlpha()
+          .composite([
+            {
+              input: Buffer.from([255, 255, 255, Math.round(opacity * 255)]),
+              raw: { width: 1, height: 1, channels: 4 },
+              blend: 'dest-in',
+              tile: true
+            }
+          ])
+          .png()
+          .toBuffer();
+
+        buf = await sharp(buf).composite([{ input: processedBg, top: finalTop, left: finalLeft }]).png().toBuffer();
+      } catch (bgOverlayErr) {
+        console.error("Failed to overlay custom background image for docx default frame", bgOverlayErr);
       }
     }
 

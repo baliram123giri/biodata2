@@ -23,6 +23,7 @@ import {
   Sliders,
   X,
   Star,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -64,10 +65,8 @@ import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/Down
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { FeedbackModal } from "@/components/biodata/FeedbackModal";
 import { PriceModal } from "@/components/biodata/PriceModal";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
-
-
-
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 export default function EditPage() {
   const router = useRouter();
@@ -147,6 +146,59 @@ export default function EditPage() {
   }, [methods, setFormData]);
 
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing } = useRazorpayPayment();
+
+  const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
+    try {
+      const fullName = currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value || modalFilename || "";
+      const contactFields = currentData.contactDetails || [];
+      const emailField = contactFields.find((f: any) => 
+        f.id === "email" || 
+        f.id === "emailId" ||
+        f.id?.toLowerCase()?.includes("email") ||
+        f.id?.toLowerCase()?.includes("mail") ||
+        (f.label || "").toLowerCase().includes("email") ||
+        (f.label || "").toLowerCase().includes("mail") ||
+        (f.label || "").toLowerCase().includes("e-mail") ||
+        (f.value || "").includes("@")
+      );
+      const properEmail = emailField?.value || "";
+      const phoneField = contactFields.find((f: any) => 
+        f.id === "mobileNumber" || 
+        f.id === "whatsappNumber" ||
+        f.id?.toLowerCase()?.includes("phone") ||
+        f.id?.toLowerCase()?.includes("mobile") ||
+        (f.label || "").toLowerCase().includes("phone") ||
+        (f.label || "").toLowerCase().includes("mobile") ||
+        (f.label || "").toLowerCase().includes("contact")
+      );
+      const properPhone = phoneField?.value || "";
+      
+      let finalPrice = 29;
+      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
+      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
+      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
+      else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
+
+      await startPayment({
+        amount: finalPrice,
+        format,
+        templateId: selectedTemplate,
+        customerName: fullName,
+        customerEmail: properEmail,
+        customerPhone: properPhone,
+        currency: activeTemplate?.currency || "INR",
+        couponCode: couponCode,
+        onDownload: async () => {
+          await triggerDownload(currentData, selectedTemplate, format, modalFilename);
+        }
+      });
+    } catch (paymentErr) {
+      console.error("Payment failed or cancelled:", paymentErr);
+    }
+  };
+
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
   const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("templates");
@@ -380,12 +432,20 @@ export default function EditPage() {
       console.error("Failed to save feedback:", err);
     }
 
-    await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(formData, format, modalFilename);
+    } else {
+      await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    }
   };
 
   const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
-    await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(formData, format, modalFilename);
+    } else {
+      await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    }
   };
 
   /** Generate a JPG data URL for WhatsApp sharing */
@@ -1123,9 +1183,13 @@ export default function EditPage() {
       <PriceModal
         isOpen={isPriceModalOpen}
         onOpenChange={setIsPriceModalOpen}
-        onSelectFormat={async (format) => {
+        onSelectFormat={async (format, couponCode) => {
           setIsPriceModalOpen(false);
-          await triggerDownload(formData, selectedTemplate, format, filename);
+          if (activeTemplate?.isPremium) {
+            await processPremiumPaymentAndDownload(formData, format, filename, couponCode);
+          } else {
+            await triggerDownload(formData, selectedTemplate, format, filename);
+          }
         }}
         currency={activeTemplate?.currency}
         price={activeTemplate?.price}
@@ -1141,6 +1205,23 @@ export default function EditPage() {
         comboPrice={(activeTemplate as any)?.comboPrice}
         comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
       />
+      <SandboxModal />
+
+      {/* Full-screen secure checkout loading screen */}
+      <Dialog open={isPaymentProcessing}>
+        <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+            <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+          </div>
+          <div className="space-y-1 select-none">
+            <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">Securing Checkout...</DialogTitle>
+            <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
+              Opening payment gateway. Please do not close or refresh this page.
+            </DialogDescription>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

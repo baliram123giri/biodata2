@@ -943,25 +943,38 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
-          <BgWatermarkImage 
-            bgConfig={{
-              url: theme.bgImageUrl || templateConfig.bgConfig?.url,
-              x: theme.bgImageUrl 
-                ? (147.5 + theme.bgImageXOffset)
-                : ((templateConfig.bgConfig?.x ?? 0) + (theme.bgImageUrl ? theme.bgImageXOffset : 0)),
-              y: theme.bgImageUrl 
-                ? (271 + theme.bgImageYOffset)
-                : ((templateConfig.bgConfig?.y ?? 0) + (theme.bgImageUrl ? theme.bgImageYOffset : 0)),
-              width: theme.bgImageUrl
-                ? (300 * theme.bgImageScale)
-                : ((templateConfig.bgConfig?.width ?? 595) * (theme.bgImageUrl ? theme.bgImageScale : 1.0)),
-              height: theme.bgImageUrl
-                ? (300 * theme.bgImageScale)
-                : ((templateConfig.bgConfig?.height ?? 842) * (theme.bgImageUrl ? theme.bgImageScale : 1.0)),
-              opacity: theme.bgImageUrl ? theme.bgImageOpacity : (templateConfig.bgConfig?.opacity ?? 0.15),
-            }} 
-            isCustom={!!theme.bgImageUrl}
-          />
+          {(() => {
+            const isCustomBg = !!theme.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (templateConfig.bgConfig?.height ?? 842);
+            
+            const scale = theme.bgImageScale ?? 1.0;
+            const width = baseW * scale;
+            const height = baseH * scale;
+            
+            const baseLeft = isCustomBg ? 147.5 : (templateConfig.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (templateConfig.bgConfig?.y ?? 0);
+            
+            const xOffset = theme.bgImageXOffset ?? 0;
+            const yOffset = theme.bgImageYOffset ?? 0;
+            
+            const x = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
+            const y = baseTop + yOffset - (baseH * (scale - 1)) / 2;
+            
+            return (
+              <BgWatermarkImage 
+                bgConfig={{
+                  url: theme.bgImageUrl || templateConfig.bgConfig?.url,
+                  x,
+                  y,
+                  width,
+                  height,
+                  opacity: theme.bgImageUrl ? theme.bgImageOpacity : (templateConfig.bgConfig?.opacity ?? 0.15),
+                }} 
+                isCustom={isCustomBg}
+              />
+            );
+          })()}
           
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
@@ -1319,6 +1332,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           {isDesigner && selectedStickers.length > 0 && (
             <Transformer
               ref={transformerRef}
+              centeredScaling={true}
               boundBoxFunc={(oldBox, newBox) => {
                 // Minimum size
                 if (newBox.width < 20 || newBox.height < 20) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useBiodataStore } from "@/store/useBiodataStore";
 import type { DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { getTemplateConfig } from "@/lib/frame-config";
 
@@ -157,7 +158,14 @@ export async function prepareDataForGeneration(
   theme: any,
   templateId: string
 ): Promise<{ formData: any; theme: any }> {
-  const preparedFormData = await prepareFormDataWithBase64Logos(formData);
+  const storeState = useBiodataStore.getState();
+  const mergedFormData = {
+    ...formData,
+    layout: formData?.layout || storeState.formData?.layout,
+    stickers: formData?.stickers || storeState.formData?.stickers || [],
+  };
+
+  const preparedFormData = await prepareFormDataWithBase64Logos(mergedFormData);
 
   let bgImageUrlBase64 = undefined;
   const bgUrl = theme.bgImageUrl || getTemplateConfig(templateId)?.bgConfig?.url;

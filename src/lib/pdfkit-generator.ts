@@ -466,26 +466,38 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                 })
               ) : null
             ),
-          (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
-            src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
-            style: {
-              position: 'absolute',
-              left: theme?.bgImageUrl
-                ? (147.5 + (theme.bgImageXOffset ?? 0))
-                : ((config.bgConfig?.x ?? 0) + (theme?.bgImageUrl ? (theme.bgImageXOffset ?? 0) : 0)),
-              top: theme?.bgImageUrl
-                ? (271 + (theme.bgImageYOffset ?? 0))
-                : ((config.bgConfig?.y ?? 0) + (theme?.bgImageUrl ? (theme.bgImageYOffset ?? 0) : 0)),
-              width: theme?.bgImageUrl
-                ? (300 * (theme.bgImageScale ?? 1.0))
-                : ((config.bgConfig?.width ?? 595) * (theme?.bgImageUrl ? (theme.bgImageScale ?? 1.0) : 1.0)),
-              height: theme?.bgImageUrl
-                ? (300 * (theme.bgImageScale ?? 1.0))
-                : ((config.bgConfig?.height ?? 842) * (theme?.bgImageUrl ? (theme.bgImageScale ?? 1.0) : 1.0)),
-              opacity: theme?.bgImageUrl ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0),
-              objectFit: theme?.bgImageUrl ? 'contain' : 'fill',
-            } as any
-          }) : null,
+          (() => {
+            const isCustomBg = !!theme?.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+            
+            const scale = theme?.bgImageScale ?? 1.0;
+            const width = baseW * scale;
+            const height = baseH * scale;
+            
+            const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+            
+            const xOffset = theme?.bgImageXOffset ?? 0;
+            const yOffset = theme?.bgImageYOffset ?? 0;
+            
+            // Adjust left/top to scale from center
+            const left = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
+            const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
+            
+            return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
+              src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
+              style: {
+                position: 'absolute',
+                left,
+                top,
+                width,
+                height,
+                opacity: isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0),
+                objectFit: isCustomBg ? 'contain' : 'fill',
+              } as any
+            }) : null;
+          })(),
           
         WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
           style: {

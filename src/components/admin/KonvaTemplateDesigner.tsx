@@ -1614,6 +1614,7 @@ export function KonvaTemplateDesigner({
             {selectedIds.length > 0 && (
               <Transformer
                 ref={transformerRef}
+                centeredScaling={true}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (newBox.width < 30 || newBox.height < 30) {
                     return oldBox;

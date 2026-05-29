@@ -7,10 +7,9 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, X, ShieldAlert, Sparkles, Receipt, CreditCard, ChevronRight } from "lucide-react";
+import { Check, X, ShieldAlert, Sparkles, Receipt, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 // Load Razorpay script dynamically on demand
@@ -42,16 +41,18 @@ interface PaymentParams {
   customerPhone?: string;
   currency?: string;
   couponCode?: string;
+  onDownload?: () => void | Promise<void>;
 }
 
 export function useRazorpayPayment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sandboxOrder, setSandboxOrder] = useState<any | null>(null);
-  
+
   // Keep resolve/reject promises so we can trigger them from the sandbox UI
   const paymentPromiseRef = useRef<{
     resolve: (data: any) => void;
     reject: (err: Error) => void;
+    onDownload?: () => void | Promise<void>;
   } | null>(null);
 
   const startPayment = useCallback((params: PaymentParams): Promise<any> => {
@@ -81,6 +82,14 @@ export function useRazorpayPayment() {
           toast.success("Promo code applied! 100% discount unlocked.");
           setIsProcessing(false);
           resolve(data);
+          if (params.onDownload) {
+            try {
+              await params.onDownload();
+            } catch (dlErr) {
+              console.error("Auto-download failed:", dlErr);
+              toast.error("Auto-download failed, but transaction is safe. Please retry download.");
+            }
+          }
           return;
         }
 
@@ -95,7 +104,7 @@ export function useRazorpayPayment() {
             currency: params.currency || "INR",
           });
 
-          paymentPromiseRef.current = { resolve, reject };
+          paymentPromiseRef.current = { resolve, reject, onDownload: params.onDownload };
           setIsProcessing(false);
           return;
         }
@@ -113,11 +122,8 @@ export function useRazorpayPayment() {
           currency: data.order.currency,
           name: "Premium Matrimonial Biodata",
           description: `Premium download for ${params.format.toUpperCase()} format`,
-          image: "/images/logo.png", // fallback or project logo
+          image: "/images/logo.png",
           order_id: data.order.id,
-          // Explicitly enable all payment methods including UPI and QR scanner.
-          // NOTE: config.display with show_default_blocks:false requires a special
-          // Razorpay plan and causes silent modal dismissal in test mode — avoid it.
           method: {
             upi: true,        // GPay, PhonePe, Paytm, BHIM, etc.
             qr: true,         // UPI QR code scanner
@@ -136,9 +142,7 @@ export function useRazorpayPayment() {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  // Razorpay returns the contact (mobile) the customer used
                   razorpay_contact: response.razorpay_contact || null,
-                  // Email confirmed by Razorpay at checkout (may differ from prefill)
                   razorpay_email: response.razorpay_email || null,
                   isSandbox: false,
                 }),
@@ -152,6 +156,14 @@ export function useRazorpayPayment() {
               const verifyData = await verifyRes.json();
               toast.success("Payment successful! Your download is ready.");
               resolve(verifyData);
+              if (params.onDownload) {
+                try {
+                  await params.onDownload();
+                } catch (dlErr) {
+                  console.error("Auto-download failed:", dlErr);
+                  toast.error("Auto-download failed, but transaction is safe. Please retry download.");
+                }
+              }
             } catch (err: any) {
               toast.error(err.message || "Payment verification failed");
               reject(err);
@@ -219,6 +231,16 @@ export function useRazorpayPayment() {
 
       const verifyData = await res.json();
       toast.success("Sandbox simulated payment successful!");
+
+      if (paymentPromiseRef.current.onDownload) {
+        try {
+          await paymentPromiseRef.current.onDownload();
+        } catch (dlErr) {
+          console.error("Auto-download failed:", dlErr);
+          toast.error("Auto-download failed, but transaction is safe. Please retry download.");
+        }
+      }
+
       paymentPromiseRef.current.resolve(verifyData);
       setSandboxOrder(null);
     } catch (err: any) {

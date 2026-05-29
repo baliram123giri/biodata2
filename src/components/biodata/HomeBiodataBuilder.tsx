@@ -266,9 +266,10 @@ export function HomeBiodataBuilder() {
         customerPhone: properPhone,
         currency: activeTemplate?.currency || "INR",
         couponCode: couponCode,
+        onDownload: async () => {
+          await triggerDownload(currentData, storedTemplate, format, modalFilename);
+        }
       });
-      
-      await triggerDownload(currentData, storedTemplate, format, modalFilename);
     } catch (paymentErr) {
       console.error("Payment failed or cancelled:", paymentErr);
     }
