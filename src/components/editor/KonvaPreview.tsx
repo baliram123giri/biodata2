@@ -291,7 +291,7 @@ function StickerItem({
 }) {
   const { updateSticker, addSticker } = useBiodataStore();
   let asset = STICKER_ASSETS.find(a => a.id === sticker.type);
-  if (!asset && (sticker.type.startsWith('http') || sticker.type.startsWith('data:'))) {
+  if (!asset && sticker.type) {
     asset = { id: sticker.type, type: 'image', url: sticker.type, name: 'Custom', path: '', viewBox: '' };
   }
   
@@ -422,7 +422,7 @@ const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }
 export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
   const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore();
   const theme = useThemeStore();
-  const formData = liveFormData || storeFormData;
+  const formData = liveFormData ? { ...liveFormData, stickers: storeFormData.stickers } : storeFormData;
   const selectedTemplate = templateId || storeTemplate;
   const templateConfig = getTemplateConfig(selectedTemplate);
 
@@ -1085,24 +1085,32 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                         offsetX={A4_W / 2}
                       />
                     )}
-                    {mantraSticker && (
-                      <>
-                        <StickerItem
-                          sticker={{ ...mantraSticker, id: "mantra-sign-left", x: A4_W / 2 - 140, y: -12, scaleX: 0.45, scaleY: 0.45 }}
-                          color={primaryColor}
-                          isDesigner={false}
-                          isSelected={false}
-                          onClick={() => {}}
-                        />
-                        <StickerItem
-                          sticker={{ ...mantraSticker, id: "mantra-sign-right", x: A4_W / 2 + 95, y: -12, scaleX: 0.45, scaleY: 0.45 }}
-                          color={primaryColor}
-                          isDesigner={false}
-                          isSelected={false}
-                          onClick={() => {}}
-                        />
-                      </>
-                    )}
+                    {mantraSticker && (() => {
+                      // Estimate text width (approx 0.6 ratio for typical fonts)
+                      const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
+                      const halfW = textWidth / 2;
+                      const gap = 5;
+                      const imgW = 45; // 100 * 0.45
+                      
+                      return (
+                        <>
+                          <StickerItem
+                            sticker={{ ...mantraSticker, id: "mantra-sign-left", x: A4_W / 2 - halfW - gap - imgW, y: -6, scaleX: 0.45, scaleY: 0.45 }}
+                            color={primaryColor}
+                            isDesigner={false}
+                            isSelected={false}
+                            onClick={() => {}}
+                          />
+                          <StickerItem
+                            sticker={{ ...mantraSticker, id: "mantra-sign-right", x: A4_W / 2 + halfW + gap + imgW, y: -6, scaleX: -0.45, scaleY: 0.45 }}
+                            color={primaryColor}
+                            isDesigner={false}
+                            isSelected={false}
+                            onClick={() => {}}
+                          />
+                        </>
+                      );
+                    })()}
                   </Group>
 
                   {/* Title Rendering */}

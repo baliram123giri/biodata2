@@ -633,8 +633,56 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                   );
                 }
               }
+              if (item.type === 'mantra') {
+                const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
+                if (mantraSticker) {
+                  // Estimate text width
+                  const textWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
+                  const halfW = textWidth / 2;
+                  const gap = 5;
+                  const imgW = 45;
+                  const imgH = 45;
+                  
+                  return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W, height: Math.max(item.fontSize, imgH) } as any },
+                    React.createElement(Text, {
+                      style: {
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: A4_W,
+                        textAlign: 'center',
+                        fontSize: item.fontSize,
+                        fontFamily: item.font,
+                        fontWeight: 'bold',
+                        color: primary
+                      } as any
+                    }, item.text ? String(item.text) : ""),
+                    React.createElement(Image, {
+                      src: mantraSticker.type,
+                      style: {
+                        position: 'absolute',
+                        top: -6,
+                        left: A4_W / 2 - halfW - gap - imgW,
+                        width: imgW,
+                        height: imgH
+                      } as any
+                    }),
+                    React.createElement(Image, {
+                      src: mantraSticker.type,
+                      style: {
+                        position: 'absolute',
+                        top: -6,
+                        left: A4_W / 2 + halfW + gap,
+                        width: imgW,
+                        height: imgH,
+                        transform: 'scaleX(-1)'
+                      } as any
+                    })
+                  );
+                }
+              }
               
-              // Default: simple title or mantra text
+              // Default: simple title or mantra text (no sticker)
               return React.createElement(Text, {
                 key: i,
                 style: {
@@ -842,7 +890,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             })
           ].filter(Boolean);
         }),
-        (data.stickers || []).map((sticker: any, i: number) => {
+        (data.stickers || []).filter((s: any) => !s.isMantra).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
           const resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
           
