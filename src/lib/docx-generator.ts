@@ -191,7 +191,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
         if (customBgImgBuffer) {
           try {
-            const isCustomBg = !!theme?.bgImageUrl;
+            const isCustomBg = !!(theme?.bgImageUrl || theme?.bgImageUrlBase64);
             const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
             const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
             const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
@@ -370,7 +370,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
       if (customBgImgBuffer) {
         try {
-          const isCustomBg = !!theme?.bgImageUrl;
+          const isCustomBg = !!(theme?.bgImageUrl || theme?.bgImageUrlBase64);
           const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
           const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
           const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
@@ -490,7 +490,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
     const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
     if (customBgImgBuffer) {
       try {
-        const isCustomBg = !!theme?.bgImageUrl;
+        const isCustomBg = !!(theme?.bgImageUrl || theme?.bgImageUrlBase64);
         const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
         const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
         const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
