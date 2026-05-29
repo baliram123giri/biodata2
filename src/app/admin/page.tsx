@@ -78,11 +78,11 @@ export default function AdminDashboard() {
     },
     {
       title: "Total Revenue",
-      value: isLoading ? "..." : `₹${data?.totalRevenue?.toLocaleString() || "0"}`,
-      change: isLoading ? "" : `+₹${data?.revenueToday || 0}`,
+      value: isLoading ? "..." : `₹${Number(data?.totalRevenue || 0).toFixed(2)}`,
+      change: isLoading ? "" : `+₹${Number(data?.revenueToday || 0).toFixed(2)}`,
       trend: "up",
       icon: Sparkles,
-      description: isLoading ? "Loading revenue..." : `₹${data?.revenueToday || 0} earned in the last 24h`,
+      description: isLoading ? "Loading revenue..." : `₹${Number(data?.revenueToday || 0).toFixed(2)} earned in the last 24h`,
       color: "from-secondary/15 to-transparent",
       borderColor: "border-secondary/30",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(201,168,76,0.15)]"

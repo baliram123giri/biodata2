@@ -179,7 +179,7 @@ export default function AdminTransactions() {
             </div>
             <div className="mt-4">
               <span className="text-2xl sm:text-3xl font-black text-foreground tracking-tight block">
-                ₹{stats?.totalRevenue?.toLocaleString() || "0"}
+                ₹{Number(stats?.totalRevenue || 0).toFixed(2)}
               </span>
               <span className="text-[11px] text-muted-foreground font-semibold mt-1 block">
                 Calculated from paid orders

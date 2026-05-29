@@ -138,6 +138,8 @@ export function useRazorpayPayment() {
                   razorpay_signature: response.razorpay_signature,
                   // Razorpay returns the contact (mobile) the customer used
                   razorpay_contact: response.razorpay_contact || null,
+                  // Email confirmed by Razorpay at checkout (may differ from prefill)
+                  razorpay_email: response.razorpay_email || null,
                   isSandbox: false,
                 }),
               });
