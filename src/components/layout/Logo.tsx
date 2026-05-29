@@ -20,14 +20,10 @@ export function Logo({ className, iconClassName, onClick, disableShine = false }
       )}
       onClick={onClick}
     >
-      <Image
+      <img
         src="/logo.svg"
         alt="biodata99.com Logo"
-        width={180}
-        height={48}
         className={cn("h-10 md:h-12 w-auto object-contain shrink-0 relative z-10 transition-transform duration-300 group-hover:scale-105", iconClassName)}
-        style={{ width: "auto", height: "auto" }}
-        priority
       />
       {/* Premium Metallic Shimmer Sweep Overlay */}
       {!disableShine && <div className="logo-shine-overlay" />}

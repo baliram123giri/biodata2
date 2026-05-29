@@ -18,6 +18,7 @@ import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
 import { useBiodataStore } from "@/store/useBiodataStore";
+import { cn } from "@/lib/utils";
 
 export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
@@ -128,45 +129,72 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                />
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2 relative">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="mantra">Mantra / Heading</Label>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 text-[10px] px-2 text-primary font-bold hover:bg-primary/10"
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-bold text-foreground flex items-center justify-between">
+                  <span>Mantra / Heading</span>
+                  <span className="text-xs font-normal text-muted-foreground">Appears at top of page</span>
+                </Label>
+                
+                <div className="flex items-stretch gap-3">
+                  {/* Premium Sign Selector Thumbnail Button */}
+                  <button
+                    type="button"
                     onClick={() => setIsMantraDialogOpen(true)}
+                    className={cn(
+                      "relative group w-14 h-14 shrink-0 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden p-1 shadow-sm",
+                      currentMantraSticker 
+                        ? "border-primary bg-primary/5 hover:bg-primary/10" 
+                        : "border-dashed border-border/80 bg-muted/20 hover:bg-muted/30 hover:border-primary/40"
+                    )}
+                    title={currentMantraSticker ? "Change Sign" : "Add Sign"}
                   >
-                    <Sparkles className="w-3 h-3 mr-1"/> {currentMantraSticker ? "Change Sign" : "Add Sign"}
-                  </Button>
-                </div>
-                {currentMantraSticker && (
-                  <div className="flex items-center gap-3 p-2 bg-muted/20 border border-border/50 rounded-lg">
-                    <div 
-                      className="w-12 h-12 bg-white rounded-md border flex items-center justify-center overflow-hidden cursor-pointer shrink-0" 
-                      onClick={() => setIsMantraDialogOpen(true)}
-                    >
-                      <img src={currentMantraSticker.type} alt="Mantra Sign" className="w-10 h-10 object-contain hover:scale-105 transition-transform" />
-                    </div>
-                    <div className="flex-1 flex flex-col">
-                      <span className="text-xs font-bold text-foreground">Sign Selected</span>
-                      <button 
-                        type="button" 
-                        onClick={() => removeSticker(currentMantraSticker.id)} 
-                        className="text-[10px] text-destructive hover:underline text-left mt-0.5"
-                      >
-                        Remove
-                      </button>
+                    {currentMantraSticker ? (
+                      <>
+                        <img 
+                          src={currentMantraSticker.type} 
+                          alt="Selected Sign" 
+                          className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110" 
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Pencil className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-[9px] font-bold text-muted-foreground group-hover:text-primary tracking-tight mt-0.5 text-center leading-none">Add Sign</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Mantra Input */}
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="relative">
+                      <Input 
+                        id="mantra" 
+                        placeholder="e.g. Shree Ganeshay Namah" 
+                        {...register("mantra")} 
+                        className="h-14 pr-12 border-border/80 focus-visible:ring-primary/20 bg-card font-medium text-sm"
+                      />
+                      {currentMantraSticker && (
+                        <button
+                          type="button"
+                          onClick={() => removeSticker(currentMantraSticker.id)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive/80 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/10 transition-all"
+                          title="Remove Sign"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
-                <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} className={currentMantraSticker ? "mt-2" : ""} />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="title">Biodata Title</Label>
-                <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} />
+                <Label htmlFor="title" className="text-sm font-bold text-foreground">Biodata Title</Label>
+                <Input id="title" placeholder="e.g. Biodata, Resume" {...register("title")} className="border-border/80 focus-visible:ring-primary/20 bg-card font-semibold" />
               </div>
             </div>
           </AccordionContent>
@@ -184,7 +212,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
           <DialogHeader className="p-4 md:p-6 pb-2 md:pb-4 border-b border-border/50 sticky top-0 bg-card z-10">
             <DialogTitle className="text-lg md:text-xl font-bold flex items-center gap-2 text-primary">
               <Sparkles className="w-5 h-5 text-primary" />
-              Add Mantra Sign
+              Select Mantra Sign
             </DialogTitle>
           </DialogHeader>
           
@@ -219,22 +247,35 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {mantraStickers?.map((sticker) => (
-                    <button
-                      key={sticker.id}
-                      type="button"
-                      onClick={() => {
-                        if (currentMantraSticker) {
-                          removeSticker(currentMantraSticker.id);
-                        }
-                        addSticker({ type: sticker.url, x: 250, y: 50, scaleX: 1, scaleY: 1, isMantra: true });
-                        setIsMantraDialogOpen(false);
-                      }}
-                      className="aspect-square flex items-center justify-center rounded-xl border border-border/50 bg-white hover:bg-primary/5 hover:border-primary/40 hover:shadow-md transition-all group overflow-hidden p-2 relative cursor-pointer"
-                    >
-                      <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                    </button>
-                  ))}
+                  {mantraStickers?.map((sticker) => {
+                    const isSelected = currentMantraSticker?.type === sticker.url;
+                    return (
+                      <button
+                        key={sticker.id}
+                        type="button"
+                        onClick={() => {
+                          if (currentMantraSticker) {
+                            removeSticker(currentMantraSticker.id);
+                          }
+                          addSticker({ type: sticker.url, x: 250, y: 50, scaleX: 1, scaleY: 1, isMantra: true });
+                          setIsMantraDialogOpen(false);
+                        }}
+                        className={cn(
+                          "aspect-square flex items-center justify-center rounded-xl border-2 bg-white transition-all group overflow-hidden p-2 relative cursor-pointer",
+                          isSelected 
+                            ? "border-primary bg-primary/5 shadow-md" 
+                            : "border-border/50 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md"
+                        )}
+                      >
+                        <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-3.5 h-3.5 bg-primary text-white rounded-full flex items-center justify-center">
+                            <span className="text-[8px] font-black">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

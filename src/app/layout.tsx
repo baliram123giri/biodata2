@@ -105,6 +105,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${notoSerif.variable} ${playfair.variable} ${notoDevanagari.variable} h-full antialiased`}
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <JsonLd schema={webApplicationSchema} />

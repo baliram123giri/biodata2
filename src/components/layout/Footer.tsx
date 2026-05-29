@@ -60,7 +60,7 @@ export function Footer() {
     <footer className="w-full relative overflow-hidden">
       {/* Top Wave Divider */}
       <div className="w-full overflow-hidden leading-none">
-        <svg viewBox="0 0 1440 60" className="w-full block" preserveAspectRatio="none" style={{ height: 48 }}>
+        <svg viewBox="0 0 1440 60" className="w-full block" preserveAspectRatio="none" style={{ height: 20 }}>
           <path d="M0,40 C360,0 1080,80 1440,20 L1440,60 L0,60 Z" fill="#0f172a" />
         </svg>
       </div>
@@ -68,18 +68,18 @@ export function Footer() {
       {/* Main Footer Body */}
       <div className="bg-[#0f172a] text-white">
         {/* Main Grid */}
-        <div className="container mx-auto px-4 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
 
             {/* Brand Column */}
-            <div className="md:col-span-5 flex flex-col gap-5">
-              <Logo iconClassName="h-10 md:h-12" disableShine />
-              <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+            <div className="md:col-span-5 flex flex-col gap-3">
+              <Logo iconClassName="h-8 md:h-10" disableShine />
+              <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
               </p>
 
               {/* Social Icons */}
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-2 mt-1">
                 {socialLinks.map(({ href, label, svgPath }) => (
                   <a
                     key={label}
@@ -87,9 +87,9 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="w-9 h-9 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all duration-200"
+                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all duration-200"
                   >
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                       <path d={svgPath} />
                     </svg>
                   </a>
@@ -97,25 +97,25 @@ export function Footer() {
               </div>
 
               {/* Trust badge */}
-              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 w-fit mt-1">
-                <Shield className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-[11px] font-bold text-slate-300 tracking-wide">100% Free &amp; Secure</span>
+              <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1 w-fit mt-1">
+                <Shield className="w-3 h-3 text-green-400" />
+                <span className="text-[10px] font-bold text-slate-300 tracking-wide">100% Free &amp; Secure</span>
               </div>
             </div>
 
             {/* Company Links */}
             <div className="md:col-span-3">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
                 Company
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {footerLinks.company.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="group flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
                     >
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
                       {label}
                     </Link>
                   </li>
@@ -125,17 +125,17 @@ export function Footer() {
 
             {/* Legal Links */}
             <div className="md:col-span-4">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
                 Legal
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {footerLinks.legal.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="group flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
                     >
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
                       {label}
                     </Link>
                   </li>
@@ -143,20 +143,20 @@ export function Footer() {
               </ul>
 
               {/* Contact email */}
-              <div className="mt-6 flex items-center gap-2 text-slate-400 group">
-                <Mail className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <div className="mt-4 flex items-center gap-1.5 text-slate-400 group">
+                <Mail className="w-3 h-3 text-cyan-400 shrink-0" />
                 <a
                   href="mailto:support@biodata99.com"
-                  className="text-xs hover:text-cyan-400 transition-colors"
+                  className="text-[11px] hover:text-cyan-400 transition-colors"
                 >
                   support@biodata99.com
                 </a>
               </div>
 
               {/* Location */}
-              <div className="mt-3 flex items-center gap-2 text-slate-400">
-                <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="text-xs">Maharashtra, India</span>
+              <div className="mt-2 flex items-center gap-1.5 text-slate-400">
+                <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+                <span className="text-[11px]">Maharashtra, India</span>
               </div>
             </div>
           </div>
@@ -164,13 +164,13 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/8">
-          <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-slate-400 text-center sm:text-left" suppressHydrationWarning>
+          <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-[11px] text-slate-400 text-center sm:text-left" suppressHydrationWarning>
               © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
             </p>
-            <p className="text-xs text-slate-400 flex items-center gap-1.5">
-              Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for Happy Marriages
-              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 ml-1" />
+            <p className="text-[11px] text-slate-400 flex items-center gap-1">
+              Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for Happy Marriages
+              <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400 ml-0.5" />
             </p>
           </div>
         </div>
