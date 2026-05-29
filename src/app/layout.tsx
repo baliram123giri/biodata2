@@ -29,6 +29,7 @@ const notoDevanagari = Noto_Sans_Devanagari({
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ClientLayoutProviders } from "@/components/layout/ClientLayoutProviders";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { webApplicationSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 
@@ -107,12 +108,14 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <JsonLd schema={webApplicationSchema} />
-        <ClientLayoutProviders />
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <QueryProvider>
+          <ClientLayoutProviders />
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </QueryProvider>
       </body>
     </html>
   );

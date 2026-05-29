@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
   return (session?.user as any) || null;
 }
 
-// Memory caching variables
-let cachedStats: any = null;
-let lastCacheTime = 0;
-const CACHE_TTL = 30 * 1000; // Cache TTL set to 30 seconds
+const CACHE_KEY = "admin:dashboard-stats";
 
 export async function GET(req: Request) {
   try {
@@ -20,14 +18,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if URL specifies bypassCache parameter (like when clicking refresh)
     const { searchParams } = new URL(req.url);
     const bypassCache = searchParams.get("bypass") === "true";
+    if (bypassCache) apiCache.invalidate(CACHE_KEY);
 
-    const now = Date.now();
-    if (!bypassCache && cachedStats && now - lastCacheTime < CACHE_TTL) {
-      return NextResponse.json({ ...cachedStats, fromCache: true });
-    }
+    const stats = await apiCache.remember(CACHE_KEY, TTL.SHORT, async () => {
 
     // 1. Total Registered Users
     const totalUsers = await prisma.user.count();
@@ -54,6 +49,22 @@ export async function GET(req: Request) {
         },
       },
     });
+
+    // 4b. Revenue aggregations
+    const paidOrders = await prisma.order.aggregate({
+      where: { status: "paid" },
+      _sum: { amount: true },
+    });
+    const totalRevenue = paidOrders._sum.amount || 0;
+
+    const paidOrdersToday = await prisma.order.aggregate({
+      where: {
+        status: "paid",
+        createdAt: { gte: oneDayAgo },
+      },
+      _sum: { amount: true },
+    });
+    const revenueToday = paidOrdersToday._sum.amount || 0;
 
     // Get all templates to map names
     const templates = await prisma.template.findMany({
@@ -137,19 +148,20 @@ export async function GET(req: Request) {
       dailyTraffic.push({ day: dayLabel, count });
     }
 
-    // Save result into global cache
-    cachedStats = {
-      totalUsers,
-      newUsersToday,
-      totalDownloads,
-      downloadsThisWeek,
-      recentDownloads,
-      templatePopularity,
-      dailyTraffic,
-    };
-    lastCacheTime = now;
+    return {
+        totalUsers,
+        newUsersToday,
+        totalDownloads,
+        downloadsThisWeek,
+        totalRevenue,
+        revenueToday,
+        recentDownloads,
+        templatePopularity,
+        dailyTraffic,
+      };
+    }); // end apiCache.remember
 
-    return NextResponse.json({ ...cachedStats, fromCache: false });
+    return NextResponse.json({ ...stats, fromCache: false });
   } catch (error: any) {
     console.error("Dashboard stats error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -27,6 +27,7 @@ export interface Sticker {
   scaleX: number;
   scaleY: number;
   rotation?: number;
+  isMantra?: boolean;
 }
 
 interface BiodataState {
@@ -36,6 +37,7 @@ interface BiodataState {
   };
   selectedTemplate: string;
   customTemplates: TemplateConfig[];
+  customStickers: any[];
   setFormData: (data: any) => void;
   updateField: (section: keyof BiodataFormValues, id: string, value: string) => void;
   updateLayout: (id: string, x: number, y: number) => void;
@@ -45,6 +47,7 @@ interface BiodataState {
   setSelectedTemplate: (templateId: string) => void;
   setCustomTemplates: (templates: TemplateConfig[]) => void;
   fetchCustomTemplates: () => Promise<void>;
+  fetchCustomStickers: () => Promise<void>;
   resetStore: () => void;
   resetFormDataOnly: () => void;
 }
@@ -65,6 +68,7 @@ export const useBiodataStore = create<BiodataState>()(
         },
         selectedTemplate: "",
         customTemplates: [],
+        customStickers: [],
         setFormData: (data) => set((state) => ({
           formData: {
             ...state.formData,
@@ -139,6 +143,19 @@ export const useBiodataStore = create<BiodataState>()(
             }
           } catch (err) {
             console.error("Store failed to fetch templates:", err);
+          }
+        },
+        fetchCustomStickers: async () => {
+          try {
+            const res = await fetch("/api/stickers?limit=1000");
+            const data = await res.json();
+            if (data.stickers && data.stickers.length > 0) {
+              const { registerDynamicStickers } = await import("@/lib/sticker-assets");
+              registerDynamicStickers(data.stickers);
+              set({ customStickers: data.stickers });
+            }
+          } catch (err) {
+            console.error("Store failed to fetch stickers:", err);
           }
         },
         resetStore: () => set({ 

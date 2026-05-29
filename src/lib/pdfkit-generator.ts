@@ -66,11 +66,20 @@ const registerFonts = () => {
 registerFonts();
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
-  return null;
+  return React.createElement(View, {});
 }
 
 const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const config = getTemplateConfig(templateId);
+
+  const sectionOffsets = (() => {
+    try { return JSON.parse(config.bgConfig?.sectionOffsets || "{}"); } catch { return {}; }
+  })();
+
+  const sectionStyles = (() => {
+    try { return JSON.parse(config.bgConfig?.sectionStyles || "{}"); } catch { return {}; }
+  })();
+
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
   const accent = theme.accentColor || config.defaultAccent;
@@ -86,7 +95,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     : (config.frame as any).bgColor || "#ffffff";
   const padding = theme.padding ?? config.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
-  const initialFontSize = theme.fontSize || 11;
+  const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 11;
 
   const renderPDFBackground = () => {
     // 1. If a theme palette has a custom background gradient (length > 1), respect the palette background settings
@@ -195,11 +204,18 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     ];
 
     for (const sec of sectionKeys) {
+      const secIdx = sectionKeys.indexOf(sec);
+      const secKey = `sec-${secIdx}`;
+      const lookupKey = sec.key || secKey;
+      const style = sectionStyles[lookupKey] || sectionStyles[secKey] || {};
+      const secFontSize = style.fontSize ? Number(style.fontSize) : fSize;
+      const secLineSpacing = secFontSize * 0.5 + 2;
+
       const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12;
+      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 12;
       const fieldRows: any[] = [];
 
       let i = 0;
@@ -244,13 +260,16 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             valueW
           });
           
-          cursorY += fSize * 1.35 + LINE_SPACING;
+          cursorY += secFontSize * 1.35 + secLineSpacing;
           i += 2;
         } else {
-          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
-          const valW = valText.length * fSize * 0.6;
+          let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          if (f1.logoUrl) {
+            valueW -= (secFontSize + 4);
+          }
+          const valW = valText.length * secFontSize * 0.6;
           const lines = Math.ceil(valW / valueW) || 1;
-          const rowHeight = Math.max(fSize, lines * fSize * 1.1);
+          const rowHeight = Math.max(secFontSize, lines * secFontSize * 1.1);
           
           fieldRows.push({
             ...f1,
@@ -260,13 +279,13 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             rowWidth
           });
           
-          cursorY += rowHeight + LINE_SPACING;
+          cursorY += rowHeight + secLineSpacing;
           i += 1;
         }
       }
       
-      sectionLayouts.push({ title: sec.label, titleY, fields: fieldRows });
-      cursorY += fSize * 1.5;
+      sectionLayouts.push({ key: sec.key, title: sec.label, titleY, fields: fieldRows });
+      cursorY += secFontSize * 1.5;
     }
     return { headerItems, sectionLayouts, totalHeight: cursorY };
   };
@@ -274,7 +293,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   // Find optimal font size to fit on one page
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
-  const MAX_Y = A4_H - paddingY - 20;
+  const MAX_Y = A4_H - paddingY;
 
   // Reduce font size if content exceeds page height
   while (layout.totalHeight > MAX_Y && currentFontSize > 7) {
@@ -348,117 +367,139 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     logo: { width: 14, height: 14, marginRight: 4 }
   });
 
-  return React.createElement(Document, {},
+   return React.createElement(Document, {},
     React.createElement(Page, { size: "A4", style: styles.page as any },
       React.createElement(View, { style: styles.container as any, wrap: false },
-        renderPDFBackground(),
-        config.bgConfig?.url && React.createElement(Image, {
-          src: config.bgConfig.url,
-          style: {
-            position: 'absolute',
-            left: config.bgConfig.x ?? 0,
-            top: config.bgConfig.y ?? 0,
-            width: config.bgConfig.width ?? 595,
-            height: config.bgConfig.height ?? 842,
-            opacity: config.bgConfig.opacity ?? 1.0,
-          } as any
-        }),
-        config.frame.type === 'image' ? 
-          React.createElement(Image, { 
-            src: theme?.rasterizedFrameBase64 || (() => {
-              let url = getFrameImageUrl(config.frame, primary);
-              // Force PNG format by replacing f_auto with f_png and translating .svg to .png
-              // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
-              url = url.replace(/f_auto/g, 'f_png');
-              if (url.toLowerCase().endsWith('.svg')) {
-                url = url.substring(0, url.length - 4) + '.png';
-              } else if (url.toLowerCase().includes('.svg?')) {
-                url = url.replace(/\.svg\?/i, '.png?');
-              }
-              return url;
-            })(), 
-            style: [styles.frame, { objectFit: 'fill' }] as any
-          })
-        : config.frame.type === 'gradient' ?
-          React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-            React.createElement(Rect, { 
-              x: config.frame.outerInset, 
-              y: config.frame.outerInset, 
-              width: A4_W - config.frame.outerInset * 2, 
-              height: A4_H - config.frame.outerInset * 2, 
-              stroke: primary, 
-              strokeWidth: config.frame.outerStrokeWidth,
-              rx: config.frame.outerCornerRadius,
-              fill: "none"
-            }),
-            React.createElement(Rect, { 
-              x: config.frame.innerInset, 
-              y: config.frame.innerInset, 
-              width: A4_W - config.frame.innerInset * 2, 
-              height: A4_H - config.frame.innerInset * 2, 
-              stroke: primary, 
-              strokeWidth: config.frame.innerStrokeWidth,
-              rx: config.frame.innerCornerRadius,
-              strokeOpacity: 0.3,
-              fill: "none"
+        ...([
+          renderPDFBackground(),
+          config.frame.type === 'image' ? 
+            React.createElement(Image, { 
+              src: theme?.rasterizedFrameBase64 || (() => {
+                let url = getFrameImageUrl(config.frame, primary);
+                // Force PNG format by replacing f_auto with f_png and translating .svg to .png
+                // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
+                url = url.replace(/f_auto/g, 'f_png');
+                if (url.toLowerCase().endsWith('.svg')) {
+                  url = url.substring(0, url.length - 4) + '.png';
+                } else if (url.toLowerCase().includes('.svg?')) {
+                  url = url.replace(/\.svg\?/i, '.png?');
+                }
+                return url;
+              })(), 
+              style: [styles.frame, { objectFit: 'fill' }] as any
             })
-          )
-        : config.frame.type === 'custom' ?
-          React.createElement(View, { style: styles.frame as any },
-            React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
-          )
-        : 
-          React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-            React.createElement(Rect, { 
-              x: config.frame.outerInset, 
-              y: config.frame.outerInset, 
-              width: A4_W - config.frame.outerInset * 2, 
-              height: A4_H - config.frame.outerInset * 2, 
-              stroke: primary, 
-              strokeWidth: config.frame.outerStrokeWidth,
-              rx: config.frame.outerCornerRadius,
-              fill: "none"
-            }),
-            React.createElement(Rect, { 
-              x: config.frame.innerInset, 
-              y: config.frame.innerInset, 
-              width: A4_W - config.frame.innerInset * 2, 
-              height: A4_H - config.frame.innerInset * 2, 
-              stroke: primary, 
-              strokeWidth: config.frame.innerStrokeWidth,
-              rx: config.frame.innerCornerRadius,
-              strokeOpacity: 0.6,
-              fill: "none"
-            }),
-            config.frame.hasCornerCurves && React.createElement(G, {},
-              // Top-Left
-              React.createElement(Path, { 
-                d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
-                stroke: primary,
-                strokeWidth: config.frame.outerStrokeWidth
+          : config.frame.type === 'gradient' ?
+            React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+              React.createElement(Rect, { 
+                x: config.frame.outerInset, 
+                y: config.frame.outerInset, 
+                width: A4_W - config.frame.outerInset * 2, 
+                height: A4_H - config.frame.outerInset * 2, 
+                stroke: primary, 
+                strokeWidth: config.frame.outerStrokeWidth,
+                rx: config.frame.outerCornerRadius,
+                fill: "none"
               }),
-              // Top-Right
-              React.createElement(Path, { 
-                d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
-                stroke: primary,
-                strokeWidth: config.frame.outerStrokeWidth
-              }),
-              // Bottom-Left
-              React.createElement(Path, { 
-                d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
-                stroke: primary,
-                strokeWidth: config.frame.outerStrokeWidth
-              }),
-              // Bottom-Right
-              React.createElement(Path, { 
-                d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
-                stroke: primary,
-                strokeWidth: config.frame.outerStrokeWidth
+              React.createElement(Rect, { 
+                x: config.frame.innerInset, 
+                y: config.frame.innerInset, 
+                width: A4_W - config.frame.innerInset * 2, 
+                height: A4_H - config.frame.innerInset * 2, 
+                stroke: primary, 
+                strokeWidth: config.frame.innerStrokeWidth,
+                rx: config.frame.innerCornerRadius,
+                strokeOpacity: 0.3,
+                fill: "none"
               })
             )
-          ),
+          : config.frame.type === 'custom' ?
+            React.createElement(View, { style: styles.frame as any },
+              React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
+            )
+          : 
+            React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+              React.createElement(Rect, { 
+                x: config.frame.outerInset, 
+                y: config.frame.outerInset, 
+                width: A4_W - config.frame.outerInset * 2, 
+                height: A4_H - config.frame.outerInset * 2, 
+                stroke: primary, 
+                strokeWidth: config.frame.outerStrokeWidth,
+                rx: config.frame.outerCornerRadius,
+                fill: "none"
+              }),
+              React.createElement(Rect, { 
+                x: config.frame.innerInset, 
+                y: config.frame.innerInset, 
+                width: A4_W - config.frame.innerInset * 2, 
+                height: A4_H - config.frame.innerInset * 2, 
+                stroke: primary, 
+                strokeWidth: config.frame.innerStrokeWidth,
+                rx: config.frame.innerCornerRadius,
+                strokeOpacity: 0.6,
+                fill: "none"
+              }),
+              config.frame.hasCornerCurves ? React.createElement(G, {},
+                // Top-Left
+                React.createElement(Path, { 
+                  d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
+                  stroke: primary,
+                  strokeWidth: config.frame.outerStrokeWidth
+                }),
+                // Top-Right
+                React.createElement(Path, { 
+                  d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
+                  stroke: primary,
+                  strokeWidth: config.frame.outerStrokeWidth
+                }),
+                // Bottom-Left
+                React.createElement(Path, { 
+                  d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
+                  stroke: primary,
+                  strokeWidth: config.frame.outerStrokeWidth
+                }),
+                // Bottom-Right
+                React.createElement(Path, { 
+                  d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
+                  stroke: primary,
+                  strokeWidth: config.frame.outerStrokeWidth
+                })
+              ) : null
+            ),
+          (() => {
+            const isCustomBg = !!theme?.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+            
+            const scale = theme?.bgImageScale ?? 1.0;
+            const width = baseW * scale;
+            const height = baseH * scale;
+            
+            const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+            
+            const xOffset = theme?.bgImageXOffset ?? 0;
+            const yOffset = theme?.bgImageYOffset ?? 0;
+            
+            // Adjust left/top to scale from center
+            const left = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
+            const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
+            
+            return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
+              src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
+              style: {
+                position: 'absolute',
+                left,
+                top,
+                width,
+                height,
+                opacity: isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0),
+                objectFit: isCustomBg ? 'contain' : 'fill',
+              } as any
+            }) : null;
+          })(),
           
-        WATERMARK_CONFIG.isEnabled && React.createElement(View, {
+        WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
           style: {
             position: 'absolute',
             left: (A4_W - WATERMARK_CONFIG.width) / 2,
@@ -471,234 +512,387 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         }, React.createElement(Image, {
           src: path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath),
           style: { width: '100%', height: '100%' } as any
-        })),
+        })) : null,
 
-        layout.headerItems.map((item, i) => {
-          if (item.type === 'title') {
-            if (titleShape === "ribbon") {
-              const ribbonW = 320;
-              const ribbonH = item.fontSize * 2.8;
-              const ribbonX = (A4_W - ribbonW) / 2;
-              const ribbonY = item.y - 4;
-              
-              return React.createElement(View, { key: i, style: { position: 'absolute', top: ribbonY, left: 0, width: A4_W } as any },
-                React.createElement(Svg, { width: A4_W, height: ribbonH, viewBox: `0 0 ${A4_W} ${ribbonH}` },
-                  // Left ribbon tail polygon
-                  React.createElement(Path, {
-                    d: `M ${ribbonX - 20} ${8} L ${ribbonX} ${2} L ${ribbonX} ${ribbonH - 2} L ${ribbonX - 20} ${ribbonH + 4} L ${ribbonX - 28} ${(ribbonH / 2) + 5} Z`,
-                    fill: primary,
-                    opacity: 0.8
-                  }),
-                  // Right ribbon tail polygon
-                  React.createElement(Path, {
-                    d: `M ${ribbonX + ribbonW + 20} ${8} L ${ribbonX + ribbonW} ${2} L ${ribbonX + ribbonW} ${ribbonH - 2} L ${ribbonX + ribbonW + 20} ${ribbonH + 4} L ${ribbonX + ribbonW + 28} ${(ribbonH / 2) + 5} Z`,
-                    fill: primary,
-                    opacity: 0.8
-                  }),
-                  // Center banner
-                  React.createElement(Rect, {
-                    x: ribbonX,
-                    y: 0,
-                    width: ribbonW,
-                    height: ribbonH,
-                    fill: primary,
-                    stroke: accent || primary,
-                    strokeWidth: 2,
-                    rx: 6
-                  })
-                ),
-                React.createElement(Text, {
-                  style: {
-                    position: 'absolute',
-                    top: (ribbonH - item.fontSize * 2) / 2,
-                    left: ribbonX,
-                    width: ribbonW,
-                    textAlign: 'center',
-                    fontSize: item.fontSize * 0.9,
-                    fontFamily: item.font,
-                    fontWeight: 'bold',
-                    color: '#ffffff'
-                  } as any
-                }, item.text)
-              );
-            } else if (titleShape === "arch") {
-              return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
-                React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -28 } as any },
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 - 120} 32 C ${A4_W / 2 - 80} 16 C ${A4_W / 2 - 30} 10 C ${A4_W / 2} 10 C ${A4_W / 2 + 30} 10 C ${A4_W / 2 + 80} 16 C ${A4_W / 2 + 120} 32`,
-                    stroke: accent || primary,
-                    strokeWidth: 2.5,
-                    fill: 'none'
-                  }),
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 - 100} 36 C ${A4_W / 2 - 70} 22 C ${A4_W / 2 - 25} 16 C ${A4_W / 2} 16 C ${A4_W / 2 + 25} 16 C ${A4_W / 2 + 70} 22 C ${A4_W / 2 + 100} 36`,
-                    stroke: primary,
-                    strokeWidth: 1,
-                    opacity: 0.6,
-                    fill: 'none'
-                  })
-                ),
-                React.createElement(Text, {
-                  style: {
-                    textAlign: 'center',
-                    fontSize: item.fontSize,
-                    fontFamily: item.font,
-                    fontWeight: 'bold',
-                    color: primary
-                  } as any
-                }, item.text)
-              );
-            } else if (titleShape === "ornament") {
-              return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
-                React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -2 } as any },
-                  // Left Mandala Path
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 - 170} 15 C ${A4_W / 2 - 162} 15 C ${A4_W / 2 - 155} 21 C ${A4_W / 2 - 155} 30 C ${A4_W / 2 - 155} 38 C ${A4_W / 2 - 162} 45 C ${A4_W / 2 - 170} 45 C ${A4_W / 2 - 178} 45 C ${A4_W / 2 - 185} 38 C ${A4_W / 2 - 185} 30 C ${A4_W / 2 - 185} 21 C ${A4_W / 2 - 178} 15 Z`,
-                    fill: accent || primary,
-                    transform: "scale(0.8)"
-                  }),
-                  // Right Mandala Path
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 + 140} 15 C ${A4_W / 2 + 148} 15 C ${A4_W / 2 + 155} 21 C ${A4_W / 2 + 155} 30 C ${A4_W / 2 + 155} 38 C ${A4_W / 2 + 148} 45 C ${A4_W / 2 + 140} 45 C ${A4_W / 2 + 132} 45 C ${A4_W / 2 + 125} 38 C ${A4_W / 2 + 125} 30 C ${A4_W / 2 + 125} 21 C ${A4_W / 2 + 132} 15 Z`,
-                    fill: accent || primary,
-                    transform: "scale(0.8)"
-                  }),
-                  // Underline line
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 - 90} 38 L ${A4_W / 2 + 90} 38`,
-                    stroke: accent || primary,
-                    strokeWidth: 1.5,
-                    fill: 'none'
-                  }),
-                  // Diamond Center
-                  React.createElement(Path, {
-                    d: `M ${A4_W / 2 - 5} 38 L ${A4_W / 2} 35.5 L ${A4_W / 2 + 5} 38 L ${A4_W / 2} 40.5 Z`,
-                    fill: accent || primary
-                  })
-                ),
-                React.createElement(Text, {
-                  style: {
-                    textAlign: 'center',
-                    fontSize: item.fontSize,
-                    fontFamily: item.font,
-                    fontWeight: 'bold',
-                    color: primary
-                  } as any
-                }, item.text)
-              );
-            }
-          }
-          
-          return React.createElement(Text, {
-            key: i,
+        (() => {
+          const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
+          return React.createElement(View, {
             style: {
               position: 'absolute',
-              top: item.y,
-              left: 0,
+              top: headerOffset.y,
+              left: headerOffset.x,
               width: A4_W,
-              textAlign: 'center',
-              fontSize: item.fontSize,
-              fontFamily: item.font,
-              fontWeight: 'bold',
-              color: primary
+              height: A4_H
             } as any
-          }, item.text);
-        }),
-        data.photo && React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }),
-        data.photo && config.photo.showBorder !== false && React.createElement(View, { style: styles.photoBorder as any }),
-        layout.sectionLayouts.map((sec, si) => React.createElement(View, { key: si, style: { position: 'absolute', top: sec.titleY, left: 0, width: A4_W } as any },
-          
-          // Modern Boxed Card Background Rendering
-          detailsLayout === "modern-boxed" && (() => {
-            const lastField = sec.fields[sec.fields.length - 1];
-            const boxHeight = lastField ? (lastField.y + currentFontSize * 1.45 - sec.titleY + 12) : 50;
-            return React.createElement(Svg, {
-              style: {
-                position: 'absolute',
-                left: padding - 8,
-                top: -8,
-                width: A4_W - padding * 2 + 16,
-                height: boxHeight,
-              } as any
-            },
-              React.createElement(Rect, {
-                x: 0,
-                y: 0,
-                width: A4_W - padding * 2 + 16,
-                height: boxHeight,
-                fill: primary,
-                fillOpacity: 0.04,
-                stroke: primary,
-                strokeOpacity: 0.1,
-                strokeWidth: 1.2,
-                rx: 10
-              })
-            );
-          })(),
-
-          React.createElement(View, { style: styles.sectionTitleBar as any }),
-          React.createElement(Text, { style: styles.sectionTitleText as any }, sec.title),
-          sec.fields.map((f: any, fi: any) => {
-            const colX = f.isHalf 
-              ? (f.colIndex === 0 
-                  ? (padding + 10) 
-                  : (padding + 10 + f.halfW + 10))
-              : (padding + 10);
-            const lblW = f.isHalf ? f.labelW : 130;
-            const colonX = colX + lblW + 5;
-            const valX = colX + lblW + 15;
-            
-            return React.createElement(View, {
-              key: fi,
-              style: { 
-                position: 'absolute', 
-                top: (f.y - sec.titleY), 
-                left: colX, 
-                flexDirection: 'row', 
-                width: f.isHalf ? f.halfW : (f.rowWidth - 10) 
-              } as any
-            },
-              React.createElement(Text, { style: [styles.label, { width: lblW }] as any }, f.displayLabel),
-              React.createElement(Text, { style: [styles.colon, { left: colonX - colX, position: 'absolute' }] as any }, ":"),
-              React.createElement(View, { style: { left: valX - colX, position: 'absolute', width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
-                f.logoUrl && (() => {
-                  let resolvedSrc: any = f.logoUrl;
-                  if (f.logoUrl.startsWith("data:image/")) {
-                    const commaIdx = f.logoUrl.indexOf(",");
-                    const base64Content = f.logoUrl.substring(commaIdx + 1);
-                    resolvedSrc = Buffer.from(base64Content, "base64");
-                  } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
-                    resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
-                  } else if (f.logoUrl.startsWith("/")) {
-                    resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
-                  }
-                  return React.createElement(Image, { 
-                    src: resolvedSrc, 
-                    style: styles.logo as any 
-                  });
-                })(),
-                React.createElement(Text, { style: styles.value as any }, f.displayValue)
-              ),
+          },
+            ...layout.headerItems.map((item, i) => {
+              if (item.type === 'title') {
+                if (titleShape === "ribbon") {
+                  const ribbonW = 320;
+                  const ribbonH = item.fontSize * 2.8;
+                  const ribbonX = (A4_W - ribbonW) / 2;
+                  const ribbonY = item.y - 4;
+                  
+                  return React.createElement(View, { key: i, style: { position: 'absolute', top: ribbonY, left: 0, width: A4_W } as any },
+                    React.createElement(Svg, { width: A4_W, height: ribbonH, viewBox: `0 0 ${A4_W} ${ribbonH}` },
+                      React.createElement(Path, {
+                        d: `M ${ribbonX - 20} ${8} L ${ribbonX} ${2} L ${ribbonX} ${ribbonH - 2} L ${ribbonX - 20} ${ribbonH + 4} L ${ribbonX - 28} ${(ribbonH / 2) + 5} Z`,
+                        fill: primary,
+                        opacity: 0.8
+                      }),
+                      React.createElement(Path, {
+                        d: `M ${ribbonX + ribbonW + 20} ${8} L ${ribbonX + ribbonW} ${2} L ${ribbonX + ribbonW} ${ribbonH - 2} L ${ribbonX + ribbonW + 20} ${ribbonH + 4} L ${ribbonX + ribbonW + 28} ${(ribbonH / 2) + 5} Z`,
+                        fill: primary,
+                        opacity: 0.8
+                      }),
+                      React.createElement(Rect, {
+                        x: ribbonX,
+                        y: 0,
+                        width: ribbonW,
+                        height: ribbonH,
+                        fill: primary,
+                        stroke: accent || primary,
+                        strokeWidth: 2,
+                        rx: 6
+                      })
+                    ),
+                    React.createElement(Text, {
+                      style: {
+                        position: 'absolute',
+                        top: (ribbonH - item.fontSize * 2) / 2,
+                        left: ribbonX,
+                        width: ribbonW,
+                        textAlign: 'center',
+                        fontSize: item.fontSize * 0.9,
+                        fontFamily: item.font,
+                        fontWeight: 'bold',
+                        color: '#ffffff'
+                      } as any
+                    }, item.text ? String(item.text) : "")
+                  );
+                } else if (titleShape === "arch") {
+                  return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
+                    React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -28 } as any },
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 - 120} 32 C ${A4_W / 2 - 80} 16 C ${A4_W / 2 - 30} 10 C ${A4_W / 2} 10 C ${A4_W / 2 + 30} 10 C ${A4_W / 2 + 80} 16 C ${A4_W / 2 + 120} 32`,
+                        stroke: accent || primary,
+                        strokeWidth: 2.5,
+                        fill: 'none'
+                      }),
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 - 100} 36 C ${A4_W / 2 - 70} 22 C ${A4_W / 2 - 25} 16 C ${A4_W / 2} 16 C ${A4_W / 2 + 25} 16 C ${A4_W / 2 + 70} 22 C ${A4_W / 2 + 100} 36`,
+                        stroke: primary,
+                        strokeWidth: 1,
+                        opacity: 0.6,
+                        fill: 'none'
+                      })
+                    ),
+                    React.createElement(Text, {
+                      style: {
+                        textAlign: 'center',
+                        fontSize: item.fontSize,
+                        fontFamily: item.font,
+                        fontWeight: 'bold',
+                        color: primary
+                      } as any
+                    }, item.text ? String(item.text) : "")
+                  );
+                } else if (titleShape === "ornament") {
+                  return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
+                    React.createElement(Svg, { width: A4_W, height: 40, viewBox: `0 0 ${A4_W} 40`, style: { position: 'absolute', top: -2 } as any },
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 - 170} 15 C ${A4_W / 2 - 162} 15 C ${A4_W / 2 - 155} 21 C ${A4_W / 2 - 155} 30 C ${A4_W / 2 - 155} 38 C ${A4_W / 2 - 162} 45 C ${A4_W / 2 - 170} 45 C ${A4_W / 2 - 178} 45 C ${A4_W / 2 - 185} 38 C ${A4_W / 2 - 185} 30 C ${A4_W / 2 - 185} 21 C ${A4_W / 2 - 178} 15 Z`,
+                        fill: accent || primary,
+                        transform: "scale(0.8)"
+                      }),
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 + 140} 15 C ${A4_W / 2 + 148} 15 C ${A4_W / 2 + 155} 21 C ${A4_W / 2 + 155} 30 C ${A4_W / 2 + 155} 38 C ${A4_W / 2 + 148} 45 C ${A4_W / 2 + 140} 45 C ${A4_W / 2 + 132} 45 C ${A4_W / 2 + 125} 38 C ${A4_W / 2 + 125} 30 C ${A4_W / 2 + 125} 21 C ${A4_W / 2 + 132} 15 Z`,
+                        fill: accent || primary,
+                        transform: "scale(0.8)"
+                      }),
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 - 90} 38 L ${A4_W / 2 + 90} 38`,
+                        stroke: accent || primary,
+                        strokeWidth: 1.5,
+                        fill: 'none'
+                      }),
+                      React.createElement(Path, {
+                        d: `M ${A4_W / 2 - 5} 38 L ${A4_W / 2} 35.5 L ${A4_W / 2 + 5} 38 L ${A4_W / 2} 40.5 Z`,
+                        fill: accent || primary
+                      })
+                    ),
+                    React.createElement(Text, {
+                      style: {
+                        textAlign: 'center',
+                        fontSize: item.fontSize,
+                        fontFamily: item.font,
+                        fontWeight: 'bold',
+                        color: primary
+                      } as any
+                    }, item.text ? String(item.text) : "")
+                  );
+                }
+              }
+              if (item.type === 'mantra') {
+                const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
+                if (mantraSticker) {
+                  // Estimate text width
+                  const textWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
+                  const halfW = textWidth / 2;
+                  const gap = 5;
+                  const imgW = 45;
+                  const imgH = 45;
+                  
+                  return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W, height: Math.max(item.fontSize, imgH) } as any },
+                    React.createElement(Text, {
+                      style: {
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: A4_W,
+                        textAlign: 'center',
+                        fontSize: item.fontSize,
+                        fontFamily: item.font,
+                        fontWeight: 'bold',
+                        color: primary
+                      } as any
+                    }, item.text ? String(item.text) : ""),
+                    React.createElement(Image, {
+                      src: mantraSticker.type,
+                      style: {
+                        position: 'absolute',
+                        top: -6,
+                        left: A4_W / 2 - halfW - gap - imgW,
+                        width: imgW,
+                        height: imgH
+                      } as any
+                    }),
+                    React.createElement(Image, {
+                      src: mantraSticker.type,
+                      style: {
+                        position: 'absolute',
+                        top: -6,
+                        left: A4_W / 2 + halfW + gap,
+                        width: imgW,
+                        height: imgH,
+                        transform: 'scaleX(-1)'
+                      } as any
+                    })
+                  );
+                }
+              }
               
-              // Divided underline line
-              detailsLayout === "elegant-divided" && (!f.isHalf || f.colIndex === 1) && React.createElement(Svg, {
-                height: 1,
-                width: f.isHalf ? f.halfW : (A4_W - padding * 2 - 20),
-                style: { position: 'absolute', bottom: -4, left: 0 } as any
+              // Default: simple title or mantra text (no sticker)
+              return React.createElement(Text, {
+                key: i,
+                style: {
+                  position: 'absolute',
+                  top: item.y,
+                  left: 0,
+                  width: A4_W,
+                  textAlign: 'center',
+                  fontSize: item.fontSize,
+                  fontFamily: item.font,
+                  fontWeight: 'bold',
+                  color: primary
+                } as any
+              }, item.text ? String(item.text) : "");
+            })
+          );
+        })(),
+        data.photo ? React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }) : null,
+        data.photo && config.photo.showBorder !== false ? React.createElement(View, { style: styles.photoBorder as any }) : null,
+        ...layout.sectionLayouts.flatMap((sec, si) => {
+          const secKey = `sec-${si}`;
+          const lookupKey = sec.key || secKey;
+          const offset = sectionOffsets[lookupKey] || sectionOffsets[secKey] || { x: 0, y: 0 };
+          const style = sectionStyles[lookupKey] || sectionStyles[secKey] || {};
+          const titleColor = style.titleColor || primary;
+          const fieldColor = style.fieldColor || secondary;
+          const fSize = style.fontSize ? Number(style.fontSize) : currentFontSize;
+          const fontStyle = style.fontStyle || "bold";
+          const textTransform = style.textTransform || "none";
+          const applyTransform = (rawText: any) => {
+            if (rawText === null || rawText === undefined) return "";
+            const text = String(rawText);
+            if (textTransform === "uppercase") return text.toUpperCase();
+            if (textTransform === "lowercase") return text.toLowerCase();
+            if (textTransform === "capitalize") return text.replace(/\b\w/g, c => c.toUpperCase());
+            return text;
+          };
+
+          const absTitleY = sec.titleY + offset.y;
+
+          return [
+            // Modern Boxed Card Background Rendering
+            detailsLayout === "modern-boxed" ? (() => {
+              const lastField = sec.fields[sec.fields.length - 1];
+              const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
+              return React.createElement(Svg, {
+                key: `card-${si}`,
+                style: {
+                  position: 'absolute',
+                  left: padding - 8 + offset.x,
+                  top: absTitleY - 8,
+                  width: A4_W - padding * 2 + 16,
+                  height: boxHeight,
+                } as any
               },
-                React.createElement(Path, {
-                  d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padding * 2 - 20)} 0`,
-                  stroke: secondary + "15",
-                  strokeWidth: 0.8,
-                  strokeDasharray: "2,2"
-                } as any)
-              )
-            );
-          })
-        )),
-        (data.stickers || []).map((sticker: any, i: number) => {
+                React.createElement(Rect, {
+                  x: 0,
+                  y: 0,
+                  width: A4_W - padding * 2 + 16,
+                  height: boxHeight,
+                  fill: titleColor,
+                  fillOpacity: 0.04,
+                  stroke: titleColor,
+                  strokeOpacity: 0.1,
+                  strokeWidth: 1.2,
+                  rx: 10
+                })
+              );
+            })() : null,
+
+            React.createElement(View, {
+              key: `bar-${si}`,
+              style: [
+                styles.sectionTitleBar,
+                {
+                  left: padding + offset.x,
+                  top: absTitleY + 15,
+                  backgroundColor: accent || titleColor
+                }
+              ] as any
+            }),
+            React.createElement(Text, { 
+              key: `title-${si}`,
+              style: [
+                styles.sectionTitleText, 
+                { 
+                  left: padding + 10 + offset.x,
+                  top: absTitleY + 2,
+                  fontSize: Math.round(fSize * 1.4), 
+                  fontFamily: fontFamily, 
+                  fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
+                  color: titleColor 
+                }
+              ] as any 
+            }, applyTransform(sec.title)),
+            ...sec.fields.flatMap((f: any, fi: any) => {
+              const colX = f.isHalf 
+                ? (f.colIndex === 0 
+                    ? (padding + 10) 
+                    : (padding + 10 + f.halfW + 10))
+                : (padding + 10);
+              const lblW = f.isHalf ? f.labelW : 130;
+              const colonX = colX + lblW + 5;
+              const valX = colX + lblW + 15;
+              
+              const absFieldY = f.y + offset.y;
+              
+              return [
+                // 1. Label
+                React.createElement(Text, { 
+                  key: `lbl-${si}-${fi}`,
+                  style: [
+                    styles.label, 
+                    { 
+                      position: 'absolute',
+                      top: absFieldY,
+                      left: colX + offset.x,
+                      width: lblW, 
+                      fontSize: fSize, 
+                      fontFamily: fontFamily, 
+                      fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
+                      color: fieldColor,
+                      lineHeight: 1.1
+                    }
+                  ] as any 
+                }, applyTransform(f.displayLabel)),
+                
+                // 2. Colon
+                React.createElement(Text, { 
+                  key: `cln-${si}-${fi}`,
+                  style: [
+                    styles.colon, 
+                    { 
+                      position: 'absolute',
+                      top: absFieldY,
+                      left: colonX + offset.x, 
+                      width: 15,
+                      fontSize: fSize, 
+                      fontFamily: fontFamily, 
+                      color: fieldColor,
+                      lineHeight: 1.1
+                    }
+                  ] as any 
+                }, ":"),
+                
+                // 3. Logo & Value wrapped inline
+                React.createElement(View, {
+                  key: `val-${si}-${fi}`,
+                  style: {
+                    position: 'absolute',
+                    top: absFieldY,
+                    left: valX + offset.x,
+                    width: f.valueW + (f.logoUrl ? (fSize + 4) : 0),
+                    flexDirection: 'row',
+                    alignItems: 'flex-start'
+                  } as any
+                },
+                  ...([
+                    f.logoUrl ? (() => {
+                      let resolvedSrc: any = f.logoUrl;
+                      if (f.logoUrl.startsWith("data:image/")) {
+                        const commaIdx = f.logoUrl.indexOf(",");
+                        const base64Content = f.logoUrl.substring(commaIdx + 1);
+                        resolvedSrc = Buffer.from(base64Content, "base64");
+                      } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
+                        resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
+                      } else if (f.logoUrl.startsWith("/")) {
+                        resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
+                      }
+                      return React.createElement(Image, { 
+                        src: resolvedSrc, 
+                        style: [styles.logo, { width: fSize, height: fSize, marginTop: fSize * 0.05, marginRight: 4 }] as any 
+                      });
+                    })() : null,
+                    React.createElement(Text, { 
+                      style: [
+                        styles.value, 
+                        { 
+                          fontSize: fSize, 
+                          fontFamily: fontFamily, 
+                          color: fieldColor,
+                          width: f.valueW,
+                          lineHeight: 1.1
+                        }
+                      ] as any 
+                    }, applyTransform(f.displayValue))
+                  ].filter(Boolean))
+                ),
+                
+                // 4. Divided underline
+                detailsLayout === "elegant-divided" && (!f.isHalf || f.colIndex === 1) ? React.createElement(Svg, {
+                  key: `div-${si}-${fi}`,
+                  height: 1,
+                  width: f.isHalf ? f.halfW : (A4_W - padding * 2 - 20),
+                  style: { position: 'absolute', top: absFieldY + fSize * 1.35 + 2, left: colX + offset.x } as any
+                },
+                  React.createElement(Path, {
+                    d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padding * 2 - 20)} 0`,
+                    stroke: fieldColor + "15",
+                    strokeWidth: 0.8,
+                    strokeDasharray: "2,2"
+                  } as any)
+                ) : null
+              ].filter(Boolean);
+            })
+          ].filter(Boolean);
+        }),
+        (data.stickers || []).filter((s: any) => !s.isMantra).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
-          if (!asset) return null;
+          const resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
           
           const sX = sticker.scaleX ?? 1;
           const sY = sticker.scaleY ?? 1;
@@ -712,39 +906,118 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               width: 100 * sX,
               height: 100 * sY,
               transformOrigin: 'top left',
-              transform: sticker.rotation ? `rotate(${sticker.rotation}deg)` : undefined,
+              ...(sticker.rotation ? { transform: `rotate(${sticker.rotation}deg)` } : {}),
             } as any
           },
-            asset.type === 'image' ? 
+            resolvedSrc ? 
               React.createElement(Image, { 
-                src: asset.url!, 
+                src: resolvedSrc, 
                 style: { width: '100%', height: '100%', objectFit: 'fill' } as any
               })
-            : 
+            : asset && asset.type === 'svg' ?
               React.createElement(Svg, { viewBox: asset.viewBox || "0 0 100 100", width: '100%', height: '100%' },
                 React.createElement(Path, { d: asset.path || "", fill: primary })
               )
+            : 
+              React.createElement(View, {})
           );
         })
+        ].filter(Boolean))
       )
     )
   );
 };
 
-async function fetchImageAsBase64(url: string): Promise<string | undefined> {
+async function resolveAndConvertImage(url: string): Promise<string | undefined> {
+  if (!url) {
+    console.log("[resolveAndConvertImage] Empty URL received.");
+    return undefined;
+  }
+  
+  console.log(`[resolveAndConvertImage] Resolving URL: "${url.substring(0, 150)}..."`);
+  
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    let buffer: Buffer;
+    let contentType = "image/png";
+    let isSvg = url.toLowerCase().endsWith(".svg") || url.toLowerCase().includes(".svg?");
+    
+    if (url.startsWith("data:image/svg+xml")) {
+      console.log("[resolveAndConvertImage] SVG Data URL detected, rasterizing...");
+      try {
+        const commaIdx = url.indexOf(",");
+        const base64Content = url.substring(commaIdx + 1);
+        let svgXml = "";
+        if (url.includes(";base64,")) {
+          svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+        } else {
+          svgXml = decodeURIComponent(base64Content);
+        }
+        const sharp = require("sharp");
+        const pngBuffer = await sharp(Buffer.from(svgXml), { density: 300 })
+          .png()
+          .toBuffer();
+        console.log(`[resolveAndConvertImage] SVG rasterization successful. PNG base64 length: ${pngBuffer.length}`);
+        return `data:image/png;base64,${pngBuffer.toString("base64")}`;
+      } catch (rasterError) {
+        console.error("[resolveAndConvertImage] Failed to rasterize data SVG to PNG:", rasterError);
+        return url;
       }
-    });
-    if (!response.ok) return undefined;
-    const arrayBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get("content-type") || "image/png";
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    return `data:${contentType};base64,${base64}`;
+    } else if (url.startsWith("http")) {
+      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${url}"`);
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      if (!response.ok) {
+        console.error(`[resolveAndConvertImage] Fetch failed for ${url} with status ${response.status} ${response.statusText}`);
+        return undefined;
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+      const mime = response.headers.get("content-type") || "";
+      console.log(`[resolveAndConvertImage] Fetch successful. Status: ${response.status}, Content-Type: ${mime}, Buffer size: ${buffer.length}`);
+      if (mime.includes("svg")) {
+        isSvg = true;
+      } else {
+        contentType = mime;
+      }
+    } else if (url.startsWith("/")) {
+      console.log(`[resolveAndConvertImage] Local public file detected: "${url}"`);
+      const fs = require("fs");
+      const localPath = path.join(process.cwd(), 'public', url);
+      if (!fs.existsSync(localPath)) {
+        console.warn(`[resolveAndConvertImage] Local file does not exist at: ${localPath}`);
+        return undefined;
+      }
+      buffer = fs.readFileSync(localPath);
+      if (url.toLowerCase().endsWith(".svg")) {
+        isSvg = true;
+      }
+    } else {
+      console.log(`[resolveAndConvertImage] Treating as direct local path/data URL (starts with: "${url.substring(0, 30)}...")`);
+      return url;
+    }
+    
+    if (isSvg) {
+      try {
+        console.log(`[resolveAndConvertImage] SVG detected. Rasterizing to PNG via sharp...`);
+        const sharp = require("sharp");
+        const pngBuffer = await sharp(buffer, { density: 300 })
+          .png()
+          .toBuffer();
+        console.log(`[resolveAndConvertImage] SVG rasterization successful. Output size: ${pngBuffer.length}`);
+        return `data:image/png;base64,${pngBuffer.toString("base64")}`;
+      } catch (sharpError) {
+        console.error(`[resolveAndConvertImage] Failed to rasterize SVG: ${url}`, sharpError);
+      }
+    }
+    
+    const resultBase64 = `data:${contentType};base64,${buffer.toString("base64")}`;
+    console.log(`[resolveAndConvertImage] Returning converted image base64 length: ${resultBase64.length}`);
+    return resultBase64;
   } catch (error) {
-    console.error(`Failed to fetch and convert image to base64: ${url}`, error);
+    console.error(`[resolveAndConvertImage] Error resolving and converting image ${url}:`, error);
     return undefined;
   }
 }
@@ -752,128 +1025,92 @@ async function fetchImageAsBase64(url: string): Promise<string | undefined> {
 export async function generatePDFBuffer(opts: any): Promise<Buffer> {
   const { formData, templateId, theme } = opts;
   try {
-    // Pre-fetch and convert company logo using sharp to guarantee server-side compatibility (PNG conversion)
-    const sectionsToSearch = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"];
-    for (const secKey of sectionsToSearch) {
-      const sectionFields = formData ? formData[secKey] : null;
-      if (sectionFields && Array.isArray(sectionFields)) {
-        for (const field of sectionFields) {
-          if (field.type === "company" || field.id === "companyName") {
-            let rawLogo = field.logo;
-            
-            // Check if it was already proxied and decode it
-            if (rawLogo && rawLogo.startsWith("/api/proxy-logo?url=")) {
-              rawLogo = decodeURIComponent(rawLogo.split("?url=")[1]);
-            }
-            
-            if (!rawLogo) {
-              // Check popular companies
-              const cleanName = (field.value || "").trim().toLowerCase();
-              const popular = [
-                { name: "tcs", domain: "tcs.com" },
-                { name: "tata consultancy services", domain: "tcs.com" },
-                { name: "infosys", domain: "infosys.com" },
-                { name: "wipro", domain: "wipro.com" },
-                { name: "cognizant", domain: "cognizant.com" },
-                { name: "accenture", domain: "accenture.com" },
-                { name: "google", domain: "google.com" },
-                { name: "microsoft", domain: "microsoft.com" },
-                { name: "amazon", domain: "amazon.com" },
-                { name: "flipkart", domain: "flipkart.com" },
-                { name: "reliance", domain: "ril.com" },
-                { name: "tata motors", domain: "tatamotors.com" },
-                { name: "hdfc bank", domain: "hdfcbank.com" },
-                { name: "hdfc", domain: "hdfcbank.com" },
-                { name: "icici bank", domain: "icicibank.com" },
-                { name: "icici", domain: "icicibank.com" },
-                { name: "sbi", domain: "sbi.co.in" },
-                { name: "state bank of india", domain: "sbi.co.in" },
-                { name: "l&t", domain: "larsentoubro.com" },
-                { name: "larsen & toubro", domain: "larsentoubro.com" },
-                { name: "mahindra", domain: "mahindra.com" },
-                { name: "government of india", domain: "india.gov.in" },
-                { name: "meta", domain: "meta.com" },
-                { name: "apple", domain: "apple.com" },
-                { name: "netflix", domain: "netflix.com" },
-              ];
-              const foundPopular = popular.find(p => cleanName.includes(p.name) || p.name.includes(cleanName));
-              if (foundPopular) {
-                rawLogo = `https://icon.horse/icon/${foundPopular.domain}`;
-              }
-            }
-            
-            if (!rawLogo) {
-              rawLogo = sectionFields.find((f: any) => f.id === "companyLogo")?.value;
-              if ((field.value || "").toLowerCase() !== "google" && rawLogo && rawLogo.includes("google.com")) {
-                rawLogo = undefined;
-              }
-            }
-            
-            if (!rawLogo && (field.value || "").includes(".")) {
-              const potentialDomain = (field.value || "").replace(/https?:\/\//, "").split("/")[0].trim();
-              rawLogo = `https://icon.horse/icon/${potentialDomain}`;
-            }
-            
-            let imageBuffer: Buffer | undefined;
-            
-            if (rawLogo && rawLogo.startsWith("http")) {
-              try {
-                console.log(`PDF Generator fetching: ${rawLogo}`);
-                const response = await fetch(rawLogo, {
-                  headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                  }
-                });
-                if (response.ok) {
-                  const arrayBuffer = await response.arrayBuffer();
-                  imageBuffer = Buffer.from(arrayBuffer);
-                }
-              } catch (fetchError) {
-                console.error("PDF Generator fetch error:", fetchError);
-              }
-            } else if (rawLogo && rawLogo.startsWith("data:image/")) {
-              try {
-                const commaIdx = rawLogo.indexOf(",");
-                const base64Content = rawLogo.substring(commaIdx + 1);
-                imageBuffer = Buffer.from(base64Content, "base64");
-              } catch (parseError) {
-                console.error("PDF Generator Base64 parse error:", parseError);
-              }
-            }
-            
-            if (imageBuffer) {
-              try {
-                const sharp = require("sharp");
-                const pngBuffer = await sharp(imageBuffer)
-                  .png()
-                  .toBuffer();
-                field.logo = `data:image/png;base64,${pngBuffer.toString("base64")}`;
-                console.log("Successfully converted company logo to standard PNG using sharp!");
-              } catch (sharpError) {
-                console.error("Failed to convert image to PNG using sharp:", sharpError);
-                if (rawLogo && rawLogo.startsWith("data:image/")) {
-                  field.logo = rawLogo;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    // Pre-fetch and convert company logo (Disabled)
     // Resolve template dynamically if it is a database template to align module contexts
     const tId = templateId || "royal";
     const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");
+    
+    // Fetch and register custom stickers from database
+    try {
+      const cached = require("./prisma");
+      let prisma = cached?.prisma || cached;
+      if (!prisma || !prisma.sticker) {
+        console.warn("[pdfkit-generator] prisma.sticker is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
+        const { PrismaClient } = require("../generated/prisma");
+        prisma = new PrismaClient();
+      }
+      const dbStickers = await prisma.sticker.findMany();
+      if (dbStickers && dbStickers.length > 0) {
+        const { registerDynamicStickers } = require("./sticker-assets");
+        registerDynamicStickers(dbStickers);
+      }
+    } catch (stickerErr) {
+      console.error("Failed to load dynamic stickers for PDF generation:", stickerErr);
+    }
+
     if (tId && !TEMPLATE_CONFIGS[tId]) {
-      const { prisma } = require("./prisma");
-      const dbTpl = await prisma.template.findUnique({
-        where: { id: tId }
-      });
-      if (dbTpl) {
-        TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+      try {
+        const cached = require("./prisma");
+        let prisma = cached?.prisma || cached;
+        if (!prisma || !prisma.template) {
+          console.warn("[pdfkit-generator] prisma.template is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
+          const { PrismaClient } = require("../generated/prisma");
+          prisma = new PrismaClient();
+        }
+        const dbTpl = await prisma.template.findUnique({
+          where: { id: tId }
+        });
+        if (dbTpl) {
+          TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+        }
+      } catch (templateErr) {
+        console.error("Failed to fetch template from database:", templateErr);
       }
     }
 
     const config = TEMPLATE_CONFIGS[tId];
+
+    // Pre-fetch custom background watermark to base64 or resolve as absolute local path (handling SVGs)
+    const bgUrl = theme?.bgImageUrl || config?.bgConfig?.url;
+    if (bgUrl && theme) {
+      if (theme.bgImageUrlBase64 && !theme.bgImageUrlBase64.startsWith("data:image/svg+xml")) {
+        // Already pre-fetched non-SVG base64 by client
+      } else {
+        try {
+          const urlToResolve = theme.bgImageUrlBase64 || bgUrl;
+          const base64 = await resolveAndConvertImage(urlToResolve);
+          if (base64) {
+            theme.bgImageUrlBase64 = base64;
+          }
+        } catch (e) {
+          console.error("Error pre-fetching background image:", e);
+        }
+      }
+    }
+
+    // Pre-fetch stickers to base64 (handling SVGs)
+    if (formData.stickers && formData.stickers.length > 0) {
+      const { STICKER_ASSETS } = require("./sticker-assets");
+      for (const sticker of formData.stickers) {
+        if (sticker.resolvedUrl && !sticker.resolvedUrl.startsWith("data:image/svg+xml")) {
+          continue; // Skip if already pre-fetched as a clean PNG/JPEG Base64
+        }
+        
+        const asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
+        const urlToResolve = sticker.resolvedUrl || (asset && asset.url);
+        if (urlToResolve) {
+          try {
+            const base64 = await resolveAndConvertImage(urlToResolve);
+            if (base64) {
+              sticker.resolvedUrl = base64;
+            }
+          } catch (e) {
+            console.error(`Failed to pre-fetch sticker ${sticker.type}:`, e);
+          }
+        }
+      }
+    }
+
     if (config && config.frame && config.frame.type === "image") {
       const primaryColor = theme?.primaryColor || config.defaultPrimary || "#800000";
       const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);

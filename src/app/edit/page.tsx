@@ -23,6 +23,10 @@ import {
   Sliders,
   X,
   Star,
+  Crown,
+  Loader2,
+  ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { StickerSelector } from "@/components/editor/StickerSelector";
+import { BackgroundSelector } from "@/components/editor/BackgroundSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
@@ -62,10 +67,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { FeedbackModal } from "@/components/biodata/FeedbackModal";
+import { PriceModal } from "@/components/biodata/PriceModal";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
-
-
-
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 export default function EditPage() {
   const router = useRouter();
@@ -81,8 +85,10 @@ export default function EditPage() {
   const biodataHistory = useStore(useBiodataStore.temporal, (state) => state);
   const themeHistory = useStore(useThemeStore.temporal, (state) => state);
 
+  const activeTemplate = customTemplates.find((t) => t.id === selectedTemplate) || getTemplateConfig(selectedTemplate);
   const canUndo = biodataHistory.pastStates.length > 0 || themeHistory.pastStates.length > 0;
   const canRedo = biodataHistory.futureStates.length > 0 || themeHistory.futureStates.length > 0;
+
 
 
 
@@ -112,39 +118,125 @@ export default function EditPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [biodataHistory, themeHistory]);
   const [isMounted, setIsMounted] = useState(false);
+  const [isStoreHydrated, setIsStoreHydrated] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
+
+  // Monitor store hydration
+  useEffect(() => {
+    if (useBiodataStore.persist.hasHydrated()) {
+      setIsStoreHydrated(true);
+    }
+    const unsub = useBiodataStore.persist.onFinishHydration(() => {
+      setIsStoreHydrated(true);
+    });
+    return () => unsub();
+  }, []);
 
   // Rating & Feedback Modal states
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [hasRated, setHasRated] = useState(false);
   const [filename, setFilename] = useState("biodata");
 
+  // AI Photo Generator states
+  const [aiGender, setAiGender] = useState<"male" | "female">("male");
+  const [aiStyle, setAiStyle] = useState<"traditional" | "professional">("traditional");
+  const [aiAge, setAiAge] = useState("26");
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState("");
+
   // Sync store data to form ONCE when mounted/hydrated
   useEffect(() => {
-    if (isMounted && !hasInitializedForm && formData) {
+    if (isMounted && isStoreHydrated && !hasInitializedForm && formData) {
       methods.reset(formData);
       setHasInitializedForm(true);
     }
-  }, [isMounted, hasInitializedForm, formData, methods]);
+  }, [isMounted, isStoreHydrated, hasInitializedForm, formData, methods]);
 
-  // Synchronize form changes back to the zustand store with debounce to prevent typing lag
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const subscription = methods.watch((value) => {
-      const timer = setTimeout(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
         if (value) {
           setFormData(value as BiodataFormValues);
         }
       }, 400);
-      return () => clearTimeout(timer);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [methods, setFormData]);
 
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep } = useRazorpayPayment();
+
+  const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
+    try {
+      const fullName = currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value || modalFilename || "";
+      const contactFields = currentData.contactDetails || [];
+      const emailField = contactFields.find((f: any) => 
+        f.id === "email" || 
+        f.id === "emailId" ||
+        f.id?.toLowerCase()?.includes("email") ||
+        f.id?.toLowerCase()?.includes("mail") ||
+        (f.label || "").toLowerCase().includes("email") ||
+        (f.label || "").toLowerCase().includes("mail") ||
+        (f.label || "").toLowerCase().includes("e-mail") ||
+        (f.value || "").includes("@")
+      );
+      const properEmail = emailField?.value || "";
+      const phoneField = contactFields.find((f: any) => 
+        f.id === "mobileNumber" || 
+        f.id === "whatsappNumber" ||
+        f.id?.toLowerCase()?.includes("phone") ||
+        f.id?.toLowerCase()?.includes("mobile") ||
+        (f.label || "").toLowerCase().includes("phone") ||
+        (f.label || "").toLowerCase().includes("mobile") ||
+        (f.label || "").toLowerCase().includes("contact")
+      );
+      const properPhone = phoneField?.value || "";
+      
+      let finalPrice = 29;
+      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
+      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
+      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
+      else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
+
+      await startPayment({
+        amount: finalPrice,
+        format,
+        templateId: selectedTemplate,
+        customerName: fullName,
+        customerEmail: properEmail,
+        customerPhone: properPhone,
+        currency: activeTemplate?.currency || "INR",
+        couponCode: couponCode,
+        onDownload: async () => {
+          await triggerDownload(currentData, selectedTemplate, format, modalFilename);
+        }
+      });
+    } catch (paymentErr) {
+      console.error("Payment failed or cancelled:", paymentErr);
+    }
+  };
+
   const [zoom, setZoom] = useState(1);
+  const [selectedStickersCount, setSelectedStickersCount] = useState(0);
+
+  useEffect(() => {
+    const handleSelection = (e: Event) => {
+      const selected = (e as CustomEvent).detail || [];
+      setSelectedStickersCount(selected.length);
+    };
+    window.addEventListener("biodata:selection-changed", handleSelection);
+    return () => window.removeEventListener("biodata:selection-changed", handleSelection);
+  }, []);
   const [fitResetKey, setFitResetKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "stickers" | "whatsapp">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("templates");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
@@ -233,6 +325,8 @@ export default function EditPage() {
         }
       }
     });
+
+    useBiodataStore.getState().fetchCustomStickers();
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
@@ -340,18 +434,22 @@ export default function EditPage() {
     );
   }
 
-  const handleDownload = async (format: DownloadFormat = "pdf") => {
+  const handleDownload = async () => {
     const nameField =
       formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
       "biodata";
     const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
-    setPendingDownloadFormat(format);
-    setIsFeedbackOpen(true);
+    if (activeTemplate?.isPremium) {
+      setIsPriceModalOpen(true);
+    } else {
+      setPendingDownloadFormat("pdf"); // default format
+      setIsFeedbackOpen(true);
+    }
   };
 
-  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
     setHasRated(true);
     setIsFeedbackOpen(false);
 
@@ -369,15 +467,45 @@ export default function EditPage() {
       console.error("Failed to save feedback:", err);
     }
 
-    if (pendingDownloadFormat) {
-      await triggerDownload(formData, selectedTemplate, pendingDownloadFormat, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(formData, format, modalFilename);
+    } else {
+      await triggerDownload(formData, selectedTemplate, format, modalFilename);
     }
   };
 
-  const handleSkipDownload = async (modalFilename: string) => {
+  const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
-    if (pendingDownloadFormat) {
-      await triggerDownload(formData, selectedTemplate, pendingDownloadFormat, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(formData, format, modalFilename);
+    } else {
+      await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    }
+  };
+
+  const handleGenerateAiPhoto = async () => {
+    setIsAiGenerating(true);
+    try {
+      const res = await fetch("/api/generate-portrait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gender: aiGender,
+          style: aiStyle,
+          age: aiAge,
+          religion: methods.getValues().personalDetails?.find((f: any) => f.id === "religion")?.value || "Hindu"
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setAiResultUrl(data.url);
+      } else {
+        console.error("AI Generation failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Error generating AI photo:", err);
+    } finally {
+      setIsAiGenerating(false);
     }
   };
 
@@ -430,11 +558,12 @@ export default function EditPage() {
         <div className="flex items-center gap-2 md:gap-4">
           <Button
             variant="ghost"
-            className="group gap-2 px-4 py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
+            className="group gap-1 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
             onClick={() => router.push("/", { scroll: false })}
           >
-            <ArrowLeft className="w-4.5 h-4.5 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-bold tracking-wide">Go Back</span>
+            <ArrowLeft className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 transition-transform group-hover:-translate-x-1" />
+            <span className="hidden md:inline text-sm font-bold tracking-wide">Go Back</span>
+            <span className="inline md:hidden text-xs font-bold tracking-wide">Back</span>
           </Button>
         </div>
 
@@ -503,6 +632,10 @@ export default function EditPage() {
             onDownload={handleDownload}
             isGenerating={isGenerating}
             variant="primary"
+            isPremium={activeTemplate?.isPremium}
+            price={activeTemplate?.price}
+            discountPrice={activeTemplate?.discountPrice}
+            currency={activeTemplate?.currency}
           />
         </div>
       </header>
@@ -542,9 +675,9 @@ export default function EditPage() {
 
           <ToolButton
             icon={<Sparkles />}
-            label="Stickers"
-            active={isRightOpen && activeTab === "stickers"}
-            onClick={() => handleTabClick("stickers")}
+            label="Graphics"
+            active={isRightOpen && activeTab === "graphics"}
+            onClick={() => handleTabClick("graphics")}
           />
         </nav>
 
@@ -591,9 +724,9 @@ export default function EditPage() {
               />
               <ToolButton
                 icon={<Sparkles />}
-                label="Stickers"
-                active={isRightOpen && activeTab === "stickers"}
-                onClick={() => handleTabClick("stickers")}
+                label="Graphics"
+                active={isRightOpen && activeTab === "graphics"}
+                onClick={() => handleTabClick("graphics")}
               />
             </nav>
           )}
@@ -692,10 +825,10 @@ export default function EditPage() {
                 <div className="flex flex-col gap-6">
                   <Tabs defaultValue="bg" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl mb-6">
-                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
                         Background Themes
                       </TabsTrigger>
-                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
                         Text Themes
                       </TabsTrigger>
                     </TabsList>
@@ -1022,7 +1155,7 @@ export default function EditPage() {
 
 
               {activeTab === "photo" && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-200">
                   <div className="space-y-4">
                     <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
                     <ImageUpload
@@ -1039,17 +1172,179 @@ export default function EditPage() {
                       Tip: A clear portrait with a simple background looks best in matrimonial biodata.
                     </p>
                   </div>
+
+                  <div className="border-t border-stitch-outline/10 my-1" />
+
+                  {/* AI Passport Photo Generator */}
+                  <div className="flex flex-col gap-4 bg-stitch-surface-variant/5 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-stitch-primary animate-pulse" />
+                      <Label className="text-[11px] font-bold uppercase tracking-wider text-stitch-on-surface">AI Passport Photo Generator</Label>
+                    </div>
+
+                    <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed">
+                      Don't have a professional photo? Generate a realistic Indian matrimonial portrait instantly for free!
+                    </p>
+
+                    {/* Gender Selection */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Gender</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAiGender("male")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiGender === "male"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Groom (Male)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiGender("female")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiGender === "female"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Bride (Female)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Style Selection */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Attire Style</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAiStyle("traditional")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiStyle === "traditional"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Traditional
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiStyle("professional")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiStyle === "professional"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Formal Suit
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Age Input Dropdown */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Target Age</span>
+                      <select
+                        value={aiAge}
+                        onChange={(e) => setAiAge(e.target.value)}
+                        className="w-full p-2.5 text-xs bg-white border border-stitch-outline/15 rounded-xl text-stitch-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-stitch-primary cursor-pointer"
+                      >
+                        {[22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35].map(a => (
+                          <option key={a} value={a}>{a} Years Old</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Generate Button */}
+                    <Button
+                      type="button"
+                      onClick={handleGenerateAiPhoto}
+                      disabled={isAiGenerating}
+                      className="w-full mt-2 py-5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 hover:opacity-90 text-white font-bold cursor-pointer transition-all duration-300 shadow-md flex items-center justify-center gap-2"
+                    >
+                      {isAiGenerating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Generating Portrait...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-[#E6C97A] fill-[#E6C97A]" />
+                          <span>Generate Free Portrait</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Preview Generated AI Portrait */}
+                    {aiResultUrl && (
+                      <div className="flex flex-col gap-3 mt-2 border border-stitch-outline/10 bg-white p-3 rounded-2xl shadow-sm animate-in zoom-in duration-200">
+                        <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-primary text-center">Generated Result</span>
+                        
+                        <div className="relative aspect-[3/4] w-32 mx-auto rounded-xl overflow-hidden border border-black/5 shadow-md">
+                          <img
+                            src={aiResultUrl}
+                            alt="AI Passport Photo"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            methods.setValue("photo", aiResultUrl);
+                            setAiResultUrl(""); // clear preview once applied
+                            if (window.innerWidth < 1024) {
+                              setIsRightOpen(false);
+                            }
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-stitch-primary hover:bg-stitch-primary/95 text-white font-bold cursor-pointer transition-all text-xs"
+                        >
+                          Apply to Biodata
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {activeTab === "stickers" && (
-                <StickerSelector
-                  onSelect={() => {
-                    if (window.innerWidth < 1024) {
-                      setIsRightOpen(false);
-                    }
-                  }}
-                />
+              {activeTab === "graphics" && (
+                <Tabs defaultValue="stickers" className="w-full flex flex-col gap-4">
+                  <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl">
+                    <TabsTrigger value="stickers" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      Stickers
+                    </TabsTrigger>
+                    <TabsTrigger value="backgrounds" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      BG Images
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="stickers" className="animate-in fade-in duration-200 mt-2">
+                    <StickerSelector
+                      onSelect={() => {
+                        if (window.innerWidth < 1024) {
+                          setIsRightOpen(false);
+                        }
+                      }}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="backgrounds" className="animate-in fade-in duration-200 mt-2">
+                    <BackgroundSelector
+                      onSelect={() => {
+                        if (window.innerWidth < 1024) {
+                          setIsRightOpen(false);
+                        }
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
               )}
 
               {activeTab === "whatsapp" && (
@@ -1070,7 +1365,80 @@ export default function EditPage() {
         initialName={filename}
         onSubmit={handleFeedbackSubmit}
         onSkip={handleSkipDownload}
+        isPremium={activeTemplate?.isPremium}
+        price={activeTemplate?.price}
+        discountPrice={activeTemplate?.discountPrice}
+        currency={activeTemplate?.currency}
+        downloadFormat={pendingDownloadFormat}
+        pdfPrice={activeTemplate?.pdfPrice}
+        pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+        docxPrice={activeTemplate?.docxPrice}
+        docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+        jpgPrice={activeTemplate?.jpgPrice}
+        jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+        pngPrice={activeTemplate?.pngPrice}
+        pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+        comboPrice={(activeTemplate as any)?.comboPrice}
+        comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
       />
+      <PriceModal
+        isOpen={isPriceModalOpen}
+        onOpenChange={setIsPriceModalOpen}
+        onSelectFormat={async (format, couponCode) => {
+          setIsPriceModalOpen(false);
+          if (activeTemplate?.isPremium) {
+            await processPremiumPaymentAndDownload(formData, format, filename, couponCode);
+          } else {
+            await triggerDownload(formData, selectedTemplate, format, filename);
+          }
+        }}
+        currency={activeTemplate?.currency}
+        price={activeTemplate?.price}
+        discountPrice={activeTemplate?.discountPrice}
+        pdfPrice={activeTemplate?.pdfPrice}
+        pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+        docxPrice={activeTemplate?.docxPrice}
+        docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+        jpgPrice={activeTemplate?.jpgPrice}
+        jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+        pngPrice={activeTemplate?.pngPrice}
+        pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+        comboPrice={(activeTemplate as any)?.comboPrice}
+        comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
+      />
+      <SandboxModal />
+
+      {/* Full-screen secure checkout loading screen */}
+      <Dialog open={isPaymentProcessing}>
+        <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+            {paymentStep === "downloading" ? (
+              <Download className="w-6 h-6 text-emerald-600 animate-bounce" />
+            ) : paymentStep === "verifying" ? (
+              <ShieldCheck className="w-6 h-6 text-emerald-600 animate-pulse" />
+            ) : (
+              <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+            )}
+          </div>
+          <div className="space-y-1 select-none">
+            <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">
+              {paymentStep === "downloading"
+                ? "Generating Document..."
+                : paymentStep === "verifying"
+                ? "Verifying Payment..."
+                : "Securing Checkout..."}
+            </DialogTitle>
+            <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
+              {paymentStep === "downloading"
+                ? "Payment successful! Creating your high-quality biodata and downloading now."
+                : paymentStep === "verifying"
+                ? "Confirming transaction with payment gateway. Please do not close or refresh."
+                : "Opening payment gateway. Please do not close or refresh this page."}
+            </DialogDescription>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1082,7 +1450,7 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
       className={cn(
         "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0 cursor-pointer",
         active
-          ? "bg-gradient-primary text-white shadow-lg -translate-y-0.5 border-0"
+          ? "bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-[0_4px_12px_rgba(244,63,94,0.25)] -translate-y-0.5 border-0"
           : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
       )}
     >
@@ -1133,7 +1501,7 @@ function AlignmentButton({ icon, active = false, onClick }: { icon: React.ReactN
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all",
+        "flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer",
         active
           ? "bg-stitch-primary-container/10 text-stitch-primary"
           : "text-stitch-on-surface-variant hover:bg-stitch-surface-variant/30"
@@ -1148,7 +1516,7 @@ function Swatch({ color, onClick }: { color: string, onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-7 h-7 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform active:scale-95"
+      className="w-7 h-7 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform active:scale-95 cursor-pointer"
       style={{ backgroundColor: color }}
     />
   );

@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { cn } from "@/lib/utils";
-import { Sparkles, Plus } from "lucide-react";
+import { Sparkles, Plus, Loader2 } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { STICKER_ASSETS, type StickerAsset } from "@/lib/sticker-assets";
 
 const StickerItem = React.memo(function StickerItem({
@@ -72,6 +73,72 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
   const { addSticker } = useBiodataStore();
   const theme = useThemeStore();
 
+  // Fetch dynamic custom stickers from database using useInfiniteQuery
+  const {
+    data: customStickersInfiniteData,
+    isLoading: isCustomStickersLoading,
+    fetchNextPage: fetchNextCustomPage,
+    hasNextPage: hasNextCustomPage,
+    isFetchingNextPage: isFetchingNextCustomPage,
+  } = useInfiniteQuery({
+    queryKey: ["stickers"],
+    queryFn: async ({ pageParam }) => {
+      const url = pageParam 
+        ? `/api/stickers?limit=10&cursor=${pageParam}`
+        : `/api/stickers?limit=10`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load custom stickers");
+      const json = await res.json();
+      return json as { stickers: any[]; nextCursor: string | null };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: Infinity, // Cache until page refresh
+  });
+
+  // Dynamically register new custom stickers as they are loaded so that the Konva stage knows their image URLs
+  React.useEffect(() => {
+    if (customStickersInfiniteData) {
+      const allFetchedStickers = customStickersInfiniteData.pages.flatMap((page) => page.stickers);
+      if (allFetchedStickers.length > 0) {
+        import("@/lib/sticker-assets").then(({ registerDynamicStickers }) => {
+          registerDynamicStickers(allFetchedStickers);
+        });
+      }
+    }
+  }, [customStickersInfiniteData]);
+
+  // Combine static predefined STICKER_ASSETS and paginated custom stickers
+  const dynamicStickers = customStickersInfiniteData
+    ? customStickersInfiniteData.pages.flatMap((page) => page.stickers.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: "image" as const,
+        url: s.url,
+      })))
+    : [];
+
+  const combinedStickers = dynamicStickers;
+
+  // Infinite Scroll Trigger logic
+  const observerTarget = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!observerTarget.current || !hasNextCustomPage || isFetchingNextCustomPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextCustomPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [hasNextCustomPage, isFetchingNextCustomPage, fetchNextCustomPage]);
+
   const handleAddSticker = (type: string) => {
     addSticker({
       type,
@@ -87,27 +154,44 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="grid grid-cols-2 gap-4">
-        {STICKER_ASSETS.map((sticker) => (
-          <StickerItem
-            key={sticker.id}
-            sticker={sticker}
-            themeColor={theme.primaryColor}
-            onAdd={handleAddSticker}
-          />
-        ))}
-      </div>
+      {!isCustomStickersLoading && combinedStickers.length === 0 ? (
+        <div className="relative overflow-hidden rounded-2xl border border-stitch-primary/10 bg-gradient-to-br from-white/80 via-white/50 to-stitch-primary/[0.02] p-6 text-center shadow-md backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:border-stitch-primary/20 flex flex-col items-center justify-center gap-4 group">
+          {/* Subtle background glow decorator */}
+          <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-stitch-primary/5 blur-2xl group-hover:bg-stitch-primary/10 transition-colors duration-500" />
+          <div className="absolute -left-10 -bottom-10 w-24 h-24 rounded-full bg-stitch-primary/5 blur-2xl group-hover:bg-stitch-primary/10 transition-colors duration-500" />
 
-      <div className="mt-8 p-4 rounded-xl bg-stitch-primary/5 border border-stitch-primary/10">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-stitch-primary" />
-          <h4 className="text-[10px] font-bold text-stitch-primary uppercase tracking-widest">Designer Tip</h4>
+          {/* Icon frame with golden/crimson gradient */}
+          <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-stitch-primary/10 to-stitch-primary/5 border border-stitch-primary/20 text-stitch-primary shadow-inner group-hover:scale-110 transition-transform duration-300">
+            <Sparkles className="w-5 h-5 animate-pulse" />
+          </div>
+
+          <div className="space-y-1.5 z-10">
+            <h4 className="text-xs font-bold text-stitch-on-surface uppercase tracking-wider">
+              No Stickers Available
+            </h4>
+            <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed max-w-[200px] mx-auto">
+              Ready to decorate? Upload custom matrimonial stickers from the Admin Panel to see them here!
+            </p>
+          </div>
         </div>
-        <p className="text-[10px] text-stitch-on-surface-variant/80 leading-relaxed italic">
-          Add sacred symbols to the header or corners of your biodata to create a traditional, auspicious look. 
-          <br /><br />
-          <strong>Pro Tip:</strong> Hold <strong>Alt</strong> while dragging a sticker to duplicate it!
-        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-4">
+          {combinedStickers.map((sticker) => (
+            <StickerItem
+              key={sticker.id}
+              sticker={sticker}
+              themeColor={theme.primaryColor}
+              onAdd={handleAddSticker}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Infinite scrolling bottom loader target */}
+      <div ref={observerTarget} className="h-12 flex items-center justify-center mt-4">
+        {(isCustomStickersLoading || isFetchingNextCustomPage) && (
+          <Loader2 className="w-5 h-5 animate-spin text-stitch-primary" />
+        )}
       </div>
     </div>
   );

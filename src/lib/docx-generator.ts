@@ -48,13 +48,62 @@ async function fetchWithCache(url: string): Promise<Buffer> {
   if (networkCache.has(url)) {
     return networkCache.get(url)!;
   }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
-  const arrayBuffer = await res.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  networkCache.set(url, buffer);
-  return buffer;
+  console.log(`[docx-generator fetchWithCache] Fetching remote URL: "${url.substring(0, 150)}..."`);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log(`[docx-generator fetchWithCache] Fetch successful! Buffer size: ${buffer.length} bytes`);
+    networkCache.set(url, buffer);
+    return buffer;
+  } catch (err) {
+    console.error(`[docx-generator fetchWithCache] Failed to fetch remote URL: ${url}`, err);
+    throw err;
+  }
 }
+
+async function resolveBgImageBuffer(url: string): Promise<Buffer | null> {
+  if (!url) {
+    console.log("[docx-generator resolveBgImageBuffer] Empty URL received.");
+    return null;
+  }
+  console.log(`[docx-generator resolveBgImageBuffer] Resolving URL: "${url.substring(0, 100)}..."`);
+  try {
+    if (url.startsWith("data:image/")) {
+      const base64Content = url.substring(url.indexOf(",") + 1);
+      const buffer = Buffer.from(base64Content, "base64");
+      if (url.includes("svg") || url.startsWith("data:image/svg+xml")) {
+        console.log("[docx-generator resolveBgImageBuffer] SVG Data URL detected. Rasterizing with sharp...");
+        return await sharp(buffer, { density: 300 }).png().toBuffer();
+      }
+      console.log(`[docx-generator resolveBgImageBuffer] Resolved Base64 image successfully. Buffer size: ${buffer.length} bytes`);
+      return buffer;
+    } else if (url.startsWith("http://") || url.startsWith("https://")) {
+      return await fetchWithCache(url);
+    } else {
+      const filePath = path.join(process.cwd(), 'public', url);
+      console.log(`[docx-generator resolveBgImageBuffer] Resolving as local file path: "${filePath}"`);
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        console.log(`[docx-generator resolveBgImageBuffer] Read local file successfully. Buffer size: ${buffer.length} bytes`);
+        return buffer;
+      } else {
+        console.warn(`[docx-generator resolveBgImageBuffer] Local file does not exist at: "${filePath}"`);
+      }
+    }
+  } catch (err) {
+    console.error(`[docx-generator resolveBgImageBuffer] Failed to resolve background image buffer for URL: ${url.substring(0, 100)}`, err);
+  }
+  return null;
+}
+
 
 /** Convert hex color like "#800000" to "800000" (docx expects no hash, and strictly 6 digits) */
 function hexColor(hex: string): string {
@@ -137,7 +186,9 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         }
 
         const resizedFrame = await sharp(imgBuffer).resize(A4_W, A4_H).png().toBuffer();
-        let finalBuffer = await sharp(bgBuffer)
+        
+        // Composite custom background image if present
+                let finalBuffer = await sharp(bgBuffer)
           .composite([{ input: resizedFrame, top: 0, left: 0 }])
           .png()
           .toBuffer();
@@ -186,10 +237,15 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 
     if (config.frame.type === "custom") {
       const componentId = config.frame.componentId;
-      let svgContent = `<rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" />`;
+      
+      // 1. Create Background Buffer with Solid Background Color
+      const bgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}"><rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" /></svg>`;
+      let bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
 
+      // 3. Render Custom Frame SVGs (Transparent) ON TOP of the Background + Background Image
+      let frameContent = "";
       if (componentId === "ornate-grandeur-frame") {
-        svgContent += `
+        frameContent = `
           <g transform="scale(${A4_W / 595}, ${A4_H / 842})">
             <g transform="translate(0,842) scale(0.0716867,-0.06578125)">
               <path d="${ORNATE_SVG_PATHS.join(' ')}" fill="${primaryColor}" />
@@ -197,7 +253,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
           </g>
         `;
       } else if (componentId === "new-generation-arch") {
-        svgContent += `
+        frameContent = `
           <g transform="scale(${A4_W / 595}, ${A4_H / 842})">
             <g transform="translate(0,842) scale(0.0697538,-0.06578125)">
               <path d="${SVG_PATHS.join(' ')}" fill="${primaryColor}" />
@@ -205,7 +261,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
           </g>
         `;
       } else if (componentId === "green-shapes") {
-        svgContent += `
+        frameContent = `
           <g transform="scale(${A4_W / 3572}, ${A4_H / 5051})">
             <defs>
               <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
@@ -225,15 +281,12 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
         `;
       }
 
-      const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${svgContent}</svg>`;
-      let compositeOps: any[] = [];
+      const frameSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${frameContent}</svg>`;
+      const frameImgBuffer = await sharp(Buffer.from(frameSvg)).png().toBuffer();
 
-      let sharpImg = sharp(Buffer.from(fullSvg));
-      if (compositeOps.length > 0) {
-        sharpImg = sharpImg.composite(compositeOps);
-      }
-      let buf = await sharpImg.png().toBuffer();
+      let finalBuffer = await sharp(bgBuffer).composite([{ input: frameImgBuffer, top: 0, left: 0 }]).png().toBuffer();
 
+      // 4. Add Watermark ON TOP
       if (WATERMARK_CONFIG.isEnabled) {
         try {
           const coords = getWatermarkCoordinates(595, 842);
@@ -247,8 +300,8 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
             .rotate(WATERMARK_CONFIG.rotation || 0, { background: { r: 0, g: 0, b: 0, alpha: 0 } });
 
           const meta = await rotatedImage.metadata();
-          const finalTop = Math.round((A4_H - (meta.height || wHeight)) / 2);
-          const finalLeft = Math.round((A4_W - (meta.width || wWidth)) / 2);
+          const wTop = Math.round((A4_H - (meta.height || wHeight)) / 2);
+          const wLeft = Math.round((A4_W - (meta.width || wWidth)) / 2);
 
           const opaqueLogo = await rotatedImage
             .ensureAlpha()
@@ -263,30 +316,36 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
             .png()
             .toBuffer();
 
-          buf = await sharp(buf).composite([{ input: opaqueLogo, top: finalTop, left: finalLeft }]).png().toBuffer();
-        } catch (fetchErr) {
-          console.error("Failed to fetch/process watermark for docx", fetchErr);
+          finalBuffer = await sharp(finalBuffer).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
+        } catch (watermarkErr) {
+          console.error("Failed to add watermark in docx frame compositing", watermarkErr);
         }
       }
 
-      return Buffer.from(buf);
+      return finalBuffer;
     }
 
-    let svgBody = `<rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" />`;
+    // 1. Create Background Buffer (Solid or Gradient)
+    let bgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}"><rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" /></svg>`;
 
     if (config.frame.type === "gradient") {
       const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
       let stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
-      svgBody = `
-         <defs>
-           <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-             ${stops}
-           </linearGradient>
-         </defs>
-         <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+      bgSvg = `
+         <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+           <defs>
+             <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+               ${stops}
+             </linearGradient>
+           </defs>
+           <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+         </svg>
        `;
     }
+    let bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
 
+    // 3. Render Frame Borders / Strokes (Transparent SVG) ON TOP of Background + Background Image
+    let borderSvgContent = "";
     if (config.frame.outerInset) {
       const oI = config.frame.outerInset * scale;
       const oSW = config.frame.outerStrokeWidth * scale;
@@ -296,14 +355,14 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       const iCR = config.frame.innerCornerRadius * scale;
 
       const innerOpacity = config.frame.type === "gradient" ? 0.3 : 0.6;
-      svgBody += `
+      borderSvgContent += `
         <rect x="${oI}" y="${oI}" width="${A4_W - oI * 2}" height="${A4_H - oI * 2}" stroke="${primaryColor}" stroke-width="${oSW}" rx="${oCR}" fill="none" />
         <rect x="${iI}" y="${iI}" width="${A4_W - iI * 2}" height="${A4_H - iI * 2}" stroke="${primaryColor}" stroke-width="${iSW}" rx="${iCR}" stroke-opacity="${innerOpacity}" fill="none" />
       `;
 
       if (config.frame.hasCornerCurves) {
         const cp = 30 * scale;
-        svgBody += `
+        borderSvgContent += `
           <path d="M ${oI},${oI + cp} Q ${oI},${oI} ${oI + cp},${oI}" stroke="${primaryColor}" stroke-width="${oSW}" fill="none" />
           <path d="M ${A4_W - oI - cp},${oI} Q ${A4_W - oI},${oI} ${A4_W - oI},${oI + cp}" stroke="${primaryColor}" stroke-width="${oSW}" fill="none" />
           <path d="M ${oI},${A4_H - oI - cp} Q ${oI},${A4_H - oI} ${oI + cp},${A4_H - oI}" stroke="${primaryColor}" stroke-width="${oSW}" fill="none" />
@@ -312,9 +371,12 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       }
     }
 
-    const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${svgBody}</svg>`;
-    let buf = await sharp(Buffer.from(fullSvg)).png().toBuffer();
+    const borderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">${borderSvgContent}</svg>`;
+    const borderImgBuffer = await sharp(Buffer.from(borderSvg)).png().toBuffer();
 
+    let finalBuffer = await sharp(bgBuffer).composite([{ input: borderImgBuffer, top: 0, left: 0 }]).png().toBuffer();
+
+    // 4. Add Watermark ON TOP
     if (WATERMARK_CONFIG.isEnabled) {
       try {
         const coords = getWatermarkCoordinates(595, 842);
@@ -339,13 +401,13 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
           .png()
           .toBuffer();
 
-        buf = await sharp(buf).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
+        finalBuffer = await sharp(finalBuffer).composite([{ input: opaqueLogo, top: wTop, left: wLeft }]).png().toBuffer();
       } catch (fetchErr) {
         console.error("Failed to fetch/process watermark for docx", fetchErr);
       }
     }
 
-    return Buffer.from(buf);
+    return finalBuffer;
   } catch (err) {
     console.error("Frame generation error", err);
     return null;
@@ -409,13 +471,42 @@ export async function generateDocxBuffer(opts: {
   // Resolve template dynamically if it is a database template to align module contexts
   const tId = templateId || "royal";
   const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");
+  
+  // Fetch and register custom stickers from database
+  try {
+    const cached = require("./prisma");
+    let prisma = cached?.prisma || cached;
+    if (!prisma || !prisma.sticker) {
+      console.warn("[docx-generator] prisma.sticker is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
+      const { PrismaClient } = require("../generated/prisma");
+      prisma = new PrismaClient();
+    }
+    const dbStickers = await prisma.sticker.findMany();
+    if (dbStickers && dbStickers.length > 0) {
+      const { registerDynamicStickers } = require("./sticker-assets");
+      registerDynamicStickers(dbStickers);
+    }
+  } catch (stickerErr) {
+    console.error("Failed to load dynamic stickers for DOCX generation:", stickerErr);
+  }
+
   if (tId && !TEMPLATE_CONFIGS[tId]) {
-    const { prisma } = require("./prisma");
-    const dbTpl = await prisma.template.findUnique({
-      where: { id: tId }
-    });
-    if (dbTpl) {
-      TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+    try {
+      const cached = require("./prisma");
+      let prisma = cached?.prisma || cached;
+      if (!prisma || !prisma.template) {
+        console.warn("[docx-generator] prisma.template is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
+        const { PrismaClient } = require("../generated/prisma");
+        prisma = new PrismaClient();
+      }
+      const dbTpl = await prisma.template.findUnique({
+        where: { id: tId }
+      });
+      if (dbTpl) {
+        TEMPLATE_CONFIGS[tId] = mapDbTemplateToConfig(dbTpl);
+      }
+    } catch (tplErr) {
+      console.error("Failed to load dynamic template for DOCX generation:", tplErr);
     }
   }
 
@@ -532,23 +623,103 @@ export async function generateDocxBuffer(opts: {
       })
     ];
 
+    // Add custom background image as a separate floating ImageRun (exactly like stickers but behindDocument: true, zIndex: 1)
+    const customBgImgBuffer = await resolveBgImageBuffer(theme?.bgImageUrlBase64 || theme?.bgImageUrl || config?.bgConfig?.url);
+    if (customBgImgBuffer) {
+      try {
+        const isCustomBg = !!(theme?.bgImageUrl || theme?.bgImageUrlBase64);
+        const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+        const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+        const scaleVal = isCustomBg ? (theme.bgImageScale ?? 1.0) : 1.0;
+        const w = baseW * scaleVal;
+        const h = baseH * scaleVal;
+        const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+        const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+        const xOffset = isCustomBg ? (theme.bgImageXOffset ?? 0) : 0;
+        const yOffset = isCustomBg ? (theme.bgImageYOffset ?? 0) : 0;
+        
+        // Adjust left/top to scale from center
+        const left = baseLeft + xOffset - (baseW * (scaleVal - 1)) / 2;
+        const top = baseTop + yOffset - (baseH * (scaleVal - 1)) / 2;
+        const opacity = isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0);
+
+        const finalW = Math.max(1, Math.round(w));
+        const finalH = Math.max(1, Math.round(h));
+        const finalLeft = Math.round(left);
+        const finalTop = Math.round(top);
+
+        let processedBg = sharp(customBgImgBuffer)
+          .resize(finalW, finalH, { fit: isCustomBg ? 'contain' : 'fill', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .ensureAlpha();
+
+        processedBg = processedBg.composite([
+          {
+            input: Buffer.from([255, 255, 255, Math.round(opacity * 255)]),
+            raw: { width: 1, height: 1, channels: 4 },
+            blend: 'dest-in',
+            tile: true
+          }
+        ]);
+
+        const finalBgBuffer = await processedBg.png().toBuffer();
+
+        const emuX = Math.round(finalLeft * 12700);
+        const emuY = Math.round(finalTop * 12700);
+
+        paragraphChildren.push(
+          new ImageRun({
+            data: finalBgBuffer,
+            type: "png",
+            transformation: {
+              width: finalW,
+              height: finalH,
+            },
+            floating: {
+              horizontalPosition: {
+                relative: HorizontalPositionRelativeFrom.PAGE,
+                offset: emuX,
+              },
+              verticalPosition: {
+                relative: VerticalPositionRelativeFrom.PAGE,
+                offset: emuY,
+              },
+              wrap: {
+                type: TextWrappingType.NONE,
+              },
+              behindDocument: true,
+              zIndex: 1,
+            },
+          })
+        );
+      } catch (bgErr) {
+        console.error("Failed to render background image in docx", bgErr);
+      }
+    }
+
     // Add each user-added sticker as a separate selectable floating ImageRun
     if (data.stickers && data.stickers.length > 0) {
       for (const sticker of data.stickers) {
         try {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
-          if (!asset) continue;
-
           let stickerBuffer: Buffer | null = null;
-          if (asset.type === 'image') {
-            stickerBuffer = await fetchWithCache(asset.url!);
-          } else if (asset.type === 'svg') {
-            const svgStr = `
-              <svg viewBox="${asset.viewBox || "0 0 100 100"}" width="100" height="100">
-                <path d="${asset.path || ""}" fill="${primary}" />
-              </svg>
-            `;
-            stickerBuffer = Buffer.from(svgStr);
+
+          if (asset) {
+            if (asset.type === 'image') {
+              stickerBuffer = await fetchWithCache(asset.url!);
+            } else if (asset.type === 'svg') {
+              const svgStr = `
+                <svg viewBox="${asset.viewBox || "0 0 100 100"}" width="100" height="100">
+                  <path d="${asset.path || ""}" fill="${primary}" />
+                </svg>
+              `;
+              stickerBuffer = Buffer.from(svgStr);
+            }
+          } else {
+            // Fallback for custom dynamic stickers passed in the payload
+            const urlToResolve = sticker.resolvedUrl || sticker.url;
+            if (urlToResolve) {
+              stickerBuffer = await resolveBgImageBuffer(urlToResolve);
+            }
           }
 
           if (!stickerBuffer) continue;

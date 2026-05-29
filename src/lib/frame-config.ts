@@ -55,6 +55,12 @@ export interface BgConfig {
   width: number;
   height: number;
   opacity: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontSize?: number;
+  alignment?: string;
+  sectionOffsets?: string;
+  sectionStyles?: string;
 }
 
 export interface TemplateConfig {
@@ -82,6 +88,26 @@ export interface TemplateConfig {
   language?: string;
   detailsLayout?: string;
   titleShape?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontSize?: number;
+  alignment?: string;
+  // Pricing
+  isPremium?: boolean;
+  price?: number | null;
+  discountPrice?: number | null;
+  currency?: string;
+  // Format-specific Pricing
+  pdfPrice?: number | null;
+  pdfDiscountPrice?: number | null;
+  docxPrice?: number | null;
+  docxDiscountPrice?: number | null;
+  jpgPrice?: number | null;
+  jpgDiscountPrice?: number | null;
+  pngPrice?: number | null;
+  pngDiscountPrice?: number | null;
+  comboPrice?: number | null;
+  comboDiscountPrice?: number | null;
 }
 
 // ── Registry ───────────────────────────────────────────────────────
@@ -225,6 +251,8 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
           width: typeof parsed.width === "number" ? parsed.width : 595,
           height: typeof parsed.height === "number" ? parsed.height : 842,
           opacity: typeof parsed.opacity === "number" ? parsed.opacity : 1.0,
+          sectionOffsets: parsed.sectionOffsets || "{}",
+          sectionStyles: parsed.sectionStyles || "{}",
         };
       }
     } catch (e) {
@@ -247,7 +275,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
       width: dbTpl.photoWidth,
       height: dbTpl.photoHeight,
       cornerRadius: 0,
-      showBorder: dbTpl.photoShowBorder !== false, // default true when null/undefined
+      showBorder: dbTpl.photoShowBorder !== false,
     },
     frame,
     thumbnailUrl: dbTpl.thumbnailUrl || undefined,
@@ -257,5 +285,20 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     language: dbTpl.language || "English",
     detailsLayout: dbTpl.detailsLayout || "classic",
     titleShape: dbTpl.titleShape || "simple",
+    // Pricing
+    isPremium: dbTpl.isPremium === true,
+    price: dbTpl.price ?? null,
+    discountPrice: dbTpl.discountPrice ?? null,
+    currency: dbTpl.currency || "INR",
+    pdfPrice: (dbTpl as any).pdfPrice ?? null,
+    pdfDiscountPrice: (dbTpl as any).pdfDiscountPrice ?? null,
+    docxPrice: (dbTpl as any).docxPrice ?? null,
+    docxDiscountPrice: (dbTpl as any).docxDiscountPrice ?? null,
+    jpgPrice: (dbTpl as any).jpgPrice ?? null,
+    jpgDiscountPrice: (dbTpl as any).jpgDiscountPrice ?? null,
+    pngPrice: (dbTpl as any).pngPrice ?? null,
+    pngDiscountPrice: (dbTpl as any).pngDiscountPrice ?? null,
+    comboPrice: (dbTpl as any).comboPrice ?? null,
+    comboDiscountPrice: (dbTpl as any).comboDiscountPrice ?? null,
   });
 }

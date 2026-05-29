@@ -10,12 +10,15 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X, Crown, ShieldCheck } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 import { FeedbackModal } from "./FeedbackModal";
+import { PriceModal } from "./PriceModal";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
+
 
 import {
   Dialog,
@@ -65,10 +68,13 @@ export function HomeBiodataBuilder() {
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep } = useRazorpayPayment();
   const [isHydrated, setIsHydrated] = useState(false);
+
 
   // Rating & Feedback Modal states
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [filename, setFilename] = useState("biodata");
   const router = useRouter();
@@ -126,6 +132,7 @@ export function HomeBiodataBuilder() {
 
     // Load dynamic templates from database on initial page load
     useBiodataStore.getState().fetchCustomTemplates?.();
+    useBiodataStore.getState().fetchCustomStickers?.();
 
     // Register a listener for when hydration completes
     const unsub = useBiodataStore.persist.onFinishHydration(() => {
@@ -180,15 +187,18 @@ export function HomeBiodataBuilder() {
     }
   }, [storedTemplate, customTemplates, isHydrated, theme]);
 
-  // Debounced store update
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const subscription = methods.watch((value) => {
-      const timer = setTimeout(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
         if (value) setFormData(value as BiodataFormValues);
       }, 400);
-      return () => clearTimeout(timer);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [methods, setFormData]);
 
   const currentLang = useWatch({ control: methods.control, name: "language" }) || "English";
@@ -200,7 +210,7 @@ export function HomeBiodataBuilder() {
     setShowResetDialog(false);
   };
 
-  const handleDownload = async (format: DownloadFormat = "pdf") => {
+  const handleDownload = async () => {
     const currentData = methods.getValues();
     const nameField =
       currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
@@ -208,11 +218,67 @@ export function HomeBiodataBuilder() {
     const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
-    setPendingDownloadFormat(format);
-    setIsFeedbackOpen(true);
+    if (activeTemplate?.isPremium) {
+      setIsPriceModalOpen(true);
+    } else {
+      setPendingDownloadFormat("pdf"); // default format
+      setIsFeedbackOpen(true);
+    }
   };
 
-  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
+  const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
+    try {
+      const fullName = currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value || modalFilename || "";
+      // Robust email lookup to capture the proper email address (including custom labels or IDs)
+      const contactFields = currentData.contactDetails || [];
+      const emailField = contactFields.find((f: any) => 
+        f.id === "email" || 
+        f.id === "emailId" ||
+        f.id?.toLowerCase()?.includes("email") ||
+        f.id?.toLowerCase()?.includes("mail") ||
+        (f.label || "").toLowerCase().includes("email") ||
+        (f.label || "").toLowerCase().includes("mail") ||
+        (f.label || "").toLowerCase().includes("e-mail") ||
+        (f.value || "").includes("@")
+      );
+      const properEmail = emailField?.value || "";
+      const phoneField = contactFields.find((f: any) => 
+        f.id === "mobileNumber" || 
+        f.id === "whatsappNumber" ||
+        f.id?.toLowerCase()?.includes("phone") ||
+        f.id?.toLowerCase()?.includes("mobile") ||
+        (f.label || "").toLowerCase().includes("phone") ||
+        (f.label || "").toLowerCase().includes("mobile") ||
+        (f.label || "").toLowerCase().includes("contact")
+      );
+      const properPhone = phoneField?.value || "";
+      
+      let finalPrice = 29;
+      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
+      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
+      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
+      else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
+
+      await startPayment({
+        amount: finalPrice,
+        format,
+        templateId: storedTemplate,
+        customerName: fullName,
+        customerEmail: properEmail,
+        customerPhone: properPhone,
+        currency: activeTemplate?.currency || "INR",
+        couponCode: couponCode,
+        onDownload: async () => {
+          await triggerDownload(currentData, storedTemplate, format, modalFilename);
+        }
+      });
+    } catch (paymentErr) {
+      console.error("Payment failed or cancelled:", paymentErr);
+    }
+  };
+
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
 
     try {
@@ -229,19 +295,24 @@ export function HomeBiodataBuilder() {
       console.error("Failed to save feedback:", err);
     }
 
-    if (pendingDownloadFormat) {
-      const currentData = methods.getValues();
-      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
+    const currentData = methods.getValues();
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
+    } else {
+      await triggerDownload(currentData, storedTemplate, format, modalFilename);
     }
   };
 
-  const handleSkipDownload = async (modalFilename: string) => {
+  const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
-    if (pendingDownloadFormat) {
-      const currentData = methods.getValues();
-      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
+    const currentData = methods.getValues();
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
+    } else {
+      await triggerDownload(currentData, storedTemplate, format, modalFilename);
     }
   };
+
 
   /** Generate a JPG data URL for the WhatsApp share button */
   const handleGenerateShareImage = async (): Promise<string> => {
@@ -293,19 +364,19 @@ export function HomeBiodataBuilder() {
         <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <SheetTrigger asChild>
             <button
-              className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
+              className="premium-gold-docked-tab group flex flex-col items-center gap-3 p-4 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-20 text-center select-none active:scale-95 cursor-pointer"
             >
-              <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <LayoutDashboard className="w-4 h-4" />
+              <div className="p-2 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <LayoutDashboard className="w-5 h-5" />
               </div>
 
-              <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
+              <div className="w-12 h-16 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
                 {activeTemplate.thumbnailUrl ? (
                   <Image
                     src={activeTemplate.thumbnailUrl}
                     alt={activeTemplate.name}
                     fill
-                    sizes="36px"
+                    sizes="48px"
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
                     loading="lazy"
                   />
@@ -330,8 +401,8 @@ export function HomeBiodataBuilder() {
                 )}
               </div>
 
-              <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
-                Themes
+              <span className="text-[10px] font-black text-stone-500 uppercase tracking-wider group-hover:text-primary transition-colors mt-0.5 leading-none">
+                Templates
               </span>
             </button>
           </SheetTrigger>
@@ -423,6 +494,10 @@ export function HomeBiodataBuilder() {
                     labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
                     variant="compact"
                     className="rounded-full bg-gradient-primary transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                    isPremium={activeTemplate?.isPremium}
+                    price={activeTemplate?.price}
+                    discountPrice={activeTemplate?.discountPrice}
+                    currency={activeTemplate?.currency}
                   />
 
                   <Button
@@ -461,9 +536,9 @@ export function HomeBiodataBuilder() {
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
                 <SheetTrigger asChild>
-                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11">
-                    <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
-                    <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Themes</span>
+                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14">
+                    <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary" />
+                    <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">Templates</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
@@ -522,6 +597,10 @@ export function HomeBiodataBuilder() {
               isGenerating={isGenerating}
               labels={{ download: t.download, generating: t.generating }}
               variant="compact"
+              isPremium={activeTemplate?.isPremium}
+              price={activeTemplate?.price}
+              discountPrice={activeTemplate?.discountPrice}
+              currency={activeTemplate?.currency}
             />
 
           </div>
@@ -554,8 +633,85 @@ export function HomeBiodataBuilder() {
           initialName={filename}
           onSubmit={handleFeedbackSubmit}
           onSkip={handleSkipDownload}
+          isPremium={activeTemplate?.isPremium}
+          price={activeTemplate?.price}
+          discountPrice={activeTemplate?.discountPrice}
+          currency={activeTemplate?.currency}
+          downloadFormat={pendingDownloadFormat}
+          pdfPrice={activeTemplate?.pdfPrice}
+          pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+          docxPrice={activeTemplate?.docxPrice}
+          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+          jpgPrice={activeTemplate?.jpgPrice}
+          jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+          pngPrice={activeTemplate?.pngPrice}
+          pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+          comboPrice={(activeTemplate as any)?.comboPrice}
+          comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
         />
+        <PriceModal
+          isOpen={isPriceModalOpen}
+          onOpenChange={setIsPriceModalOpen}
+          onSelectFormat={async (format, couponCode) => {
+            setIsPriceModalOpen(false);
+            const currentData = methods.getValues();
+            if (activeTemplate?.isPremium) {
+              await processPremiumPaymentAndDownload(currentData, format, filename, couponCode);
+            } else {
+              await triggerDownload(currentData, storedTemplate, format, filename);
+            }
+          }}
+          currency={activeTemplate?.currency}
+
+          price={activeTemplate?.price}
+          discountPrice={activeTemplate?.discountPrice}
+
+          pdfPrice={activeTemplate?.pdfPrice}
+          pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+          docxPrice={activeTemplate?.docxPrice}
+          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+          jpgPrice={activeTemplate?.jpgPrice}
+          jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+          pngPrice={activeTemplate?.pngPrice}
+          pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+          comboPrice={(activeTemplate as any)?.comboPrice}
+          comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
+        />
+        <SandboxModal />
+
+        {/* Full-screen secure checkout loading screen */}
+        <Dialog open={isPaymentProcessing}>
+          <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+              {paymentStep === "downloading" ? (
+                <Download className="w-6 h-6 text-emerald-600 animate-bounce" />
+              ) : paymentStep === "verifying" ? (
+                <ShieldCheck className="w-6 h-6 text-emerald-600 animate-pulse" />
+              ) : (
+                <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+              )}
+            </div>
+            <div className="space-y-1 select-none">
+              <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">
+                {paymentStep === "downloading"
+                  ? "Generating Document..."
+                  : paymentStep === "verifying"
+                  ? "Verifying Payment..."
+                  : "Securing Checkout..."}
+              </DialogTitle>
+              <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
+                {paymentStep === "downloading"
+                  ? "Payment successful! Creating your high-quality biodata and downloading now."
+                  : paymentStep === "verifying"
+                  ? "Confirming transaction with payment gateway. Please do not close or refresh."
+                  : "Opening payment gateway. Please do not close or refresh this page."}
+              </DialogDescription>
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
+
     </FormProvider>
   );
 }

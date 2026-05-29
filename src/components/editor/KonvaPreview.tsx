@@ -46,11 +46,40 @@ const A4_H = 842;
 // ════════════════════════════════════════════════════════════════════
 
 const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
+
+  // Implement object-fit: cover logic manually for Konva
+  const imgWidth = image.width;
+  const imgHeight = image.height;
+  const containerRatio = width / height;
+  const imageRatio = imgWidth / imgHeight;
+
+  let crop = { x: 0, y: 0, width: imgWidth, height: imgHeight };
+
+  if (containerRatio > imageRatio) {
+    // Container is wider than the image
+    const newHeight = imgWidth / containerRatio;
+    crop.y = (imgHeight - newHeight) / 2;
+    crop.height = newHeight;
+  } else {
+    // Container is taller than the image
+    const newWidth = imgHeight * containerRatio;
+    crop.x = (imgWidth - newWidth) / 2;
+    crop.width = newWidth;
+  }
+
   return (
     <Group>
-      <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} />
+      <KonvaImage 
+        image={image} 
+        x={x} 
+        y={y} 
+        width={width} 
+        height={height} 
+        crop={crop}
+        cornerRadius={cornerRadius} 
+      />
       {borderColor && (
         <Rect
           x={x}
@@ -70,12 +99,12 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
   // Add cache-busting to bypass browser CORS cache conflicts between img and canvas tags
   const cacheBustedSrc = src.includes("?") ? `${src}&canvas=true` : `${src}?canvas=true`;
-  const [image] = useImage(cacheBustedSrc);
+  const [image] = useImage(cacheBustedSrc, "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 
 const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
-  const [image] = useImage(src);
+  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
 });
 
@@ -84,7 +113,7 @@ const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, pri
 });
 
 const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }: { visible?: boolean }) {
-  const [watermarkImg] = useImage(WATERMARK_CONFIG.url);
+  const [watermarkImg] = useImage(WATERMARK_CONFIG.url, "anonymous");
   if (!watermarkImg || !WATERMARK_CONFIG.isEnabled) return null;
   
   const coords = getWatermarkCoordinates(A4_W, A4_H);
@@ -107,20 +136,38 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
 });
 
 const BgWatermarkImage = React.memo(function BgWatermarkImage({ 
-  bgConfig 
+  bgConfig,
+  isCustom = false
 }: { 
-  bgConfig?: TemplateConfig["bgConfig"] 
+  bgConfig?: TemplateConfig["bgConfig"];
+  isCustom?: boolean;
 }) {
-  const [image] = useImage(bgConfig?.url || "");
-  if (!bgConfig?.url || !image) return null;
+  const bgUrl = bgConfig?.url || "";
+  const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
+  if (!bgConfig || !bgUrl || !image) return null;
+  
+  let x = bgConfig.x;
+  let y = bgConfig.y;
+  let width = bgConfig.width;
+  let height = bgConfig.height;
+
+  if (isCustom && image.width > 0 && image.height > 0) {
+    const maxW = bgConfig.width;
+    const maxH = bgConfig.height;
+    const ratio = Math.min(maxW / image.width, maxH / image.height);
+    width = image.width * ratio;
+    height = image.height * ratio;
+    x = bgConfig.x + (maxW - width) / 2;
+    y = bgConfig.y + (maxH - height) / 2;
+  }
   
   return (
     <KonvaImage
       image={image}
-      x={bgConfig.x}
-      y={bgConfig.y}
-      width={bgConfig.width}
-      height={bgConfig.height}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
       opacity={bgConfig.opacity}
       listening={false}
     />
@@ -243,7 +290,11 @@ function StickerItem({
   onClick: (e: any) => void;
 }) {
   const { updateSticker, addSticker } = useBiodataStore();
-  const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  let asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  if (!asset && sticker.type) {
+    asset = { id: sticker.type, type: 'image', url: sticker.type, name: 'Custom', path: '', viewBox: '' };
+  }
+  
   const groupRef = useRef<Konva.Group>(null);
   
   const [isMobile, setIsMobile] = useState(false);
@@ -371,7 +422,7 @@ const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }
 export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
   const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore();
   const theme = useThemeStore();
-  const formData = liveFormData || storeFormData;
+  const formData = liveFormData ? { ...liveFormData, stickers: storeFormData.stickers } : storeFormData;
   const selectedTemplate = templateId || storeTemplate;
   const templateConfig = getTemplateConfig(selectedTemplate);
 
@@ -384,7 +435,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  const mantraSticker = formData.stickers?.find(s => s.isMantra);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const previewWatermarkRef = useRef<Konva.Text>(null);
   const lastDistRef = useRef<number | null>(null);
   const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -405,6 +458,19 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       transformerRef.current?.nodes([]);
     }
   }, [selectedStickers, isDesigner]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("biodata:selection-changed", { detail: selectedStickers }));
+  }, [selectedStickers]);
+
+  useEffect(() => {
+    const handleDeleteSelected = () => {
+      selectedStickers.forEach(id => removeSticker(id));
+      setSelectedStickers([]);
+    };
+    window.addEventListener("biodata:delete-selected", handleDeleteSelected);
+    return () => window.removeEventListener("biodata:delete-selected", handleDeleteSelected);
+  }, [selectedStickers, removeSticker]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -588,13 +654,16 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       stage.position({ x: 0, y: 0 });
       stage.size({ width: A4_W, height: A4_H });
 
-      // Programmatically hide the watermark node for the export capture
+      // Programmatically hide the watermark nodes for the export capture
       const watermarkNode = stage.findOne("#watermark");
       if (watermarkNode) {
         watermarkNode.hide();
       }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.hide();
+      }
 
-      stage.batchDraw();
+      stage.draw();
 
       const dataUrl = stage.toDataURL({
         mimeType: "image/jpeg",
@@ -606,18 +675,70 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       if (watermarkNode) {
         watermarkNode.hide();
       }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.show();
+      }
 
       // Restore previous transform
       stage.scale({ x: savedScale, y: savedScale });
       stage.position({ x: savedX, y: savedY });
       stage.size({ width: stageSize.width, height: stageSize.height });
-      stage.batchDraw();
+      stage.draw();
 
       window.dispatchEvent(new CustomEvent("biodata:jpg-ready", { detail: dataUrl }));
     };
 
     window.addEventListener("biodata:export-jpg", handleExportJpg);
     return () => window.removeEventListener("biodata:export-jpg", handleExportJpg);
+  }, [stageSize]);
+
+  // ── PNG Export via Custom Event ──────────────────────────────────
+  useEffect(() => {
+    const handleExportPng = () => {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      // Save current transform
+      const savedScale = stage.scaleX();
+      const savedX = stage.x();
+      const savedY = stage.y();
+
+      // Reset to origin at 1:1 so the full A4 canvas is captured
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: 0, y: 0 });
+      stage.size({ width: A4_W, height: A4_H });
+
+      // Programmatically hide the watermark nodes for the export capture
+      const watermarkNode = stage.findOne("#watermark");
+      if (watermarkNode) {
+        watermarkNode.hide();
+      }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.hide();
+      }
+
+      stage.draw();
+
+      const dataUrl = stage.toDataURL({
+        mimeType: "image/png",
+        pixelRatio: 3, // 3x pixel ratio for extremely high resolution and crispness
+      });
+
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.show();
+      }
+
+      // Restore previous transform
+      stage.scale({ x: savedScale, y: savedScale });
+      stage.position({ x: savedX, y: savedY });
+      stage.size({ width: stageSize.width, height: stageSize.height });
+      stage.draw();
+
+      window.dispatchEvent(new CustomEvent("biodata:png-ready", { detail: dataUrl }));
+    };
+
+    window.addEventListener("biodata:export-png", handleExportPng);
+    return () => window.removeEventListener("biodata:export-png", handleExportPng);
   }, [stageSize]);
 
   const primaryColor = theme.primaryColor;
@@ -627,6 +748,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : padding);
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
+
+  const sectionOffsets = useMemo(() => {
+    try { return JSON.parse(templateConfig.bgConfig?.sectionOffsets || "{}"); } catch { return {}; }
+  }, [templateConfig.bgConfig?.sectionOffsets]);
+
+  const sectionStyles = useMemo(() => {
+    try { return JSON.parse(templateConfig.bgConfig?.sectionStyles || "{}"); } catch { return {}; }
+  }, [templateConfig.bgConfig?.sectionStyles]);
 
   useEffect(() => {
     loadKonvaFonts([fontFamily, "Noto Sans Devanagari"]).then(() => {
@@ -638,20 +767,20 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const currentLang = formData.language || "English";
   const t = translations[currentLang] || translations["English"];
 
-  const renderSectionData = useCallback((title: string, fields: any[]) => {
+  const renderSectionData = useCallback((key: string, title: string, fields: any[]) => {
     if (!fields || fields.length === 0) return null;
     const hasValues = fields.some((f: any) => f.value && f.type !== "hidden");
     if (!hasValues) return null;
     const processedFields = fields.map(f => processPDFField(f, fields, formData, t)).filter(f => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified");
-    return { title, fields: processedFields };
+    return { key, title, fields: processedFields };
   }, [formData, t]);
 
   const sections = useMemo(() => [
-    renderSectionData(t.personal || "Personal Details", formData.personalDetails),
-    renderSectionData(t.educationSec || "Education & Career", formData.educationDetails),
-    renderSectionData(t.family || "Family Details", formData.familyDetails),
-    renderSectionData(t.contact || "Contact Details", formData.contactDetails),
-  ].filter(Boolean), [renderSectionData, formData, t]);
+    renderSectionData("personal", t.personal || "Personal Details", formData.personalDetails),
+    renderSectionData("educationSec", t.educationSec || "Education & Career", formData.educationDetails),
+    renderSectionData("family", t.family || "Family Details", formData.familyDetails),
+    renderSectionData("contact", t.contact || "Contact Details", formData.contactDetails),
+  ].filter(Boolean) as any[], [renderSectionData, formData, t]);
 
   const hasPhoto = !!formData.photo;
   const photoConfig = templateConfig.photo;
@@ -675,9 +804,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       const measure = (text: string, size: number) => {
-        if (!ctx) return text.length * size * 0.6;
-        ctx.font = `bold ${size}px "${fontFamily}"`;
-        return ctx.measureText(text).width;
+        // Use a deterministic character-based multiplier to guarantee 100% identical line-wrap 
+        // calculations and row coordinates between the client-side canvas and server-side PDF generator.
+        return text.length * size * 0.6;
       };
 
       for (const sec of sections as any[]) {
@@ -761,7 +890,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           }
         }
         
-        sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
+        sectionLayouts.push({ key: sec.key, titleText: sec.title, titleY, fields: fieldLayouts });
         cursorY += fSize * 1.5;
       }
       return { sectionLayouts, totalHeight: cursorY };
@@ -778,6 +907,18 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     }
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
+
+  const mantraGeometry = useMemo(() => {
+    if (!mantraSticker) return null;
+    const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
+    const halfW = textWidth / 2;
+    const gap = 5;
+    const imgW = 45; // 100 * 0.45
+    return {
+      leftX: A4_W / 2 - halfW - gap - imgW,
+      rightX: A4_W / 2 + halfW + gap + imgW,
+    };
+  }, [formData.mantra, mantraSticker, layout.fSize]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -867,7 +1008,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
-          <BgWatermarkImage bgConfig={templateConfig.bgConfig} />
           {templateConfig.frame.type === "image" ? (
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
@@ -877,182 +1017,78 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
+          {(() => {
+            const isCustomBg = !!theme.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (templateConfig.bgConfig?.height ?? 842);
+            
+            const scale = theme.bgImageScale ?? 1.0;
+            const width = baseW * scale;
+            const height = baseH * scale;
+            
+            const baseLeft = isCustomBg ? 147.5 : (templateConfig.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (templateConfig.bgConfig?.y ?? 0);
+            
+            const xOffset = theme.bgImageXOffset ?? 0;
+            const yOffset = theme.bgImageYOffset ?? 0;
+            
+            const x = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
+            const y = baseTop + yOffset - (baseH * (scale - 1)) / 2;
+            
+            return (
+              <BgWatermarkImage 
+                bgConfig={{
+                  url: theme.bgImageUrl || templateConfig.bgConfig?.url,
+                  x,
+                  y,
+                  width,
+                  height,
+                  opacity: theme.bgImageUrl ? theme.bgImageOpacity : (templateConfig.bgConfig?.opacity ?? 0.15),
+                }} 
+                isCustom={isCustomBg}
+              />
+            );
+          })()}
           
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
+          
+          {/* Diagonal Preview Watermark overlay */}
+          <Text
+            ref={previewWatermarkRef}
+            id="preview-watermark"
+            text="Preview"
+            fontSize={120}
+            fontFamily="Inter"
+            fontStyle="bold"
+            fill="#000000"
+            opacity={0.06}
+            x={A4_W / 2}
+            y={A4_H / 2}
+            offsetX={300}
+            offsetY={60}
+            width={600}
+            align="center"
+            rotation={-35}
+            listening={false}
+          />
           
           <Text x={0} y={A4_H - 30} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
-                {/* Mantra Rendering */}
-                {formData.mantra && (
-                  <Text
-                    x={A4_W / 2}
-                    y={paddingY + 10}
-                    text={formData.mantra}
-                    fontSize={layout.fSize * 1.2}
-                    fontFamily={fontFamily}
-                    fontStyle="bold"
-                    fill={primaryColor}
-                    align="center"
-                    width={A4_W}
-                    offsetX={A4_W / 2}
-                  />
-                )}
-
-                {/* Title Rendering */}
-                {formData.title && (() => {
-                  const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
-                  const titleHeight = layout.fSize * 2;
-                  
-                  if (titleShape === "ribbon") {
-                    const ribbonW = 320;
-                    const ribbonH = layout.fSize * 2.8;
-                    const ribbonX = (A4_W - ribbonW) / 2;
-                    const ribbonY = titleY - 4;
-                    const tailW = 30;
-                    const tailH = ribbonH;
-                    
-                    return (
-                      <Group>
-                        {/* Ribbon Left Tail (polygon) */}
-                        <Line
-                          points={[
-                            ribbonX - tailW + 10, ribbonY + 8,
-                            ribbonX, ribbonY + 2,
-                            ribbonX, ribbonY + tailH - 2,
-                            ribbonX - tailW + 10, ribbonY + tailH + 4,
-                            ribbonX - tailW + 2, ribbonY + (tailH / 2) + 5
-                          ]}
-                          fill={primaryColor}
-                          opacity={0.8}
-                          closed
-                        />
-                        {/* Ribbon Right Tail (polygon) */}
-                        <Line
-                          points={[
-                            ribbonX + ribbonW + tailW - 10, ribbonY + 8,
-                            ribbonX + ribbonW, ribbonY + 2,
-                            ribbonX + ribbonW, ribbonY + tailH - 2,
-                            ribbonX + ribbonW + tailW - 10, ribbonY + tailH + 4,
-                            ribbonX + ribbonW + tailW - 2, ribbonY + (tailH / 2) + 5
-                          ]}
-                          fill={primaryColor}
-                          opacity={0.8}
-                          closed
-                        />
-                        {/* Ribbon Main Banner */}
-                        <Rect
-                          x={ribbonX}
-                          y={ribbonY}
-                          width={ribbonW}
-                          height={ribbonH}
-                          fill={primaryColor}
-                          cornerRadius={6}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={2}
-                          shadowColor="#000000"
-                          shadowBlur={4}
-                          shadowOffset={{ x: 0, y: 2 }}
-                          shadowOpacity={0.15}
-                        />
-                        <Text
-                          x={ribbonX}
-                          y={ribbonY + (ribbonH - titleHeight) / 2}
-                          text={formData.title}
-                          fontSize={layout.fSize * 1.8}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill="#ffffff"
-                          align="center"
-                          width={ribbonW}
-                        />
-                      </Group>
-                    );
-                  } else if (titleShape === "arch") {
-                    return (
-                      <Group>
-                        {/* Traditional Temple Dome Arch */}
-                        <Path
-                          data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={2.5}
-                          lineCap="round"
-                        />
-                        <Path
-                          data={`M ${A4_W / 2 - 100},${titleY - 4} C ${A4_W / 2 - 70},${titleY - 18} ${A4_W / 2 - 25},${titleY - 24} ${A4_W / 2},${titleY - 24} C ${A4_W / 2 + 25},${titleY - 24} ${A4_W / 2 + 70},${titleY - 18} ${A4_W / 2 + 100},${titleY - 4}`}
-                          stroke={primaryColor}
-                          strokeWidth={1}
-                          opacity={0.6}
-                          lineCap="round"
-                        />
-                        <Text
-                          x={A4_W / 2}
-                          y={titleY}
-                          text={formData.title}
-                          fontSize={layout.fSize * 2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
-                        />
-                      </Group>
-                    );
-                  } else if (titleShape === "ornament") {
-                    return (
-                      <Group>
-                        {/* Elegant Decorative Side Mandalas */}
-                        <Path
-                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
-                          fill={accentColor || primaryColor}
-                          x={A4_W / 2 - 170}
-                          y={titleY - 2}
-                          scale={{ x: 0.8, y: 0.8 }}
-                        />
-                        <Path
-                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
-                          fill={accentColor || primaryColor}
-                          x={A4_W / 2 + 140}
-                          y={titleY - 2}
-                          scale={{ x: 0.8, y: 0.8 }}
-                        />
-                        {/* Title Text */}
-                        <Text
-                          x={A4_W / 2}
-                          y={titleY}
-                          text={formData.title}
-                          fontSize={layout.fSize * 2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
-                        />
-                        {/* Ornamental Underline */}
-                        <Line
-                          points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={1.5}
-                        />
-                        <Line
-                          points={[A4_W / 2 - 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 1.5, A4_W / 2 + 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 6.5]}
-                          fill={accentColor || primaryColor}
-                          closed
-                        />
-                      </Group>
-                    );
-                  } else {
-                    // Standard Simple Text
-                    return (
+            {(() => {
+              const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
+              return (
+                <Group x={headerOffset.x} y={headerOffset.y}>
+                  {/* Mantra Rendering */}
+                  <Group y={paddingY + 10}>
+                    {formData.mantra && (
                       <Text
                         x={A4_W / 2}
-                        y={titleY}
-                        text={formData.title}
-                        fontSize={layout.fSize * 2}
+                        y={0}
+                        text={formData.mantra}
+                        fontSize={layout.fSize * 1.2}
                         fontFamily={fontFamily}
                         fontStyle="bold"
                         fill={primaryColor}
@@ -1060,93 +1096,293 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                         width={A4_W}
                         offsetX={A4_W / 2}
                       />
-                    );
-                  }
-                })()}
-
-                {layout.sectionLayouts.map((sec: any) => (
-                  <Group key={sec.titleText}>
-                    {/* Modern Boxed Card Background Rendering */}
-                    {detailsLayout === "modern-boxed" && (() => {
-                      const lastField = sec.fields[sec.fields.length - 1];
-                      const boxHeight = lastField ? (lastField.y + layout.fSize * 1.45 - sec.titleY + 12) : 50;
-                      return (
-                        <Rect
-                          x={padding - 8}
-                          y={sec.titleY - 8}
-                          width={A4_W - padding * 2 + 16}
-                          height={boxHeight}
-                          fill={primaryColor + "06"} // Light primary color tint (opacity ~3%)
-                          stroke={primaryColor + "1a"} // Soft primary color stroke (opacity ~10%)
-                          strokeWidth={1.2}
-                          cornerRadius={10}
+                    )}
+                    {mantraSticker && mantraGeometry && (
+                      <>
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-left", x: mantraGeometry.leftX, y: -6, scaleX: 0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
                         />
-                      );
-                    })()}
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: -6, scaleX: -0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
+                        />
+                      </>
+                    )}
+                  </Group>
 
-                    {/* Section Header */}
-                    <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
-                    <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
+                  {/* Title Rendering */}
+                  {formData.title && (() => {
+                    const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
+                    const titleHeight = layout.fSize * 2;
                     
-                    {/* Section Fields */}
-                    {sec.fields.map((field: any) => {
-                      const colX = field.isHalf 
-                        ? (field.colIndex === 0 
-                            ? (padding + 10) 
-                            : (padding + 10 + field.halfW + 10))
-                        : (padding + 10);
-                      const lblW = field.isHalf ? field.labelW : 130;
-                      const valX = colX + lblW + 15;
-                      const colonX = colX + lblW + 5;
+                    if (titleShape === "ribbon") {
+                      const ribbonW = 320;
+                      const ribbonH = layout.fSize * 2.8;
+                      const ribbonX = (A4_W - ribbonW) / 2;
+                      const ribbonY = titleY - 4;
+                      const tailW = 30;
+                      const tailH = ribbonH;
                       
                       return (
-                        <Group key={field.id}>
-                          <Text x={colX} y={field.y} width={lblW} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
-                          <Text x={colonX} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                          {field.logoUrl ? (
-                            <>
-                              <LogoImage src={field.logoUrl} x={valX} y={field.y + (layout.fSize * 0.05)} size={layout.fSize} />
-                              <Text
-                                x={valX + layout.fSize + 4}
-                                y={field.y}
-                                width={field.availableWidth}
-                                text={field.value}
-                                fontSize={layout.fSize}
-                                fontFamily={fontFamily}
-                                fill={secondaryColor}
-                                lineHeight={1.1}
-                              />
-                            </>
-                          ) : (
-                            <Text
-                              x={valX}
-                              y={field.y}
-                              width={field.availableWidth}
-                              text={field.value}
-                              fontSize={layout.fSize}
-                              fontFamily={fontFamily}
-                              fill={secondaryColor}
-                              lineHeight={1.1}
-                            />
-                          )}
-
-                          {/* Elegant Divider underline */}
-                          {detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
-                            <Line
-                              points={[
-                                colX, field.y + layout.fSize * 1.35 + 2,
-                                colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + layout.fSize * 1.35 + 2
-                              ]}
-                              stroke={secondaryColor + "15"} // Ultra-soft opacity
-                              strokeWidth={0.8}
-                              dash={[2, 2]}
-                            />
-                          )}
+                        <Group>
+                          {/* Ribbon Left Tail (polygon) */}
+                          <Line
+                            points={[
+                              ribbonX - tailW + 10, ribbonY + 8,
+                              ribbonX, ribbonY + 2,
+                              ribbonX, ribbonY + tailH - 2,
+                              ribbonX - tailW + 10, ribbonY + tailH + 4,
+                              ribbonX - tailW + 2, ribbonY + (tailH / 2) + 5
+                            ]}
+                            fill={primaryColor}
+                            opacity={0.8}
+                            closed
+                          />
+                          {/* Ribbon Right Tail (polygon) */}
+                          <Line
+                            points={[
+                              ribbonX + ribbonW + tailW - 10, ribbonY + 8,
+                              ribbonX + ribbonW, ribbonY + 2,
+                              ribbonX + ribbonW, ribbonY + tailH - 2,
+                              ribbonX + ribbonW + tailW - 10, ribbonY + tailH + 4,
+                              ribbonX + ribbonW + tailW - 2, ribbonY + (tailH / 2) + 5
+                            ]}
+                            fill={primaryColor}
+                            opacity={0.8}
+                            closed
+                          />
+                          {/* Ribbon Main Banner */}
+                          <Rect
+                            x={ribbonX}
+                            y={ribbonY}
+                            width={ribbonW}
+                            height={ribbonH}
+                            fill={primaryColor}
+                            cornerRadius={6}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={2}
+                            shadowColor="#000000"
+                            shadowBlur={4}
+                            shadowOffset={{ x: 0, y: 2 }}
+                            shadowOpacity={0.15}
+                          />
+                          <Text
+                            x={ribbonX}
+                            y={ribbonY + (ribbonH - titleHeight) / 2}
+                            text={formData.title}
+                            fontSize={layout.fSize * 1.8}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill="#ffffff"
+                            align="center"
+                            width={ribbonW}
+                          />
                         </Group>
                       );
-                    })}
-                  </Group>
-                ))}
+                    } else if (titleShape === "arch") {
+                      return (
+                        <Group>
+                          {/* Traditional Temple Dome Arch */}
+                          <Path
+                            data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={2.5}
+                            lineCap="round"
+                          />
+                          <Path
+                            data={`M ${A4_W / 2 - 100},${titleY - 4} C ${A4_W / 2 - 70},${titleY - 18} ${A4_W / 2 - 25},${titleY - 24} ${A4_W / 2},${titleY - 24} C ${A4_W / 2 + 25},${titleY - 24} ${A4_W / 2 + 70},${titleY - 18} ${A4_W / 2 + 100},${titleY - 4}`}
+                            stroke={primaryColor}
+                            strokeWidth={1}
+                            opacity={0.6}
+                            lineCap="round"
+                          />
+                          <Text
+                            x={A4_W / 2}
+                            y={titleY}
+                            text={formData.title}
+                            fontSize={layout.fSize * 2}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill={primaryColor}
+                            align="center"
+                            width={A4_W}
+                            offsetX={A4_W / 2}
+                          />
+                        </Group>
+                      );
+                    } else if (titleShape === "ornament") {
+                      return (
+                        <Group>
+                          {/* Elegant Decorative Side Mandalas */}
+                          <Path
+                            data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                            fill={accentColor || primaryColor}
+                            x={A4_W / 2 - 170}
+                            y={titleY - 2}
+                            scale={{ x: 0.8, y: 0.8 }}
+                          />
+                          <Path
+                            data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                            fill={accentColor || primaryColor}
+                            x={A4_W / 2 + 140}
+                            y={titleY - 2}
+                            scale={{ x: 0.8, y: 0.8 }}
+                          />
+                          {/* Title Text */}
+                          <Text
+                            x={A4_W / 2}
+                            y={titleY}
+                            text={formData.title}
+                            fontSize={layout.fSize * 2}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill={primaryColor}
+                            align="center"
+                            width={A4_W}
+                            offsetX={A4_W / 2}
+                          />
+                          {/* Ornamental Underline */}
+                          <Line
+                            points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={1.5}
+                          />
+                          <Line
+                            points={[A4_W / 2 - 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 1.5, A4_W / 2 + 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 6.5]}
+                            fill={accentColor || primaryColor}
+                            closed
+                          />
+                        </Group>
+                      );
+                    } else {
+                      // Standard Simple Text
+                      return (
+                        <Text
+                          x={A4_W / 2}
+                          y={titleY}
+                          text={formData.title}
+                          fontSize={layout.fSize * 2}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill={primaryColor}
+                          align="center"
+                          width={A4_W}
+                          offsetX={A4_W / 2}
+                        />
+                      );
+                    }
+                  })()}
+                </Group>
+              );
+            })()}
+
+            {layout.sectionLayouts.map((sec: any, secIdx: number) => {
+              const secKey = sec.key || `sec-${secIdx}`;
+              const offset = sectionOffsets[secKey] || sectionOffsets[`sec-${secIdx}`] || { x: 0, y: 0 };
+              const style = sectionStyles[secKey] || sectionStyles[`sec-${secIdx}`] || {};
+              const titleColor = style.titleColor || primaryColor;
+              const fieldColor = style.fieldColor || secondaryColor;
+              const fSize = style.fontSize ? Number(style.fontSize) : layout.fSize;
+              const fontStyle = style.fontStyle || "bold";
+              const textTransform = style.textTransform || "none";
+              const applyTransform = (text: string) => {
+                if (textTransform === "uppercase") return text.toUpperCase();
+                if (textTransform === "lowercase") return text.toLowerCase();
+                if (textTransform === "capitalize") return text.replace(/\b\w/g, c => c.toUpperCase());
+                return text;
+              };
+
+              return (
+                <Group key={secKey} x={offset.x} y={offset.y}>
+                  {/* Modern Boxed Card Background Rendering */}
+                  {detailsLayout === "modern-boxed" && (() => {
+                    const lastField = sec.fields[sec.fields.length - 1];
+                    const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
+                    return (
+                      <Rect
+                        x={padding - 8}
+                        y={sec.titleY - 8}
+                        width={A4_W - padding * 2 + 16}
+                        height={boxHeight}
+                        fill={titleColor + "06"} // Light title color tint (opacity ~3%)
+                        stroke={titleColor + "1a"} // Soft title color stroke (opacity ~10%)
+                        strokeWidth={1.2}
+                        cornerRadius={10}
+                      />
+                    );
+                  })()}
+
+                  {/* Section Header */}
+                  <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || titleColor} strokeWidth={3} lineCap="round" />
+                  <Text x={padding + 10} y={sec.titleY + 2} text={applyTransform(sec.titleText)} fontSize={Math.round(fSize * 1.4)} fontFamily={fontFamily} fontStyle={fontStyle} fill={titleColor} />
+                  
+                  {/* Section Fields */}
+                  {sec.fields.map((field: any) => {
+                    const colX = field.isHalf 
+                      ? (field.colIndex === 0 
+                          ? (padding + 10) 
+                          : (padding + 10 + field.halfW + 10))
+                      : (padding + 10);
+                    const lblW = field.isHalf ? field.labelW : 130;
+                    const valX = colX + lblW + 15;
+                    const colonX = colX + lblW + 5;
+                    
+                    return (
+                      <Group key={field.id}>
+                        <Text x={colX} y={field.y} width={lblW} text={applyTransform(field.label)} fontSize={fSize} fontFamily={fontFamily} fontStyle={fontStyle} fill={fieldColor} />
+                        <Text x={colonX} y={field.y} text=":" fontSize={fSize} fontFamily={fontFamily} fill={fieldColor} />
+                        {field.logoUrl ? (
+                          <>
+                            <LogoImage src={field.logoUrl} x={valX} y={field.y + (fSize * 0.05)} size={fSize} />
+                            <Text
+                              x={valX + fSize + 4}
+                              y={field.y}
+                              width={field.availableWidth}
+                              text={applyTransform(field.value)}
+                              fontSize={fSize}
+                              fontFamily={fontFamily}
+                              fill={fieldColor}
+                              lineHeight={1.1}
+                            />
+                          </>
+                        ) : (
+                          <Text
+                            x={valX}
+                            y={field.y}
+                            width={field.availableWidth}
+                            text={applyTransform(field.value)}
+                            fontSize={fSize}
+                            fontFamily={fontFamily}
+                            fill={fieldColor}
+                            lineHeight={1.1}
+                          />
+                        )}
+
+                        {/* Elegant Divider underline */}
+                        {detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
+                          <Line
+                            points={[
+                              colX, field.y + fSize * 1.35 + 2,
+                              colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + fSize * 1.35 + 2
+                            ]}
+                            stroke={fieldColor + "15"} // Ultra-soft opacity
+                            strokeWidth={0.8}
+                            dash={[2, 2]}
+                          />
+                        )}
+                      </Group>
+                    );
+                  })}
+                </Group>
+              );
+            })}
 
 
 
@@ -1163,7 +1399,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             )}
 
             {/* Stickers Rendering */}
-            {formData.stickers?.map((sticker) => (
+            {formData.stickers?.filter(s => !s.isMantra).map((sticker) => (
               <StickerItem 
                 key={sticker.id} 
                 sticker={sticker} 
@@ -1192,6 +1428,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           {isDesigner && selectedStickers.length > 0 && (
             <Transformer
               ref={transformerRef}
+              centeredScaling={true}
               boundBoxFunc={(oldBox, newBox) => {
                 // Minimum size
                 if (newBox.width < 20 || newBox.height < 20) {
@@ -1216,7 +1453,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         </Layer>
       </Stage>
       {isDesigner && (
-        <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+        <div className="absolute top-4 left-4 lg:left-auto lg:right-4 flex flex-col gap-2 pointer-events-none items-start lg:items-end">
           {/* Alignment Toolbar */}
           {selectedStickers.length >= 2 && (
             <div className="flex bg-white/90 backdrop-blur-sm border border-primary/20 rounded-full shadow-2xl p-1 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">

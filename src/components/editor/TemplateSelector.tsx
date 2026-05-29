@@ -4,8 +4,10 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import Image from "next/image";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   royal: "Royal Gold",
@@ -20,9 +22,8 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const { selectedTemplate, setSelectedTemplate, customTemplates, formData } = useBiodataStore();
   const theme = useThemeStore();
 
-  // Initial language filter matches the current biodata form's selected language
-  const currentLang = formData?.language || "English";
-  const [langFilter, setLangFilter] = React.useState<string>(currentLang);
+  // Initial language filter set to "all" to show all languages by default
+  const [langFilter, setLangFilter] = React.useState<string>("all");
 
   const templates = React.useMemo(() => {
     return customTemplates;
@@ -48,24 +49,29 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
 
   return (
     <div className="space-y-3">
-      {/* Horizontal scrollable language filters */}
+      {/* Horizontal scrollable language filters using Radix UI Tabs */}
       {languagesList.length > 1 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-1 border-b border-stone-100 dark:border-stone-800">
-          {languagesList.map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLangFilter(lang)}
-              className={cn(
-                "px-2.5 py-1 text-[9px] font-black rounded-none border transition-all cursor-pointer whitespace-nowrap outline-none",
-                langFilter === lang
-                  ? "bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm"
-                  : "bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100 dark:bg-stone-900 dark:text-stone-400 dark:border-stone-800 dark:hover:bg-stone-800"
-              )}
-            >
-              {lang === "all" ? "All Languages" : lang}
-            </button>
-          ))}
-        </div>
+        <Tabs value={langFilter} onValueChange={setLangFilter} className="w-full">
+          <TabsList className="flex items-center justify-start gap-1 w-full overflow-x-auto no-scrollbar bg-stone-100/40 p-1 rounded-xl border border-stone-200/50 dark:bg-stone-900/40 dark:border-stone-800/50">
+            {languagesList.map((lang) => {
+              const isActive = langFilter === lang;
+              return (
+                <TabsTrigger
+                  key={lang}
+                  value={lang}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap outline-none border border-transparent",
+                    isActive
+                      ? "bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 !text-white shadow-[0_4px_12px_rgba(244,63,94,0.25)]"
+                      : "text-stone-500 hover:bg-stone-200/30 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800/30 dark:hover:text-stone-200"
+                  )}
+                >
+                  {lang === "all" ? "All Languages" : lang}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
       )}
 
       <div className="grid grid-cols-1 gap-4">
@@ -157,7 +163,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                     "absolute object-contain select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out",
                     isSelected ? "inset-[3px] rounded-[9px]" : "inset-0"
                   )}
-                  loading="lazy"
+                  priority={isSelected || filteredTemplates.indexOf(tpl) === 0}
                 />
               )}
               {/* Simulated inner border lines like a real biodata frame (only if there is no custom thumbnail) */}
@@ -176,6 +182,20 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                   </div>
                 </>
               )}
+
+              {/* FREE / PREMIUM badge — top-left corner of thumbnail */}
+              <div className="absolute top-1.5 left-1.5 z-20 pointer-events-none">
+                {tpl.isPremium ? (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow">
+                    <Crown className="w-2 h-2" />
+                    PREMIUM
+                  </span>
+                ) : (
+                  <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-black bg-green-500 text-white shadow">
+                    FREE
+                  </span>
+                )}
+              </div>
 
               {/* Selected overlay with checkmark (no blur backdrop) */}
               {isSelected && (

@@ -6,7 +6,7 @@ import { Check, Lock, Loader2, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
-import { generatePdfBlob } from "@/hooks/useDownloadBiodata";
+import { generatePdfBlob, prepareDataForGeneration } from "@/hooks/useDownloadBiodata";
 
 // Inline WhatsApp SVG with custom sizing
 function WhatsAppLogo({ className }: { className?: string }) {
@@ -62,6 +62,9 @@ export function WhatsAppDeliveryCard({
       const formData = storeData.formData;
       const selectedTemplate = storeData.selectedTemplate;
 
+      // Pre-resolve all assets (background watermark, field logos, and stickers) client-side
+      const { formData: preparedFormData, theme: preparedTheme } = await prepareDataForGeneration(formData, themeData, selectedTemplate);
+
       // 2. Call the server-side whatsapp-deliver API
       const response = await fetch("/api/whatsapp-deliver", {
         method: "POST",
@@ -71,9 +74,9 @@ export function WhatsAppDeliveryCard({
         body: JSON.stringify({
           phoneNumber,
           countryCode,
-          formData,
+          formData: preparedFormData,
           templateId: selectedTemplate,
-          theme: themeData,
+          theme: preparedTheme,
         }),
       });
 
@@ -87,11 +90,11 @@ export function WhatsAppDeliveryCard({
       // 3. Check if server requested Client-Side fallback
       if (resJson.fallback) {
         const nameField =
-          formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+          preparedFormData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
           "biodata";
 
-        // Generate PDF Blob on client
-        const pdfBlob = await generatePdfBlob(formData, selectedTemplate, themeData);
+        // Generate PDF Blob on client - passing the pre-fetched objects directly
+        const pdfBlob = await generatePdfBlob(preparedFormData, selectedTemplate, preparedTheme);
         // Prefilled template message builder
         const getTemplateMessage = (name: string, url?: string) => {
           let msg = `*Matrimonial Biodata* 💍\n\n`;

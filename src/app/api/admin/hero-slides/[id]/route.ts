@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache } from "@/lib/api-cache";
+import { HERO_SLIDES_CACHE_KEY } from "../route";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -32,6 +34,9 @@ export async function PATCH(
       data,
     });
 
+    // Invalidate cache
+    apiCache.invalidate(HERO_SLIDES_CACHE_KEY);
+
     return NextResponse.json({ slide });
   } catch (error: any) {
     console.error("Update hero slide error:", error);
@@ -54,6 +59,9 @@ export async function DELETE(
     await prisma.heroSlide.delete({
       where: { id },
     });
+
+    // Invalidate cache
+    apiCache.invalidate(HERO_SLIDES_CACHE_KEY);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
