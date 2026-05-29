@@ -725,9 +725,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       const measure = (text: string, size: number) => {
-        if (!ctx) return text.length * size * 0.6;
-        ctx.font = `bold ${size}px "${fontFamily}"`;
-        return ctx.measureText(text).width;
+        // Use a deterministic character-based multiplier to guarantee 100% identical line-wrap 
+        // calculations and row coordinates between the client-side canvas and server-side PDF generator.
+        return text.length * size * 0.6;
       };
 
       for (const sec of sections as any[]) {

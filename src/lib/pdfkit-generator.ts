@@ -66,19 +66,19 @@ const registerFonts = () => {
 registerFonts();
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
-  return null;
+  return React.createElement(View, {});
 }
 
 const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const config = getTemplateConfig(templateId);
 
-  const sectionOffsets = React.useMemo(() => {
+  const sectionOffsets = (() => {
     try { return JSON.parse(config.bgConfig?.sectionOffsets || "{}"); } catch { return {}; }
-  }, [config.bgConfig?.sectionOffsets]);
+  })();
 
-  const sectionStyles = React.useMemo(() => {
+  const sectionStyles = (() => {
     try { return JSON.parse(config.bgConfig?.sectionStyles || "{}"); } catch { return {}; }
-  }, [config.bgConfig?.sectionStyles]);
+  })();
 
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
@@ -95,7 +95,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     : (config.frame as any).bgColor || "#ffffff";
   const padding = theme.padding ?? config.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
-  const initialFontSize = theme.fontSize || 11;
+  const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 11;
 
   const renderPDFBackground = () => {
     // 1. If a theme palette has a custom background gradient (length > 1), respect the palette background settings
@@ -263,7 +263,10 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           cursorY += secFontSize * 1.35 + secLineSpacing;
           i += 2;
         } else {
-          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          if (f1.logoUrl) {
+            valueW -= (secFontSize + 4);
+          }
           const valW = valText.length * secFontSize * 0.6;
           const lines = Math.ceil(valW / valueW) || 1;
           const rowHeight = Math.max(secFontSize, lines * secFontSize * 1.1);
@@ -290,7 +293,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   // Find optimal font size to fit on one page
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
-  const MAX_Y = A4_H - paddingY - 20;
+  const MAX_Y = A4_H - paddingY;
 
   // Reduce font size if content exceeds page height
   while (layout.totalHeight > MAX_Y && currentFontSize > 7) {
@@ -367,18 +370,19 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   return React.createElement(Document, {},
     React.createElement(Page, { size: "A4", style: styles.page as any },
       React.createElement(View, { style: styles.container as any, wrap: false },
-        renderPDFBackground(),
-        config.bgConfig?.url ? React.createElement(Image, {
-          src: config.bgConfig.url,
-          style: {
-            position: 'absolute',
-            left: config.bgConfig.x ?? 0,
-            top: config.bgConfig.y ?? 0,
-            width: config.bgConfig.width ?? 595,
-            height: config.bgConfig.height ?? 842,
-            opacity: config.bgConfig.opacity ?? 1.0,
-          } as any
-        }) : null,
+        ...([
+          renderPDFBackground(),
+          config.bgConfig?.url ? React.createElement(Image, {
+            src: config.bgConfig.url,
+            style: {
+              position: 'absolute',
+              left: config.bgConfig.x ?? 0,
+              top: config.bgConfig.y ?? 0,
+              width: config.bgConfig.width ?? 595,
+              height: config.bgConfig.height ?? 842,
+              opacity: config.bgConfig.opacity ?? 1.0,
+            } as any
+          }) : null,
         config.frame.type === 'image' ? 
           React.createElement(Image, { 
             src: theme?.rasterizedFrameBase64 || (() => {
@@ -497,10 +501,10 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               top: headerOffset.y,
               left: headerOffset.x,
               width: A4_W,
-              height: 150
+              height: A4_H
             } as any
           },
-            layout.headerItems.map((item, i) => {
+            ...layout.headerItems.map((item, i) => {
               if (item.type === 'title') {
                 if (titleShape === "ribbon") {
                   const ribbonW = 320;
@@ -543,7 +547,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                         fontWeight: 'bold',
                         color: '#ffffff'
                       } as any
-                    }, item.text)
+                    }, item.text ? String(item.text) : "")
                   );
                 } else if (titleShape === "arch") {
                   return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
@@ -570,7 +574,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                         fontWeight: 'bold',
                         color: primary
                       } as any
-                    }, item.text)
+                    }, item.text ? String(item.text) : "")
                   );
                 } else if (titleShape === "ornament") {
                   return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W } as any },
@@ -604,7 +608,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                         fontWeight: 'bold',
                         color: primary
                       } as any
-                    }, item.text)
+                    }, item.text ? String(item.text) : "")
                   );
                 }
               }
@@ -623,13 +627,13 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                   fontWeight: 'bold',
                   color: primary
                 } as any
-              }, item.text);
+              }, item.text ? String(item.text) : "");
             })
           );
         })(),
         data.photo ? React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }) : null,
         data.photo && config.photo.showBorder !== false ? React.createElement(View, { style: styles.photoBorder as any }) : null,
-        layout.sectionLayouts.map((sec, si) => {
+        ...layout.sectionLayouts.flatMap((sec, si) => {
           const secKey = `sec-${si}`;
           const lookupKey = sec.key || secKey;
           const offset = sectionOffsets[lookupKey] || sectionOffsets[secKey] || { x: 0, y: 0 };
@@ -639,24 +643,28 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           const fSize = style.fontSize ? Number(style.fontSize) : currentFontSize;
           const fontStyle = style.fontStyle || "bold";
           const textTransform = style.textTransform || "none";
-          const applyTransform = (text: string) => {
+          const applyTransform = (rawText: any) => {
+            if (rawText === null || rawText === undefined) return "";
+            const text = String(rawText);
             if (textTransform === "uppercase") return text.toUpperCase();
             if (textTransform === "lowercase") return text.toLowerCase();
             if (textTransform === "capitalize") return text.replace(/\b\w/g, c => c.toUpperCase());
             return text;
           };
 
-          return React.createElement(View, { key: si, style: { position: 'absolute', top: sec.titleY + offset.y, left: offset.x, width: A4_W } as any },
-            
+          const absTitleY = sec.titleY + offset.y;
+
+          return [
             // Modern Boxed Card Background Rendering
             detailsLayout === "modern-boxed" ? (() => {
               const lastField = sec.fields[sec.fields.length - 1];
               const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
               return React.createElement(Svg, {
+                key: `card-${si}`,
                 style: {
                   position: 'absolute',
-                  left: padding - 8,
-                  top: -8,
+                  left: padding - 8 + offset.x,
+                  top: absTitleY - 8,
                   width: A4_W - padding * 2 + 16,
                   height: boxHeight,
                 } as any
@@ -676,11 +684,24 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               );
             })() : null,
 
-            React.createElement(View, { style: [styles.sectionTitleBar, { backgroundColor: accent || titleColor }] as any }),
+            React.createElement(View, {
+              key: `bar-${si}`,
+              style: [
+                styles.sectionTitleBar,
+                {
+                  left: padding + offset.x,
+                  top: absTitleY + 15,
+                  backgroundColor: accent || titleColor
+                }
+              ] as any
+            }),
             React.createElement(Text, { 
+              key: `title-${si}`,
               style: [
                 styles.sectionTitleText, 
                 { 
+                  left: padding + 10 + offset.x,
+                  top: absTitleY + 2,
                   fontSize: Math.round(fSize * 1.4), 
                   fontFamily: fontFamily, 
                   fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
@@ -688,7 +709,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                 }
               ] as any 
             }, applyTransform(sec.title)),
-            sec.fields.map((f: any, fi: any) => {
+            ...sec.fields.flatMap((f: any, fi: any) => {
               const colX = f.isHalf 
                 ? (f.colIndex === 0 
                     ? (padding + 10) 
@@ -698,74 +719,96 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               const colonX = colX + lblW + 5;
               const valX = colX + lblW + 15;
               
-              return React.createElement(View, {
-                key: fi,
-                style: { 
-                  position: 'absolute', 
-                  top: (f.y - sec.titleY), 
-                  left: colX, 
-                  flexDirection: 'row', 
-                  width: f.isHalf ? f.halfW : (f.rowWidth - 10) 
-                } as any
-              },
+              const absFieldY = f.y + offset.y;
+              
+              return [
+                // 1. Label
                 React.createElement(Text, { 
+                  key: `lbl-${si}-${fi}`,
                   style: [
                     styles.label, 
                     { 
+                      position: 'absolute',
+                      top: absFieldY,
+                      left: colX + offset.x,
                       width: lblW, 
                       fontSize: fSize, 
                       fontFamily: fontFamily, 
                       fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
-                      color: fieldColor 
+                      color: fieldColor,
+                      lineHeight: 1.1
                     }
                   ] as any 
                 }, applyTransform(f.displayLabel)),
+                
+                // 2. Colon
                 React.createElement(Text, { 
+                  key: `cln-${si}-${fi}`,
                   style: [
                     styles.colon, 
                     { 
-                      left: colonX - colX, 
-                      position: 'absolute', 
+                      position: 'absolute',
+                      top: absFieldY,
+                      left: colonX + offset.x, 
+                      width: 15,
                       fontSize: fSize, 
                       fontFamily: fontFamily, 
-                      color: fieldColor 
+                      color: fieldColor,
+                      lineHeight: 1.1
                     }
                   ] as any 
                 }, ":"),
-                React.createElement(View, { style: { left: valX - colX, position: 'absolute', width: f.valueW, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' } as any },
-                  f.logoUrl ? (() => {
-                    let resolvedSrc: any = f.logoUrl;
-                    if (f.logoUrl.startsWith("data:image/")) {
-                      const commaIdx = f.logoUrl.indexOf(",");
-                      const base64Content = f.logoUrl.substring(commaIdx + 1);
-                      resolvedSrc = Buffer.from(base64Content, "base64");
-                    } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
-                      resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
-                    } else if (f.logoUrl.startsWith("/")) {
-                      resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
-                    }
-                    return React.createElement(Image, { 
-                      src: resolvedSrc, 
-                      style: styles.logo as any 
-                    });
-                  })() : null,
-                  React.createElement(Text, { 
-                    style: [
-                      styles.value, 
-                      { 
-                        fontSize: fSize, 
-                        fontFamily: fontFamily, 
-                        color: fieldColor 
+                
+                // 3. Logo & Value wrapped inline
+                React.createElement(View, {
+                  key: `val-${si}-${fi}`,
+                  style: {
+                    position: 'absolute',
+                    top: absFieldY,
+                    left: valX + offset.x,
+                    width: f.valueW + (f.logoUrl ? (fSize + 4) : 0),
+                    flexDirection: 'row',
+                    alignItems: 'flex-start'
+                  } as any
+                },
+                  ...([
+                    f.logoUrl ? (() => {
+                      let resolvedSrc: any = f.logoUrl;
+                      if (f.logoUrl.startsWith("data:image/")) {
+                        const commaIdx = f.logoUrl.indexOf(",");
+                        const base64Content = f.logoUrl.substring(commaIdx + 1);
+                        resolvedSrc = Buffer.from(base64Content, "base64");
+                      } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
+                        resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
+                      } else if (f.logoUrl.startsWith("/")) {
+                        resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
                       }
-                    ] as any 
-                  }, applyTransform(f.displayValue))
+                      return React.createElement(Image, { 
+                        src: resolvedSrc, 
+                        style: [styles.logo, { width: fSize, height: fSize, marginTop: fSize * 0.05, marginRight: 4 }] as any 
+                      });
+                    })() : null,
+                    React.createElement(Text, { 
+                      style: [
+                        styles.value, 
+                        { 
+                          fontSize: fSize, 
+                          fontFamily: fontFamily, 
+                          color: fieldColor,
+                          width: f.valueW,
+                          lineHeight: 1.1
+                        }
+                      ] as any 
+                    }, applyTransform(f.displayValue))
+                  ].filter(Boolean))
                 ),
                 
-                // Divided underline line
+                // 4. Divided underline
                 detailsLayout === "elegant-divided" && (!f.isHalf || f.colIndex === 1) ? React.createElement(Svg, {
+                  key: `div-${si}-${fi}`,
                   height: 1,
                   width: f.isHalf ? f.halfW : (A4_W - padding * 2 - 20),
-                  style: { position: 'absolute', bottom: -4, left: 0 } as any
+                  style: { position: 'absolute', top: absFieldY + fSize * 1.35 + 2, left: colX + offset.x } as any
                 },
                   React.createElement(Path, {
                     d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padding * 2 - 20)} 0`,
@@ -774,9 +817,9 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                     strokeDasharray: "2,2"
                   } as any)
                 ) : null
-              );
+              ].filter(Boolean);
             })
-          );
+          ].filter(Boolean);
         }),
         (data.stickers || []).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
@@ -808,6 +851,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
               )
           );
         })
+        ].filter(Boolean))
       )
     )
   );
@@ -834,114 +878,7 @@ async function fetchImageAsBase64(url: string): Promise<string | undefined> {
 export async function generatePDFBuffer(opts: any): Promise<Buffer> {
   const { formData, templateId, theme } = opts;
   try {
-    // Pre-fetch and convert company logo using sharp to guarantee server-side compatibility (PNG conversion)
-    const sectionsToSearch = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"];
-    for (const secKey of sectionsToSearch) {
-      const sectionFields = formData ? formData[secKey] : null;
-      if (sectionFields && Array.isArray(sectionFields)) {
-        for (const field of sectionFields) {
-          if (field.type === "company" || field.id === "companyName") {
-            let rawLogo = field.logo;
-            
-            // Check if it was already proxied and decode it
-            if (rawLogo && rawLogo.startsWith("/api/proxy-logo?url=")) {
-              rawLogo = decodeURIComponent(rawLogo.split("?url=")[1]);
-            }
-            
-            if (!rawLogo) {
-              // Check popular companies
-              const cleanName = (field.value || "").trim().toLowerCase();
-              const popular = [
-                { name: "tcs", domain: "tcs.com" },
-                { name: "tata consultancy services", domain: "tcs.com" },
-                { name: "infosys", domain: "infosys.com" },
-                { name: "wipro", domain: "wipro.com" },
-                { name: "cognizant", domain: "cognizant.com" },
-                { name: "accenture", domain: "accenture.com" },
-                { name: "google", domain: "google.com" },
-                { name: "microsoft", domain: "microsoft.com" },
-                { name: "amazon", domain: "amazon.com" },
-                { name: "flipkart", domain: "flipkart.com" },
-                { name: "reliance", domain: "ril.com" },
-                { name: "tata motors", domain: "tatamotors.com" },
-                { name: "hdfc bank", domain: "hdfcbank.com" },
-                { name: "hdfc", domain: "hdfcbank.com" },
-                { name: "icici bank", domain: "icicibank.com" },
-                { name: "icici", domain: "icicibank.com" },
-                { name: "sbi", domain: "sbi.co.in" },
-                { name: "state bank of india", domain: "sbi.co.in" },
-                { name: "l&t", domain: "larsentoubro.com" },
-                { name: "larsen & toubro", domain: "larsentoubro.com" },
-                { name: "mahindra", domain: "mahindra.com" },
-                { name: "government of india", domain: "india.gov.in" },
-                { name: "meta", domain: "meta.com" },
-                { name: "apple", domain: "apple.com" },
-                { name: "netflix", domain: "netflix.com" },
-              ];
-              const foundPopular = popular.find(p => cleanName.includes(p.name) || p.name.includes(cleanName));
-              if (foundPopular) {
-                rawLogo = `https://icon.horse/icon/${foundPopular.domain}`;
-              }
-            }
-            
-            if (!rawLogo) {
-              rawLogo = sectionFields.find((f: any) => f.id === "companyLogo")?.value;
-              if ((field.value || "").toLowerCase() !== "google" && rawLogo && rawLogo.includes("google.com")) {
-                rawLogo = undefined;
-              }
-            }
-            
-            if (!rawLogo && (field.value || "").includes(".")) {
-              const potentialDomain = (field.value || "").replace(/https?:\/\//, "").split("/")[0].trim();
-              rawLogo = `https://icon.horse/icon/${potentialDomain}`;
-            }
-            
-            let imageBuffer: Buffer | undefined;
-            
-            if (rawLogo && rawLogo.startsWith("http")) {
-              try {
-                console.log(`PDF Generator fetching: ${rawLogo}`);
-                const response = await fetch(rawLogo, {
-                  headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                  }
-                });
-                if (response.ok) {
-                  const arrayBuffer = await response.arrayBuffer();
-                  imageBuffer = Buffer.from(arrayBuffer);
-                }
-              } catch (fetchError) {
-                console.error("PDF Generator fetch error:", fetchError);
-              }
-            } else if (rawLogo && rawLogo.startsWith("data:image/")) {
-              try {
-                const commaIdx = rawLogo.indexOf(",");
-                const base64Content = rawLogo.substring(commaIdx + 1);
-                imageBuffer = Buffer.from(base64Content, "base64");
-              } catch (parseError) {
-                console.error("PDF Generator Base64 parse error:", parseError);
-              }
-            }
-            
-            if (imageBuffer) {
-              try {
-                const sharp = require("sharp");
-                const pngBuffer = await sharp(imageBuffer)
-                  .png()
-                  .toBuffer();
-                field.logo = `data:image/png;base64,${pngBuffer.toString("base64")}`;
-                console.log("Successfully converted company logo to standard PNG using sharp!");
-              } catch (sharpError) {
-                console.error("Failed to convert image to PNG using sharp:", sharpError);
-                if (rawLogo && rawLogo.startsWith("data:image/")) {
-                  field.logo = rawLogo;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    // Pre-fetch and convert company logo (Disabled)
     // Resolve template dynamically if it is a database template to align module contexts
     const tId = templateId || "royal";
     const { TEMPLATE_CONFIGS, mapDbTemplateToConfig } = require("./frame-config");

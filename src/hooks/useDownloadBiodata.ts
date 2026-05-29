@@ -51,91 +51,7 @@ export function generatePngDataUrl(): Promise<string> {
  * This guarantees the server receives offline-ready data for perfect PDF/DOCX rendering.
  */
 async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
-  if (!formData) return formData;
-  try {
-    const cloned = JSON.parse(JSON.stringify(formData));
-    const sections = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"];
-    for (const secKey of sections) {
-      const fields = cloned[secKey];
-      if (fields && Array.isArray(fields)) {
-        for (const field of fields) {
-          if (field.type === "company" || field.id === "companyName") {
-            let rawLogo = field.logo;
-            
-            if (!rawLogo) {
-              const cleanName = (field.value || "").trim().toLowerCase();
-              const popular = [
-                { name: "tcs", domain: "tcs.com" },
-                { name: "tata consultancy services", domain: "tcs.com" },
-                { name: "infosys", domain: "infosys.com" },
-                { name: "wipro", domain: "wipro.com" },
-                { name: "cognizant", domain: "cognizant.com" },
-                { name: "accenture", domain: "accenture.com" },
-                { name: "google", domain: "google.com" },
-                { name: "microsoft", domain: "microsoft.com" },
-                { name: "amazon", domain: "amazon.com" },
-                { name: "flipkart", domain: "flipkart.com" },
-                { name: "reliance", domain: "ril.com" },
-                { name: "tata motors", domain: "tatamotors.com" },
-                { name: "hdfc bank", domain: "hdfcbank.com" },
-                { name: "hdfc", domain: "hdfcbank.com" },
-                { name: "icici bank", domain: "icicibank.com" },
-                { name: "icici", domain: "icicibank.com" },
-                { name: "sbi", domain: "sbi.co.in" },
-                { name: "state bank of india", domain: "sbi.co.in" },
-                { name: "l&t", domain: "larsentoubro.com" },
-                { name: "larsen & toubro", domain: "larsentoubro.com" },
-                { name: "mahindra", domain: "mahindra.com" },
-                { name: "government of india", domain: "india.gov.in" },
-                { name: "meta", domain: "meta.com" },
-                { name: "apple", domain: "apple.com" },
-                { name: "netflix", domain: "netflix.com" },
-              ];
-              const foundPopular = popular.find(p => cleanName.includes(p.name) || p.name.includes(cleanName));
-              if (foundPopular) {
-                rawLogo = `https://icon.horse/icon/${foundPopular.domain}`;
-              }
-            }
-            
-            if (!rawLogo) {
-              rawLogo = fields.find((f: any) => f.id === "companyLogo")?.value;
-              if ((field.value || "").toLowerCase() !== "google" && rawLogo && rawLogo.includes("google.com")) {
-                rawLogo = undefined;
-              }
-            }
-            
-            if (!rawLogo && (field.value || "").includes(".")) {
-              const potentialDomain = (field.value || "").replace(/https?:\/\//, "").split("/")[0].trim();
-              rawLogo = `https://icon.horse/icon/${potentialDomain}`;
-            }
-            
-            if (rawLogo && rawLogo.startsWith("http")) {
-              console.log("Client-side pre-fetching logo for PDF generation:", rawLogo);
-              try {
-                const proxyUrl = `/api/proxy-logo?url=${encodeURIComponent(rawLogo)}`;
-                const res = await fetch(proxyUrl);
-                if (res.ok) {
-                  const blob = await res.blob();
-                  const base64 = await new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(blob);
-                  });
-                  field.logo = base64;
-                }
-              } catch (err) {
-                console.error("Client logo pre-fetch error:", err);
-              }
-            }
-          }
-        }
-      }
-    }
-    return cloned;
-  } catch (e) {
-    console.error("Error in prepareFormDataWithBase64Logos:", e);
-    return formData;
-  }
+  return formData;
 }
 
 /**
@@ -224,16 +140,73 @@ export function useDownloadBiodata() {
       }),
     }).catch((err) => console.error("Failed to log download:", err));
 
-    // ── Combo Pack Export: Trigger PDF, DOCX, JPG, and PNG sequentially ──
+    // Helper to generate server-side documents (PDF/DOCX)
+    const generateServerBlob = async (docFormat: "pdf" | "docx") => {
+      const apiUrl = docFormat === "docx" ? "/api/generate-docx" : "/api/generate-pdf";
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData: preparedData,
+          templateId,
+          theme: {
+            fontFamily: theme.fontFamily,
+            primaryColor: theme.primaryColor,
+            secondaryColor: theme.secondaryColor,
+            accentColor: theme.accentColor,
+            fontSize: theme.fontSize,
+            padding: theme.padding,
+            paddingY: theme.paddingY,
+            selectedPaletteName: theme.selectedPaletteName,
+            bgColors: theme.bgColors,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(text);
+        } catch (e) {
+          console.error("Non-JSON error response:", res.status, res.statusText, text.substring(0, 500));
+        }
+        throw new Error(
+          `Server error: ${res.status} - ${errorData.details || errorData.error || text.substring(0, 200) || res.statusText}`
+        );
+      }
+      return await res.blob();
+    };
+
+    // ── Combo Pack Export: ZIP Download ──
     if (format === "combo") {
       try {
-        await handleDownload(formData, templateId, "pdf", nameField);
-        await new Promise(r => setTimeout(r, 800));
-        await handleDownload(formData, templateId, "docx", nameField);
-        await new Promise(r => setTimeout(r, 800));
-        await handleDownload(formData, templateId, "jpg", nameField);
-        await new Promise(r => setTimeout(r, 800));
-        await handleDownload(formData, templateId, "png", nameField);
+        const JSZip = (await import("jszip")).default;
+        const { saveAs } = await import("file-saver");
+
+        const zip = new JSZip();
+
+        // 1. PDF
+        const pdfBlob = await generateServerBlob("pdf");
+        zip.file(`${nameField}_biodata.pdf`, pdfBlob);
+
+        // 2. DOCX
+        const docxBlob = await generateServerBlob("docx");
+        zip.file(`${nameField}_biodata.docx`, docxBlob);
+
+        // 3. JPG
+        const jpgDataUrl = await generateJpgDataUrl();
+        const jpgBase64 = jpgDataUrl.split(",")[1];
+        zip.file(`${nameField}_biodata.jpeg`, jpgBase64, { base64: true });
+
+        // 4. PNG
+        const pngDataUrl = await generatePngDataUrl();
+        const pngBase64 = pngDataUrl.split(",")[1];
+        zip.file(`${nameField}_biodata.png`, pngBase64, { base64: true });
+
+        // Generate and download ZIP
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        saveAs(zipBlob, `${nameField}_Combo_Pack.zip`);
       } catch (err) {
         console.error("Combo Pack Download Error:", err);
       } finally {
@@ -278,43 +251,8 @@ export function useDownloadBiodata() {
 
     // ── PDF / DOCX Export: server-side ──────────────────────────────
     try {
-      const apiUrl = format === "docx" ? "/api/generate-docx" : "/api/generate-pdf";
       const fileExt = format === "docx" ? "docx" : "pdf";
-
-      const res = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formData: preparedData,
-          templateId,
-          theme: {
-            fontFamily: theme.fontFamily,
-            primaryColor: theme.primaryColor,
-            secondaryColor: theme.secondaryColor,
-            accentColor: theme.accentColor,
-            fontSize: theme.fontSize,
-            padding: theme.padding,
-            paddingY: theme.paddingY,
-            selectedPaletteName: theme.selectedPaletteName,
-            bgColors: theme.bgColors,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        let errorData: any = {};
-        try {
-          errorData = JSON.parse(text);
-        } catch (e) {
-          console.error("Non-JSON error response:", res.status, res.statusText, text.substring(0, 500));
-        }
-        throw new Error(
-          `Server error: ${res.status} - ${errorData.details || errorData.error || text.substring(0, 200) || res.statusText}`
-        );
-      }
-
-      const blob = await res.blob();
+      const blob = await generateServerBlob(format === "docx" ? "docx" : "pdf");
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
