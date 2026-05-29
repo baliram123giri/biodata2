@@ -38,7 +38,7 @@ export async function GET(req: Request) {
 
     const whereClause: any = {};
     if (type) whereClause.type = type;
-    if (religion) whereClause.religion = religion;
+    if (religion && religion !== "All") whereClause.religion = religion;
 
     const stickers = await prisma.sticker.findMany({
       where: whereClause,
