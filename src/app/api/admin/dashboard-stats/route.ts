@@ -55,6 +55,22 @@ export async function GET(req: Request) {
       },
     });
 
+    // 4b. Revenue aggregations
+    const paidOrders = await prisma.order.aggregate({
+      where: { status: "paid" },
+      _sum: { amount: true },
+    });
+    const totalRevenue = paidOrders._sum.amount || 0;
+
+    const paidOrdersToday = await prisma.order.aggregate({
+      where: {
+        status: "paid",
+        createdAt: { gte: oneDayAgo },
+      },
+      _sum: { amount: true },
+    });
+    const revenueToday = paidOrdersToday._sum.amount || 0;
+
     // Get all templates to map names
     const templates = await prisma.template.findMany({
       select: {
@@ -143,6 +159,8 @@ export async function GET(req: Request) {
       newUsersToday,
       totalDownloads,
       downloadsThisWeek,
+      totalRevenue,
+      revenueToday,
       recentDownloads,
       templatePopularity,
       dailyTraffic,

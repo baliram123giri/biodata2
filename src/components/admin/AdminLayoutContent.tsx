@@ -24,7 +24,9 @@ import {
   Sun,
   Laptop,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Tag,
+  CreditCard
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,13 +48,16 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Biodatas", href: "/admin/biodatas", icon: FileText, badge: "New" },
+  { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
   { name: "User Directory", href: "/admin/users", icon: Users },
   { name: "Templates Config", href: "/admin/templates", icon: LayoutGrid },
+  { name: "Coupons", href: "/admin/coupons", icon: Tag },
   { name: "Hero Section", href: "/admin/hero-slides", icon: Sparkles },
   { name: "Blog Posts", href: "/admin/blog", icon: BookOpen },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
+
 
 export function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

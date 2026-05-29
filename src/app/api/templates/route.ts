@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, withRetry } from "@/lib/prisma";
 import { mapDbTemplateToConfig } from "@/lib/frame-config";
 
 export async function GET() {
   try {
-    const dbTemplates = await prisma.template.findMany({
-      where: { active: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const dbTemplates = await withRetry(() =>
+      prisma.template.findMany({
+        where: { active: true },
+        orderBy: { createdAt: "desc" },
+      })
+    );
 
     const templates = dbTemplates.map(mapDbTemplateToConfig);
 

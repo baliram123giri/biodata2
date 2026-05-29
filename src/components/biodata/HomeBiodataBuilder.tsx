@@ -10,13 +10,15 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X, Crown } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 import { FeedbackModal } from "./FeedbackModal";
 import { PriceModal } from "./PriceModal";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
+
 
 import {
   Dialog,
@@ -66,7 +68,9 @@ export function HomeBiodataBuilder() {
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing } = useRazorpayPayment();
   const [isHydrated, setIsHydrated] = useState(false);
+
 
   // Rating & Feedback Modal states
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -218,6 +222,57 @@ export function HomeBiodataBuilder() {
     }
   };
 
+  const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
+    try {
+      const fullName = currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value || modalFilename || "";
+      // Robust email lookup to capture the proper email address (including custom labels or IDs)
+      const contactFields = currentData.contactDetails || [];
+      const emailField = contactFields.find((f: any) => 
+        f.id === "email" || 
+        f.id === "emailId" ||
+        f.id?.toLowerCase()?.includes("email") ||
+        f.id?.toLowerCase()?.includes("mail") ||
+        (f.label || "").toLowerCase().includes("email") ||
+        (f.label || "").toLowerCase().includes("mail") ||
+        (f.label || "").toLowerCase().includes("e-mail") ||
+        (f.value || "").includes("@")
+      );
+      const properEmail = emailField?.value || "";
+      const phoneField = contactFields.find((f: any) => 
+        f.id === "mobileNumber" || 
+        f.id === "whatsappNumber" ||
+        f.id?.toLowerCase()?.includes("phone") ||
+        f.id?.toLowerCase()?.includes("mobile") ||
+        (f.label || "").toLowerCase().includes("phone") ||
+        (f.label || "").toLowerCase().includes("mobile") ||
+        (f.label || "").toLowerCase().includes("contact")
+      );
+      const properPhone = phoneField?.value || "";
+      
+      let finalPrice = 29;
+      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
+      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
+      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
+      else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
+
+      await startPayment({
+        amount: finalPrice,
+        format,
+        templateId: storedTemplate,
+        customerName: fullName,
+        customerEmail: properEmail,
+        customerPhone: properPhone,
+        currency: activeTemplate?.currency || "INR",
+        couponCode: couponCode,
+      });
+      
+      await triggerDownload(currentData, storedTemplate, format, modalFilename);
+    } catch (paymentErr) {
+      console.error("Payment failed or cancelled:", paymentErr);
+    }
+  };
+
   const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
 
@@ -236,14 +291,23 @@ export function HomeBiodataBuilder() {
     }
 
     const currentData = methods.getValues();
-    await triggerDownload(currentData, storedTemplate, format, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
+    } else {
+      await triggerDownload(currentData, storedTemplate, format, modalFilename);
+    }
   };
 
   const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
     const currentData = methods.getValues();
-    await triggerDownload(currentData, storedTemplate, format, modalFilename);
+    if (activeTemplate?.isPremium) {
+      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
+    } else {
+      await triggerDownload(currentData, storedTemplate, format, modalFilename);
+    }
   };
+
 
   /** Generate a JPG data URL for the WhatsApp share button */
   const handleGenerateShareImage = async (): Promise<string> => {
@@ -583,14 +647,20 @@ export function HomeBiodataBuilder() {
         <PriceModal
           isOpen={isPriceModalOpen}
           onOpenChange={setIsPriceModalOpen}
-          onSelectFormat={async (format) => {
+          onSelectFormat={async (format, couponCode) => {
             setIsPriceModalOpen(false);
             const currentData = methods.getValues();
-            await triggerDownload(currentData, storedTemplate, format, filename);
+            if (activeTemplate?.isPremium) {
+              await processPremiumPaymentAndDownload(currentData, format, filename, couponCode);
+            } else {
+              await triggerDownload(currentData, storedTemplate, format, filename);
+            }
           }}
           currency={activeTemplate?.currency}
+
           price={activeTemplate?.price}
           discountPrice={activeTemplate?.discountPrice}
+
           pdfPrice={activeTemplate?.pdfPrice}
           pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
           docxPrice={activeTemplate?.docxPrice}
@@ -602,7 +672,25 @@ export function HomeBiodataBuilder() {
           comboPrice={(activeTemplate as any)?.comboPrice}
           comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
         />
+        <SandboxModal />
+
+        {/* Full-screen secure checkout loading screen */}
+        <Dialog open={isPaymentProcessing}>
+          <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+              <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+            </div>
+            <div className="space-y-1 select-none">
+              <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">Securing Checkout...</DialogTitle>
+              <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
+                Opening payment gateway. Please do not close or refresh this page.
+              </DialogDescription>
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
+
     </FormProvider>
   );
 }

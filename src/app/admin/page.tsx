@@ -77,15 +77,15 @@ export default function AdminDashboard() {
       glowColor: "group-hover:shadow-[0_0_20px_rgba(155,27,48,0.1)]"
     },
     {
-      title: "Premium Downloads",
-      value: isLoading ? "..." : (data?.totalDownloads?.toLocaleString() || "0"),
-      change: "Conversion: 100%",
-      trend: "stable",
+      title: "Total Revenue",
+      value: isLoading ? "..." : `₹${data?.totalRevenue?.toLocaleString() || "0"}`,
+      change: isLoading ? "" : `+₹${data?.revenueToday || 0}`,
+      trend: "up",
       icon: Sparkles,
-      description: "All custom themes are free",
-      color: "from-secondary/10 to-transparent",
-      borderColor: "border-secondary/20",
-      glowColor: "group-hover:shadow-[0_0_20px_rgba(201,168,76,0.1)]"
+      description: isLoading ? "Loading revenue..." : `₹${data?.revenueToday || 0} earned in the last 24h`,
+      color: "from-secondary/15 to-transparent",
+      borderColor: "border-secondary/30",
+      glowColor: "group-hover:shadow-[0_0_20px_rgba(201,168,76,0.15)]"
     },
     {
       title: "System Health",
