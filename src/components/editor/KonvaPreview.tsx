@@ -402,6 +402,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const previewWatermarkRef = useRef<Konva.Text>(null);
   const lastDistRef = useRef<number | null>(null);
   const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -422,6 +423,19 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       transformerRef.current?.nodes([]);
     }
   }, [selectedStickers, isDesigner]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("biodata:selection-changed", { detail: selectedStickers }));
+  }, [selectedStickers]);
+
+  useEffect(() => {
+    const handleDeleteSelected = () => {
+      selectedStickers.forEach(id => removeSticker(id));
+      setSelectedStickers([]);
+    };
+    window.addEventListener("biodata:delete-selected", handleDeleteSelected);
+    return () => window.removeEventListener("biodata:delete-selected", handleDeleteSelected);
+  }, [selectedStickers, removeSticker]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -605,13 +619,16 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       stage.position({ x: 0, y: 0 });
       stage.size({ width: A4_W, height: A4_H });
 
-      // Programmatically hide the watermark node for the export capture
+      // Programmatically hide the watermark nodes for the export capture
       const watermarkNode = stage.findOne("#watermark");
       if (watermarkNode) {
         watermarkNode.hide();
       }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.hide();
+      }
 
-      stage.batchDraw();
+      stage.draw();
 
       const dataUrl = stage.toDataURL({
         mimeType: "image/jpeg",
@@ -623,12 +640,15 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       if (watermarkNode) {
         watermarkNode.hide();
       }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.show();
+      }
 
       // Restore previous transform
       stage.scale({ x: savedScale, y: savedScale });
       stage.position({ x: savedX, y: savedY });
       stage.size({ width: stageSize.width, height: stageSize.height });
-      stage.batchDraw();
+      stage.draw();
 
       window.dispatchEvent(new CustomEvent("biodata:jpg-ready", { detail: dataUrl }));
     };
@@ -653,24 +673,31 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       stage.position({ x: 0, y: 0 });
       stage.size({ width: A4_W, height: A4_H });
 
-      // Programmatically hide the watermark node for the export capture
+      // Programmatically hide the watermark nodes for the export capture
       const watermarkNode = stage.findOne("#watermark");
       if (watermarkNode) {
         watermarkNode.hide();
       }
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.hide();
+      }
 
-      stage.batchDraw();
+      stage.draw();
 
       const dataUrl = stage.toDataURL({
         mimeType: "image/png",
         pixelRatio: 3, // 3x pixel ratio for extremely high resolution and crispness
       });
 
+      if (previewWatermarkRef.current) {
+        previewWatermarkRef.current.show();
+      }
+
       // Restore previous transform
       stage.scale({ x: savedScale, y: savedScale });
       stage.position({ x: savedX, y: savedY });
       stage.size({ width: stageSize.width, height: stageSize.height });
-      stage.batchDraw();
+      stage.draw();
 
       window.dispatchEvent(new CustomEvent("biodata:png-ready", { detail: dataUrl }));
     };
@@ -981,6 +1008,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           
           {/* Diagonal Preview Watermark overlay */}
           <Text
+            ref={previewWatermarkRef}
+            id="preview-watermark"
             text="Preview"
             fontSize={120}
             fontFamily="Inter"
@@ -1357,7 +1386,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         </Layer>
       </Stage>
       {isDesigner && (
-        <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+        <div className="absolute top-4 left-4 lg:left-auto lg:right-4 flex flex-col gap-2 pointer-events-none items-start lg:items-end">
           {/* Alignment Toolbar */}
           {selectedStickers.length >= 2 && (
             <div className="flex bg-white/90 backdrop-blur-sm border border-primary/20 rounded-full shadow-2xl p-1 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">

@@ -110,30 +110,32 @@ export function DownloadDropdown({
       onClick={handleButtonClick}
       disabled={isGenerating}
       className={cn(
-        "relative overflow-hidden bg-gradient-primary text-xs font-semibold h-9 px-4 md:px-6 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-md border-0 text-white",
+        "relative overflow-hidden bg-gradient-primary text-[10px] md:text-xs font-bold md:font-semibold h-8 md:h-9 px-3 md:px-6 flex items-center gap-1 md:gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-full md:rounded-md border-0 text-white",
         className
       )}
     >
       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-      <span className="relative flex items-center gap-2">
+      <span className="relative flex items-center gap-1 md:gap-2">
         {isGenerating ? (
           <>
-            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             <span className="hidden sm:inline">{labels?.generating || "Generating..."}</span>
+            <span className="inline sm:hidden">{labels?.generating || "..."}</span>
           </>
         ) : (
           <>
             {isPremium ? (
-              <span className="flex items-center gap-1.5 font-bold">
-                <span>👑 Premium Download</span>
+              <span className="flex items-center gap-1 font-bold">
+                <span className="hidden sm:inline">👑 Premium Download</span>
+                <span className="inline sm:hidden">👑 Download</span>
               </span>
             ) : (
               <>
                 <span>{labels?.download || "Download"}</span>
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
               </>
             )}
           </>

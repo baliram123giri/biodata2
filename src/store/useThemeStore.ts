@@ -116,11 +116,6 @@ export const useThemeStore = create<ThemeState>()(
           accentColor: palette.accent,
           bgColors: palette.bgColors || [],
           selectedPaletteName: palette.name === "None" ? null : palette.name,
-          bgImageUrl: null, // Clear custom watermark when palette/template changes
-          bgImageOpacity: 0.15,
-          bgImageScale: 1.0,
-          bgImageXOffset: 0,
-          bgImageYOffset: 0
         }),
         setPadding: (padding) => set({ padding: padding }),
         setPaddingY: (paddingY) => set({ paddingY: paddingY }),

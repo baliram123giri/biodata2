@@ -26,6 +26,7 @@ import {
   Crown,
   Loader2,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -202,6 +203,16 @@ export default function EditPage() {
   };
 
   const [zoom, setZoom] = useState(1);
+  const [selectedStickersCount, setSelectedStickersCount] = useState(0);
+
+  useEffect(() => {
+    const handleSelection = (e: Event) => {
+      const selected = (e as CustomEvent).detail || [];
+      setSelectedStickersCount(selected.length);
+    };
+    window.addEventListener("biodata:selection-changed", handleSelection);
+    return () => window.removeEventListener("biodata:selection-changed", handleSelection);
+  }, []);
   const [fitResetKey, setFitResetKey] = useState(0);
   const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("templates");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
@@ -499,11 +510,12 @@ export default function EditPage() {
         <div className="flex items-center gap-2 md:gap-4">
           <Button
             variant="ghost"
-            className="group gap-2 px-4 py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
+            className="group gap-1 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
             onClick={() => router.push("/", { scroll: false })}
           >
-            <ArrowLeft className="w-4.5 h-4.5 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-bold tracking-wide">Go Back</span>
+            <ArrowLeft className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 transition-transform group-hover:-translate-x-1" />
+            <span className="hidden md:inline text-sm font-bold tracking-wide">Go Back</span>
+            <span className="inline md:hidden text-xs font-bold tracking-wide">Back</span>
           </Button>
         </div>
 
@@ -765,10 +777,10 @@ export default function EditPage() {
                 <div className="flex flex-col gap-6">
                   <Tabs defaultValue="bg" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl mb-6">
-                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
                         Background Themes
                       </TabsTrigger>
-                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
                         Text Themes
                       </TabsTrigger>
                     </TabsList>
@@ -1251,7 +1263,7 @@ function ToolButton({ icon, label, active = false, onClick }: { icon: React.Reac
       className={cn(
         "w-14 h-14 lg:w-16 lg:h-16 flex flex-col items-center justify-center gap-1 lg:gap-1.5 transition-all rounded-xl lg:rounded-2xl shrink-0 cursor-pointer",
         active
-          ? "bg-gradient-primary text-white shadow-lg -translate-y-0.5 border-0"
+          ? "bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-[0_4px_12px_rgba(244,63,94,0.25)] -translate-y-0.5 border-0"
           : "text-stitch-on-surface-variant hover:text-stitch-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5"
       )}
     >
@@ -1302,7 +1314,7 @@ function AlignmentButton({ icon, active = false, onClick }: { icon: React.ReactN
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all",
+        "flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer",
         active
           ? "bg-stitch-primary-container/10 text-stitch-primary"
           : "text-stitch-on-surface-variant hover:bg-stitch-surface-variant/30"
@@ -1317,7 +1329,7 @@ function Swatch({ color, onClick }: { color: string, onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-7 h-7 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform active:scale-95"
+      className="w-7 h-7 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform active:scale-95 cursor-pointer"
       style={{ backgroundColor: color }}
     />
   );

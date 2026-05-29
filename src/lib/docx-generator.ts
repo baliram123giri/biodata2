@@ -330,7 +330,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
 
     if (config.frame.type === "gradient") {
       const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
-      let stops = colors.map((c, i) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+      let stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
       bgSvg = `
          <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
            <defs>

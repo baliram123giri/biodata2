@@ -304,7 +304,7 @@ export function FeedbackModal({
               <Sparkles className="w-4 h-4" />
               {isPremium 
                 ? `Submit & Pay ${currencySymbol}${finalPrice}`
-                : `Submit & Download Free (${selectedFormat.toUpperCase()})`}
+                : `Submit & Download Free (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
             </Button>
  
             <Button
@@ -315,7 +315,7 @@ export function FeedbackModal({
             >
               {isPremium 
                 ? `Skip & Pay ${currencySymbol}${finalPrice}`
-                : `Skip & Download (${selectedFormat.toUpperCase()})`}
+                : `Skip & Download (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
             </Button>
           </div>
         </form>

@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { Check, Crown } from "lucide-react";
 import Image from "next/image";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 const TEMPLATE_LABELS: Record<string, string> = {
   royal: "Royal Gold",
   "ivory-elegance": "Ivory Elegance",
@@ -20,9 +22,8 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const { selectedTemplate, setSelectedTemplate, customTemplates, formData } = useBiodataStore();
   const theme = useThemeStore();
 
-  // Initial language filter matches the current biodata form's selected language
-  const currentLang = formData?.language || "English";
-  const [langFilter, setLangFilter] = React.useState<string>(currentLang);
+  // Initial language filter set to "all" to show all languages by default
+  const [langFilter, setLangFilter] = React.useState<string>("all");
 
   const templates = React.useMemo(() => {
     return customTemplates;
@@ -48,24 +49,29 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
 
   return (
     <div className="space-y-3">
-      {/* Horizontal scrollable language filters */}
+      {/* Horizontal scrollable language filters using Radix UI Tabs */}
       {languagesList.length > 1 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-1 border-b border-stone-100 dark:border-stone-800">
-          {languagesList.map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLangFilter(lang)}
-              className={cn(
-                "px-2.5 py-1 text-[9px] font-black rounded-none border transition-all cursor-pointer whitespace-nowrap outline-none",
-                langFilter === lang
-                  ? "bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm"
-                  : "bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100 dark:bg-stone-900 dark:text-stone-400 dark:border-stone-800 dark:hover:bg-stone-800"
-              )}
-            >
-              {lang === "all" ? "All Languages" : lang}
-            </button>
-          ))}
-        </div>
+        <Tabs value={langFilter} onValueChange={setLangFilter} className="w-full">
+          <TabsList className="flex items-center justify-start gap-1 w-full overflow-x-auto no-scrollbar bg-stone-100/40 p-1 rounded-xl border border-stone-200/50 dark:bg-stone-900/40 dark:border-stone-800/50">
+            {languagesList.map((lang) => {
+              const isActive = langFilter === lang;
+              return (
+                <TabsTrigger
+                  key={lang}
+                  value={lang}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap outline-none border border-transparent",
+                    isActive
+                      ? "bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 !text-white shadow-[0_4px_12px_rgba(244,63,94,0.25)]"
+                      : "text-stone-500 hover:bg-stone-200/30 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800/30 dark:hover:text-stone-200"
+                  )}
+                >
+                  {lang === "all" ? "All Languages" : lang}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
       )}
 
       <div className="grid grid-cols-1 gap-4">
