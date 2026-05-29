@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useThemeStore } from "@/store/useThemeStore";
 import type { DownloadFormat } from "@/components/biodata/DownloadDropdown";
+import { getTemplateConfig } from "@/lib/frame-config";
 
 /**
  * Generate a JPG data URL from the Konva canvas preview.
@@ -47,11 +48,146 @@ export function generatePngDataUrl(): Promise<string> {
 }
 
 /**
- * Pre-fetch and convert any company logo to a Base64 data URL client-side.
+ * Converts any URL to a Base64 data URL client-side with canvas fallback.
+ */
+async function imageUrlToBase64(url: string): Promise<string> {
+  if (!url) return "";
+  if (url.startsWith("data:")) return url;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (fetchErr) {
+    console.warn("Client fetch failed for base64 conversion, trying canvas...", fetchErr);
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Canvas context is null"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0);
+          try {
+            resolve(canvas.toDataURL("image/png"));
+          } catch (e) {
+            reject(e);
+          }
+        };
+        img.onerror = (e) => reject(e);
+        img.src = url.includes("?") ? `${url}&cvs=true` : `${url}?cvs=true`;
+      });
+    } catch (canvasErr) {
+      console.error("Canvas conversion failed too:", canvasErr);
+      return url;
+    }
+  }
+}
+
+/**
+ * Pre-fetch and convert any company logo & stickers to a Base64 data URL client-side.
  * This guarantees the server receives offline-ready data for perfect PDF/DOCX rendering.
  */
 async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
-  return formData;
+  if (!formData) return formData;
+  
+  const clonedData = JSON.parse(JSON.stringify(formData));
+
+  // 1. Resolve field logos
+  const sections = ['personalDetails', 'educationDetails', 'familyDetails', 'contactDetails'];
+  for (const sec of sections) {
+    if (clonedData[sec] && Array.isArray(clonedData[sec])) {
+      for (const field of clonedData[sec]) {
+        if (field.logoUrl && field.logoUrl.startsWith("http")) {
+          try {
+            const base64 = await imageUrlToBase64(field.logoUrl);
+            if (base64 && base64.startsWith("data:")) {
+              field.logoUrl = base64;
+            }
+          } catch (e) {
+            console.error(`Failed to pre-fetch logo for field ${field.id}:`, e);
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Resolve stickers
+  if (clonedData.stickers && clonedData.stickers.length > 0) {
+    try {
+      const { STICKER_ASSETS } = await import("@/lib/sticker-assets");
+      for (const sticker of clonedData.stickers) {
+        const asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
+        if (asset && asset.url) {
+          try {
+            const base64 = await imageUrlToBase64(asset.url);
+            if (base64 && base64.startsWith("data:")) {
+              sticker.resolvedUrl = base64;
+            }
+          } catch (e) {
+            console.error(`Failed to pre-fetch sticker base64 for ${sticker.type}:`, e);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load STICKER_ASSETS in prepareFormDataWithBase64Logos:", err);
+    }
+  }
+
+  return clonedData;
+}
+
+/**
+ * Pre-fetches background assets and builds fully-populated, offline-ready payload for PDF generation.
+ */
+export async function prepareDataForGeneration(
+  formData: any,
+  theme: any,
+  templateId: string
+): Promise<{ formData: any; theme: any }> {
+  const preparedFormData = await prepareFormDataWithBase64Logos(formData);
+
+  let bgImageUrlBase64 = undefined;
+  const bgUrl = theme.bgImageUrl || getTemplateConfig(templateId)?.bgConfig?.url;
+  if (bgUrl) {
+    try {
+      bgImageUrlBase64 = await imageUrlToBase64(bgUrl);
+    } catch (e) {
+      console.error("Failed to pre-fetch background base64 client-side:", e);
+    }
+  }
+
+  const preparedTheme = {
+    fontFamily: theme.fontFamily,
+    primaryColor: theme.primaryColor,
+    secondaryColor: theme.secondaryColor,
+    accentColor: theme.accentColor,
+    fontSize: theme.fontSize,
+    padding: theme.padding,
+    paddingY: theme.paddingY,
+    selectedPaletteName: theme.selectedPaletteName,
+    bgColors: theme.bgColors,
+    bgImageUrl: theme.bgImageUrl,
+    bgImageUrlBase64: bgImageUrlBase64 || theme.bgImageUrlBase64,
+    bgImageOpacity: theme.bgImageOpacity,
+    bgImageScale: theme.bgImageScale,
+    bgImageXOffset: theme.bgImageXOffset,
+    bgImageYOffset: theme.bgImageYOffset,
+  };
+
+  return { formData: preparedFormData, theme: preparedTheme };
 }
 
 /**
@@ -62,24 +198,14 @@ export async function generatePdfBlob(
   templateId: string,
   theme: any
 ): Promise<Blob> {
-  const preparedData = await prepareFormDataWithBase64Logos(formData);
+  const { formData: preparedData, theme: preparedTheme } = await prepareDataForGeneration(formData, theme, templateId);
   const res = await fetch("/api/generate-pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       formData: preparedData,
       templateId,
-      theme: {
-        fontFamily: theme.fontFamily,
-        primaryColor: theme.primaryColor,
-        secondaryColor: theme.secondaryColor,
-        accentColor: theme.accentColor,
-        fontSize: theme.fontSize,
-        padding: theme.padding,
-        paddingY: theme.paddingY,
-        selectedPaletteName: theme.selectedPaletteName,
-        bgColors: theme.bgColors,
-      },
+      theme: preparedTheme,
     }),
   });
 
@@ -111,7 +237,7 @@ export function useDownloadBiodata() {
   ) => {
     setIsGenerating(true);
 
-    const preparedData = await prepareFormDataWithBase64Logos(formData);
+    const { formData: preparedData, theme: preparedTheme } = await prepareDataForGeneration(formData, theme, templateId);
 
     const getFieldVal = (details: any[], id: string) => {
       return details?.find((f: any) => f.id === id)?.value || "";
@@ -149,17 +275,7 @@ export function useDownloadBiodata() {
         body: JSON.stringify({
           formData: preparedData,
           templateId,
-          theme: {
-            fontFamily: theme.fontFamily,
-            primaryColor: theme.primaryColor,
-            secondaryColor: theme.secondaryColor,
-            accentColor: theme.accentColor,
-            fontSize: theme.fontSize,
-            padding: theme.padding,
-            paddingY: theme.paddingY,
-            selectedPaletteName: theme.selectedPaletteName,
-            bgColors: theme.bgColors,
-          },
+          theme: preparedTheme,
         }),
       });
 

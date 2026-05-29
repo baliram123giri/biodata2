@@ -46,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TemplateSelector } from "@/components/editor/TemplateSelector";
 import { StickerSelector } from "@/components/editor/StickerSelector";
+import { BackgroundSelector } from "@/components/editor/BackgroundSelector";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
@@ -148,7 +149,7 @@ export default function EditPage() {
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
   const [zoom, setZoom] = useState(1);
   const [fitResetKey, setFitResetKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "stickers" | "whatsapp">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("templates");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
@@ -552,9 +553,9 @@ export default function EditPage() {
 
           <ToolButton
             icon={<Sparkles />}
-            label="Stickers"
-            active={isRightOpen && activeTab === "stickers"}
-            onClick={() => handleTabClick("stickers")}
+            label="Graphics"
+            active={isRightOpen && activeTab === "graphics"}
+            onClick={() => handleTabClick("graphics")}
           />
         </nav>
 
@@ -601,9 +602,9 @@ export default function EditPage() {
               />
               <ToolButton
                 icon={<Sparkles />}
-                label="Stickers"
-                active={isRightOpen && activeTab === "stickers"}
-                onClick={() => handleTabClick("stickers")}
+                label="Graphics"
+                active={isRightOpen && activeTab === "graphics"}
+                onClick={() => handleTabClick("graphics")}
               />
             </nav>
           )}
@@ -1052,14 +1053,37 @@ export default function EditPage() {
                 </div>
               )}
 
-              {activeTab === "stickers" && (
-                <StickerSelector
-                  onSelect={() => {
-                    if (window.innerWidth < 1024) {
-                      setIsRightOpen(false);
-                    }
-                  }}
-                />
+              {activeTab === "graphics" && (
+                <Tabs defaultValue="stickers" className="w-full flex flex-col gap-4">
+                  <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl">
+                    <TabsTrigger value="stickers" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      Stickers
+                    </TabsTrigger>
+                    <TabsTrigger value="backgrounds" className="font-bold py-2 rounded-lg transition-all text-xs">
+                      BG Images
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="stickers" className="animate-in fade-in duration-200 mt-2">
+                    <StickerSelector
+                      onSelect={() => {
+                        if (window.innerWidth < 1024) {
+                          setIsRightOpen(false);
+                        }
+                      }}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="backgrounds" className="animate-in fade-in duration-200 mt-2">
+                    <BackgroundSelector
+                      onSelect={() => {
+                        if (window.innerWidth < 1024) {
+                          setIsRightOpen(false);
+                        }
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
               )}
 
               {activeTab === "whatsapp" && (

@@ -54,6 +54,11 @@ export interface ThemeState {
   borderRadius: number;
   selectedElement: string | null;
   selectedPaletteName: string | null;
+  bgImageUrl: string | null;
+  bgImageOpacity: number;
+  bgImageScale: number;
+  bgImageXOffset: number;
+  bgImageYOffset: number;
 
   setFontFamily: (font: FontFamily) => void;
   setFontWeight: (weight: FontWeight) => void;
@@ -67,6 +72,11 @@ export interface ThemeState {
   setPaddingY: (paddingY: number | undefined) => void;
   setBorderRadius: (radius: number) => void;
   setSelectedElement: (elementId: string | null) => void;
+  setBgImageUrl: (url: string | null) => void;
+  setBgImageOpacity: (opacity: number) => void;
+  setBgImageScale: (scale: number) => void;
+  setBgImageXOffset: (x: number) => void;
+  setBgImageYOffset: (y: number) => void;
   resetTheme: () => void;
 }
 
@@ -87,6 +97,11 @@ export const useThemeStore = create<ThemeState>()(
         borderRadius: 12,
         selectedElement: "Section Group",
         selectedPaletteName: "Royal Maroon",
+        bgImageUrl: null,
+        bgImageOpacity: 0.15,
+        bgImageScale: 1.0,
+        bgImageXOffset: 0,
+        bgImageYOffset: 0,
 
         setFontFamily: (font) => set({ fontFamily: font }),
         setFontWeight: (weight) => set({ fontWeight: weight }),
@@ -100,12 +115,28 @@ export const useThemeStore = create<ThemeState>()(
           secondaryColor: palette.secondary, 
           accentColor: palette.accent,
           bgColors: palette.bgColors || [],
-          selectedPaletteName: palette.name === "None" ? null : palette.name
+          selectedPaletteName: palette.name === "None" ? null : palette.name,
+          bgImageUrl: null, // Clear custom watermark when palette/template changes
+          bgImageOpacity: 0.15,
+          bgImageScale: 1.0,
+          bgImageXOffset: 0,
+          bgImageYOffset: 0
         }),
         setPadding: (padding) => set({ padding: padding }),
         setPaddingY: (paddingY) => set({ paddingY: paddingY }),
         setBorderRadius: (radius) => set({ borderRadius: radius }),
         setSelectedElement: (elementId) => set({ selectedElement: elementId }),
+        setBgImageUrl: (url) => set({ 
+          bgImageUrl: url,
+          bgImageOpacity: 0.15,
+          bgImageScale: 1.0,
+          bgImageXOffset: 0,
+          bgImageYOffset: 0
+        }),
+        setBgImageOpacity: (opacity) => set({ bgImageOpacity: opacity }),
+        setBgImageScale: (scale) => set({ bgImageScale: scale }),
+        setBgImageXOffset: (x) => set({ bgImageXOffset: x }),
+        setBgImageYOffset: (y) => set({ bgImageYOffset: y }),
         resetTheme: () => set({
           fontFamily: "noto",
           fontWeight: "medium",
@@ -120,6 +151,11 @@ export const useThemeStore = create<ThemeState>()(
           borderRadius: 12,
           selectedElement: "Section Group",
           selectedPaletteName: "Royal Maroon",
+          bgImageUrl: null,
+          bgImageOpacity: 0.15,
+          bgImageScale: 1.0,
+          bgImageXOffset: 0,
+          bgImageYOffset: 0,
         }),
       })
     ),

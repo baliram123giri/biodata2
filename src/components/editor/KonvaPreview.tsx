@@ -107,20 +107,37 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
 });
 
 const BgWatermarkImage = React.memo(function BgWatermarkImage({ 
-  bgConfig 
+  bgConfig,
+  isCustom = false
 }: { 
-  bgConfig?: TemplateConfig["bgConfig"] 
+  bgConfig?: TemplateConfig["bgConfig"];
+  isCustom?: boolean;
 }) {
   const [image] = useImage(bgConfig?.url || "", "anonymous");
   if (!bgConfig?.url || !image) return null;
   
+  let x = bgConfig.x;
+  let y = bgConfig.y;
+  let width = bgConfig.width;
+  let height = bgConfig.height;
+
+  if (isCustom && image.width > 0 && image.height > 0) {
+    const maxW = bgConfig.width;
+    const maxH = bgConfig.height;
+    const ratio = Math.min(maxW / image.width, maxH / image.height);
+    width = image.width * ratio;
+    height = image.height * ratio;
+    x = bgConfig.x + (maxW - width) / 2;
+    y = bgConfig.y + (maxH - height) / 2;
+  }
+  
   return (
     <KonvaImage
       image={image}
-      x={bgConfig.x}
-      y={bgConfig.y}
-      width={bgConfig.width}
-      height={bgConfig.height}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
       opacity={bgConfig.opacity}
       listening={false}
     />
@@ -917,7 +934,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
-          <BgWatermarkImage bgConfig={templateConfig.bgConfig} />
           {templateConfig.frame.type === "image" ? (
             <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
           ) : templateConfig.frame.type === "gradient" ? (
@@ -927,9 +943,46 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           ) : (
             <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
           )}
+          <BgWatermarkImage 
+            bgConfig={{
+              url: theme.bgImageUrl || templateConfig.bgConfig?.url,
+              x: theme.bgImageUrl 
+                ? (147.5 + theme.bgImageXOffset)
+                : ((templateConfig.bgConfig?.x ?? 0) + (theme.bgImageUrl ? theme.bgImageXOffset : 0)),
+              y: theme.bgImageUrl 
+                ? (271 + theme.bgImageYOffset)
+                : ((templateConfig.bgConfig?.y ?? 0) + (theme.bgImageUrl ? theme.bgImageYOffset : 0)),
+              width: theme.bgImageUrl
+                ? (300 * theme.bgImageScale)
+                : ((templateConfig.bgConfig?.width ?? 595) * (theme.bgImageUrl ? theme.bgImageScale : 1.0)),
+              height: theme.bgImageUrl
+                ? (300 * theme.bgImageScale)
+                : ((templateConfig.bgConfig?.height ?? 842) * (theme.bgImageUrl ? theme.bgImageScale : 1.0)),
+              opacity: theme.bgImageUrl ? theme.bgImageOpacity : (templateConfig.bgConfig?.opacity ?? 0.15),
+            }} 
+            isCustom={!!theme.bgImageUrl}
+          />
           
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
+          
+          {/* Diagonal Preview Watermark overlay */}
+          <Text
+            text="Preview"
+            fontSize={120}
+            fontFamily="Inter"
+            fontStyle="bold"
+            fill="#000000"
+            opacity={0.06}
+            x={A4_W / 2}
+            y={A4_H / 2}
+            offsetX={300}
+            offsetY={60}
+            width={600}
+            align="center"
+            rotation={-35}
+            listening={false}
+          />
           
           <Text x={0} y={A4_H - 30} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>

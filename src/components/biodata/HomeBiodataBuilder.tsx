@@ -360,19 +360,19 @@ export function HomeBiodataBuilder() {
         <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <SheetTrigger asChild>
             <button
-              className="premium-gold-docked-tab group flex flex-col items-center gap-2.5 p-3.5 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-16 text-center select-none active:scale-95 cursor-pointer"
+              className="premium-gold-docked-tab group flex flex-col items-center gap-3 p-4 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-20 text-center select-none active:scale-95 cursor-pointer"
             >
-              <div className="p-1.5 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <LayoutDashboard className="w-4 h-4" />
+              <div className="p-2 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <LayoutDashboard className="w-5 h-5" />
               </div>
 
-              <div className="w-9 h-12 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
+              <div className="w-12 h-16 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
                 {activeTemplate.thumbnailUrl ? (
                   <Image
                     src={activeTemplate.thumbnailUrl}
                     alt={activeTemplate.name}
                     fill
-                    sizes="36px"
+                    sizes="48px"
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
                     loading="lazy"
                   />
@@ -397,8 +397,8 @@ export function HomeBiodataBuilder() {
                 )}
               </div>
 
-              <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest group-hover:text-primary transition-colors mt-0.5 leading-none">
-                Themes
+              <span className="text-[10px] font-black text-stone-500 uppercase tracking-wider group-hover:text-primary transition-colors mt-0.5 leading-none">
+                Templates
               </span>
             </button>
           </SheetTrigger>
@@ -532,9 +532,9 @@ export function HomeBiodataBuilder() {
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
                 <SheetTrigger asChild>
-                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11">
-                    <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
-                    <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Themes</span>
+                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14">
+                    <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary" />
+                    <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">Templates</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">

@@ -14,7 +14,8 @@ import {
   Crown,
   Tag,
   Smile,
-  Copy
+  Copy,
+  Wand2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,10 +70,68 @@ export default function AdminTemplates() {
   const [newBgName, setNewBgName] = React.useState("");
   const [newBgFile, setNewBgFile] = React.useState<string | null>(null);
   const [isUploadingBg, setIsUploadingBg] = React.useState(false);
+  const [isAnalyzingBg, setIsAnalyzingBg] = React.useState(false);
+
+  const handleBgAiAnalyzeName = async (overrideFile?: string) => {
+    const fileToAnalyze = overrideFile || newBgFile;
+    if (!fileToAnalyze) {
+      toast.error("Please select a file first");
+      return;
+    }
+    setIsAnalyzingBg(true);
+    try {
+      const res = await fetch("/api/admin/stickers/analyze-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: fileToAnalyze }),
+      });
+      const data = await res.json();
+      if (res.ok && data.name) {
+        setNewBgName(data.name);
+        toast.success(`AI suggested: "${data.name}"`);
+      } else {
+        toast.error(data.error || "Failed to analyze background with AI");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred during AI analysis");
+    } finally {
+      setIsAnalyzingBg(false);
+    }
+  };
 
   const [newStickerName, setNewStickerName] = React.useState("");
   const [newStickerFile, setNewStickerFile] = React.useState<string | null>(null);
   const [isUploadingSticker, setIsUploadingSticker] = React.useState(false);
+  const [isAnalyzingSticker, setIsAnalyzingSticker] = React.useState(false);
+
+  const handleAiAnalyzeName = async (overrideFile?: string) => {
+    const fileToAnalyze = overrideFile || newStickerFile;
+    if (!fileToAnalyze) {
+      toast.error("Please select a file first");
+      return;
+    }
+    setIsAnalyzingSticker(true);
+    try {
+      const res = await fetch("/api/admin/stickers/analyze-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: fileToAnalyze }),
+      });
+      const data = await res.json();
+      if (res.ok && data.name) {
+        setNewStickerName(data.name);
+        toast.success(`AI suggested: "${data.name}"`);
+      } else {
+        toast.error(data.error || "Failed to analyze image with AI");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred during AI analysis");
+    } finally {
+      setIsAnalyzingSticker(false);
+    }
+  };
 
   // Fetch templates query
   const { data: templatesData, isLoading } = useQuery({
@@ -197,7 +256,9 @@ export default function AdminTemplates() {
     }
     const reader = new FileReader();
     reader.onloadend = () => {
-      setNewBgFile(reader.result as string);
+      const base64 = reader.result as string;
+      setNewBgFile(base64);
+      handleBgAiAnalyzeName(base64);
     };
     reader.readAsDataURL(file);
   };
@@ -262,7 +323,9 @@ export default function AdminTemplates() {
     }
     const reader = new FileReader();
     reader.onloadend = () => {
-      setNewStickerFile(reader.result as string);
+      const base64 = reader.result as string;
+      setNewStickerFile(base64);
+      handleAiAnalyzeName(base64);
     };
     reader.readAsDataURL(file);
   };
@@ -571,18 +634,6 @@ export default function AdminTemplates() {
 
               <form onSubmit={handleUploadBg} className="space-y-3.5">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Background Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newBgName}
-                    onChange={(e) => setNewBgName(e.target.value)}
-                    placeholder="e.g. Floral Mandala"
-                    className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
-                  />
-                </div>
-
-                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-muted-foreground uppercase">SVG File</label>
                   <input
                     id="bg-file-input"
@@ -594,9 +645,52 @@ export default function AdminTemplates() {
                   />
                 </div>
 
+                {newBgFile && (
+                  <>
+                    <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
+                      <img
+                        src={newBgFile}
+                        alt="Preview"
+                        className="max-h-full max-w-full object-contain"
+                        style={{ opacity: 0.8 }}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-between animate-fade-in">
+                        <span>Background Name</span>
+                        {isAnalyzingBg ? (
+                          <span className="text-[9px] font-bold text-primary animate-pulse flex items-center gap-1">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            AI Analyzing...
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleBgAiAnalyzeName()}
+                            className="text-[9px] font-black text-primary hover:opacity-80 active:scale-95 flex items-center gap-1 transition-all uppercase cursor-pointer"
+                          >
+                            <Wand2 className="w-2.5 h-2.5" />
+                            <span>AI Re-Suggest</span>
+                          </button>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        disabled={isAnalyzingBg}
+                        value={newBgName}
+                        onChange={(e) => setNewBgName(e.target.value)}
+                        placeholder={isAnalyzingBg ? "Analyzing image with AI..." : "e.g. Floral Mandala"}
+                        className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground disabled:opacity-60"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <Button
                   type="submit"
-                  disabled={isUploadingBg}
+                  disabled={isUploadingBg || isAnalyzingBg}
                   className="w-full text-xs font-bold h-9 rounded-lg bg-primary hover:opacity-95 text-primary-foreground flex justify-center items-center gap-1.5 cursor-pointer"
                 >
                   {isUploadingBg ? (
@@ -692,18 +786,6 @@ export default function AdminTemplates() {
 
               <form onSubmit={handleUploadSticker} className="space-y-3.5">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Sticker Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newStickerName}
-                    onChange={(e) => setNewStickerName(e.target.value)}
-                    placeholder="e.g. Ganesh Icon"
-                    className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
-                  />
-                </div>
-
-                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-muted-foreground uppercase">File (Image/SVG)</label>
                   <input
                     id="sticker-file-input"
@@ -716,13 +798,45 @@ export default function AdminTemplates() {
                 </div>
 
                 {newStickerFile && (
-                  <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden">
-                    <img
-                      src={newStickerFile}
-                      alt="Preview"
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </div>
+                  <>
+                    <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden">
+                      <img
+                        src={newStickerFile}
+                        alt="Preview"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-between animate-fade-in">
+                        <span>Sticker Name</span>
+                        {isAnalyzingSticker ? (
+                          <span className="text-[9px] font-bold text-primary animate-pulse flex items-center gap-1">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            AI Analyzing...
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAiAnalyzeName()}
+                            className="text-[9px] font-black text-primary hover:opacity-80 active:scale-95 flex items-center gap-1 transition-all uppercase cursor-pointer"
+                          >
+                            <Wand2 className="w-2.5 h-2.5" />
+                            <span>AI Re-Suggest</span>
+                          </button>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        disabled={isAnalyzingSticker}
+                        value={newStickerName}
+                        onChange={(e) => setNewStickerName(e.target.value)}
+                        placeholder={isAnalyzingSticker ? "Analyzing image with AI..." : "e.g. Ganesh Icon"}
+                        className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground disabled:opacity-60"
+                      />
+                    </div>
+                  </>
                 )}
 
                 <Button

@@ -157,7 +157,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                     "absolute object-contain select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out",
                     isSelected ? "inset-[3px] rounded-[9px]" : "inset-0"
                   )}
-                  loading="lazy"
+                  priority={isSelected || filteredTemplates.indexOf(tpl) === 0}
                 />
               )}
               {/* Simulated inner border lines like a real biodata frame (only if there is no custom thumbnail) */}
