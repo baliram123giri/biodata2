@@ -70,12 +70,12 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
   // Add cache-busting to bypass browser CORS cache conflicts between img and canvas tags
   const cacheBustedSrc = src.includes("?") ? `${src}&canvas=true` : `${src}?canvas=true`;
-  const [image] = useImage(cacheBustedSrc);
+  const [image] = useImage(cacheBustedSrc, "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 
 const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
-  const [image] = useImage(src);
+  const [image] = useImage(src, "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
 });
 
@@ -84,7 +84,7 @@ const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, pri
 });
 
 const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }: { visible?: boolean }) {
-  const [watermarkImg] = useImage(WATERMARK_CONFIG.url);
+  const [watermarkImg] = useImage(WATERMARK_CONFIG.url, "anonymous");
   if (!watermarkImg || !WATERMARK_CONFIG.isEnabled) return null;
   
   const coords = getWatermarkCoordinates(A4_W, A4_H);
@@ -111,7 +111,7 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
 }: { 
   bgConfig?: TemplateConfig["bgConfig"] 
 }) {
-  const [image] = useImage(bgConfig?.url || "");
+  const [image] = useImage(bgConfig?.url || "", "anonymous");
   if (!bgConfig?.url || !image) return null;
   
   return (
@@ -620,6 +620,48 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     return () => window.removeEventListener("biodata:export-jpg", handleExportJpg);
   }, [stageSize]);
 
+  // ── PNG Export via Custom Event ──────────────────────────────────
+  useEffect(() => {
+    const handleExportPng = () => {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      // Save current transform
+      const savedScale = stage.scaleX();
+      const savedX = stage.x();
+      const savedY = stage.y();
+
+      // Reset to origin at 1:1 so the full A4 canvas is captured
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: 0, y: 0 });
+      stage.size({ width: A4_W, height: A4_H });
+
+      // Programmatically hide the watermark node for the export capture
+      const watermarkNode = stage.findOne("#watermark");
+      if (watermarkNode) {
+        watermarkNode.hide();
+      }
+
+      stage.batchDraw();
+
+      const dataUrl = stage.toDataURL({
+        mimeType: "image/png",
+        pixelRatio: 3, // 3x pixel ratio for extremely high resolution and crispness
+      });
+
+      // Restore previous transform
+      stage.scale({ x: savedScale, y: savedScale });
+      stage.position({ x: savedX, y: savedY });
+      stage.size({ width: stageSize.width, height: stageSize.height });
+      stage.batchDraw();
+
+      window.dispatchEvent(new CustomEvent("biodata:png-ready", { detail: dataUrl }));
+    };
+
+    window.addEventListener("biodata:export-png", handleExportPng);
+    return () => window.removeEventListener("biodata:export-png", handleExportPng);
+  }, [stageSize]);
+
   const primaryColor = theme.primaryColor;
   const secondaryColor = theme.secondaryColor;
   const accentColor = theme.accentColor;
@@ -627,6 +669,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
   const paddingY = theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : padding);
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
+
+  const sectionOffsets = useMemo(() => {
+    try { return JSON.parse(templateConfig.bgConfig?.sectionOffsets || "{}"); } catch { return {}; }
+  }, [templateConfig.bgConfig?.sectionOffsets]);
+
+  const sectionStyles = useMemo(() => {
+    try { return JSON.parse(templateConfig.bgConfig?.sectionStyles || "{}"); } catch { return {}; }
+  }, [templateConfig.bgConfig?.sectionStyles]);
 
   useEffect(() => {
     loadKonvaFonts([fontFamily, "Noto Sans Devanagari"]).then(() => {
@@ -638,20 +688,20 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const currentLang = formData.language || "English";
   const t = translations[currentLang] || translations["English"];
 
-  const renderSectionData = useCallback((title: string, fields: any[]) => {
+  const renderSectionData = useCallback((key: string, title: string, fields: any[]) => {
     if (!fields || fields.length === 0) return null;
     const hasValues = fields.some((f: any) => f.value && f.type !== "hidden");
     if (!hasValues) return null;
     const processedFields = fields.map(f => processPDFField(f, fields, formData, t)).filter(f => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified");
-    return { title, fields: processedFields };
+    return { key, title, fields: processedFields };
   }, [formData, t]);
 
   const sections = useMemo(() => [
-    renderSectionData(t.personal || "Personal Details", formData.personalDetails),
-    renderSectionData(t.educationSec || "Education & Career", formData.educationDetails),
-    renderSectionData(t.family || "Family Details", formData.familyDetails),
-    renderSectionData(t.contact || "Contact Details", formData.contactDetails),
-  ].filter(Boolean), [renderSectionData, formData, t]);
+    renderSectionData("personal", t.personal || "Personal Details", formData.personalDetails),
+    renderSectionData("educationSec", t.educationSec || "Education & Career", formData.educationDetails),
+    renderSectionData("family", t.family || "Family Details", formData.familyDetails),
+    renderSectionData("contact", t.contact || "Contact Details", formData.contactDetails),
+  ].filter(Boolean) as any[], [renderSectionData, formData, t]);
 
   const hasPhoto = !!formData.photo;
   const photoConfig = templateConfig.photo;
@@ -761,7 +811,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           }
         }
         
-        sectionLayouts.push({ titleText: sec.title, titleY, fields: fieldLayouts });
+        sectionLayouts.push({ key: sec.key, titleText: sec.title, titleY, fields: fieldLayouts });
         cursorY += fSize * 1.5;
       }
       return { sectionLayouts, totalHeight: cursorY };
@@ -885,268 +935,292 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
-                {/* Mantra Rendering */}
-                {formData.mantra && (
-                  <Text
-                    x={A4_W / 2}
-                    y={paddingY + 10}
-                    text={formData.mantra}
-                    fontSize={layout.fSize * 1.2}
-                    fontFamily={fontFamily}
-                    fontStyle="bold"
-                    fill={primaryColor}
-                    align="center"
-                    width={A4_W}
-                    offsetX={A4_W / 2}
-                  />
-                )}
+            {(() => {
+              const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
+              return (
+                <Group x={headerOffset.x} y={headerOffset.y}>
+                  {/* Mantra Rendering */}
+                  {formData.mantra && (
+                    <Text
+                      x={A4_W / 2}
+                      y={paddingY + 10}
+                      text={formData.mantra}
+                      fontSize={layout.fSize * 1.2}
+                      fontFamily={fontFamily}
+                      fontStyle="bold"
+                      fill={primaryColor}
+                      align="center"
+                      width={A4_W}
+                      offsetX={A4_W / 2}
+                    />
+                  )}
 
-                {/* Title Rendering */}
-                {formData.title && (() => {
-                  const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
-                  const titleHeight = layout.fSize * 2;
-                  
-                  if (titleShape === "ribbon") {
-                    const ribbonW = 320;
-                    const ribbonH = layout.fSize * 2.8;
-                    const ribbonX = (A4_W - ribbonW) / 2;
-                    const ribbonY = titleY - 4;
-                    const tailW = 30;
-                    const tailH = ribbonH;
+                  {/* Title Rendering */}
+                  {formData.title && (() => {
+                    const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
+                    const titleHeight = layout.fSize * 2;
                     
-                    return (
-                      <Group>
-                        {/* Ribbon Left Tail (polygon) */}
-                        <Line
-                          points={[
-                            ribbonX - tailW + 10, ribbonY + 8,
-                            ribbonX, ribbonY + 2,
-                            ribbonX, ribbonY + tailH - 2,
-                            ribbonX - tailW + 10, ribbonY + tailH + 4,
-                            ribbonX - tailW + 2, ribbonY + (tailH / 2) + 5
-                          ]}
-                          fill={primaryColor}
-                          opacity={0.8}
-                          closed
-                        />
-                        {/* Ribbon Right Tail (polygon) */}
-                        <Line
-                          points={[
-                            ribbonX + ribbonW + tailW - 10, ribbonY + 8,
-                            ribbonX + ribbonW, ribbonY + 2,
-                            ribbonX + ribbonW, ribbonY + tailH - 2,
-                            ribbonX + ribbonW + tailW - 10, ribbonY + tailH + 4,
-                            ribbonX + ribbonW + tailW - 2, ribbonY + (tailH / 2) + 5
-                          ]}
-                          fill={primaryColor}
-                          opacity={0.8}
-                          closed
-                        />
-                        {/* Ribbon Main Banner */}
-                        <Rect
-                          x={ribbonX}
-                          y={ribbonY}
-                          width={ribbonW}
-                          height={ribbonH}
-                          fill={primaryColor}
-                          cornerRadius={6}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={2}
-                          shadowColor="#000000"
-                          shadowBlur={4}
-                          shadowOffset={{ x: 0, y: 2 }}
-                          shadowOpacity={0.15}
-                        />
-                        <Text
-                          x={ribbonX}
-                          y={ribbonY + (ribbonH - titleHeight) / 2}
-                          text={formData.title}
-                          fontSize={layout.fSize * 1.8}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill="#ffffff"
-                          align="center"
-                          width={ribbonW}
-                        />
-                      </Group>
-                    );
-                  } else if (titleShape === "arch") {
-                    return (
-                      <Group>
-                        {/* Traditional Temple Dome Arch */}
-                        <Path
-                          data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={2.5}
-                          lineCap="round"
-                        />
-                        <Path
-                          data={`M ${A4_W / 2 - 100},${titleY - 4} C ${A4_W / 2 - 70},${titleY - 18} ${A4_W / 2 - 25},${titleY - 24} ${A4_W / 2},${titleY - 24} C ${A4_W / 2 + 25},${titleY - 24} ${A4_W / 2 + 70},${titleY - 18} ${A4_W / 2 + 100},${titleY - 4}`}
-                          stroke={primaryColor}
-                          strokeWidth={1}
-                          opacity={0.6}
-                          lineCap="round"
-                        />
-                        <Text
-                          x={A4_W / 2}
-                          y={titleY}
-                          text={formData.title}
-                          fontSize={layout.fSize * 2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
-                        />
-                      </Group>
-                    );
-                  } else if (titleShape === "ornament") {
-                    return (
-                      <Group>
-                        {/* Elegant Decorative Side Mandalas */}
-                        <Path
-                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
-                          fill={accentColor || primaryColor}
-                          x={A4_W / 2 - 170}
-                          y={titleY - 2}
-                          scale={{ x: 0.8, y: 0.8 }}
-                        />
-                        <Path
-                          data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
-                          fill={accentColor || primaryColor}
-                          x={A4_W / 2 + 140}
-                          y={titleY - 2}
-                          scale={{ x: 0.8, y: 0.8 }}
-                        />
-                        {/* Title Text */}
-                        <Text
-                          x={A4_W / 2}
-                          y={titleY}
-                          text={formData.title}
-                          fontSize={layout.fSize * 2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
-                        />
-                        {/* Ornamental Underline */}
-                        <Line
-                          points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
-                          stroke={accentColor || primaryColor}
-                          strokeWidth={1.5}
-                        />
-                        <Line
-                          points={[A4_W / 2 - 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 1.5, A4_W / 2 + 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 6.5]}
-                          fill={accentColor || primaryColor}
-                          closed
-                        />
-                      </Group>
-                    );
-                  } else {
-                    // Standard Simple Text
-                    return (
-                      <Text
-                        x={A4_W / 2}
-                        y={titleY}
-                        text={formData.title}
-                        fontSize={layout.fSize * 2}
-                        fontFamily={fontFamily}
-                        fontStyle="bold"
-                        fill={primaryColor}
-                        align="center"
-                        width={A4_W}
-                        offsetX={A4_W / 2}
-                      />
-                    );
-                  }
-                })()}
-
-                {layout.sectionLayouts.map((sec: any) => (
-                  <Group key={sec.titleText}>
-                    {/* Modern Boxed Card Background Rendering */}
-                    {detailsLayout === "modern-boxed" && (() => {
-                      const lastField = sec.fields[sec.fields.length - 1];
-                      const boxHeight = lastField ? (lastField.y + layout.fSize * 1.45 - sec.titleY + 12) : 50;
-                      return (
-                        <Rect
-                          x={padding - 8}
-                          y={sec.titleY - 8}
-                          width={A4_W - padding * 2 + 16}
-                          height={boxHeight}
-                          fill={primaryColor + "06"} // Light primary color tint (opacity ~3%)
-                          stroke={primaryColor + "1a"} // Soft primary color stroke (opacity ~10%)
-                          strokeWidth={1.2}
-                          cornerRadius={10}
-                        />
-                      );
-                    })()}
-
-                    {/* Section Header */}
-                    <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || primaryColor} strokeWidth={3} lineCap="round" />
-                    <Text x={padding + 10} y={sec.titleY + 2} text={sec.titleText} fontSize={Math.round(layout.fSize * 1.4)} fontFamily={fontFamily} fontStyle="bold" fill={primaryColor} />
-                    
-                    {/* Section Fields */}
-                    {sec.fields.map((field: any) => {
-                      const colX = field.isHalf 
-                        ? (field.colIndex === 0 
-                            ? (padding + 10) 
-                            : (padding + 10 + field.halfW + 10))
-                        : (padding + 10);
-                      const lblW = field.isHalf ? field.labelW : 130;
-                      const valX = colX + lblW + 15;
-                      const colonX = colX + lblW + 5;
+                    if (titleShape === "ribbon") {
+                      const ribbonW = 320;
+                      const ribbonH = layout.fSize * 2.8;
+                      const ribbonX = (A4_W - ribbonW) / 2;
+                      const ribbonY = titleY - 4;
+                      const tailW = 30;
+                      const tailH = ribbonH;
                       
                       return (
-                        <Group key={field.id}>
-                          <Text x={colX} y={field.y} width={lblW} text={field.label} fontSize={layout.fSize} fontFamily={fontFamily} fontStyle="bold" fill={secondaryColor} />
-                          <Text x={colonX} y={field.y} text=":" fontSize={layout.fSize} fontFamily={fontFamily} fill={secondaryColor} />
-                          {field.logoUrl ? (
-                            <>
-                              <LogoImage src={field.logoUrl} x={valX} y={field.y + (layout.fSize * 0.05)} size={layout.fSize} />
-                              <Text
-                                x={valX + layout.fSize + 4}
-                                y={field.y}
-                                width={field.availableWidth}
-                                text={field.value}
-                                fontSize={layout.fSize}
-                                fontFamily={fontFamily}
-                                fill={secondaryColor}
-                                lineHeight={1.1}
-                              />
-                            </>
-                          ) : (
-                            <Text
-                              x={valX}
-                              y={field.y}
-                              width={field.availableWidth}
-                              text={field.value}
-                              fontSize={layout.fSize}
-                              fontFamily={fontFamily}
-                              fill={secondaryColor}
-                              lineHeight={1.1}
-                            />
-                          )}
-
-                          {/* Elegant Divider underline */}
-                          {detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
-                            <Line
-                              points={[
-                                colX, field.y + layout.fSize * 1.35 + 2,
-                                colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + layout.fSize * 1.35 + 2
-                              ]}
-                              stroke={secondaryColor + "15"} // Ultra-soft opacity
-                              strokeWidth={0.8}
-                              dash={[2, 2]}
-                            />
-                          )}
+                        <Group>
+                          {/* Ribbon Left Tail (polygon) */}
+                          <Line
+                            points={[
+                              ribbonX - tailW + 10, ribbonY + 8,
+                              ribbonX, ribbonY + 2,
+                              ribbonX, ribbonY + tailH - 2,
+                              ribbonX - tailW + 10, ribbonY + tailH + 4,
+                              ribbonX - tailW + 2, ribbonY + (tailH / 2) + 5
+                            ]}
+                            fill={primaryColor}
+                            opacity={0.8}
+                            closed
+                          />
+                          {/* Ribbon Right Tail (polygon) */}
+                          <Line
+                            points={[
+                              ribbonX + ribbonW + tailW - 10, ribbonY + 8,
+                              ribbonX + ribbonW, ribbonY + 2,
+                              ribbonX + ribbonW, ribbonY + tailH - 2,
+                              ribbonX + ribbonW + tailW - 10, ribbonY + tailH + 4,
+                              ribbonX + ribbonW + tailW - 2, ribbonY + (tailH / 2) + 5
+                            ]}
+                            fill={primaryColor}
+                            opacity={0.8}
+                            closed
+                          />
+                          {/* Ribbon Main Banner */}
+                          <Rect
+                            x={ribbonX}
+                            y={ribbonY}
+                            width={ribbonW}
+                            height={ribbonH}
+                            fill={primaryColor}
+                            cornerRadius={6}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={2}
+                            shadowColor="#000000"
+                            shadowBlur={4}
+                            shadowOffset={{ x: 0, y: 2 }}
+                            shadowOpacity={0.15}
+                          />
+                          <Text
+                            x={ribbonX}
+                            y={ribbonY + (ribbonH - titleHeight) / 2}
+                            text={formData.title}
+                            fontSize={layout.fSize * 1.8}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill="#ffffff"
+                            align="center"
+                            width={ribbonW}
+                          />
                         </Group>
                       );
-                    })}
-                  </Group>
-                ))}
+                    } else if (titleShape === "arch") {
+                      return (
+                        <Group>
+                          {/* Traditional Temple Dome Arch */}
+                          <Path
+                            data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={2.5}
+                            lineCap="round"
+                          />
+                          <Path
+                            data={`M ${A4_W / 2 - 100},${titleY - 4} C ${A4_W / 2 - 70},${titleY - 18} ${A4_W / 2 - 25},${titleY - 24} ${A4_W / 2},${titleY - 24} C ${A4_W / 2 + 25},${titleY - 24} ${A4_W / 2 + 70},${titleY - 18} ${A4_W / 2 + 100},${titleY - 4}`}
+                            stroke={primaryColor}
+                            strokeWidth={1}
+                            opacity={0.6}
+                            lineCap="round"
+                          />
+                          <Text
+                            x={A4_W / 2}
+                            y={titleY}
+                            text={formData.title}
+                            fontSize={layout.fSize * 2}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill={primaryColor}
+                            align="center"
+                            width={A4_W}
+                            offsetX={A4_W / 2}
+                          />
+                        </Group>
+                      );
+                    } else if (titleShape === "ornament") {
+                      return (
+                        <Group>
+                          {/* Elegant Decorative Side Mandalas */}
+                          <Path
+                            data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                            fill={accentColor || primaryColor}
+                            x={A4_W / 2 - 170}
+                            y={titleY - 2}
+                            scale={{ x: 0.8, y: 0.8 }}
+                          />
+                          <Path
+                            data="M 15 0 C 23.2 0 30 6.8 30 15 C 30 23.2 23.2 30 15 30 C 6.8 30 0 23.2 0 15 C 0 6.8 6.8 0 15 0 Z M 15 5 C 9.5 5 5 9.5 5 15 C 5 20.5 9.5 25 15 25 C 20.5 25 25 20.5 25 15 C 25 9.5 20.5 5 15 5 Z"
+                            fill={accentColor || primaryColor}
+                            x={A4_W / 2 + 140}
+                            y={titleY - 2}
+                            scale={{ x: 0.8, y: 0.8 }}
+                          />
+                          {/* Title Text */}
+                          <Text
+                            x={A4_W / 2}
+                            y={titleY}
+                            text={formData.title}
+                            fontSize={layout.fSize * 2}
+                            fontFamily={fontFamily}
+                            fontStyle="bold"
+                            fill={primaryColor}
+                            align="center"
+                            width={A4_W}
+                            offsetX={A4_W / 2}
+                          />
+                          {/* Ornamental Underline */}
+                          <Line
+                            points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
+                            stroke={accentColor || primaryColor}
+                            strokeWidth={1.5}
+                          />
+                          <Line
+                            points={[A4_W / 2 - 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 1.5, A4_W / 2 + 5, titleY + titleHeight + 4, A4_W / 2, titleY + titleHeight + 6.5]}
+                            fill={accentColor || primaryColor}
+                            closed
+                          />
+                        </Group>
+                      );
+                    } else {
+                      // Standard Simple Text
+                      return (
+                        <Text
+                          x={A4_W / 2}
+                          y={titleY}
+                          text={formData.title}
+                          fontSize={layout.fSize * 2}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill={primaryColor}
+                          align="center"
+                          width={A4_W}
+                          offsetX={A4_W / 2}
+                        />
+                      );
+                    }
+                  })()}
+                </Group>
+              );
+            })()}
+
+            {layout.sectionLayouts.map((sec: any, secIdx: number) => {
+              const secKey = sec.key || `sec-${secIdx}`;
+              const offset = sectionOffsets[secKey] || sectionOffsets[`sec-${secIdx}`] || { x: 0, y: 0 };
+              const style = sectionStyles[secKey] || sectionStyles[`sec-${secIdx}`] || {};
+              const titleColor = style.titleColor || primaryColor;
+              const fieldColor = style.fieldColor || secondaryColor;
+              const fSize = style.fontSize ? Number(style.fontSize) : layout.fSize;
+              const fontStyle = style.fontStyle || "bold";
+              const textTransform = style.textTransform || "none";
+              const applyTransform = (text: string) => {
+                if (textTransform === "uppercase") return text.toUpperCase();
+                if (textTransform === "lowercase") return text.toLowerCase();
+                if (textTransform === "capitalize") return text.replace(/\b\w/g, c => c.toUpperCase());
+                return text;
+              };
+
+              return (
+                <Group key={secKey} x={offset.x} y={offset.y}>
+                  {/* Modern Boxed Card Background Rendering */}
+                  {detailsLayout === "modern-boxed" && (() => {
+                    const lastField = sec.fields[sec.fields.length - 1];
+                    const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
+                    return (
+                      <Rect
+                        x={padding - 8}
+                        y={sec.titleY - 8}
+                        width={A4_W - padding * 2 + 16}
+                        height={boxHeight}
+                        fill={titleColor + "06"} // Light title color tint (opacity ~3%)
+                        stroke={titleColor + "1a"} // Soft title color stroke (opacity ~10%)
+                        strokeWidth={1.2}
+                        cornerRadius={10}
+                      />
+                    );
+                  })()}
+
+                  {/* Section Header */}
+                  <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || titleColor} strokeWidth={3} lineCap="round" />
+                  <Text x={padding + 10} y={sec.titleY + 2} text={applyTransform(sec.titleText)} fontSize={Math.round(fSize * 1.4)} fontFamily={fontFamily} fontStyle={fontStyle} fill={titleColor} />
+                  
+                  {/* Section Fields */}
+                  {sec.fields.map((field: any) => {
+                    const colX = field.isHalf 
+                      ? (field.colIndex === 0 
+                          ? (padding + 10) 
+                          : (padding + 10 + field.halfW + 10))
+                      : (padding + 10);
+                    const lblW = field.isHalf ? field.labelW : 130;
+                    const valX = colX + lblW + 15;
+                    const colonX = colX + lblW + 5;
+                    
+                    return (
+                      <Group key={field.id}>
+                        <Text x={colX} y={field.y} width={lblW} text={applyTransform(field.label)} fontSize={fSize} fontFamily={fontFamily} fontStyle={fontStyle} fill={fieldColor} />
+                        <Text x={colonX} y={field.y} text=":" fontSize={fSize} fontFamily={fontFamily} fill={fieldColor} />
+                        {field.logoUrl ? (
+                          <>
+                            <LogoImage src={field.logoUrl} x={valX} y={field.y + (fSize * 0.05)} size={fSize} />
+                            <Text
+                              x={valX + fSize + 4}
+                              y={field.y}
+                              width={field.availableWidth}
+                              text={applyTransform(field.value)}
+                              fontSize={fSize}
+                              fontFamily={fontFamily}
+                              fill={fieldColor}
+                              lineHeight={1.1}
+                            />
+                          </>
+                        ) : (
+                          <Text
+                            x={valX}
+                            y={field.y}
+                            width={field.availableWidth}
+                            text={applyTransform(field.value)}
+                            fontSize={fSize}
+                            fontFamily={fontFamily}
+                            fill={fieldColor}
+                            lineHeight={1.1}
+                          />
+                        )}
+
+                        {/* Elegant Divider underline */}
+                        {detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
+                          <Line
+                            points={[
+                              colX, field.y + fSize * 1.35 + 2,
+                              colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + fSize * 1.35 + 2
+                            ]}
+                            stroke={fieldColor + "15"} // Ultra-soft opacity
+                            strokeWidth={0.8}
+                            dash={[2, 2]}
+                          />
+                        )}
+                      </Group>
+                    );
+                  })}
+                </Group>
+              );
+            })}
 
 
 

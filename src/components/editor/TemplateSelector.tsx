@@ -4,7 +4,7 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import Image from "next/image";
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -176,6 +176,20 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                   </div>
                 </>
               )}
+
+              {/* FREE / PREMIUM badge — top-left corner of thumbnail */}
+              <div className="absolute top-1.5 left-1.5 z-20 pointer-events-none">
+                {tpl.isPremium ? (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow">
+                    <Crown className="w-2 h-2" />
+                    PREMIUM
+                  </span>
+                ) : (
+                  <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-black bg-green-500 text-white shadow">
+                    FREE
+                  </span>
+                )}
+              </div>
 
               {/* Selected overlay with checkmark (no blur backdrop) */}
               {isSelected && (

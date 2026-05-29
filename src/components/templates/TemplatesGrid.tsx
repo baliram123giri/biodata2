@@ -402,8 +402,6 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.description || "A premium matrimonial biodata template with elegant design and comprehensive fields."}
                 </p>
 
-
-
                 {/* Spacer to push CTA to the bottom */}
                 <div className="flex-1 min-h-[16px] md:min-h-0" />
 

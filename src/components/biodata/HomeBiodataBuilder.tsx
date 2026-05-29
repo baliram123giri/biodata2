@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
 import { FeedbackModal } from "./FeedbackModal";
+import { PriceModal } from "./PriceModal";
 
 import {
   Dialog,
@@ -69,6 +70,7 @@ export function HomeBiodataBuilder() {
 
   // Rating & Feedback Modal states
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [filename, setFilename] = useState("biodata");
   const router = useRouter();
@@ -200,7 +202,7 @@ export function HomeBiodataBuilder() {
     setShowResetDialog(false);
   };
 
-  const handleDownload = async (format: DownloadFormat = "pdf") => {
+  const handleDownload = async () => {
     const currentData = methods.getValues();
     const nameField =
       currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
@@ -208,11 +210,15 @@ export function HomeBiodataBuilder() {
     const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
-    setPendingDownloadFormat(format);
-    setIsFeedbackOpen(true);
+    if (activeTemplate?.isPremium) {
+      setIsPriceModalOpen(true);
+    } else {
+      setPendingDownloadFormat("pdf"); // default format
+      setIsFeedbackOpen(true);
+    }
   };
 
-  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
 
     try {
@@ -229,18 +235,14 @@ export function HomeBiodataBuilder() {
       console.error("Failed to save feedback:", err);
     }
 
-    if (pendingDownloadFormat) {
-      const currentData = methods.getValues();
-      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
-    }
+    const currentData = methods.getValues();
+    await triggerDownload(currentData, storedTemplate, format, modalFilename);
   };
 
-  const handleSkipDownload = async (modalFilename: string) => {
+  const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
     setIsFeedbackOpen(false);
-    if (pendingDownloadFormat) {
-      const currentData = methods.getValues();
-      await triggerDownload(currentData, storedTemplate, pendingDownloadFormat, modalFilename);
-    }
+    const currentData = methods.getValues();
+    await triggerDownload(currentData, storedTemplate, format, modalFilename);
   };
 
   /** Generate a JPG data URL for the WhatsApp share button */
@@ -423,6 +425,10 @@ export function HomeBiodataBuilder() {
                     labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
                     variant="compact"
                     className="rounded-full bg-gradient-primary transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                    isPremium={activeTemplate?.isPremium}
+                    price={activeTemplate?.price}
+                    discountPrice={activeTemplate?.discountPrice}
+                    currency={activeTemplate?.currency}
                   />
 
                   <Button
@@ -522,6 +528,10 @@ export function HomeBiodataBuilder() {
               isGenerating={isGenerating}
               labels={{ download: t.download, generating: t.generating }}
               variant="compact"
+              isPremium={activeTemplate?.isPremium}
+              price={activeTemplate?.price}
+              discountPrice={activeTemplate?.discountPrice}
+              currency={activeTemplate?.currency}
             />
 
           </div>
@@ -554,6 +564,43 @@ export function HomeBiodataBuilder() {
           initialName={filename}
           onSubmit={handleFeedbackSubmit}
           onSkip={handleSkipDownload}
+          isPremium={activeTemplate?.isPremium}
+          price={activeTemplate?.price}
+          discountPrice={activeTemplate?.discountPrice}
+          currency={activeTemplate?.currency}
+          downloadFormat={pendingDownloadFormat}
+          pdfPrice={activeTemplate?.pdfPrice}
+          pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+          docxPrice={activeTemplate?.docxPrice}
+          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+          jpgPrice={activeTemplate?.jpgPrice}
+          jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+          pngPrice={activeTemplate?.pngPrice}
+          pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+          comboPrice={(activeTemplate as any)?.comboPrice}
+          comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
+        />
+        <PriceModal
+          isOpen={isPriceModalOpen}
+          onOpenChange={setIsPriceModalOpen}
+          onSelectFormat={async (format) => {
+            setIsPriceModalOpen(false);
+            const currentData = methods.getValues();
+            await triggerDownload(currentData, storedTemplate, format, filename);
+          }}
+          currency={activeTemplate?.currency}
+          price={activeTemplate?.price}
+          discountPrice={activeTemplate?.discountPrice}
+          pdfPrice={activeTemplate?.pdfPrice}
+          pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
+          docxPrice={activeTemplate?.docxPrice}
+          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
+          jpgPrice={activeTemplate?.jpgPrice}
+          jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
+          pngPrice={activeTemplate?.pngPrice}
+          pngDiscountPrice={activeTemplate?.pngDiscountPrice}
+          comboPrice={(activeTemplate as any)?.comboPrice}
+          comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
         />
       </section>
     </FormProvider>

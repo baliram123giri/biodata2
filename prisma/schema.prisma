@@ -77,6 +77,22 @@ model Template {
   titleShape             String   @default("simple")
   language               String   @default("English")
   active                 Boolean  @default(true)
+  // Pricing
+  isPremium              Boolean  @default(false)
+  price                  Float?
+  discountPrice          Float?
+  currency               String   @default("INR")
+  // Format-specific Pricing
+  pdfPrice               Float?
+  pdfDiscountPrice       Float?
+  docxPrice              Float?
+  docxDiscountPrice      Float?
+  jpgPrice               Float?
+  jpgDiscountPrice       Float?
+  pngPrice               Float?
+  pngDiscountPrice       Float?
+  comboPrice             Float?
+  comboDiscountPrice     Float?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }

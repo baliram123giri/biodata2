@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
 
@@ -13,6 +13,12 @@ export const BgConfigSchema = z.object({
   width: z.number().default(595),
   height: z.number().default(842),
   opacity: z.number().min(0).max(1).default(1.0),
+  fontFamily: z.string().optional().nullable(),
+  fontWeight: z.string().optional().nullable(),
+  fontSize: z.number().optional().nullable(),
+  alignment: z.string().optional().nullable(),
+  sectionOffsets: z.string().optional().nullable(),
+  sectionStyles: z.string().optional().nullable(),
 });
 
 async function getSessionUser() {
@@ -116,6 +122,22 @@ export async function POST(req: Request) {
       detailsLayout,
       titleShape,
       photoShowBorder,
+      // Pricing
+      isPremium,
+      price,
+      discountPrice,
+      currency,
+      // Format-specific Pricing
+      pdfPrice,
+      pdfDiscountPrice,
+      docxPrice,
+      docxDiscountPrice,
+      jpgPrice,
+      jpgDiscountPrice,
+      pngPrice,
+      pngDiscountPrice,
+      comboPrice,
+      comboDiscountPrice,
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -190,6 +212,22 @@ export async function POST(req: Request) {
         titleShape: titleShape || "simple",
         photoShowBorder: photoShowBorder !== false, // default true
         active: true,
+        // Pricing
+        isPremium: isPremium === true,
+        price: price !== undefined && price !== null && price !== "" ? parseFloat(price) : null,
+        discountPrice: discountPrice !== undefined && discountPrice !== null && discountPrice !== "" ? parseFloat(discountPrice) : null,
+        currency: currency || "INR",
+        // Format-specific Pricing
+        pdfPrice: pdfPrice !== undefined && pdfPrice !== null && pdfPrice !== "" ? parseFloat(pdfPrice) : null,
+        pdfDiscountPrice: pdfDiscountPrice !== undefined && pdfDiscountPrice !== null && pdfDiscountPrice !== "" ? parseFloat(pdfDiscountPrice) : null,
+        docxPrice: docxPrice !== undefined && docxPrice !== null && docxPrice !== "" ? parseFloat(docxPrice) : null,
+        docxDiscountPrice: docxDiscountPrice !== undefined && docxDiscountPrice !== null && docxDiscountPrice !== "" ? parseFloat(docxDiscountPrice) : null,
+        jpgPrice: jpgPrice !== undefined && jpgPrice !== null && jpgPrice !== "" ? parseFloat(jpgPrice) : null,
+        jpgDiscountPrice: jpgDiscountPrice !== undefined && jpgDiscountPrice !== null && jpgDiscountPrice !== "" ? parseFloat(jpgDiscountPrice) : null,
+        pngPrice: pngPrice !== undefined && pngPrice !== null && pngPrice !== "" ? parseFloat(pngPrice) : null,
+        pngDiscountPrice: pngDiscountPrice !== undefined && pngDiscountPrice !== null && pngDiscountPrice !== "" ? parseFloat(pngDiscountPrice) : null,
+        comboPrice: comboPrice !== undefined && comboPrice !== null && comboPrice !== "" ? parseFloat(comboPrice) : null,
+        comboDiscountPrice: comboDiscountPrice !== undefined && comboDiscountPrice !== null && comboDiscountPrice !== "" ? parseFloat(comboDiscountPrice) : null,
       },
     });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
 
@@ -13,6 +13,12 @@ export const BgConfigSchema = z.object({
   width: z.number().default(595),
   height: z.number().default(842),
   opacity: z.number().min(0).max(1).default(1.0),
+  fontFamily: z.string().optional().nullable(),
+  fontWeight: z.string().optional().nullable(),
+  fontSize: z.number().optional().nullable(),
+  alignment: z.string().optional().nullable(),
+  sectionOffsets: z.string().optional().nullable(),
+  sectionStyles: z.string().optional().nullable(),
 });
 
 async function getSessionUser() {
@@ -201,6 +207,50 @@ export async function PATCH(
 
     if (body.frameBgGradientColors !== undefined) {
       updateData.frameBgGradientColors = body.frameBgGradientColors;
+    }
+
+    // Pricing fields
+    if (body.isPremium !== undefined) {
+      updateData.isPremium = body.isPremium === true;
+    }
+    if (body.price !== undefined) {
+      updateData.price = body.price !== null && body.price !== "" ? parseFloat(body.price) : null;
+    }
+    if (body.discountPrice !== undefined) {
+      updateData.discountPrice = body.discountPrice !== null && body.discountPrice !== "" ? parseFloat(body.discountPrice) : null;
+    }
+    if (body.currency !== undefined) {
+      updateData.currency = body.currency || "INR";
+    }
+    if (body.pdfPrice !== undefined) {
+      updateData.pdfPrice = body.pdfPrice !== null && body.pdfPrice !== "" ? parseFloat(body.pdfPrice) : null;
+    }
+    if (body.pdfDiscountPrice !== undefined) {
+      updateData.pdfDiscountPrice = body.pdfDiscountPrice !== null && body.pdfDiscountPrice !== "" ? parseFloat(body.pdfDiscountPrice) : null;
+    }
+    if (body.docxPrice !== undefined) {
+      updateData.docxPrice = body.docxPrice !== null && body.docxPrice !== "" ? parseFloat(body.docxPrice) : null;
+    }
+    if (body.docxDiscountPrice !== undefined) {
+      updateData.docxDiscountPrice = body.docxDiscountPrice !== null && body.docxDiscountPrice !== "" ? parseFloat(body.docxDiscountPrice) : null;
+    }
+    if (body.jpgPrice !== undefined) {
+      updateData.jpgPrice = body.jpgPrice !== null && body.jpgPrice !== "" ? parseFloat(body.jpgPrice) : null;
+    }
+    if (body.jpgDiscountPrice !== undefined) {
+      updateData.jpgDiscountPrice = body.jpgDiscountPrice !== null && body.jpgDiscountPrice !== "" ? parseFloat(body.jpgDiscountPrice) : null;
+    }
+    if (body.pngPrice !== undefined) {
+      updateData.pngPrice = body.pngPrice !== null && body.pngPrice !== "" ? parseFloat(body.pngPrice) : null;
+    }
+    if (body.pngDiscountPrice !== undefined) {
+      updateData.pngDiscountPrice = body.pngDiscountPrice !== null && body.pngDiscountPrice !== "" ? parseFloat(body.pngDiscountPrice) : null;
+    }
+    if (body.comboPrice !== undefined) {
+      updateData.comboPrice = body.comboPrice !== null && body.comboPrice !== "" ? parseFloat(body.comboPrice) : null;
+    }
+    if (body.comboDiscountPrice !== undefined) {
+      updateData.comboDiscountPrice = body.comboDiscountPrice !== null && body.comboDiscountPrice !== "" ? parseFloat(body.comboDiscountPrice) : null;
     }
 
     // File re-uploads

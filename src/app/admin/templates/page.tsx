@@ -10,7 +10,9 @@ import {
   Plus, 
   Trash2, 
   Edit3, 
-  Loader2
+  Loader2,
+  Crown,
+  Tag
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,10 @@ interface Template {
   active: boolean;
   createdAt: string;
   language?: string | null;
+  isPremium?: boolean | null;
+  price?: number | null;
+  discountPrice?: number | null;
+  currency?: string | null;
 }
 
 interface Background {
@@ -297,6 +303,21 @@ export default function AdminTemplates() {
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30">
                         {temp.language || "English"}
                       </span>
+                      {/* Pricing Badge */}
+                      {temp.isPremium ? (
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-full border bg-gradient-to-r from-amber-400/20 to-yellow-400/20 text-amber-700 border-amber-300/50 dark:text-amber-300 dark:border-amber-700/50 flex items-center gap-1">
+                          <Crown className="w-2.5 h-2.5" />
+                          {temp.discountPrice
+                            ? `${temp.currency === "USD" ? "$" : temp.currency === "EUR" ? "€" : temp.currency === "GBP" ? "£" : "₹"}${temp.discountPrice}`
+                            : temp.price
+                            ? `${temp.currency === "USD" ? "$" : temp.currency === "EUR" ? "€" : temp.currency === "GBP" ? "£" : "₹"}${temp.price}`
+                            : "Premium"}
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/30">
+                          FREE
+                        </span>
+                      )}
                     </div>
                   </div>
 

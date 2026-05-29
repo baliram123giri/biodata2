@@ -17,7 +17,7 @@ import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, Ar
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
 
-export function BiodataForm() {
+export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const currentLang = watchLang || "English";
@@ -51,8 +51,13 @@ export function BiodataForm() {
 
   const t = translations[currentLang] || translations["English"];
 
+  const FormComponent = asDiv ? "div" : "form";
+
   return (
-    <form className="space-y-6 pb-0">
+    <FormComponent 
+      className="space-y-6 pb-0" 
+      onSubmit={asDiv ? (e: any) => { e.preventDefault(); e.stopPropagation(); } : undefined}
+    >
       {/* Language Selector */}
       <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
         <div className="flex items-center gap-2 text-primary font-semibold">
@@ -122,7 +127,7 @@ export function BiodataForm() {
         <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
       </Accordion>
-    </form>
+    </FormComponent>
   );
 }
 

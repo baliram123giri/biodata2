@@ -26,6 +26,27 @@ export function generateJpgDataUrl(): Promise<string> {
 }
 
 /**
+ * Generate a PNG data URL from the Konva canvas preview.
+ * Uses custom events to communicate with KonvaPreview.
+ */
+export function generatePngDataUrl(): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("PNG export timed out")),
+      10_000
+    );
+
+    const handler = (e: Event) => {
+      clearTimeout(timeout);
+      window.removeEventListener("biodata:png-ready", handler);
+      resolve((e as CustomEvent<string>).detail);
+    };
+    window.addEventListener("biodata:png-ready", handler);
+    window.dispatchEvent(new CustomEvent("biodata:export-png"));
+  });
+}
+
+/**
  * Pre-fetch and convert any company logo to a Base64 data URL client-side.
  * This guarantees the server receives offline-ready data for perfect PDF/DOCX rendering.
  */
@@ -203,6 +224,24 @@ export function useDownloadBiodata() {
       }),
     }).catch((err) => console.error("Failed to log download:", err));
 
+    // ── Combo Pack Export: Trigger PDF, DOCX, JPG, and PNG sequentially ──
+    if (format === "combo") {
+      try {
+        await handleDownload(formData, templateId, "pdf", nameField);
+        await new Promise(r => setTimeout(r, 800));
+        await handleDownload(formData, templateId, "docx", nameField);
+        await new Promise(r => setTimeout(r, 800));
+        await handleDownload(formData, templateId, "jpg", nameField);
+        await new Promise(r => setTimeout(r, 800));
+        await handleDownload(formData, templateId, "png", nameField);
+      } catch (err) {
+        console.error("Combo Pack Download Error:", err);
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
     // ── JPEG Export: fully client-side via Konva canvas ──────────────
     if (format === "jpg") {
       try {
@@ -214,6 +253,23 @@ export function useDownloadBiodata() {
         link.click();
       } catch (err) {
         console.error("JPG Export Error:", err);
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
+    // ── PNG Export: fully client-side via Konva canvas ──────────────
+    if (format === "png") {
+      try {
+        const dataUrl = await generatePngDataUrl();
+
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `${nameField}.png`;
+        link.click();
+      } catch (err) {
+        console.error("PNG Export Error:", err);
       } finally {
         setIsGenerating(false);
       }
