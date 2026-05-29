@@ -984,8 +984,8 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
     
     // Fetch and register custom stickers from database
     try {
-      const { prisma: cachedPrisma } = require("./prisma");
-      let prisma = cachedPrisma;
+      const cached = require("./prisma");
+      let prisma = cached?.prisma || cached;
       if (!prisma || !prisma.sticker) {
         console.warn("[pdfkit-generator] prisma.sticker is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
         const { PrismaClient } = require("../generated/prisma");
@@ -1002,8 +1002,8 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
 
     if (tId && !TEMPLATE_CONFIGS[tId]) {
       try {
-        const { prisma: cachedPrisma } = require("./prisma");
-        let prisma = cachedPrisma;
+        const cached = require("./prisma");
+        let prisma = cached?.prisma || cached;
         if (!prisma || !prisma.template) {
           console.warn("[pdfkit-generator] prisma.template is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
           const { PrismaClient } = require("../generated/prisma");

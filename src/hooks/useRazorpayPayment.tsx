@@ -46,6 +46,7 @@ interface PaymentParams {
 
 export function useRazorpayPayment() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<"idle" | "securing" | "verifying" | "downloading">("idle");
   const [sandboxOrder, setSandboxOrder] = useState<any | null>(null);
 
   // Keep resolve/reject promises so we can trigger them from the sandbox UI
@@ -57,6 +58,7 @@ export function useRazorpayPayment() {
 
   const startPayment = useCallback((params: PaymentParams): Promise<any> => {
     return new Promise(async (resolve, reject) => {
+      setPaymentStep("securing");
       setIsProcessing(true);
       try {
         // 1. Create order on Next.js backend
@@ -80,7 +82,8 @@ export function useRazorpayPayment() {
         // 1.5 Handle 100% free checkout from promo code
         if (data.isFreeOrder) {
           toast.success("Promo code applied! 100% discount unlocked.");
-          setIsProcessing(false);
+          setPaymentStep("downloading");
+          setIsProcessing(true);
           resolve(data);
           if (params.onDownload) {
             try {
@@ -88,7 +91,13 @@ export function useRazorpayPayment() {
             } catch (dlErr) {
               console.error("Auto-download failed:", dlErr);
               toast.error("Auto-download failed, but transaction is safe. Please retry download.");
+            } finally {
+              setIsProcessing(false);
+              setPaymentStep("idle");
             }
+          } else {
+            setIsProcessing(false);
+            setPaymentStep("idle");
           }
           return;
         }
@@ -106,6 +115,7 @@ export function useRazorpayPayment() {
 
           paymentPromiseRef.current = { resolve, reject, onDownload: params.onDownload };
           setIsProcessing(false);
+          setPaymentStep("idle");
           return;
         }
 
@@ -133,6 +143,7 @@ export function useRazorpayPayment() {
           },
           handler: async function (response: any) {
             setIsProcessing(true);
+            setPaymentStep("verifying");
             try {
               // Verify payment on Next.js backend
               const verifyRes = await fetch("/api/razorpay/verify-payment", {
@@ -155,6 +166,7 @@ export function useRazorpayPayment() {
 
               const verifyData = await verifyRes.json();
               toast.success("Payment successful! Your download is ready.");
+              setPaymentStep("downloading");
               resolve(verifyData);
               if (params.onDownload) {
                 try {
@@ -169,6 +181,7 @@ export function useRazorpayPayment() {
               reject(err);
             } finally {
               setIsProcessing(false);
+              setPaymentStep("idle");
             }
           },
           prefill: {
@@ -182,6 +195,7 @@ export function useRazorpayPayment() {
           modal: {
             ondismiss: function () {
               setIsProcessing(false);
+              setPaymentStep("idle");
               toast.info("Payment cancelled");
               reject(new Error("Payment cancelled by user"));
             },
@@ -192,15 +206,18 @@ export function useRazorpayPayment() {
         rzp.on("payment.failed", function (response: any) {
           toast.error(response.error.description || "Payment transaction failed");
           setIsProcessing(false);
+          setPaymentStep("idle");
           reject(new Error(response.error.description));
         });
         
         setIsProcessing(false);
+        setPaymentStep("idle");
         rzp.open();
       } catch (err: any) {
         console.error("Razorpay payment initialization error:", err);
         toast.error(err.message || "Failed to start payment process");
         setIsProcessing(false);
+        setPaymentStep("idle");
         reject(err);
       }
     });
@@ -367,6 +384,7 @@ export function useRazorpayPayment() {
 
   return {
     isProcessing,
+    paymentStep,
     startPayment,
     SandboxModal,
   };

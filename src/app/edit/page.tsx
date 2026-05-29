@@ -24,6 +24,8 @@ import {
   X,
   Star,
   Crown,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -146,7 +148,7 @@ export default function EditPage() {
   }, [methods, setFormData]);
 
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
-  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing } = useRazorpayPayment();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep } = useRazorpayPayment();
 
   const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
     try {
@@ -1212,12 +1214,28 @@ export default function EditPage() {
         <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
           <div className="relative w-16 h-16 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
-            <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+            {paymentStep === "downloading" ? (
+              <Download className="w-6 h-6 text-emerald-600 animate-bounce" />
+            ) : paymentStep === "verifying" ? (
+              <ShieldCheck className="w-6 h-6 text-emerald-600 animate-pulse" />
+            ) : (
+              <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+            )}
           </div>
           <div className="space-y-1 select-none">
-            <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">Securing Checkout...</DialogTitle>
+            <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">
+              {paymentStep === "downloading"
+                ? "Generating Document..."
+                : paymentStep === "verifying"
+                ? "Verifying Payment..."
+                : "Securing Checkout..."}
+            </DialogTitle>
             <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
-              Opening payment gateway. Please do not close or refresh this page.
+              {paymentStep === "downloading"
+                ? "Payment successful! Creating your high-quality biodata and downloading now."
+                : paymentStep === "verifying"
+                ? "Confirming transaction with payment gateway. Please do not close or refresh."
+                : "Opening payment gateway. Please do not close or refresh this page."}
             </DialogDescription>
           </div>
         </DialogContent>
