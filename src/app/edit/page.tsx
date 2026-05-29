@@ -154,17 +154,20 @@ export default function EditPage() {
     }
   }, [isMounted, isStoreHydrated, hasInitializedForm, formData, methods]);
 
-  // Synchronize form changes back to the zustand store with debounce to prevent typing lag
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const subscription = methods.watch((value) => {
-      const timer = setTimeout(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
         if (value) {
           setFormData(value as BiodataFormValues);
         }
       }, 400);
-      return () => clearTimeout(timer);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [methods, setFormData]);
 
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();

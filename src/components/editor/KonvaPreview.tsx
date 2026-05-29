@@ -908,6 +908,18 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
 
+  const mantraGeometry = useMemo(() => {
+    if (!mantraSticker) return null;
+    const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
+    const halfW = textWidth / 2;
+    const gap = 5;
+    const imgW = 45; // 100 * 0.45
+    return {
+      leftX: A4_W / 2 - halfW - gap - imgW,
+      rightX: A4_W / 2 + halfW + gap + imgW,
+    };
+  }, [formData.mantra, mantraSticker, layout.fSize]);
+
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
     
@@ -1085,32 +1097,24 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                         offsetX={A4_W / 2}
                       />
                     )}
-                    {mantraSticker && (() => {
-                      // Estimate text width (approx 0.6 ratio for typical fonts)
-                      const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
-                      const halfW = textWidth / 2;
-                      const gap = 5;
-                      const imgW = 45; // 100 * 0.45
-                      
-                      return (
-                        <>
-                          <StickerItem
-                            sticker={{ ...mantraSticker, id: "mantra-sign-left", x: A4_W / 2 - halfW - gap - imgW, y: -6, scaleX: 0.45, scaleY: 0.45 }}
-                            color={primaryColor}
-                            isDesigner={false}
-                            isSelected={false}
-                            onClick={() => {}}
-                          />
-                          <StickerItem
-                            sticker={{ ...mantraSticker, id: "mantra-sign-right", x: A4_W / 2 + halfW + gap + imgW, y: -6, scaleX: -0.45, scaleY: 0.45 }}
-                            color={primaryColor}
-                            isDesigner={false}
-                            isSelected={false}
-                            onClick={() => {}}
-                          />
-                        </>
-                      );
-                    })()}
+                    {mantraSticker && mantraGeometry && (
+                      <>
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-left", x: mantraGeometry.leftX, y: -6, scaleX: 0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
+                        />
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: -6, scaleX: -0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
+                        />
+                      </>
+                    )}
                   </Group>
 
                   {/* Title Rendering */}

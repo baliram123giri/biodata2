@@ -187,15 +187,18 @@ export function HomeBiodataBuilder() {
     }
   }, [storedTemplate, customTemplates, isHydrated, theme]);
 
-  // Debounced store update
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const subscription = methods.watch((value) => {
-      const timer = setTimeout(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
         if (value) setFormData(value as BiodataFormValues);
       }, 400);
-      return () => clearTimeout(timer);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [methods, setFormData]);
 
   const currentLang = useWatch({ control: methods.control, name: "language" }) || "English";

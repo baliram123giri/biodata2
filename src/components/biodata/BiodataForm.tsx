@@ -38,6 +38,8 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
       return (data.stickers || []) as { id: string; name: string; url: string }[];
     },
     enabled: isMantraDialogOpen,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+    gcTime: 1000 * 60 * 60,    // Keep garbage collection time at 1 hour
   });
 
   const handleLanguageChange = (newLang: string | null) => {
