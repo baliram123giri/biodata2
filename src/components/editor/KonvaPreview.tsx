@@ -290,7 +290,11 @@ function StickerItem({
   onClick: (e: any) => void;
 }) {
   const { updateSticker, addSticker } = useBiodataStore();
-  const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  let asset = STICKER_ASSETS.find(a => a.id === sticker.type);
+  if (!asset && (sticker.type.startsWith('http') || sticker.type.startsWith('data:'))) {
+    asset = { id: sticker.type, type: 'image', url: sticker.type, name: 'Custom', path: '', viewBox: '' };
+  }
+  
   const groupRef = useRef<Konva.Group>(null);
   
   const [isMobile, setIsMobile] = useState(false);
@@ -431,6 +435,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  const mantraSticker = formData.stickers?.find(s => s.isMantra);
   const transformerRef = useRef<Konva.Transformer>(null);
   const previewWatermarkRef = useRef<Konva.Text>(null);
   const lastDistRef = useRef<number | null>(null);
@@ -1065,20 +1070,40 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               return (
                 <Group x={headerOffset.x} y={headerOffset.y}>
                   {/* Mantra Rendering */}
-                  {formData.mantra && (
-                    <Text
-                      x={A4_W / 2}
-                      y={paddingY + 10}
-                      text={formData.mantra}
-                      fontSize={layout.fSize * 1.2}
-                      fontFamily={fontFamily}
-                      fontStyle="bold"
-                      fill={primaryColor}
-                      align="center"
-                      width={A4_W}
-                      offsetX={A4_W / 2}
-                    />
-                  )}
+                  <Group y={paddingY + 10}>
+                    {formData.mantra && (
+                      <Text
+                        x={A4_W / 2}
+                        y={0}
+                        text={formData.mantra}
+                        fontSize={layout.fSize * 1.2}
+                        fontFamily={fontFamily}
+                        fontStyle="bold"
+                        fill={primaryColor}
+                        align="center"
+                        width={A4_W}
+                        offsetX={A4_W / 2}
+                      />
+                    )}
+                    {mantraSticker && (
+                      <>
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-left", x: A4_W / 2 - 140, y: -12, scaleX: 0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
+                        />
+                        <StickerItem
+                          sticker={{ ...mantraSticker, id: "mantra-sign-right", x: A4_W / 2 + 95, y: -12, scaleX: 0.45, scaleY: 0.45 }}
+                          color={primaryColor}
+                          isDesigner={false}
+                          isSelected={false}
+                          onClick={() => {}}
+                        />
+                      </>
+                    )}
+                  </Group>
 
                   {/* Title Rendering */}
                   {formData.title && (() => {
@@ -1362,7 +1387,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             )}
 
             {/* Stickers Rendering */}
-            {formData.stickers?.map((sticker) => (
+            {formData.stickers?.filter(s => !s.isMantra).map((sticker) => (
               <StickerItem 
                 key={sticker.id} 
                 sticker={sticker} 

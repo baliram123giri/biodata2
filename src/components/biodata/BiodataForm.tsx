@@ -13,14 +13,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2 } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
+import { useQuery } from "@tanstack/react-query";
+import { useBiodataStore } from "@/store/useBiodataStore";
 
 export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const currentLang = watchLang || "English";
+
+  const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
+  const [mantraReligion, setMantraReligion] = useState("Hindu");
+  const { addSticker, removeSticker, formData } = useBiodataStore();
+  const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
+
+  const { data: mantraStickers, isLoading: isLoadingMantras } = useQuery({
+    queryKey: ["mantraStickers", mantraReligion],
+    queryFn: async () => {
+      const res = await fetch(`/api/stickers?type=Mantra&religion=${mantraReligion}&limit=50`);
+      if (!res.ok) throw new Error("Failed to load mantras");
+      const data = await res.json();
+      return (data.stickers || []) as { id: string; name: string; url: string }[];
+    },
+    enabled: isMantraDialogOpen,
+  });
 
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
@@ -109,9 +127,40 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="mantra">Mantra / Heading</Label>
-                <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} />
+              <div className="space-y-2 relative">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="mantra">Mantra / Heading</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 text-[10px] px-2 text-primary font-bold hover:bg-primary/10"
+                    onClick={() => setIsMantraDialogOpen(true)}
+                  >
+                    <Sparkles className="w-3 h-3 mr-1"/> {currentMantraSticker ? "Change Sign" : "Add Sign"}
+                  </Button>
+                </div>
+                {currentMantraSticker && (
+                  <div className="flex items-center gap-3 p-2 bg-muted/20 border border-border/50 rounded-lg">
+                    <div 
+                      className="w-12 h-12 bg-white rounded-md border flex items-center justify-center overflow-hidden cursor-pointer shrink-0" 
+                      onClick={() => setIsMantraDialogOpen(true)}
+                    >
+                      <img src={currentMantraSticker.type} alt="Mantra Sign" className="w-10 h-10 object-contain hover:scale-105 transition-transform" />
+                    </div>
+                    <div className="flex-1 flex flex-col">
+                      <span className="text-xs font-bold text-foreground">Sign Selected</span>
+                      <button 
+                        type="button" 
+                        onClick={() => removeSticker(currentMantraSticker.id)} 
+                        className="text-[10px] text-destructive hover:underline text-left mt-0.5"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <Input id="mantra" placeholder="e.g. Shree Ganeshay Namah" {...register("mantra")} className={currentMantraSticker ? "mt-2" : ""} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="title">Biodata Title</Label>
@@ -127,6 +176,75 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
         <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
       </Accordion>
+
+      <Dialog open={isMantraDialogOpen} onOpenChange={setIsMantraDialogOpen}>
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden bg-card border-stitch-outline/20">
+          <DialogHeader className="p-4 md:p-6 pb-2 md:pb-4 border-b border-border/50 sticky top-0 bg-card z-10">
+            <DialogTitle className="text-lg md:text-xl font-bold flex items-center gap-2 text-primary">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Add Mantra Sign
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin">
+            <div className="space-y-3">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Religion</Label>
+              <Select value={mantraReligion} onValueChange={setMantraReligion}>
+                <SelectTrigger className="w-full h-11 border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
+                  <SelectValue placeholder="Select Religion" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hindu">Hindu</SelectItem>
+                  <SelectItem value="Muslim">Muslim</SelectItem>
+                  <SelectItem value="Sikh">Sikh</SelectItem>
+                  <SelectItem value="Jain">Jain</SelectItem>
+                  <SelectItem value="Christian">Christian</SelectItem>
+                  <SelectItem value="Buddhist">Buddhist</SelectItem>
+                  <SelectItem value="All">All Religions</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                Available Signs
+                {isLoadingMantras && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+              </Label>
+              
+              {!isLoadingMantras && mantraStickers?.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-xl bg-muted/10">
+                  No signs available for {mantraReligion} yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {mantraStickers?.map((sticker) => (
+                    <button
+                      key={sticker.id}
+                      type="button"
+                      onClick={() => {
+                        if (currentMantraSticker) {
+                          removeSticker(currentMantraSticker.id);
+                        }
+                        addSticker({ type: sticker.url, x: 250, y: 50, scaleX: 1, scaleY: 1, isMantra: true });
+                        setIsMantraDialogOpen(false);
+                      }}
+                      className="aspect-square flex items-center justify-center rounded-xl border border-border/50 bg-white hover:bg-primary/5 hover:border-primary/40 hover:shadow-md transition-all group overflow-hidden p-2 relative cursor-pointer"
+                    >
+                      <img src={sticker.url} alt={sticker.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex sm:justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setIsMantraDialogOpen(false)} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </FormComponent>
   );
 }

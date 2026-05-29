@@ -21,6 +21,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Template {
@@ -61,6 +68,8 @@ interface Sticker {
   id: string;
   name: string;
   url: string;
+  type?: string;
+  religion?: string;
   createdAt: string;
 }
 
@@ -102,6 +111,8 @@ export default function AdminTemplates() {
 
   const [newStickerName, setNewStickerName] = React.useState("");
   const [newStickerFile, setNewStickerFile] = React.useState<string | null>(null);
+  const [newStickerType, setNewStickerType] = React.useState("Normal");
+  const [newStickerReligion, setNewStickerReligion] = React.useState("Hindu");
   const [isUploadingSticker, setIsUploadingSticker] = React.useState(false);
   const [isAnalyzingSticker, setIsAnalyzingSticker] = React.useState(false);
 
@@ -258,7 +269,7 @@ export default function AdminTemplates() {
     reader.onloadend = () => {
       const base64 = reader.result as string;
       setNewBgFile(base64);
-      handleBgAiAnalyzeName(base64);
+      // Removed automatic AI generation on file select as per user request
     };
     reader.readAsDataURL(file);
   };
@@ -325,7 +336,7 @@ export default function AdminTemplates() {
     reader.onloadend = () => {
       const base64 = reader.result as string;
       setNewStickerFile(base64);
-      handleAiAnalyzeName(base64);
+      // Removed automatic AI generation on file select as per user request
     };
     reader.readAsDataURL(file);
   };
@@ -341,7 +352,12 @@ export default function AdminTemplates() {
       const res = await fetch("/api/admin/stickers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newStickerName, file: newStickerFile }),
+        body: JSON.stringify({ 
+          name: newStickerName, 
+          file: newStickerFile,
+          type: newStickerType,
+          religion: newStickerType === "Mantra" ? newStickerReligion : null
+        }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -836,6 +852,39 @@ export default function AdminTemplates() {
                         className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground disabled:opacity-60"
                       />
                     </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase">Sticker Type</label>
+                      <Select value={newStickerType} onValueChange={setNewStickerType}>
+                        <SelectTrigger className="w-full h-9 text-xs">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Normal" className="text-xs">Normal Sticker</SelectItem>
+                          <SelectItem value="Mantra" className="text-xs">Mantra / Header Sign</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {newStickerType === "Mantra" && (
+                      <div className="space-y-1 animate-fade-in">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Associated Religion</label>
+                        <Select value={newStickerReligion} onValueChange={setNewStickerReligion}>
+                          <SelectTrigger className="w-full h-9 text-xs">
+                            <SelectValue placeholder="Select religion" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Hindu" className="text-xs">Hindu</SelectItem>
+                            <SelectItem value="Muslim" className="text-xs">Muslim</SelectItem>
+                            <SelectItem value="Sikh" className="text-xs">Sikh</SelectItem>
+                            <SelectItem value="Jain" className="text-xs">Jain</SelectItem>
+                            <SelectItem value="Christian" className="text-xs">Christian</SelectItem>
+                            <SelectItem value="Buddhist" className="text-xs">Buddhist</SelectItem>
+                            <SelectItem value="All" className="text-xs">All Religions</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -878,7 +927,14 @@ export default function AdminTemplates() {
                     <Card key={sticker.id} className="bg-card border border-border rounded-xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
                       <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                         <div>
-                          <h4 className="font-bold text-xs text-foreground truncate">{sticker.name}</h4>
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="font-bold text-xs text-foreground truncate">{sticker.name}</h4>
+                            {sticker.type === "Mantra" && (
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 shrink-0">
+                                {sticker.religion}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[8px] text-muted-foreground font-mono truncate block mt-0.5">
                             Added: {new Date(sticker.createdAt).toLocaleDateString()}
                           </span>

@@ -27,6 +27,7 @@ export interface Sticker {
   scaleX: number;
   scaleY: number;
   rotation?: number;
+  isMantra?: boolean;
 }
 
 interface BiodataState {

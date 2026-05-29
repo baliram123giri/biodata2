@@ -5,9 +5,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const cursor = searchParams.get("cursor") || undefined;
+    const type = searchParams.get("type");
+    const religion = searchParams.get("religion");
+
+    const whereClause: any = {};
+    if (type) whereClause.type = type;
+    if (religion) whereClause.religion = religion;
 
     const { prisma } = await import("@/lib/prisma");
     const stickers = await prisma.sticker.findMany({
+      where: whereClause,
       take: limit,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { createdAt: "desc" },

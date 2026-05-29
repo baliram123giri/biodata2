@@ -33,8 +33,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const cursor = searchParams.get("cursor") || undefined;
+    const type = searchParams.get("type");
+    const religion = searchParams.get("religion");
+
+    const whereClause: any = {};
+    if (type) whereClause.type = type;
+    if (religion) whereClause.religion = religion;
 
     const stickers = await prisma.sticker.findMany({
+      where: whereClause,
       take: limit,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { createdAt: "desc" },
@@ -57,7 +64,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, file } = body;
+    const { name, file, type = "Normal", religion = null } = body;
 
     if (!name || !file) {
       return NextResponse.json({ error: "Missing name or file parameter" }, { status: 400 });
@@ -69,6 +76,8 @@ export async function POST(req: Request) {
       data: {
         name,
         url: secureUrl,
+        type,
+        religion,
       },
     });
 
