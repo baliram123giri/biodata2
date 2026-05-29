@@ -21,10 +21,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface DownloadLog {
   id: string;
@@ -43,10 +43,7 @@ interface Template {
 }
 
 export default function AdminBiodatas() {
-  const [downloads, setDownloads] = React.useState<DownloadLog[]>([]);
-  const [templates, setTemplates] = React.useState<Template[]>([]);
-  const [totalRecords, setTotalRecords] = React.useState(0);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
   const [isCsvExporting, setIsCsvExporting] = React.useState(false);
   
   // Filters state
@@ -58,72 +55,39 @@ export default function AdminBiodatas() {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
 
-  // Client-side paginated query memory cache
-  const cacheRef = React.useRef<Record<string, { downloads: DownloadLog[]; total: number }>>({});
-
-  const fetchTemplates = async () => {
-    try {
+  // Load templates once on mount via Query
+  const { data: templatesData } = useQuery({
+    queryKey: ["admin", "templates"],
+    queryFn: async () => {
       const res = await fetch("/api/admin/templates");
-      if (res.ok) {
-        const templatesData = await res.json();
-        setTemplates(templatesData.templates || []);
-      }
-    } catch (err) {
-      console.error("Failed to load templates:", err);
-    }
-  };
+      if (!res.ok) throw new Error("Failed to fetch templates");
+      const json = await res.json();
+      return (json.templates || []) as Template[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+  const templates = templatesData || [];
 
-  const fetchDownloads = async (bypassCache = false) => {
-    const cacheKey = `page=${currentPage}&limit=${pageSize}&search=${search}&format=${formatFilter}&templateId=${templateFilter}`;
-    
-    if (!bypassCache && cacheRef.current[cacheKey]) {
-      setDownloads(cacheRef.current[cacheKey].downloads);
-      setTotalRecords(cacheRef.current[cacheKey].total);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
+  // Fetch downloads query based on filters
+  const downloadsQueryKey = ["admin", "downloads", { currentPage, pageSize, search, formatFilter, templateFilter }];
+  const { data: downloadsData, isLoading } = useQuery({
+    queryKey: downloadsQueryKey,
+    queryFn: async () => {
       const res = await fetch(
         `/api/admin/downloads?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(search)}&format=${formatFilter}&templateId=${templateFilter}`
       );
       if (!res.ok) throw new Error("Failed to fetch download records");
-      const data = await res.json();
-      
-      // Store in memory cache
-      cacheRef.current[cacheKey] = {
-        downloads: data.downloads || [],
-        total: data.total || 0
-      };
+      return res.json();
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
 
-      setDownloads(data.downloads || []);
-      setTotalRecords(data.total || 0);
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "An error occurred while loading download records");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const downloads: DownloadLog[] = downloadsData?.downloads || [];
+  const totalRecords = downloadsData?.total || 0;
 
-  // Load templates once on mount
+  // Reset page when filters change
   React.useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  // Fetch downloads on page or page-size changes
-  React.useEffect(() => {
-    fetchDownloads(false);
-  }, [currentPage, pageSize]);
-
-  // Handle filter changes (Reset page to 1, or manual reload if page is already 1)
-  React.useEffect(() => {
-    if (currentPage === 1) {
-      fetchDownloads(false);
-    } else {
-      setCurrentPage(1);
-    }
+    setCurrentPage(1);
   }, [search, formatFilter, templateFilter]);
 
   const handleDelete = async (id: string) => {
@@ -136,8 +100,7 @@ export default function AdminBiodatas() {
       const data = await res.json();
       if (res.ok) {
         toast.success("Download log deleted successfully");
-        cacheRef.current = {}; // Clear memory cache on deletion
-        fetchDownloads(true); // Force fetch live data from server
+        queryClient.invalidateQueries({ queryKey: ["admin", "downloads"] });
       } else {
         toast.error(data.error || "Failed to delete log");
       }

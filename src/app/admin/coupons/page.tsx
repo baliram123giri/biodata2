@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Coupon {
   id: string;
@@ -44,8 +45,19 @@ interface Coupon {
 }
 
 export default function CouponsAdminPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "coupons"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/coupons");
+      if (!res.ok) throw new Error("Failed to load coupons");
+      const json = await res.json();
+      return (json.coupons || []) as Coupon[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+
+  const coupons = data || [];
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,29 +99,6 @@ export default function CouponsAdminPage() {
     }
   };
 
-  const fetchCoupons = async () => {
-
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/admin/coupons");
-      const data = await res.json();
-      if (res.ok) {
-        setCoupons(data.coupons || []);
-      } else {
-        toast.error(data.error || "Failed to load coupons");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error loading coupons");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
-
   const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim() || !discountValue) {
@@ -137,7 +126,7 @@ export default function CouponsAdminPage() {
         toast.success("Coupon code created successfully!");
         setIsCreateOpen(false);
         resetForm();
-        fetchCoupons();
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
       } else {
         toast.error(data.error || "Failed to create coupon");
       }
@@ -159,10 +148,7 @@ export default function CouponsAdminPage() {
 
       if (res.ok) {
         toast.success(`Coupon ${!currentStatus ? "activated" : "deactivated"} successfully!`);
-        // Optimistic update
-        setCoupons(prev => 
-          prev.map(c => c.id === id ? { ...c, active: !currentStatus } : c)
-        );
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
       } else {
         toast.error("Failed to update coupon status");
       }
@@ -182,7 +168,7 @@ export default function CouponsAdminPage() {
 
       if (res.ok) {
         toast.success("Coupon deleted successfully!");
-        setCoupons(prev => prev.filter(c => c.id !== id));
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
       } else {
         toast.error("Failed to delete coupon");
       }

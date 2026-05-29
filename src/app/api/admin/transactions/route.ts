@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, withRetry } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 
@@ -21,7 +22,12 @@ export async function GET(req: Request) {
     const format = searchParams.get("format") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
+    const bypassCache = searchParams.get("bypass") === "true";
     const skip = (page - 1) * limit;
+
+    // Unique cache key per filter combination
+    const cacheKey = `transactions:${search}:${status}:${format}:${page}:${limit}`;
+    if (bypassCache) apiCache.invalidate(cacheKey);
 
     // Build query filters
     const where: any = {};
@@ -45,6 +51,7 @@ export async function GET(req: Request) {
       ];
     }
 
+    const result = await apiCache.remember(cacheKey, TTL.SHORT, async () => {
     // Get orders
     const [ordersRaw, total] = await Promise.all([
       withRetry(() =>
@@ -94,23 +101,26 @@ export async function GET(req: Request) {
     const paidCount = allPaidOrders._count.id;
     const successRate = totalTransactions > 0 ? Math.round((paidCount / totalTransactions) * 100) : 100;
 
-    return NextResponse.json({
-      success: true,
-      orders,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-      stats: {
-        totalRevenue,
-        totalTransactions,
-        paidCount,
-        pendingCount: allPendingOrders,
-        successRate,
-      },
-    });
+    return {
+        success: true,
+        orders,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+        stats: {
+          totalRevenue,
+          totalTransactions,
+          paidCount,
+          pendingCount: allPendingOrders,
+          successRate,
+        },
+      };
+    }); // end apiCache.remember
+
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Fetch transactions error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

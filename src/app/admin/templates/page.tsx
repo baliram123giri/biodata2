@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Template {
   id: string;
@@ -54,61 +55,38 @@ interface Background {
 }
 
 export default function AdminTemplates() {
-  const [templates, setTemplates] = React.useState<Template[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = React.useState<"templates" | "backgrounds">("templates");
-  const [backgrounds, setBackgrounds] = React.useState<Background[]>([]);
-  const [isBgLoading, setIsBgLoading] = React.useState(false);
   const [newBgName, setNewBgName] = React.useState("");
   const [newBgFile, setNewBgFile] = React.useState<string | null>(null);
   const [isUploadingBg, setIsUploadingBg] = React.useState(false);
 
-  // Fetch templates from API
-  const fetchTemplates = async () => {
-    setIsLoading(true);
-    try {
+  // Fetch templates query
+  const { data: templatesData, isLoading } = useQuery({
+    queryKey: ["admin", "templates"],
+    queryFn: async () => {
       const res = await fetch("/api/admin/templates");
-      const data = await res.json();
-      if (res.ok) {
-        setTemplates(data.templates || []);
-      } else {
-        toast.error(data.error || "Failed to load templates");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while fetching templates");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (!res.ok) throw new Error("Failed to load templates");
+      const json = await res.json();
+      return (json.templates || []) as Template[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+  const templates = templatesData || [];
 
-  const fetchBackgrounds = async () => {
-    setIsBgLoading(true);
-    try {
+  // Fetch backgrounds query
+  const { data: backgroundsData, isLoading: isBgLoading } = useQuery({
+    queryKey: ["admin", "backgrounds"],
+    queryFn: async () => {
       const res = await fetch("/api/admin/backgrounds");
-      const data = await res.json();
-      if (res.ok) {
-        setBackgrounds(data.backgrounds || []);
-      } else {
-        toast.error(data.error || "Failed to load background SVGs");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred fetching background SVGs");
-    } finally {
-      setIsBgLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  React.useEffect(() => {
-    if (activeTab === "backgrounds") {
-      fetchBackgrounds();
-    }
-  }, [activeTab]);
+      if (!res.ok) throw new Error("Failed to load background SVGs");
+      const json = await res.json();
+      return (json.backgrounds || []) as Background[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+    enabled: activeTab === "backgrounds",
+  });
+  const backgrounds = backgroundsData || [];
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     try {
@@ -120,7 +98,7 @@ export default function AdminTemplates() {
       const data = await res.json();
       if (res.ok) {
         toast.success(`Template ${!currentStatus ? "enabled" : "disabled"} successfully`);
-        setTemplates(templates.map(t => t.id === id ? { ...t, active: !currentStatus } : t));
+        queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
       } else {
         toast.error(data.error || "Failed to update template status");
       }
@@ -140,7 +118,7 @@ export default function AdminTemplates() {
       const data = await res.json();
       if (res.ok) {
         toast.success("Template deleted successfully");
-        setTemplates(templates.filter(t => t.id !== id));
+        queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
       } else {
         toast.error(data.error || "Failed to delete template");
       }
@@ -184,7 +162,7 @@ export default function AdminTemplates() {
         setNewBgFile(null);
         const fileInput = document.getElementById("bg-file-input") as HTMLInputElement;
         if (fileInput) fileInput.value = "";
-        fetchBackgrounds();
+        queryClient.invalidateQueries({ queryKey: ["admin", "backgrounds"] });
       } else {
         toast.error(data.error || "Failed to upload background");
       }
@@ -205,7 +183,7 @@ export default function AdminTemplates() {
       const data = await res.json();
       if (res.ok) {
         toast.success("Background deleted successfully!");
-        setBackgrounds(backgrounds.filter(bg => bg.id !== id));
+        queryClient.invalidateQueries({ queryKey: ["admin", "backgrounds"] });
       } else {
         toast.error(data.error || "Failed to delete background");
       }

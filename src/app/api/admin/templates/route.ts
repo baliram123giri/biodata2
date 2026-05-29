@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
+
+export const TEMPLATES_CACHE_KEY = "admin:templates";
 
 export const BgConfigSchema = z.object({
   url: z.string().optional().nullable(),
@@ -70,9 +73,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const templates = await prisma.template.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const templates = await apiCache.remember(TEMPLATES_CACHE_KEY, TTL.LONG, () =>
+      prisma.template.findMany({ orderBy: { createdAt: "desc" } })
+    );
 
     return NextResponse.json({ templates });
   } catch (error: any) {
@@ -230,6 +233,9 @@ export async function POST(req: Request) {
         comboDiscountPrice: comboDiscountPrice !== undefined && comboDiscountPrice !== null && comboDiscountPrice !== "" ? parseFloat(comboDiscountPrice) : null,
       },
     });
+
+    // Bust templates cache so next GET returns fresh list
+    apiCache.invalidate(TEMPLATES_CACHE_KEY);
 
     return NextResponse.json({ success: true, template });
   } catch (error: any) {

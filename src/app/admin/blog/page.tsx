@@ -58,6 +58,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import ImageExtension from "@tiptap/extension-image";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface BlogPost {
   id: string;
@@ -75,8 +76,19 @@ interface BlogPost {
 }
 
 export default function AdminBlogPosts() {
-  const [posts, setPosts] = React.useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
+  const { data: postsData, isLoading } = useQuery({
+    queryKey: ["admin", "blog"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/blog");
+      if (!res.ok) throw new Error("Failed to load blog posts");
+      const json = await res.json();
+      return (json.posts || []) as BlogPost[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+  const posts = postsData || [];
+
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingPost, setEditingPost] = React.useState<BlogPost | null>(null);
@@ -131,28 +143,6 @@ export default function AdminBlogPosts() {
       },
     },
   });
-
-  const fetchPosts = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/admin/blog");
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-      } else {
-        toast.error("Failed to load blog posts");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while loading blog posts");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchPosts();
-  }, []);
 
   // Sync Form and Tiptap state
   React.useEffect(() => {
@@ -236,7 +226,7 @@ export default function AdminBlogPosts() {
         toast.success(editingPost ? "Blog post updated successfully!" : "Blog post created successfully!");
         setIsDialogOpen(false);
         setEditingPost(null);
-        fetchPosts();
+        queryClient.invalidateQueries({ queryKey: ["admin", "blog"] });
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to save blog post");
@@ -259,7 +249,7 @@ export default function AdminBlogPosts() {
 
       if (res.ok) {
         toast.success("Blog post deleted successfully!");
-        fetchPosts();
+        queryClient.invalidateQueries({ queryKey: ["admin", "blog"] });
       } else {
         toast.error("Failed to delete blog post");
       }

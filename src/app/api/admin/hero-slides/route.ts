@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import cloudinary from "@/lib/cloudinary";
+
+export const HERO_SLIDES_CACHE_KEY = "admin:hero-slides";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -44,9 +47,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const slides = await prisma.heroSlide.findMany({
-      orderBy: { order: "asc" },
-    });
+    const slides = await apiCache.remember(HERO_SLIDES_CACHE_KEY, TTL.LONG, () =>
+      prisma.heroSlide.findMany({
+        orderBy: { order: "asc" },
+      })
+    );
 
     return NextResponse.json({ slides });
   } catch (error: any) {
@@ -80,6 +85,9 @@ export async function POST(req: Request) {
         active: active !== false,
       },
     });
+
+    // Invalidate hero-slides cache
+    apiCache.invalidate(HERO_SLIDES_CACHE_KEY);
 
     return NextResponse.json({ slide });
   } catch (error: any) {

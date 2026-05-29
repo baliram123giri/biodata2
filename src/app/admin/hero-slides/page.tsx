@@ -26,6 +26,7 @@ import {
   DialogDescription 
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface HeroSlide {
   id: string;
@@ -37,8 +38,19 @@ interface HeroSlide {
 }
 
 export default function AdminHeroSlides() {
-  const [slides, setSlides] = React.useState<HeroSlide[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "hero-slides"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/hero-slides");
+      if (!res.ok) throw new Error("Failed to load hero slides");
+      const json = await res.json();
+      return (json.slides || []) as HeroSlide[];
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+
+  const slides = data || [];
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   
@@ -47,28 +59,6 @@ export default function AdminHeroSlides() {
   const [order, setOrder] = React.useState("0");
   const [imageFile, setImageFile] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState("");
-
-  const fetchSlides = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/admin/hero-slides");
-      if (res.ok) {
-        const data = await res.json();
-        setSlides(data.slides || []);
-      } else {
-        toast.error("Failed to load hero slides");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while loading slides");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchSlides();
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -113,7 +103,7 @@ export default function AdminHeroSlides() {
         setImageFile(null);
         setFileName("");
         setIsDialogOpen(false);
-        fetchSlides();
+        queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to create slide");
@@ -136,7 +126,7 @@ export default function AdminHeroSlides() {
 
       if (res.ok) {
         toast.success(`Slide ${!currentActive ? "activated" : "deactivated"} successfully!`);
-        fetchSlides();
+        queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
       } else {
         toast.error("Failed to toggle slide status");
       }
@@ -156,7 +146,7 @@ export default function AdminHeroSlides() {
 
       if (res.ok) {
         toast.success("Slide sort order updated!");
-        fetchSlides();
+        queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
       } else {
         toast.error("Failed to update slide order");
       }
@@ -176,7 +166,7 @@ export default function AdminHeroSlides() {
 
       if (res.ok) {
         toast.success("Hero slide deleted successfully!");
-        fetchSlides();
+        queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
       } else {
         toast.error("Failed to delete slide");
       }

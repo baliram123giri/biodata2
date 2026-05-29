@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache } from "@/lib/api-cache";
+import { TEMPLATES_CACHE_KEY } from "../route";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
@@ -314,6 +316,9 @@ export async function PATCH(
       data: updateData,
     });
 
+    // Bust templates list cache — individual template changed
+    apiCache.invalidate(TEMPLATES_CACHE_KEY);
+
     return NextResponse.json({ success: true, template: updated });
   } catch (error: any) {
     console.error("Update template error:", error);
@@ -359,9 +364,10 @@ export async function DELETE(
       }
     }
 
-    await prisma.template.delete({
-      where: { id },
-    });
+    await prisma.template.delete({ where: { id } });
+
+    // Bust templates list cache — template removed
+    apiCache.invalidate(TEMPLATES_CACHE_KEY);
 
     return NextResponse.json({ success: true, message: "Template deleted successfully" });
   } catch (error: any) {

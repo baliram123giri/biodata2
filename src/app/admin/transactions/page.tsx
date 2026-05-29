@@ -28,17 +28,15 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function AdminTransactions() {
-  const [orders, setOrders] = React.useState<any[]>([]);
-  const [stats, setStats] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [status, setStatus] = React.useState("ALL");
   const [format, setFormat] = React.useState("ALL");
   const [page, setPage] = React.useState(1);
-  const [pagination, setPagination] = React.useState<any>(null);
   const [selectedTransaction, setSelectedTransaction] = React.useState<any>(null);
 
   // Debounce search input
@@ -50,37 +48,54 @@ export default function AdminTransactions() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchTransactions = async (bypassCache = false) => {
-    setIsLoading(true);
-    try {
+  const queryKey = ["admin", "transactions", { debouncedSearch, status, format, page }];
+  const { data, isLoading, refetch } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const url = new URL("/api/admin/transactions", window.location.origin);
       if (debouncedSearch) url.searchParams.set("search", debouncedSearch);
       if (status && status !== "ALL") url.searchParams.set("status", status.toLowerCase());
       if (format && format !== "ALL") url.searchParams.set("format", format.toLowerCase());
       url.searchParams.set("page", String(page));
       url.searchParams.set("limit", "15");
-      if (bypassCache) url.searchParams.set("bypass", "true");
-
       const res = await fetch(url.toString());
-      if (res.ok) {
-        const json = await res.json();
-        setOrders(json.orders || []);
-        setStats(json.stats || null);
-        setPagination(json.pagination || null);
-      } else {
-        toast.error("Failed to load transactions history");
+      if (!res.ok) throw new Error("Failed to load transactions history");
+      return res.json();
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
+
+  const orders: any[] = data?.orders || [];
+  const stats = data?.stats || null;
+  const pagination = data?.pagination || null;
+
+  const fetchTransactions = async (bypassCache = false) => {
+    if (bypassCache) {
+      try {
+        await queryClient.fetchQuery({
+          queryKey,
+          queryFn: async () => {
+            const url = new URL("/api/admin/transactions", window.location.origin);
+            if (debouncedSearch) url.searchParams.set("search", debouncedSearch);
+            if (status && status !== "ALL") url.searchParams.set("status", status.toLowerCase());
+            if (format && format !== "ALL") url.searchParams.set("format", format.toLowerCase());
+            url.searchParams.set("page", String(page));
+            url.searchParams.set("limit", "15");
+            url.searchParams.set("bypass", "true");
+            const res = await fetch(url.toString());
+            if (!res.ok) throw new Error("Failed to load transactions history");
+            return res.json();
+          }
+        });
+        toast.success("Transactions list successfully synced");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to sync transactions list");
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error communicating with servers");
-    } finally {
-      setIsLoading(false);
+    } else {
+      refetch();
     }
   };
-
-  React.useEffect(() => {
-    fetchTransactions();
-  }, [debouncedSearch, status, format, page]);
 
   const resetFilters = () => {
     setSearch("");
@@ -598,10 +613,9 @@ export default function AdminTransactions() {
                             
                             if (res.ok) {
                               toast.success(`Transaction status successfully set to ${newVal}`);
-                              // Update local state immediately
-                              setOrders((prev: any[]) => prev.map((o: any) => o.id === selectedTransaction.id ? { ...o, status: newVal.toLowerCase() } : o));
+                              // Invalidate query cache to pull updated transactions
+                              queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
                               setSelectedTransaction((prev: any) => ({ ...prev, status: newVal.toLowerCase() }));
-                              fetchTransactions(); // refresh stats & metrics
                             } else {
                               const errData = await res.json();
                               toast.error(errData.error || "Failed to update transaction status");

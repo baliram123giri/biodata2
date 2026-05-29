@@ -24,33 +24,42 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function AdminDashboard() {
-  const [timeRange, setTimeRange] = React.useState("7d");
-  const [data, setData] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const queryClient = useQueryClient();
+
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin", "dashboard-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/dashboard-stats");
+      if (!res.ok) throw new Error("Failed to load dashboard metrics");
+      return res.json();
+    },
+    staleTime: Infinity, // Cache until page refresh
+  });
 
   const fetchDashboardStats = async (bypass = false) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/admin/dashboard-stats${bypass ? "?bypass=true" : ""}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      } else {
-        toast.error("Failed to load dashboard metrics");
+    if (bypass) {
+      try {
+        await queryClient.fetchQuery({
+          queryKey: ["admin", "dashboard-stats"],
+          queryFn: async () => {
+            const res = await fetch("/api/admin/dashboard-stats?bypass=true");
+            if (!res.ok) throw new Error("Failed to load dashboard metrics");
+            return res.json();
+          }
+        });
+        toast.success("Dashboard metrics refreshed successfully");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to refresh dashboard metrics");
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred fetching dashboard metrics");
-    } finally {
-      setIsLoading(false);
+    } else {
+      refetch();
     }
   };
-
-  React.useEffect(() => {
-    fetchDashboardStats(false);
-  }, []);
 
   // Stats Card data mapped dynamically
   const stats = [

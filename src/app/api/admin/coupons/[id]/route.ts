@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, withRetry } from "@/lib/prisma";
+import { apiCache } from "@/lib/api-cache";
 
 export async function PATCH(
   req: Request,
@@ -18,10 +19,12 @@ export async function PATCH(
     if (maxUses !== undefined) dataToUpdate.maxUses = maxUses ? parseInt(maxUses) : null;
     if (expiresAt !== undefined) dataToUpdate.expiresAt = expiresAt ? new Date(expiresAt) : null;
 
-    const updated = await prisma.coupon.update({
-      where: { id },
-      data: dataToUpdate,
-    });
+    const updated = await withRetry(() =>
+      prisma.coupon.update({ where: { id }, data: dataToUpdate })
+    );
+
+    // Bust coupon list cache
+    apiCache.invalidate("admin:coupons");
 
     return NextResponse.json({ success: true, coupon: updated });
   } catch (error: any) {
@@ -40,9 +43,10 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    await prisma.coupon.delete({
-      where: { id },
-    });
+    await withRetry(() => prisma.coupon.delete({ where: { id } }));
+
+    // Bust coupon list cache
+    apiCache.invalidate("admin:coupons");
 
     return NextResponse.json({ success: true, message: "Coupon deleted successfully" });
   } catch (error: any) {

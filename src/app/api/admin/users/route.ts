@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 import { hashPassword } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
@@ -16,14 +17,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const users = await prisma.user.findMany({
-      where: {
-        role: {
-          not: "superadmin"
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    });
+    const users = await apiCache.remember("admin:users", TTL.MEDIUM, () =>
+      prisma.user.findMany({
+        where: { role: { not: "superadmin" } },
+        orderBy: { createdAt: "desc" },
+      })
+    );
 
     return NextResponse.json({ users });
   } catch (error: any) {
@@ -67,6 +66,9 @@ export async function POST(req: Request) {
         status: "active"
       }
     });
+
+    // Bust users cache so next GET reflects the new user
+    apiCache.invalidate("admin:users");
 
     return NextResponse.json({
       success: true,

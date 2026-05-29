@@ -76,6 +76,7 @@ import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 import { processPDFField } from "@/lib/pdf-data-utils";
 import type { BiodataFormValues } from "@/types/biodata";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Template {
   id: string;
@@ -234,6 +235,7 @@ const initialFormState = {
 
 export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [formState, setFormState] = React.useState(initialFormState);
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
@@ -823,6 +825,10 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
           if (tempPhoto) {
             localStorage.setItem(`matrimony_designer_preview_photo_${data.template.id}`, tempPhoto);
           }
+        }
+        queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
+        if (isEdit && template?.id) {
+          queryClient.invalidateQueries({ queryKey: ["admin", "template", template.id] });
         }
         router.push("/admin/templates");
         router.refresh();

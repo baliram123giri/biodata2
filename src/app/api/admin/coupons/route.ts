@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-// Import standard authOptions or fallback if needed, but since we are executing in NextAuth context:
-// we can check session easily
+import { prisma, withRetry } from "@/lib/prisma";
+import { apiCache, TTL } from "@/lib/api-cache";
 
-export async function GET(req: Request) {
+const CACHE_KEY = "admin:coupons";
+
+export async function GET() {
   try {
-    const coupons = await prisma.coupon.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const coupons = await apiCache.remember(CACHE_KEY, TTL.MEDIUM, () =>
+      withRetry(() => prisma.coupon.findMany({ orderBy: { createdAt: "desc" } }))
+    );
 
     return NextResponse.json({ success: true, coupons });
   } catch (error: any) {
@@ -34,10 +34,9 @@ export async function POST(req: Request) {
 
     const cleanCode = code.trim().toUpperCase();
 
-    // Check if code already exists
-    const existing = await prisma.coupon.findUnique({
-      where: { code: cleanCode },
-    });
+    const existing = await withRetry(() =>
+      prisma.coupon.findUnique({ where: { code: cleanCode } })
+    );
 
     if (existing) {
       return NextResponse.json(
@@ -46,16 +45,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const coupon = await prisma.coupon.create({
-      data: {
-        code: cleanCode,
-        discountType,
-        discountValue: parseFloat(discountValue),
-        active: active !== undefined ? active : true,
-        maxUses: maxUses ? parseInt(maxUses) : null,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
-      },
-    });
+    const coupon = await withRetry(() =>
+      prisma.coupon.create({
+        data: {
+          code: cleanCode,
+          discountType,
+          discountValue: parseFloat(discountValue),
+          active: active !== undefined ? active : true,
+          maxUses: maxUses ? parseInt(maxUses) : null,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+        },
+      })
+    );
+
+    // Bust coupon cache so next GET is fresh
+    apiCache.invalidate(CACHE_KEY);
 
     return NextResponse.json({ success: true, coupon });
   } catch (error: any) {

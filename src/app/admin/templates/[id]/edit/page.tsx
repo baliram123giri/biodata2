@@ -6,35 +6,36 @@ import { Loader2 } from "lucide-react";
 import { TemplateForm } from "@/components/admin/TemplateForm";
 import { toast } from "sonner";
 
+import { useQuery } from "@tanstack/react-query";
+
 export default function AdminTemplateEdit() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const [template, setTemplate] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+
+  const { data: template, isLoading, isError, error } = useQuery({
+    queryKey: ["admin", "template", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/templates/${id}`);
+      if (!res.ok) {
+        throw new Error("Failed to load template data");
+      }
+      const data = await res.json();
+      if (!data.template) {
+        throw new Error(data.error || "Template not found");
+      }
+      return data.template;
+    },
+    staleTime: Infinity, // Cache until page refresh
+    enabled: !!id,
+  });
 
   React.useEffect(() => {
-    if (!id) return;
-
-    fetch(`/api/admin/templates/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.template) {
-          setTemplate(data.template);
-        } else {
-          toast.error(data.error || "Template not found");
-          router.push("/admin/templates");
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        toast.error("An error occurred while loading template");
-        router.push("/admin/templates");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [id, router]);
+    if (isError && error) {
+      toast.error(error.message || "An error occurred while loading template");
+      router.push("/admin/templates");
+    }
+  }, [isError, error, router]);
 
   if (isLoading) {
     return (
