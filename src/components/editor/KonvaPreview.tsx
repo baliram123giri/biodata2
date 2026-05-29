@@ -46,11 +46,40 @@ const A4_H = 842;
 // ════════════════════════════════════════════════════════════════════
 
 const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
+
+  // Implement object-fit: cover logic manually for Konva
+  const imgWidth = image.width;
+  const imgHeight = image.height;
+  const containerRatio = width / height;
+  const imageRatio = imgWidth / imgHeight;
+
+  let crop = { x: 0, y: 0, width: imgWidth, height: imgHeight };
+
+  if (containerRatio > imageRatio) {
+    // Container is wider than the image
+    const newHeight = imgWidth / containerRatio;
+    crop.y = (imgHeight - newHeight) / 2;
+    crop.height = newHeight;
+  } else {
+    // Container is taller than the image
+    const newWidth = imgHeight * containerRatio;
+    crop.x = (imgWidth - newWidth) / 2;
+    crop.width = newWidth;
+  }
+
   return (
     <Group>
-      <KonvaImage image={image} x={x} y={y} width={width} height={height} cornerRadius={cornerRadius} />
+      <KonvaImage 
+        image={image} 
+        x={x} 
+        y={y} 
+        width={width} 
+        height={height} 
+        crop={crop}
+        cornerRadius={cornerRadius} 
+      />
       {borderColor && (
         <Rect
           x={x}
@@ -75,7 +104,7 @@ const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: stri
 });
 
 const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
 });
 
@@ -113,8 +142,9 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
   bgConfig?: TemplateConfig["bgConfig"];
   isCustom?: boolean;
 }) {
-  const [image] = useImage(bgConfig?.url || "", "anonymous");
-  if (!bgConfig?.url || !image) return null;
+  const bgUrl = bgConfig?.url || "";
+  const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
+  if (!bgConfig || !bgUrl || !image) return null;
   
   let x = bgConfig.x;
   let y = bgConfig.y;

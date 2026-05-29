@@ -33,7 +33,9 @@ import {
   DollarSign,
   Tag,
   BadgePercent,
-  Crown
+  Crown,
+  Undo2,
+  Redo2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -186,7 +188,7 @@ const initialFormState = {
   photoX: "390",
   photoY: "100",
   photoWidth: "140",
-  photoHeight: "175",
+  photoHeight: "140",
   photoCornerRadius: "0",
   photoShowBorder: true,
   frameType: "image",
@@ -238,12 +240,163 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [formState, setFormState] = React.useState(initialFormState);
+  
+  // History for Undo/Redo
+  const [history, setHistory] = React.useState<typeof initialFormState[]>([]);
+  const [historyIndex, setHistoryIndex] = React.useState(-1);
+  const isUndoRedoing = React.useRef(false);
+
+  React.useEffect(() => {
+    if (isUndoRedoing.current) {
+      isUndoRedoing.current = false;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setHistory(prev => {
+        const currentIndexState = prev[historyIndex];
+        if (currentIndexState && JSON.stringify(currentIndexState) === JSON.stringify(formState)) {
+          return prev;
+        }
+        const newHistory = historyIndex >= 0 ? prev.slice(0, historyIndex + 1) : [];
+        newHistory.push(formState);
+        if (newHistory.length > 30) newHistory.shift();
+        setHistoryIndex(newHistory.length - 1);
+        return newHistory;
+      });
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [formState, historyIndex]);
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      isUndoRedoing.current = true;
+      setHistoryIndex(prev => prev - 1);
+      setFormState(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      isUndoRedoing.current = true;
+      setHistoryIndex(prev => prev + 1);
+      setFormState(history[historyIndex + 1]);
+    }
+  };
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
   const [isAiFilling, setIsAiFilling] = React.useState(false);
   const [aiGender, setAiGender] = React.useState<"male" | "female">("male");
   const [aiReligion, setAiReligion] = React.useState("Hindu");
   const [dbBackgrounds, setDbBackgrounds] = React.useState<any[]>([]);
+  
+  // Admin AI Photo Generator states
+  const [adminAiGender, setAdminAiGender] = React.useState<"male" | "female">("male");
+  const [adminAiStyle, setAdminAiStyle] = React.useState<"traditional" | "professional">("traditional");
+  const [adminAiAge, setAdminAiAge] = React.useState("26");
+  const [adminAiReligion, setAdminAiReligion] = React.useState("Hindu");
+  const [isAdminAiGenerating, setIsAdminAiGenerating] = React.useState(false);
+  const [adminAiResultUrl, setAdminAiResultUrl] = React.useState("");
+  
+  // Admin AI Frame Generator states
+  const [isAiFrameGenerating, setIsAiFrameGenerating] = React.useState(false);
+  const [aiFrameTheme, setAiFrameTheme] = React.useState("floral");
+  const [aiFrameColor, setAiFrameColor] = React.useState("gold and white");
+  const [aiFramePadding, setAiFramePadding] = React.useState(40);
+  const [aiFrameAdditionalPrompt, setAiFrameAdditionalPrompt] = React.useState("");
+
+  const handleAdminGenerateAiFrame = async () => {
+    setIsAiFrameGenerating(true);
+    try {
+      const res = await fetch("/api/generate-frame", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          theme: aiFrameTheme,
+          color: aiFrameColor,
+          additionalPrompt: aiFrameAdditionalPrompt,
+        })
+      });
+      
+      if (!res.body) throw new Error("No response body");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let streamContent = "";
+      let lastUpdateTime = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        streamContent += decoder.decode(value, { stream: true });
+
+        const now = Date.now();
+        if (now - lastUpdateTime > 200) {
+          lastUpdateTime = now;
+          
+          let cleanSvg = streamContent.trim();
+          cleanSvg = cleanSvg.replace(/^```(svg|xml)?\n?/i, "");
+          
+          if (cleanSvg.includes("<svg") && !cleanSvg.includes("</svg>")) {
+             cleanSvg += "</svg>";
+          }
+          
+          try {
+            const innerSvgBase64 = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(cleanSvg)));
+            const wrapperSvgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842" width="595" height="842">
+  <image href="${innerSvgBase64}" x="0" y="0" width="595" height="842" preserveAspectRatio="xMidYMid slice" />
+  <rect x="${aiFramePadding}" y="${aiFramePadding}" width="${595 - 2 * aiFramePadding}" height="${842 - 2 * aiFramePadding}" fill="#ffffff" fill-opacity="0.88" rx="15" />
+</svg>`;
+            
+            setFormState(prev => ({
+              ...prev,
+              bgImageUrl: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(wrapperSvgString))),
+              bgImageFile: "",
+              bgImageX: "0",
+              bgImageY: "0",
+              bgImageWidth: "595",
+              bgImageHeight: "842",
+              bgImageOpacity: "1"
+            }));
+          } catch (e) {
+            // Ignore parse errors during stream
+          }
+        }
+      }
+
+      // Final complete parsing
+      let finalSvg = streamContent.trim();
+      const svgMatch = finalSvg.match(/<svg[\s\S]*<\/svg>/i);
+      if (svgMatch) {
+        finalSvg = svgMatch[0];
+      } else {
+        finalSvg = finalSvg.replace(/^```(svg|xml)?\n?/i, "").replace(/\n?```$/i, "");
+      }
+
+      const finalInnerSvgBase64 = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(finalSvg)));
+      const finalWrapperSvgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842" width="595" height="842">
+  <image href="${finalInnerSvgBase64}" x="0" y="0" width="595" height="842" preserveAspectRatio="xMidYMid slice" />
+  <rect x="${aiFramePadding}" y="${aiFramePadding}" width="${595 - 2 * aiFramePadding}" height="${842 - 2 * aiFramePadding}" fill="#ffffff" fill-opacity="0.88" rx="15" />
+</svg>`;
+
+      setFormState(prev => ({
+        ...prev,
+        bgImageUrl: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(finalWrapperSvgString))),
+        bgImageFile: "",
+        bgImageX: "0",
+        bgImageY: "0",
+        bgImageWidth: "595",
+        bgImageHeight: "842",
+        bgImageOpacity: "1"
+      }));
+
+      toast.success("✓ AI Background SVG Frame Applied!");
+    } catch (err) {
+      toast.error("Error generating frame");
+    } finally {
+      setIsAiFrameGenerating(false);
+    }
+  };
+
   const methods = useForm<BiodataFormValues>({
     defaultValues: defaultBiodataValues,
   });
@@ -397,6 +550,37 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       toast.error(err.message || "Failed to generate AI data. Check GEMINI_API_KEY.");
     } finally {
       setIsAiFilling(false);
+    }
+  };
+
+  const handleAdminGenerateAiPhoto = async () => {
+    setIsAdminAiGenerating(true);
+    const toastId = toast.loading("🤖 Generating premium preview portrait...", { duration: 60000 });
+    try {
+      const res = await fetch("/api/generate-portrait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gender: adminAiGender,
+          style: adminAiStyle,
+          age: adminAiAge,
+          religion: adminAiReligion,
+        })
+      });
+      const data = await res.json();
+      toast.dismiss(toastId);
+      if (data.success && data.url) {
+        setAdminAiResultUrl(data.url);
+        toast.success("✨ AI portrait generated!");
+      } else {
+        toast.error(data.error || "Failed to generate portrait");
+      }
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.error("Error generating admin AI photo:", err);
+      toast.error("Failed to generate AI photo");
+    } finally {
+      setIsAdminAiGenerating(false);
     }
   };
 
@@ -641,7 +825,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         photoX: parseInt(formState.photoX) || 390,
         photoY: parseInt(formState.photoY) || 100,
         photoWidth: parseInt(formState.photoWidth) || 140,
-        photoHeight: parseInt(formState.photoHeight) || 175,
+        photoHeight: parseInt(formState.photoHeight) || 140,
         photoCornerRadius: parseInt(formState.photoCornerRadius) || 8,
         photoShowBorder: formState.photoShowBorder !== false,
         frameType: formState.frameType,
@@ -911,6 +1095,33 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               )}
             >
               📄 High-Fidelity SVG
+            </Button>
+          </div>
+
+          <div className="h-5 w-[1px] bg-border" />
+          
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-full border border-border/50">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={historyIndex <= 0}
+              onClick={handleUndo}
+              className="h-8 w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={historyIndex >= history.length - 1}
+              onClick={handleRedo}
+              className="h-8 w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo2 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             </Button>
           </div>
 
@@ -1571,6 +1782,104 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           </div>
                         </div>
                       )}
+
+                      <div className="relative flex py-1.5 items-center mt-4">
+                        <div className="flex-grow border-t border-border/85"></div>
+                        <span className="flex-shrink mx-3 text-[9px] text-muted-foreground font-bold uppercase tracking-wider">or generate Frame with AI</span>
+                        <div className="flex-grow border-t border-border/85"></div>
+                      </div>
+
+                      <div className="space-y-3 bg-slate-100/50 dark:bg-slate-900/30 p-3 rounded-lg border border-slate-200/80 dark:border-slate-800/50">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                          Generate beautiful luxury A4 biodata backgrounds using AI:
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Theme/Style</Label>
+                            <Select
+                              value={aiFrameTheme}
+                              onValueChange={(val: any) => setAiFrameTheme(val)}
+                            >
+                              <SelectTrigger className="w-full text-xs rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 h-8 px-2 cursor-pointer">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 rounded-lg shadow-md">
+                                <SelectItem value="floral" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Floral / Nature</SelectItem>
+                                <SelectItem value="mandala" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Royal Mandala</SelectItem>
+                                <SelectItem value="minimalist" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Elegant Minimalist</SelectItem>
+                                <SelectItem value="watercolor" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Soft Watercolor</SelectItem>
+                                <SelectItem value="vintage" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Classic Vintage</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Color Palette</Label>
+                            <Select
+                              value={aiFrameColor}
+                              onValueChange={(val: any) => setAiFrameColor(val)}
+                            >
+                              <SelectTrigger className="w-full text-xs rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 h-8 px-2 cursor-pointer">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 rounded-lg shadow-md">
+                                <SelectItem value="gold and white" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Gold & White</SelectItem>
+                                <SelectItem value="rose gold and cream" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Rose Gold & Cream</SelectItem>
+                                <SelectItem value="maroon and gold" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Maroon & Gold</SelectItem>
+                                <SelectItem value="emerald and gold" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Emerald & Gold</SelectItem>
+                                <SelectItem value="navy blue and silver" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Navy & Silver</SelectItem>
+                                <SelectItem value="pastel peach and white" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Peach & White</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 pt-1">
+                          <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Additional Prompt (Optional)</Label>
+                          <Textarea
+                            value={aiFrameAdditionalPrompt}
+                            onChange={(e) => setAiFrameAdditionalPrompt(e.target.value)}
+                            placeholder="e.g. Include red roses, peacock feathers, ancient pillars..."
+                            className="w-full text-xs min-h-[60px] rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 resize-none p-2"
+                          />
+                        </div>
+
+                        <div className="space-y-1 pt-1">
+                          <div className="flex justify-between items-center">
+                            <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Content Cover Padding (px)</Label>
+                            <span className="text-[10px] text-slate-600 font-medium">{aiFramePadding}px</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="150" 
+                            value={aiFramePadding} 
+                            onChange={(e) => setAiFramePadding(parseInt(e.target.value))}
+                            className="w-full accent-emerald-500"
+                          />
+                          <p className="text-[9px] text-slate-500">Adds a solid white semi-transparent reading area in the center.</p>
+                        </div>
+
+                        <Button
+                          type="button"
+                          onClick={handleAdminGenerateAiFrame}
+                          disabled={isAiFrameGenerating}
+                          className="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white font-bold cursor-pointer text-[10.5px] transition-all flex items-center justify-center gap-1.5"
+                        >
+                          {isAiFrameGenerating ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin text-white" />
+                              <span>Generating Frame...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 text-white fill-white" />
+                              <span>Generate AI Background</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </TabsContent>
 
@@ -1862,8 +2171,12 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       <h3 className="text-sm font-bold text-primary uppercase tracking-wider">5. Profile Photo Frame Coordinates</h3>
 
                       {/* Test Profile Photo Uploader */}
-                      <div className="p-4 border border-slate-800 rounded-xl bg-slate-950/40 flex flex-col gap-3">
-                        <Label className="text-xs font-bold text-muted-foreground">Test Preview Photo (Optional)</Label>
+                      <div className="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/80 dark:bg-slate-950/40 flex flex-col gap-4">
+                        <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                          Test Preview Photo (Optional AI Generator)
+                        </Label>
+                        
                         <div className="flex items-center gap-3">
                           {previewPhotoFile ? (
                             <>
@@ -1871,8 +2184,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                 <img src={previewPhotoFile} alt="Preview photo" className="w-full h-full object-cover" />
                               </div>
                               <div className="flex-grow flex flex-col">
-                                <p className="text-[10px] font-bold text-green-400">✓ Test Photo Loaded</p>
-                                <p className="text-[9px] text-slate-400">Fills photo frame on stage</p>
+                                <p className="text-[10px] font-bold text-green-600 dark:text-green-400">✓ Test Photo Loaded</p>
+                                <p className="text-[9px] text-slate-500 dark:text-slate-400">Fills photo frame on stage</p>
                               </div>
                               <Button
                                 type="button"
@@ -1886,30 +2199,147 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                     localStorage.removeItem(key);
                                   }
                                 }}
-                                className="text-[9px] h-7 px-2.5 text-red-400 hover:text-red-300 hover:bg-red-950/20 cursor-pointer"
+                                className="text-[9px] h-7 px-2.5 text-red-500 dark:text-red-400 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-950/20 cursor-pointer"
                               >
                                 Remove
                               </Button>
                             </>
                           ) : (
                             <>
-                              <div className="w-10 h-12 rounded border border-dashed border-slate-700 bg-slate-800/40 flex items-center justify-center shrink-0">
-                                <Upload className="w-4 h-4 text-slate-500" />
+                              <div className="w-10 h-12 rounded border border-dashed border-slate-300 dark:border-slate-700 bg-slate-100/40 dark:bg-slate-800/40 flex items-center justify-center shrink-0">
+                                <Upload className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                               </div>
                               <div className="flex-grow flex flex-col">
-                                <p className="text-[10px] font-bold text-slate-300">Upload Test Portrait</p>
-                                <p className="text-[9px] text-slate-500">Test framing & sizing live</p>
+                                <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Upload Test Portrait</p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500">Test framing & sizing live</p>
                               </div>
                               <Button
                                 type="button"
-                                variant="outline"
-                                size="sm"
                                 onClick={() => previewPhotoInputRef.current?.click()}
-                                className="text-[10px] h-7 px-3.5 cursor-pointer font-bold border-slate-800 text-slate-300 hover:bg-slate-800"
+                                className="text-[10px] h-7 px-3.5 cursor-pointer font-bold border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-all duration-200"
                               >
                                 Browse
                               </Button>
                             </>
+                          )}
+                        </div>
+
+                        <div className="border-t border-slate-200 dark:border-slate-800 my-1" />
+
+                        {/* Admin AI Portrait Controls */}
+                        <div className="space-y-3 bg-slate-100/50 dark:bg-slate-900/30 p-3 rounded-lg border border-slate-200/80 dark:border-slate-800/50">
+                          <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                            Or generate a free, premium Indian matrimonial passport portrait using Flux:
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Gender</Label>
+                              <Select
+                                value={adminAiGender}
+                                onValueChange={(val: any) => setAdminAiGender(val)}
+                              >
+                                <SelectTrigger className="w-full text-xs rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 h-8 px-2 cursor-pointer">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 rounded-lg shadow-md">
+                                  <SelectItem value="male" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Groom (Male)</SelectItem>
+                                  <SelectItem value="female" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Bride (Female)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Attire Style</Label>
+                              <Select
+                                value={adminAiStyle}
+                                onValueChange={(val: any) => setAdminAiStyle(val)}
+                              >
+                                <SelectTrigger className="w-full text-xs rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 h-8 px-2 cursor-pointer">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 rounded-lg shadow-md">
+                                  <SelectItem value="traditional" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Traditional</SelectItem>
+                                  <SelectItem value="professional" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Formal Suit</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Target Age</Label>
+                              <select
+                                value={adminAiAge}
+                                onChange={(e) => setAdminAiAge(e.target.value)}
+                                className="w-full p-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer rounded-lg"
+                              >
+                                {[22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35].map(a => (
+                                  <option key={a} value={a}>{a} Years Old</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Religion context</Label>
+                              <Select
+                                value={adminAiReligion}
+                                onValueChange={(val: any) => setAdminAiReligion(val)}
+                              >
+                                <SelectTrigger className="w-full text-xs rounded-lg bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 h-8 px-2 cursor-pointer">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 rounded-lg shadow-md">
+                                  <SelectItem value="Hindu" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Hindu</SelectItem>
+                                  <SelectItem value="Muslim" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Muslim</SelectItem>
+                                  <SelectItem value="Sikh" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Sikh</SelectItem>
+                                  <SelectItem value="Christian" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Christian</SelectItem>
+                                  <SelectItem value="Jain" className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 text-xs">Jain</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            onClick={handleAdminGenerateAiPhoto}
+                            disabled={isAdminAiGenerating}
+                            className="w-full h-8 rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 hover:opacity-90 text-white font-bold cursor-pointer text-[10.5px] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            {isAdminAiGenerating ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin text-white" />
+                                <span>Generating Portrait...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-3 h-3 text-[#E6C97A] fill-[#E6C97A]" />
+                                <span>Generate AI Portrait</span>
+                              </>
+                            )}
+                          </Button>
+
+                          {adminAiResultUrl && (
+                            <div className="flex flex-col gap-2.5 mt-2.5 bg-white dark:bg-slate-950 p-2.5 border border-slate-200 dark:border-slate-800 rounded-lg animate-in zoom-in duration-200">
+                              <div className="relative aspect-[3/4] w-20 mx-auto rounded overflow-hidden border border-slate-200 dark:border-slate-800">
+                                <img src={adminAiResultUrl} alt="AI Portrait" className="w-full h-full object-cover" />
+                              </div>
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewPhotoFile(adminAiResultUrl);
+                                  if (typeof window !== "undefined") {
+                                    const key = template?.id ? `matrimony_designer_preview_photo_${template.id}` : "matrimony_designer_preview_photo_new";
+                                    localStorage.setItem(key, adminAiResultUrl);
+                                  }
+                                  setAdminAiResultUrl("");
+                                  toast.success("✓ AI portrait set as preview template photo!");
+                                }}
+                                className="w-full h-7 rounded bg-primary hover:bg-primary/95 text-white font-bold cursor-pointer text-[10px]"
+                              >
+                                Apply to Template Preview
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -2432,7 +2862,7 @@ function TemplateSvgPreview({
   const px = parseFloat(formState.photoX) || 390;
   const py = parseFloat(formState.photoY) || 100;
   const pw = parseFloat(formState.photoWidth) || 140;
-  const ph = parseFloat(formState.photoHeight) || 175;
+  const ph = parseFloat(formState.photoHeight) || 140;
   const pr = parseFloat(formState.photoCornerRadius) || 8;
 
   const outerInset = parseFloat(formState.frameOuterInset) || 10;

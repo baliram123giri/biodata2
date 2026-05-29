@@ -44,7 +44,28 @@ const PhotoImage = React.memo(function PhotoImage({
   cornerRadius: number;
   borderColor: string;
 }) {
-  const [image] = useImage(src, "anonymous");
+  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
+
+  let crop = undefined;
+  if (image) {
+    const imgWidth = image.width;
+    const imgHeight = image.height;
+    const containerRatio = width / height;
+    const imageRatio = imgWidth / imgHeight;
+
+    crop = { x: 0, y: 0, width: imgWidth, height: imgHeight };
+
+    if (containerRatio > imageRatio) {
+      const newHeight = imgWidth / containerRatio;
+      crop.y = (imgHeight - newHeight) / 2;
+      crop.height = newHeight;
+    } else {
+      const newWidth = imgHeight * containerRatio;
+      crop.x = (imgWidth - newWidth) / 2;
+      crop.width = newWidth;
+    }
+  }
+
   return (
     <Group>
       {image ? (
@@ -54,6 +75,7 @@ const PhotoImage = React.memo(function PhotoImage({
           y={y}
           width={width}
           height={height}
+          crop={crop}
           cornerRadius={cornerRadius}
         />
       ) : (
@@ -282,7 +304,7 @@ export function KonvaTemplateDesigner({
 
   // Watermark SVG image
   const watermarkSrc = formState.bgImageFile || formState.bgImageUrl || "";
-  const [watermarkImage] = useImage(watermarkSrc, "anonymous");
+  const [watermarkImage] = useImage(watermarkSrc, watermarkSrc.startsWith("data:") ? undefined : "anonymous");
 
   // Custom frame template PNG/SVG
   const frameImageSrc = formState.frameFile || template?.frameUrlTemplate || null;
@@ -1083,16 +1105,7 @@ export function KonvaTemplateDesigner({
                 width={parseFloat(formState.bgImageWidth) || 595}
                 height={parseFloat(formState.bgImageHeight) || 842}
                 opacity={parseFloat(formState.bgImageOpacity) ?? 0.15}
-                draggable={selectedIds.includes("watermark")}
-                onDragStart={handleDragStart}
-                onDragEnd={handleBgDragEnd}
-                onTransformEnd={handleBgTransformEnd}
-                onClick={(e) => {
-                  e.cancelBubble = true;
-                  handleElementSelect("watermark", e.evt.shiftKey);
-                }}
-                onMouseEnter={() => handleSetCursor(selectedIds.includes("watermark") ? 'move' : 'default')}
-                onMouseLeave={() => handleSetCursor('default')}
+                listening={false}
               />
             )}
           </Layer>

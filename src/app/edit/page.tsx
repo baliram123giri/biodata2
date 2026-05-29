@@ -118,7 +118,19 @@ export default function EditPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [biodataHistory, themeHistory]);
   const [isMounted, setIsMounted] = useState(false);
+  const [isStoreHydrated, setIsStoreHydrated] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
+
+  // Monitor store hydration
+  useEffect(() => {
+    if (useBiodataStore.persist.hasHydrated()) {
+      setIsStoreHydrated(true);
+    }
+    const unsub = useBiodataStore.persist.onFinishHydration(() => {
+      setIsStoreHydrated(true);
+    });
+    return () => unsub();
+  }, []);
 
   // Rating & Feedback Modal states
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -127,13 +139,20 @@ export default function EditPage() {
   const [hasRated, setHasRated] = useState(false);
   const [filename, setFilename] = useState("biodata");
 
+  // AI Photo Generator states
+  const [aiGender, setAiGender] = useState<"male" | "female">("male");
+  const [aiStyle, setAiStyle] = useState<"traditional" | "professional">("traditional");
+  const [aiAge, setAiAge] = useState("26");
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState("");
+
   // Sync store data to form ONCE when mounted/hydrated
   useEffect(() => {
-    if (isMounted && !hasInitializedForm && formData) {
+    if (isMounted && isStoreHydrated && !hasInitializedForm && formData) {
       methods.reset(formData);
       setHasInitializedForm(true);
     }
-  }, [isMounted, hasInitializedForm, formData, methods]);
+  }, [isMounted, isStoreHydrated, hasInitializedForm, formData, methods]);
 
   // Synchronize form changes back to the zustand store with debounce to prevent typing lag
   useEffect(() => {
@@ -458,6 +477,32 @@ export default function EditPage() {
       await processPremiumPaymentAndDownload(formData, format, modalFilename);
     } else {
       await triggerDownload(formData, selectedTemplate, format, modalFilename);
+    }
+  };
+
+  const handleGenerateAiPhoto = async () => {
+    setIsAiGenerating(true);
+    try {
+      const res = await fetch("/api/generate-portrait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gender: aiGender,
+          style: aiStyle,
+          age: aiAge,
+          religion: methods.getValues().personalDetails?.find((f: any) => f.id === "religion")?.value || "Hindu"
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setAiResultUrl(data.url);
+      } else {
+        console.error("AI Generation failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Error generating AI photo:", err);
+    } finally {
+      setIsAiGenerating(false);
     }
   };
 
@@ -1107,7 +1152,7 @@ export default function EditPage() {
 
 
               {activeTab === "photo" && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-200">
                   <div className="space-y-4">
                     <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
                     <ImageUpload
@@ -1123,6 +1168,145 @@ export default function EditPage() {
                     <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed italic">
                       Tip: A clear portrait with a simple background looks best in matrimonial biodata.
                     </p>
+                  </div>
+
+                  <div className="border-t border-stitch-outline/10 my-1" />
+
+                  {/* AI Passport Photo Generator */}
+                  <div className="flex flex-col gap-4 bg-stitch-surface-variant/5 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-stitch-primary animate-pulse" />
+                      <Label className="text-[11px] font-bold uppercase tracking-wider text-stitch-on-surface">AI Passport Photo Generator</Label>
+                    </div>
+
+                    <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed">
+                      Don't have a professional photo? Generate a realistic Indian matrimonial portrait instantly for free!
+                    </p>
+
+                    {/* Gender Selection */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Gender</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAiGender("male")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiGender === "male"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Groom (Male)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiGender("female")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiGender === "female"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Bride (Female)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Style Selection */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Attire Style</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAiStyle("traditional")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiStyle === "traditional"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Traditional
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiStyle("professional")}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                            aiStyle === "professional"
+                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
+                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
+                          )}
+                        >
+                          Formal Suit
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Age Input Dropdown */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Target Age</span>
+                      <select
+                        value={aiAge}
+                        onChange={(e) => setAiAge(e.target.value)}
+                        className="w-full p-2.5 text-xs bg-white border border-stitch-outline/15 rounded-xl text-stitch-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-stitch-primary cursor-pointer"
+                      >
+                        {[22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35].map(a => (
+                          <option key={a} value={a}>{a} Years Old</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Generate Button */}
+                    <Button
+                      type="button"
+                      onClick={handleGenerateAiPhoto}
+                      disabled={isAiGenerating}
+                      className="w-full mt-2 py-5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 hover:opacity-90 text-white font-bold cursor-pointer transition-all duration-300 shadow-md flex items-center justify-center gap-2"
+                    >
+                      {isAiGenerating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Generating Portrait...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-[#E6C97A] fill-[#E6C97A]" />
+                          <span>Generate Free Portrait</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Preview Generated AI Portrait */}
+                    {aiResultUrl && (
+                      <div className="flex flex-col gap-3 mt-2 border border-stitch-outline/10 bg-white p-3 rounded-2xl shadow-sm animate-in zoom-in duration-200">
+                        <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-primary text-center">Generated Result</span>
+                        
+                        <div className="relative aspect-[3/4] w-32 mx-auto rounded-xl overflow-hidden border border-black/5 shadow-md">
+                          <img
+                            src={aiResultUrl}
+                            alt="AI Passport Photo"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            methods.setValue("photo", aiResultUrl);
+                            setAiResultUrl(""); // clear preview once applied
+                            if (window.innerWidth < 1024) {
+                              setIsRightOpen(false);
+                            }
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-stitch-primary hover:bg-stitch-primary/95 text-white font-bold cursor-pointer transition-all text-xs"
+                        >
+                          Apply to Biodata
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

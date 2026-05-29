@@ -166,6 +166,8 @@ model Sticker {
   id        String   @id @default(uuid())
   name      String
   url       String
+  type      String   @default("Normal") // "Normal" or "Mantra"
+  religion  String?  // Optional: "Hindu", "Muslim", "Sikh", "Jain", "Christian", "All" etc.
   createdAt DateTime @default(now())
 }
 
