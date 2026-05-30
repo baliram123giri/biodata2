@@ -186,6 +186,9 @@ export function KonvaTemplateDesigner({
   useEffect(() => {
     if (designerRef) {
       (designerRef as any).current = {
+        selectElement: (id: string) => {
+          setSelectedIds([id]);
+        },
         captureThumbnail: async () => {
           const prevSelected = [...selectedIds];
           setSelectedIds([]); // Clear selection to hide bounding boxes
@@ -1200,10 +1203,7 @@ export function KonvaTemplateDesigner({
                 onMouseLeave={() => handleSetCursor('grab')}
               />
             )}
-          </Layer>
 
-          {/* ACTIVE WATERMARK GRAPHIC LAYER (DRAGGABLE/RESIZABLE IN EDITOR) */}
-          <Layer>
             {watermarkImage && (
               <KonvaImage
                 id="watermark"
@@ -1240,10 +1240,7 @@ export function KonvaTemplateDesigner({
                 onMouseLeave={() => handleSetCursor('default')}
               />
             )}
-          </Layer>
-
-          {/* STATIC FRAME DECORATOR LAYER */}
-          <Layer listening={false}>
+<Group listening={false}>
             {formState.frameType === "svg" && (
               <Group>
                 <Rect
@@ -1337,10 +1334,11 @@ export function KonvaTemplateDesigner({
                 )}
               </Group>
             )}
-          </Layer>
+</Group>
+</Layer>
 
-          {/* DYNAMIC TEXT LAYOUT LAYER — fully interactive */}
-          <Layer>
+{/* DYNAMIC CONTENT & INTERACTIVE LAYER */}
+<Layer>
             {/* Draggable Header Section */}
             {(() => {
               const headerKey = "header";
@@ -1713,10 +1711,7 @@ export function KonvaTemplateDesigner({
               fill="#cccccc"
               align="center"
             />
-          </Layer>
 
-          {/* INTERACTIVE PROFILE PHOTO FRAME LAYER (DRAGGABLE/RESIZABLE) */}
-          <Layer>
             <Group
               id="photo"
               ref={photoRef}
@@ -1750,7 +1745,7 @@ export function KonvaTemplateDesigner({
             {selectedIds.length > 0 && (
               <Transformer
                 ref={transformerRef}
-                centeredScaling={true}
+                centeredScaling={selectedId !== "frame" && selectedId !== "watermark"}
                 boundBoxFunc={(oldBox, newBox) => {
                   if (newBox.width < 30 || newBox.height < 30) {
                     return oldBox;
@@ -1758,7 +1753,13 @@ export function KonvaTemplateDesigner({
                   return newBox;
                 }}
                 rotateEnabled={false}
-                enabledAnchors={selectedIds.length === 1 ? ["top-left", "top-right", "bottom-left", "bottom-right"] : []}
+                enabledAnchors={
+                  selectedIds.length === 1
+                    ? selectedId === "frame"
+                      ? ["top-left", "top-center", "top-right", "middle-right", "bottom-right", "bottom-center", "bottom-left", "middle-left"]
+                      : ["top-left", "top-right", "bottom-left", "bottom-right"]
+                    : []
+                }
                 anchorSize={10}
                 anchorCornerRadius={3}
                 anchorStroke={primaryColor}
@@ -1768,12 +1769,8 @@ export function KonvaTemplateDesigner({
                 keepRatio={selectedId === "photo" || selectedId === "watermark"}
               />
             )}
-          </Layer>
-
-          {/* Visual selection box drawing Layer */}
-          {selectionBox && (
-            <Layer>
-              <Rect
+{selectionBox && (
+<Rect
                 x={Math.min(selectionBox.x1, selectionBox.x2)}
                 y={Math.min(selectionBox.y1, selectionBox.y2)}
                 width={Math.abs(selectionBox.x1 - selectionBox.x2)}
@@ -1782,11 +1779,11 @@ export function KonvaTemplateDesigner({
                 stroke="#2563eb"
                 strokeWidth={1 / scale}
                 dash={[3, 3]}
-                listening={false}
-              />
-            </Layer>
-          )}
-        </Stage>
+listening={false}
+/>
+)}
+</Layer>
+</Stage>
         )}
       </div>
 

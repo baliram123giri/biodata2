@@ -28,6 +28,18 @@ async function getSessionUser() {
   return (session?.user as any) || null;
 }
 
+function safeParseInt(val: any, defaultVal: number | null = null): number | null {
+  if (val === undefined || val === null || val === "") return defaultVal;
+  const parsed = parseInt(val);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
+function safeParseFloat(val: any, defaultVal: number | null = null): number | null {
+  if (val === undefined || val === null || val === "") return defaultVal;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
 // Frame images are stored as plain Cloudinary URLs.
 // Dynamic tinting is no longer applied — users manually pick their theme colors.
 function makeColorizableCloudinaryUrl(url: string): string {
@@ -195,7 +207,7 @@ export async function PATCH(
 
     numericFields.forEach((field) => {
       if (body[field] !== undefined) {
-        updateData[field] = body[field] !== null ? parseInt(body[field]) : null;
+        updateData[field] = safeParseInt(body[field]);
       }
     });
 
@@ -220,37 +232,37 @@ export async function PATCH(
       updateData.isPremium = body.isPremium === true;
     }
     if (body.price !== undefined) {
-      updateData.price = body.price !== null && body.price !== "" ? parseFloat(body.price) : null;
+      updateData.price = safeParseFloat(body.price);
     }
     if (body.discountPrice !== undefined) {
-      updateData.discountPrice = body.discountPrice !== null && body.discountPrice !== "" ? parseFloat(body.discountPrice) : null;
+      updateData.discountPrice = safeParseFloat(body.discountPrice);
     }
     if (body.currency !== undefined) {
       updateData.currency = body.currency || "INR";
     }
     if (body.pdfPrice !== undefined) {
-      updateData.pdfPrice = body.pdfPrice !== null && body.pdfPrice !== "" ? parseFloat(body.pdfPrice) : null;
+      updateData.pdfPrice = safeParseFloat(body.pdfPrice);
     }
     if (body.pdfDiscountPrice !== undefined) {
-      updateData.pdfDiscountPrice = body.pdfDiscountPrice !== null && body.pdfDiscountPrice !== "" ? parseFloat(body.pdfDiscountPrice) : null;
+      updateData.pdfDiscountPrice = safeParseFloat(body.pdfDiscountPrice);
     }
     if (body.jpgPrice !== undefined) {
-      updateData.jpgPrice = body.jpgPrice !== null && body.jpgPrice !== "" ? parseFloat(body.jpgPrice) : null;
+      updateData.jpgPrice = safeParseFloat(body.jpgPrice);
     }
     if (body.jpgDiscountPrice !== undefined) {
-      updateData.jpgDiscountPrice = body.jpgDiscountPrice !== null && body.jpgDiscountPrice !== "" ? parseFloat(body.jpgDiscountPrice) : null;
+      updateData.jpgDiscountPrice = safeParseFloat(body.jpgDiscountPrice);
     }
     if (body.pngPrice !== undefined) {
-      updateData.pngPrice = body.pngPrice !== null && body.pngPrice !== "" ? parseFloat(body.pngPrice) : null;
+      updateData.pngPrice = safeParseFloat(body.pngPrice);
     }
     if (body.pngDiscountPrice !== undefined) {
-      updateData.pngDiscountPrice = body.pngDiscountPrice !== null && body.pngDiscountPrice !== "" ? parseFloat(body.pngDiscountPrice) : null;
+      updateData.pngDiscountPrice = safeParseFloat(body.pngDiscountPrice);
     }
     if (body.comboPrice !== undefined) {
-      updateData.comboPrice = body.comboPrice !== null && body.comboPrice !== "" ? parseFloat(body.comboPrice) : null;
+      updateData.comboPrice = safeParseFloat(body.comboPrice);
     }
     if (body.comboDiscountPrice !== undefined) {
-      updateData.comboDiscountPrice = body.comboDiscountPrice !== null && body.comboDiscountPrice !== "" ? parseFloat(body.comboDiscountPrice) : null;
+      updateData.comboDiscountPrice = safeParseFloat(body.comboDiscountPrice);
     }
 
     // File re-uploads

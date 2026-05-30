@@ -35,7 +35,8 @@ import {
   BadgePercent,
   Crown,
   Undo2,
-  Redo2
+  Redo2,
+  Move
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -520,7 +521,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       const res = await fetch("/api/ai-fill-biodata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gender: aiGender, religion: aiReligion }),
+        body: JSON.stringify({ gender: aiGender, religion: aiReligion, language: methods.getValues("language") || formState.language || "English" }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "AI generation failed");
@@ -1798,25 +1799,39 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                 className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
                               />
                             </div>
-
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setFormState({
-                                ...formState,
-                                bgImageUrl: "",
-                                bgImageFile: "",
-                                bgImageX: "0",
-                                bgImageY: "0",
-                                bgImageWidth: "350",
-                                bgImageHeight: "350",
-                                bgImageOpacity: "1.0",
-                              })}
-                              className="w-full text-xs h-8 rounded-lg cursor-pointer"
-                            >
-                              Clear Watermark SVG
-                            </Button>
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  designerRef.current?.selectElement("watermark");
+                                }}
+                                className="flex-1 text-xs h-8 rounded-lg cursor-pointer gap-1.5"
+                              >
+                                <Move className="w-3.5 h-3.5" />
+                                Adjust Watermark
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setFormState({
+                                  ...formState,
+                                  bgImageUrl: "",
+                                  bgImageFile: "",
+                                  bgImageX: "0",
+                                  bgImageY: "0",
+                                  bgImageWidth: "350",
+                                  bgImageHeight: "350",
+                                  bgImageOpacity: "1.0",
+                                })}
+                                className="flex-1 text-xs h-8 rounded-lg cursor-pointer"
+                              >
+                                Clear Watermark
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1878,6 +1893,19 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                 <span className="text-[10px] text-muted-foreground text-center block truncate mt-1">Current: {template.frameUrlTemplate?.slice(0, 40)}...</span>
                               ) : (
                                 <span className="text-xs text-muted-foreground text-center block mt-1">No frame file selected</span>
+                              )}
+                              {(formState.frameFile || template?.frameUrlTemplate) && (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => {
+                                    designerRef.current?.selectElement("frame");
+                                  }}
+                                  className="text-xs font-bold gap-1.5 cursor-pointer rounded-lg h-9 w-full mt-2"
+                                >
+                                  <Move className="w-4 h-4" />
+                                  Adjust & Stretch Frame on Canvas
+                                </Button>
                               )}
                             </div>
                             <p className="text-[10px] text-muted-foreground leading-normal mt-2">
@@ -2729,7 +2757,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                 "transition-all duration-300 relative flex items-center justify-center",
                 previewMode === "designer"
                   ? "w-full h-full"
-                  : "h-full aspect-[595/842] max-h-full max-w-full shadow-2xl rounded-2xl overflow-hidden bg-white border border-border"
+                  : "h-full aspect-[595/842] max-h-full max-w-full shadow-2xl bg-white border border-border"
               )}>
                 {previewMode === "designer" ? (
                   <>

@@ -29,6 +29,18 @@ async function getSessionUser() {
   return (session?.user as any) || null;
 }
 
+function safeParseInt(val: any, defaultVal: number | null = null): number | null {
+  if (val === undefined || val === null || val === "") return defaultVal;
+  const parsed = parseInt(val);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
+function safeParseFloat(val: any, defaultVal: number | null = null): number | null {
+  if (val === undefined || val === null || val === "") return defaultVal;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
 // Frame images are stored as plain Cloudinary URLs.
 // Dynamic tinting is no longer applied — users manually pick their theme colors.
 function makeColorizableCloudinaryUrl(url: string): string {
@@ -196,28 +208,28 @@ export async function POST(req: Request) {
         defaultPrimary,
         defaultSecondary,
         defaultAccent,
-        defaultPadding: parseInt(defaultPadding) || 60,
-        defaultYPadding: defaultYPadding ? parseInt(defaultYPadding) : null,
-        defaultPaddingTop: defaultPaddingTop !== undefined && defaultPaddingTop !== null && defaultPaddingTop !== "" ? parseInt(defaultPaddingTop) : null,
-        defaultPaddingRight: defaultPaddingRight !== undefined && defaultPaddingRight !== null && defaultPaddingRight !== "" ? parseInt(defaultPaddingRight) : null,
-        defaultPaddingLeft: defaultPaddingLeft !== undefined && defaultPaddingLeft !== null && defaultPaddingLeft !== "" ? parseInt(defaultPaddingLeft) : null,
-        defaultFontSize: defaultFontSize !== undefined && defaultFontSize !== null && defaultFontSize !== "" ? parseInt(defaultFontSize) : null,
-        photoX: parseInt(photoX) ?? 390,
-        photoY: parseInt(photoY) ?? 100,
-        photoWidth: parseInt(photoWidth) ?? 140,
-        photoHeight: parseInt(photoHeight) ?? 175,
-        photoCornerRadius: parseInt(photoCornerRadius) ?? 8,
+        defaultPadding: safeParseInt(defaultPadding, 60)!,
+        defaultYPadding: safeParseInt(defaultYPadding),
+        defaultPaddingTop: safeParseInt(defaultPaddingTop),
+        defaultPaddingRight: safeParseInt(defaultPaddingRight),
+        defaultPaddingLeft: safeParseInt(defaultPaddingLeft),
+        defaultFontSize: safeParseInt(defaultFontSize),
+        photoX: safeParseInt(photoX, 390)!,
+        photoY: safeParseInt(photoY, 100)!,
+        photoWidth: safeParseInt(photoWidth, 140)!,
+        photoHeight: safeParseInt(photoHeight, 175)!,
+        photoCornerRadius: safeParseInt(photoCornerRadius, 8)!,
         frameType,
         frameBgType: frameBgType || "solid",
         frameBgColor: frameBgColor || "#ffffff",
         frameBgGradientColors: frameBgGradientColors || [],
         frameUrlTemplate,
-        frameOuterInset: frameOuterInset ? parseInt(frameOuterInset) : null,
-        frameOuterStrokeWidth: frameOuterStrokeWidth ? parseInt(frameOuterStrokeWidth) : null,
-        frameOuterCornerRadius: frameOuterCornerRadius ? parseInt(frameOuterCornerRadius) : null,
-        frameInnerInset: frameInnerInset ? parseInt(frameInnerInset) : null,
-        frameInnerStrokeWidth: frameInnerStrokeWidth ? parseInt(frameInnerStrokeWidth) : null,
-        frameInnerCornerRadius: frameInnerCornerRadius ? parseInt(frameInnerCornerRadius) : null,
+        frameOuterInset: safeParseInt(frameOuterInset),
+        frameOuterStrokeWidth: safeParseInt(frameOuterStrokeWidth),
+        frameOuterCornerRadius: safeParseInt(frameOuterCornerRadius),
+        frameInnerInset: safeParseInt(frameInnerInset),
+        frameInnerStrokeWidth: safeParseInt(frameInnerStrokeWidth),
+        frameInnerCornerRadius: safeParseInt(frameInnerCornerRadius),
         frameHasCornerCurves: frameHasCornerCurves === true,
         frameGradientColors: frameGradientColors || [],
         frameComponentId: frameComponentId || null,
@@ -232,18 +244,18 @@ export async function POST(req: Request) {
         active: true,
         // Pricing
         isPremium: isPremium === true,
-        price: price !== undefined && price !== null && price !== "" ? parseFloat(price) : null,
-        discountPrice: discountPrice !== undefined && discountPrice !== null && discountPrice !== "" ? parseFloat(discountPrice) : null,
+        price: safeParseFloat(price),
+        discountPrice: safeParseFloat(discountPrice),
         currency: currency || "INR",
         // Format-specific Pricing
-        pdfPrice: pdfPrice !== undefined && pdfPrice !== null && pdfPrice !== "" ? parseFloat(pdfPrice) : null,
-        pdfDiscountPrice: pdfDiscountPrice !== undefined && pdfDiscountPrice !== null && pdfDiscountPrice !== "" ? parseFloat(pdfDiscountPrice) : null,
-        jpgPrice: jpgPrice !== undefined && jpgPrice !== null && jpgPrice !== "" ? parseFloat(jpgPrice) : null,
-        jpgDiscountPrice: jpgDiscountPrice !== undefined && jpgDiscountPrice !== null && jpgDiscountPrice !== "" ? parseFloat(jpgDiscountPrice) : null,
-        pngPrice: pngPrice !== undefined && pngPrice !== null && pngPrice !== "" ? parseFloat(pngPrice) : null,
-        pngDiscountPrice: pngDiscountPrice !== undefined && pngDiscountPrice !== null && pngDiscountPrice !== "" ? parseFloat(pngDiscountPrice) : null,
-        comboPrice: comboPrice !== undefined && comboPrice !== null && comboPrice !== "" ? parseFloat(comboPrice) : null,
-        comboDiscountPrice: comboDiscountPrice !== undefined && comboDiscountPrice !== null && comboDiscountPrice !== "" ? parseFloat(comboDiscountPrice) : null,
+        pdfPrice: safeParseFloat(pdfPrice),
+        pdfDiscountPrice: safeParseFloat(pdfDiscountPrice),
+        jpgPrice: safeParseFloat(jpgPrice),
+        jpgDiscountPrice: safeParseFloat(jpgDiscountPrice),
+        pngPrice: safeParseFloat(pngPrice),
+        pngDiscountPrice: safeParseFloat(pngDiscountPrice),
+        comboPrice: safeParseFloat(comboPrice),
+        comboDiscountPrice: safeParseFloat(comboDiscountPrice),
       },
     });
 
