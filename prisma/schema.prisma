@@ -51,6 +51,10 @@ model Template {
   defaultAccent          String
   defaultPadding         Int      @default(60)
   defaultYPadding        Int?
+  defaultPaddingTop      Int?
+  defaultPaddingRight    Int?
+  defaultPaddingLeft     Int?
+  defaultFontSize        Int?
   photoX                 Int      @default(390)
   photoY                 Int      @default(100)
   photoWidth             Int      @default(140)
@@ -72,6 +76,8 @@ model Template {
   frameGradientColors    String[]
   frameComponentId       String?
   thumbnailUrl           String?
+  previewPhotoUrl        String?
+  rawInput               Json?
   bgConfig               Json?
   detailsLayout          String   @default("classic")
   titleShape             String   @default("simple")

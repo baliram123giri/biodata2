@@ -182,8 +182,7 @@ const initialFormState = {
   defaultYPadding: "",
   defaultFontFamily: "noto",
   defaultFontWeight: "medium",
-  defaultFontSize: "11",
-  defaultAlignment: "center",
+    defaultAlignment: "center",
   photoX: "390",
   photoY: "100",
   photoWidth: "140",
@@ -209,9 +208,13 @@ const initialFormState = {
   bgImageFile: "",
   bgImageX: "0",
   bgImageY: "0",
-  bgImageWidth: "595",
-  bgImageHeight: "842",
+  bgImageWidth: "350",
+  bgImageHeight: "350",
   bgImageOpacity: "0.1",
+  defaultPaddingTop: "",
+  defaultPaddingRight: "",
+  defaultPaddingLeft: "",
+  defaultFontSize: "16",
   language: "English",
   detailsLayout: "classic",
   titleShape: "simple",
@@ -743,7 +746,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         
         defaultFontFamily: bgConf?.fontFamily || "noto",
         defaultFontWeight: bgConf?.fontWeight || "medium",
-        defaultFontSize: bgConf?.fontSize ? String(bgConf.fontSize) : "11",
+
         defaultAlignment: bgConf?.alignment || "center",
 
         photoX: String(template.photoX),
@@ -773,9 +776,13 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         bgImageFile: "",
         bgImageX: bgConf ? String(bgConf.x ?? 0) : "0",
         bgImageY: bgConf ? String(bgConf.y ?? 0) : "0",
-        bgImageWidth: bgConf ? String(bgConf.width ?? 595) : "595",
-        bgImageHeight: bgConf ? String(bgConf.height ?? 842) : "842",
+        bgImageWidth: bgConf ? String(bgConf.width ?? 350) : "350",
+        bgImageHeight: bgConf ? String(bgConf.width ?? bgConf.height ?? 350) : "350",
         bgImageOpacity: bgConf ? String(bgConf.opacity ?? 1.0) : "1.0",
+        defaultPaddingTop: (template as any).defaultPaddingTop ? String((template as any).defaultPaddingTop) : "",
+        defaultPaddingRight: (template as any).defaultPaddingRight ? String((template as any).defaultPaddingRight) : "",
+        defaultPaddingLeft: (template as any).defaultPaddingLeft ? String((template as any).defaultPaddingLeft) : "",
+        defaultFontSize: (template as any).defaultFontSize ? String((template as any).defaultFontSize) : "16",
         frameImageX: bgConf?.frameImageX ? String(bgConf.frameImageX) : "0",
         frameImageY: bgConf?.frameImageY ? String(bgConf.frameImageY) : "0",
         frameImageWidth: bgConf?.frameImageWidth ? String(bgConf.frameImageWidth) : "595",
@@ -833,8 +840,12 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         defaultPrimary: formState.defaultPrimary,
         defaultSecondary: formState.defaultSecondary,
         defaultAccent: formState.defaultAccent,
-        defaultPadding: parseInt(formState.defaultPadding) || 60,
-        defaultYPadding: formState.defaultYPadding ? parseInt(formState.defaultYPadding) : null,
+        defaultPadding: parseInt(formState.defaultPaddingLeft) || parseInt(formState.defaultPadding) || 60,
+        defaultPaddingTop: formState.defaultPaddingTop ? parseInt(formState.defaultPaddingTop) : null,
+        defaultPaddingRight: formState.defaultPaddingRight ? parseInt(formState.defaultPaddingRight) : null,
+        defaultPaddingLeft: formState.defaultPaddingLeft ? parseInt(formState.defaultPaddingLeft) : null,
+        defaultFontSize: formState.defaultFontSize ? parseInt(formState.defaultFontSize) : null,
+        defaultYPadding: formState.defaultPaddingTop ? parseInt(formState.defaultPaddingTop) : (formState.defaultYPadding ? parseInt(formState.defaultYPadding) : null),
         photoX: parseInt(formState.photoX) || 390,
         photoY: parseInt(formState.photoY) || 100,
         photoWidth: parseInt(formState.photoWidth) || 140,
@@ -1183,8 +1194,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             { value: "fields",  Icon: ClipboardList, label: "Fields" },
             { value: "style",   Icon: Palette,       label: "Style" },
             { value: "frame",   Icon: Layers,        label: "Frame" },
-            { value: "bg",      Icon: ImageIcon,     label: "Back" },
-            { value: "photo",   Icon: User,          label: "Photo" },
+                        { value: "photo",   Icon: User,          label: "Photo" },
             { value: "pricing", Icon: DollarSign,    label: "Price" },
           ].map(({ value, Icon, label }) => (
             <button
@@ -1229,8 +1239,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             <TabsTrigger id="tab-trigger-fields"  value="fields"  className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><ClipboardList className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Fields</span></TabsTrigger>
             <TabsTrigger id="tab-trigger-style"   value="style"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><Palette className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Style</span></TabsTrigger>
             <TabsTrigger id="tab-trigger-frame"   value="frame"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><Layers className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Frame</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-bg"      value="bg"      className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><ImageIcon className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Back</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-photo"   value="photo"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><User className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Photo</span></TabsTrigger>
+                        <TabsTrigger id="tab-trigger-photo"   value="photo"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><User className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Photo</span></TabsTrigger>
             <TabsTrigger id="tab-trigger-pricing" value="pricing" className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><DollarSign className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Price</span></TabsTrigger>
             <TabsTrigger id="tab-trigger-save"    value="save"    className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer mt-auto"><Save className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Save</span></TabsTrigger>
           </TabsList>
@@ -1521,123 +1530,297 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                         </div>
                       </div>
 
-                      {/* CANVA-LIKE DYNAMIC TYPOGRAPHY SECTION */}
-                      <div className="space-y-3 pt-3 border-t border-border/80">
-                        <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
-                          Canva-like Typography Controls
-                        </h4>
-
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-bold text-muted-foreground">Default Font Family</Label>
-                          <Select
-                            value={formState.defaultFontFamily}
-                            onValueChange={value => setFormState({ ...formState, defaultFontFamily: value || "noto" })}
-                          >
-                            <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                              <SelectValue placeholder="Select Default Font" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                              <SelectItem value="noto" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Noto Serif Devanagari (Matrimonial Classic)</SelectItem>
-                              <SelectItem value="inter" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Inter (Modern & Clean)</SelectItem>
-                              <SelectItem value="playfair" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Playfair Display (Premium Serif)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-bold text-muted-foreground">Default Font Weight</Label>
-                          <Select
-                            value={formState.defaultFontWeight}
-                            onValueChange={value => setFormState({ ...formState, defaultFontWeight: value || "medium" })}
-                          >
-                            <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                              <SelectValue placeholder="Select Font Weight" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                              <SelectItem value="normal" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Regular / Normal</SelectItem>
-                              <SelectItem value="medium" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Medium (Recommended)</SelectItem>
-                              <SelectItem value="bold" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Bold / Strong</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Canva-like Font Size Slider */}
-                        <div className="space-y-1">
-                          <div className="flex justify-between items-center">
-                            <Label className="text-[11px] font-bold text-muted-foreground">Default Canvas Font Size</Label>
-                            <span className="text-xs font-mono text-primary font-bold">{formState.defaultFontSize}px</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] text-muted-foreground font-semibold">9px</span>
-                            <Slider
-                              value={[parseInt(formState.defaultFontSize) || 11]}
-                              min={9}
-                              max={24}
-                              step={1}
-                              onValueChange={(values) => setFormState({ ...formState, defaultFontSize: String(values[0]) })}
-                              className="flex-grow py-2 cursor-pointer"
-                            />
-                            <span className="text-[10px] text-muted-foreground font-semibold">24px</span>
-                          </div>
-                        </div>
-
-                        {/* Text Alignment buttons */}
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-bold text-muted-foreground">Default Text Alignment</Label>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant={formState.defaultAlignment === "left" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setFormState({ ...formState, defaultAlignment: "left" })}
-                              className="flex-1 gap-1.5 rounded-lg cursor-pointer text-xs"
-                            >
-                              <AlignLeft className="w-4 h-4" />
-                              Left
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={formState.defaultAlignment === "center" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setFormState({ ...formState, defaultAlignment: "center" })}
-                              className="flex-1 gap-1.5 rounded-lg cursor-pointer text-xs"
-                            >
-                              <AlignCenter className="w-4 h-4" />
-                              Center
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={formState.defaultAlignment === "right" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setFormState({ ...formState, defaultAlignment: "right" })}
-                              className="flex-1 gap-1.5 rounded-lg cursor-pointer text-xs"
-                            >
-                              <AlignRight className="w-4 h-4" />
-                              Right
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
+                      {/* PAGE PADDING & TYPOGRAPHY SECTION */}
                       <div className="space-y-3.5 pt-3 border-t border-border/80">
                         <SliderInput
-                          label="Page Horizontal Padding"
-                          id="tpl-padding"
+                          label="Top Padding"
+                          id="tpl-padding-top"
                           min={0}
-                          max={150}
-                          value={formState.defaultPadding}
-                          onChange={val => setFormState({ ...formState, defaultPadding: val })}
+                          max={200}
+                          value={formState.defaultPaddingTop || formState.defaultYPadding || formState.defaultPadding || "60"}
+                          onChange={val => setFormState({ ...formState, defaultPaddingTop: val })}
                         />
                         <SliderInput
-                          label="Page Vertical Padding (optional)"
-                          id="tpl-ypadding"
+                          label="Left Padding"
+                          id="tpl-padding-left"
                           min={0}
                           max={150}
-                          value={formState.defaultYPadding}
-                          onChange={val => setFormState({ ...formState, defaultYPadding: val })}
-                          placeholder="Same as X-padding if blank"
+                          value={formState.defaultPaddingLeft || formState.defaultPadding || "60"}
+                          onChange={val => setFormState({ ...formState, defaultPaddingLeft: val })}
                         />
+                        <SliderInput
+                          label="Right Padding"
+                          id="tpl-padding-right"
+                          min={0}
+                          max={150}
+                          value={formState.defaultPaddingRight || formState.defaultPadding || "60"}
+                          onChange={val => setFormState({ ...formState, defaultPaddingRight: val })}
+                        />
+                        <SliderInput
+                          label="Base Font Size"
+                          id="tpl-font-size"
+                          min={9}
+                          max={24}
+                          value={formState.defaultFontSize || "16"}
+                          onChange={val => setFormState({ ...formState, defaultFontSize: val })}
+                        />
+                      </div>
+                      {/* Background & Watermark section moved from Back tab */}
+                      <div className="pt-4 border-t border-border/80 space-y-4">
+                        <div className="space-y-4">
+                      <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Background & Watermark Graphic</h3>
+                      
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Background Style</Label>
+                        <Select
+                          value={formState.frameBgType}
+                          onValueChange={value => setFormState({ ...formState, frameBgType: value || "solid" })}
+                        >
+                          <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
+                            <SelectValue placeholder="Select background style" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                            <SelectItem value="solid" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Solid Color</SelectItem>
+                            <SelectItem value="linear" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Linear Gradient</SelectItem>
+                            <SelectItem value="radial" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Radial Gradient</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Background Color Config */}
+                      <div className="border border-border rounded-xl p-4 bg-muted/10 space-y-4">
+                        {formState.frameBgType === "solid" ? (
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-muted-foreground">Solid Background Color</Label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={formState.frameBgColor}
+                                onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                                className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
+                              />
+                              <Input
+                                type="text"
+                                value={formState.frameBgColor}
+                                onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
+                                className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
+                              <Input
+                                type="text"
+                                value={formState.frameBgGradientColors}
+                                onChange={e => setFormState({ ...formState, frameBgGradientColors: e.target.value })}
+                                placeholder="e.g. #ffffff,#f9e8e8"
+                                className="font-mono focus-visible:ring-primary rounded-lg w-full"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Palette Presets</Label>
+                              <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto p-2 border border-border/80 rounded-xl bg-muted/20 shadow-inner">
+                                {(() => {
+                                  const basePresets = GRADIENT_PRESETS.map(preset => {
+                                    const colorsArr = preset.colors.split(",");
+                                    const c1 = colorsArr[0]?.trim();
+                                    const c2 = colorsArr[1]?.trim() || c1;
+                                    const c3 = colorsArr[2]?.trim();
+
+                                    let bgStyle = "";
+                                    if (formState.frameBgType === "linear") {
+                                      bgStyle = c3
+                                        ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                        : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                                    } else {
+                                      bgStyle = c3
+                                        ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                        : `radial-gradient(circle, ${c1}, ${c2})`;
+                                    }
+
+                                    return {
+                                      name: preset.name,
+                                      colors: preset.colors,
+                                      style: { background: bgStyle }
+                                    };
+                                  });
+
+                                  const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
+                                  const activeNormalized = normalizeColors(formState.frameBgGradientColors || "");
+                                  const isAlreadyInPresets = GRADIENT_PRESETS.some(p => normalizeColors(p.colors) === activeNormalized);
+
+                                  let finalPresets = [...basePresets];
+
+                                  if (!isAlreadyInPresets && activeNormalized) {
+                                    const colorsArr = formState.frameBgGradientColors.split(",");
+                                    if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
+                                      const c1 = colorsArr[0].trim();
+                                      const c2 = colorsArr[1]?.trim() || c1;
+                                      const c3 = colorsArr[2]?.trim();
+
+                                      let bgStyle = "";
+                                      if (formState.frameBgType === "linear") {
+                                        bgStyle = c3
+                                          ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
+                                          : `linear-gradient(to bottom, ${c1}, ${c2})`;
+                                      } else {
+                                        bgStyle = c3
+                                          ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
+                                          : `radial-gradient(circle, ${c1}, ${c2})`;
+                                      }
+
+                                      finalPresets.push({
+                                        name: "Custom Gradient",
+                                        colors: formState.frameBgGradientColors,
+                                        style: { background: bgStyle }
+                                      });
+                                    }
+                                  }
+
+                                  return finalPresets.map((preset, idx) => {
+                                    const isPresetActive = normalizeColors(formState.frameBgGradientColors) === normalizeColors(preset.colors);
+                                    return (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setFormState({ ...formState, frameBgGradientColors: preset.colors })}
+                                        className={cn(
+                                          "w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 bg-background relative cursor-pointer",
+                                          isPresetActive
+                                            ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md z-10"
+                                            : "border-border/80 hover:border-foreground"
+                                        )}
+                                        style={preset.style}
+                                        title={preset.name}
+                                      >
+                                        {isPresetActive && (
+                                          <span className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white shadow-sm ring-1 ring-black/10" />
+                                        )}
+                                      </button>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Watermark Section */}
+                      <div className="space-y-3.5 border border-border rounded-xl p-4 bg-muted/10">
+                        <h4 className="text-xs font-bold text-foreground">Watermark SVG Graphic</h4>
+                        
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Select from Backgrounds Library</Label>
+                          <Select
+                            value={formState.bgImageUrl || "none"}
+                            onValueChange={(url: string | null) => {
+                              if (!url || url === "none") {
+                                setFormState({
+                                  ...formState,
+                                  bgImageUrl: "",
+                                  bgImageFile: ""
+                                });
+                              } else {
+                                setFormState({
+                                  ...formState,
+                                  bgImageUrl: url,
+                                  bgImageFile: ""
+                                });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3 cursor-pointer">
+                              <SelectValue placeholder=" - Select background SVG  -" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border border-border rounded-lg shadow-md max-h-[200px] overflow-y-auto">
+                              <SelectItem value="none" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm"> - None (No Watermark)  -</SelectItem>
+                              {dbBackgrounds.map((bg) => (
+                                <SelectItem key={bg.id} value={bg.url || ""} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
+                                  {bg.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="relative flex py-1.5 items-center">
+                          <div className="flex-grow border-t border-border/85"></div>
+                          <span className="flex-shrink mx-3 text-[9px] text-muted-foreground font-bold uppercase tracking-wider">or upload SVG</span>
+                          <div className="flex-grow border-t border-border/85"></div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Upload Custom SVG Watermark</Label>
+                          <Input
+                            type="file"
+                            accept="image/svg+xml"
+                            onChange={(e) => handleFileChange(e, "bgImageFile")}
+                            className="cursor-pointer focus-visible:ring-primary rounded-lg bg-background text-xs h-9 px-2"
+                          />
+                          {formState.bgImageUrl && (
+                            <p className="text-[10px] text-green-600 font-medium truncate mt-1">
+                              ✓ Active: {formState.bgImageUrl.substring(formState.bgImageUrl.lastIndexOf('/') + 1)}
+                            </p>
+                          )}
+                          {formState.bgImageFile && (
+                            <p className="text-[10px] text-primary font-bold mt-1">
+                              ✓ Custom SVG file uploaded
+                            </p>
+                          )}
+                        </div>
+
+                        {(formState.bgImageUrl || formState.bgImageFile) && (
+                          <div className="space-y-3.5 pt-3 border-t border-border/50">
+                            <SliderInput
+                              label="Background Size (Square)"
+                              id="bg-size"
+                              min={10}
+                              max={1200}
+                              value={formState.bgImageWidth || "350"}
+                              onChange={(val) => setFormState({ ...formState, bgImageWidth: val, bgImageHeight: val })}
+                            />
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
+                                <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={formState.bgImageOpacity}
+                                onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
+                                className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                            </div>
+
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setFormState({
+                                ...formState,
+                                bgImageUrl: "",
+                                bgImageFile: "",
+                                bgImageX: "0",
+                                bgImageY: "0",
+                                bgImageWidth: "350",
+                                bgImageHeight: "350",
+                                bgImageOpacity: "1.0",
+                              })}
+                              className="w-full text-xs h-8 rounded-lg cursor-pointer"
+                            >
+                              Clear Watermark SVG
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                       </div>
                     </div>
                   </TabsContent>
@@ -1924,287 +2107,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                   </TabsContent>
 
                   {/* Tab 4: Background & Watermark */}
-                  <TabsContent value="bg" className="space-y-4 animate-in fade-in duration-200">
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-primary uppercase tracking-wider">4. Background & Watermark Graphic</h3>
-                      
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-muted-foreground">Background Style</Label>
-                        <Select
-                          value={formState.frameBgType}
-                          onValueChange={value => setFormState({ ...formState, frameBgType: value || "solid" })}
-                        >
-                          <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
-                            <SelectValue placeholder="Select background style" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border border-border rounded-lg shadow-md">
-                            <SelectItem value="solid" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Solid Color</SelectItem>
-                            <SelectItem value="linear" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Linear Gradient</SelectItem>
-                            <SelectItem value="radial" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Radial Gradient</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Background Color Config */}
-                      <div className="border border-border rounded-xl p-4 bg-muted/10 space-y-4">
-                        {formState.frameBgType === "solid" ? (
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold text-muted-foreground">Solid Background Color</Label>
-                            <div className="flex gap-2">
-                              <input
-                                type="color"
-                                value={formState.frameBgColor}
-                                onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
-                                className="w-10 h-10 border border-border rounded-lg cursor-pointer p-0.5"
-                              />
-                              <Input
-                                type="text"
-                                value={formState.frameBgColor}
-                                onChange={e => setFormState({ ...formState, frameBgColor: e.target.value })}
-                                className="flex-1 font-mono focus-visible:ring-primary rounded-lg"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold text-muted-foreground">Gradient Hex Colors (comma-separated)</Label>
-                              <Input
-                                type="text"
-                                value={formState.frameBgGradientColors}
-                                onChange={e => setFormState({ ...formState, frameBgGradientColors: e.target.value })}
-                                placeholder="e.g. #ffffff,#f9e8e8"
-                                className="font-mono focus-visible:ring-primary rounded-lg w-full"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Palette Presets</Label>
-                              <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto p-2 border border-border/80 rounded-xl bg-muted/20 shadow-inner">
-                                {(() => {
-                                  const basePresets = GRADIENT_PRESETS.map(preset => {
-                                    const colorsArr = preset.colors.split(",");
-                                    const c1 = colorsArr[0]?.trim();
-                                    const c2 = colorsArr[1]?.trim() || c1;
-                                    const c3 = colorsArr[2]?.trim();
-
-                                    let bgStyle = "";
-                                    if (formState.frameBgType === "linear") {
-                                      bgStyle = c3
-                                        ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
-                                        : `linear-gradient(to bottom, ${c1}, ${c2})`;
-                                    } else {
-                                      bgStyle = c3
-                                        ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
-                                        : `radial-gradient(circle, ${c1}, ${c2})`;
-                                    }
-
-                                    return {
-                                      name: preset.name,
-                                      colors: preset.colors,
-                                      style: { background: bgStyle }
-                                    };
-                                  });
-
-                                  const normalizeColors = (cStr: string) => cStr.toLowerCase().replace(/\s+/g, "");
-                                  const activeNormalized = normalizeColors(formState.frameBgGradientColors || "");
-                                  const isAlreadyInPresets = GRADIENT_PRESETS.some(p => normalizeColors(p.colors) === activeNormalized);
-
-                                  let finalPresets = [...basePresets];
-
-                                  if (!isAlreadyInPresets && activeNormalized) {
-                                    const colorsArr = formState.frameBgGradientColors.split(",");
-                                    if (colorsArr.length >= 1 && colorsArr[0].startsWith("#")) {
-                                      const c1 = colorsArr[0].trim();
-                                      const c2 = colorsArr[1]?.trim() || c1;
-                                      const c3 = colorsArr[2]?.trim();
-
-                                      let bgStyle = "";
-                                      if (formState.frameBgType === "linear") {
-                                        bgStyle = c3
-                                          ? `linear-gradient(to bottom, ${c1}, ${c2}, ${c3})`
-                                          : `linear-gradient(to bottom, ${c1}, ${c2})`;
-                                      } else {
-                                        bgStyle = c3
-                                          ? `radial-gradient(circle, ${c1}, ${c2}, ${c3})`
-                                          : `radial-gradient(circle, ${c1}, ${c2})`;
-                                      }
-
-                                      finalPresets.push({
-                                        name: "Custom Gradient",
-                                        colors: formState.frameBgGradientColors,
-                                        style: { background: bgStyle }
-                                      });
-                                    }
-                                  }
-
-                                  return finalPresets.map((preset, idx) => {
-                                    const isPresetActive = normalizeColors(formState.frameBgGradientColors) === normalizeColors(preset.colors);
-                                    return (
-                                      <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => setFormState({ ...formState, frameBgGradientColors: preset.colors })}
-                                        className={cn(
-                                          "w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 bg-background relative cursor-pointer",
-                                          isPresetActive
-                                            ? "ring-2 ring-primary ring-offset-2 border-primary scale-110 shadow-md z-10"
-                                            : "border-border/80 hover:border-foreground"
-                                        )}
-                                        style={preset.style}
-                                        title={preset.name}
-                                      >
-                                        {isPresetActive && (
-                                          <span className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white shadow-sm ring-1 ring-black/10" />
-                                        )}
-                                      </button>
-                                    );
-                                  });
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Watermark Section */}
-                      <div className="space-y-3.5 border border-border rounded-xl p-4 bg-muted/10">
-                        <h4 className="text-xs font-bold text-foreground">Watermark SVG Graphic</h4>
-                        
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-muted-foreground">Select from Backgrounds Library</Label>
-                          <Select
-                            value={formState.bgImageUrl || "none"}
-                            onValueChange={(url: string | null) => {
-                              if (!url || url === "none") {
-                                setFormState({
-                                  ...formState,
-                                  bgImageUrl: "",
-                                  bgImageFile: ""
-                                });
-                              } else {
-                                setFormState({
-                                  ...formState,
-                                  bgImageUrl: url,
-                                  bgImageFile: ""
-                                });
-                              }
-                            }}
-                          >
-                            <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3 cursor-pointer">
-                              <SelectValue placeholder=" - Select background SVG  -" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border border-border rounded-lg shadow-md max-h-[200px] overflow-y-auto">
-                              <SelectItem value="none" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm"> - None (No Watermark)  -</SelectItem>
-                              {dbBackgrounds.map((bg) => (
-                                <SelectItem key={bg.id} value={bg.url || ""} className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">
-                                  {bg.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="relative flex py-1.5 items-center">
-                          <div className="flex-grow border-t border-border/85"></div>
-                          <span className="flex-shrink mx-3 text-[9px] text-muted-foreground font-bold uppercase tracking-wider">or upload SVG</span>
-                          <div className="flex-grow border-t border-border/85"></div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-muted-foreground">Upload Custom SVG Watermark</Label>
-                          <Input
-                            type="file"
-                            accept="image/svg+xml"
-                            onChange={(e) => handleFileChange(e, "bgImageFile")}
-                            className="cursor-pointer focus-visible:ring-primary rounded-lg bg-background text-xs h-9 px-2"
-                          />
-                          {formState.bgImageUrl && (
-                            <p className="text-[10px] text-green-600 font-medium truncate mt-1">
-                              ✓ Active: {formState.bgImageUrl.substring(formState.bgImageUrl.lastIndexOf('/') + 1)}
-                            </p>
-                          )}
-                          {formState.bgImageFile && (
-                            <p className="text-[10px] text-primary font-bold mt-1">
-                              ✓ Custom SVG file uploaded
-                            </p>
-                          )}
-                        </div>
-
-                        {(formState.bgImageUrl || formState.bgImageFile) && (
-                          <div className="space-y-3.5 pt-3 border-t border-border/50">
-                            <SliderInput
-                              label="Background X Position"
-                              id="bg-x"
-                              min={-200}
-                              max={595}
-                              value={formState.bgImageX}
-                              onChange={(val) => setFormState({ ...formState, bgImageX: val })}
-                            />
-                            <SliderInput
-                              label="Background Y Position"
-                              id="bg-y"
-                              min={-200}
-                              max={842}
-                              value={formState.bgImageY}
-                              onChange={(val) => setFormState({ ...formState, bgImageY: val })}
-                            />
-                            <SliderInput
-                              label="Background Width"
-                              id="bg-w"
-                              min={10}
-                              max={1200}
-                              value={formState.bgImageWidth}
-                              onChange={(val) => setFormState({ ...formState, bgImageWidth: val })}
-                            />
-                            <SliderInput
-                              label="Background Height"
-                              id="bg-h"
-                              min={10}
-                              max={1600}
-                              value={formState.bgImageHeight}
-                              onChange={(val) => setFormState({ ...formState, bgImageHeight: val })}
-                            />
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center">
-                                <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
-                                <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.01"
-                                value={formState.bgImageOpacity}
-                                onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
-                                className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                              />
-                            </div>
-
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setFormState({
-                                ...formState,
-                                bgImageUrl: "",
-                                bgImageFile: "",
-                                bgImageX: "0",
-                                bgImageY: "0",
-                                bgImageWidth: "595",
-                                bgImageHeight: "842",
-                                bgImageOpacity: "1.0",
-                              })}
-                              className="w-full text-xs h-8 rounded-lg cursor-pointer"
-                            >
-                              Clear Watermark SVG
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </TabsContent>
-
                   {/* Tab 5: Profile Photo Layout */}
                   <TabsContent value="photo" className="space-y-4 animate-in fade-in duration-200">
                     <div className="space-y-4">
@@ -2905,8 +2807,18 @@ function TemplateSvgPreview({
   const accentColor = formState.defaultAccent || "#C9A84C";
   const bgColor = formState.frameBgColor || "#ffffff";
 
-  const paddingX = parseFloat(formState.defaultPadding) || 75;
-  const paddingY = formState.defaultYPadding ? (parseFloat(formState.defaultYPadding) || paddingX) : paddingX;
+    const getNum = (val: any, fallback: number) => {
+    if (val === undefined || val === null || val === "") return fallback;
+    const n = parseFloat(val);
+    return isNaN(n) ? fallback : n;
+  };
+
+  const basePad = getNum(formState.defaultPadding, 60);
+  const baseYPad = getNum(formState.defaultYPadding, basePad);
+
+  const paddingTop = getNum(formState.defaultPaddingTop, baseYPad);
+  const paddingLeft = getNum(formState.defaultPaddingLeft, basePad);
+  const paddingRight = getNum(formState.defaultPaddingRight, basePad);
 
   // Parse gradient colors safely
   const gradientColors = formState.frameGradientColors
@@ -2978,8 +2890,8 @@ function TemplateSvgPreview({
   }, [t, propSections]);
 
   const layout = React.useMemo(() => {
-    let cursorY = paddingY + 20;
-    const baseFontSize = 11;
+    let cursorY = paddingTop + 20;
+    const baseFontSize = getNum(formState.defaultFontSize, 11);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
@@ -2988,7 +2900,7 @@ function TemplateSvgPreview({
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
     const LINE_SPACING = baseFontSize * 0.5 + 2;
-    const contentWidth = A4_W - paddingX * 2 - 10;
+    const contentWidth = A4_W - paddingLeft - paddingRight - 10;
     const sectionLayouts: any[] = [];
 
     sections.forEach((sec, secIdx) => {
@@ -3011,7 +2923,7 @@ function TemplateSvgPreview({
           cursorY >= py - 15 &&
           cursorY <= py + ph + 15
         ) {
-          rowWidth = px - paddingX - 20; // Flow text left of photo area
+          rowWidth = px - paddingLeft - 20; // Flow text left of photo area
         }
 
         const isTwoCol = formState.detailsLayout === "two-column";
@@ -3088,7 +3000,7 @@ function TemplateSvgPreview({
     });
 
     return { sectionLayouts, fSize: baseFontSize };
-  }, [sections, paddingX, paddingY, formState.detailsLayout, px, py, ph, sectionStyles]);
+  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
 
   const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
 
@@ -3335,7 +3247,7 @@ function TemplateSvgPreview({
       <g transform={`translate(${headerOffset.x}, ${headerOffset.y})`}>
         <text
           x={A4_W / 2}
-          y={paddingY + 10 + layout.fSize * 1.2}
+          y={paddingTop + 10 + layout.fSize * 1.2}
           fill={primaryColor}
           fontSize={layout.fSize * 1.2}
           fontWeight="bold"
@@ -3347,7 +3259,7 @@ function TemplateSvgPreview({
         
         {/* Title Rendering */}
         {(() => {
-          const titleY = paddingY + 10 + layout.fSize * 2;
+          const titleY = paddingTop + 10 + layout.fSize * 2;
           const titleHeight = layout.fSize * 2;
           const titleVal = title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
 
@@ -3572,9 +3484,9 @@ function TemplateSvgPreview({
               const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
               return (
                 <rect
-                  x={paddingX - 8}
+                  x={paddingLeft - 8}
                   y={sec.titleY - 8}
-                  width={A4_W - paddingX * 2 + 16}
+                  width={A4_W - paddingLeft - paddingRight + 16}
                   height={boxHeight}
                   fill={titleColor + "06"}
                   stroke={titleColor + "1a"}
@@ -3587,16 +3499,16 @@ function TemplateSvgPreview({
 
             {/* Section Header Underline Decoration */}
             <line
-              x1={paddingX}
+              x1={paddingLeft}
               y1={sec.titleY + 15}
-              x2={paddingX + 5}
+              x2={paddingLeft + 5}
               y2={sec.titleY + 15}
               stroke={accentColor || titleColor}
               strokeWidth="3"
               strokeLinecap="round"
             />
             <text
-              x={paddingX + 10}
+              x={paddingLeft + 10}
               y={sec.titleY + 2 + Math.round(fSize * 1.4)}
               fill={titleColor}
               fontSize={Math.round(fSize * 1.4)}
@@ -3610,9 +3522,9 @@ function TemplateSvgPreview({
             {sec.fields.map((field: any) => {
               const colX = field.isHalf 
                 ? (field.colIndex === 0 
-                    ? (paddingX + 10) 
-                    : (paddingX + 10 + field.halfW + 10))
-                : (paddingX + 10);
+                    ? (paddingLeft + 10) 
+                    : (paddingLeft + 10 + field.halfW + 10))
+                : (paddingLeft + 10);
               const lblW = field.isHalf ? field.labelW : 130;
               const valX = colX + lblW + 15;
               const colonX = colX + lblW + 5;
@@ -3654,7 +3566,7 @@ function TemplateSvgPreview({
                     <line
                       x1={colX}
                       y1={field.y + fSize * 1.35 + 2}
-                      x2={colX + (field.isHalf ? field.halfW : (A4_W - paddingX * 2 - 20))}
+                      x2={colX + (field.isHalf ? field.halfW : (A4_W - paddingLeft - paddingRight - 20))}
                       y2={field.y + fSize * 1.35 + 2}
                       stroke={fieldColor + "15"}
                       strokeWidth="0.8"
@@ -3669,7 +3581,7 @@ function TemplateSvgPreview({
       })}
 
       {/* Decorative footer elements */}
-      <line x1={paddingX - 15} y1={842 - paddingY - 10} x2={595 - paddingX + 15} y2={842 - paddingY - 10} stroke={primaryColor} strokeWidth="0.5" opacity="0.3" />
+      <line x1={paddingLeft - 15} y1={842 - paddingTop - 10} x2={595 - paddingRight + 15} y2={842 - paddingTop - 10} stroke={primaryColor} strokeWidth="0.5" opacity="0.3" />
       
       {/* Bottom watermark branding */}
       <text

@@ -100,6 +100,10 @@ export async function POST(req: Request) {
       defaultAccent,
       defaultPadding,
       defaultYPadding,
+      defaultPaddingTop,
+      defaultPaddingRight,
+      defaultPaddingLeft,
+      defaultFontSize,
       photoX,
       photoY,
       photoWidth,
@@ -139,6 +143,8 @@ export async function POST(req: Request) {
       pngDiscountPrice,
       comboPrice,
       comboDiscountPrice,
+      previewPhotoFile,
+      rawInput,
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -161,6 +167,11 @@ export async function POST(req: Request) {
     // Upload thumbnail if provided as Base64
     if (thumbnailFile) {
       thumbnailUrl = await uploadToCloudinary(thumbnailFile, "thumbnails");
+    }
+
+    let previewPhotoUrl: string | null = null;
+    if (previewPhotoFile) {
+      previewPhotoUrl = await uploadToCloudinary(previewPhotoFile, "previews");
     }
 
     // Process and validate bgConfig JSON schema if provided
@@ -187,6 +198,10 @@ export async function POST(req: Request) {
         defaultAccent,
         defaultPadding: parseInt(defaultPadding) || 60,
         defaultYPadding: defaultYPadding ? parseInt(defaultYPadding) : null,
+        defaultPaddingTop: defaultPaddingTop !== undefined && defaultPaddingTop !== null && defaultPaddingTop !== "" ? parseInt(defaultPaddingTop) : null,
+        defaultPaddingRight: defaultPaddingRight !== undefined && defaultPaddingRight !== null && defaultPaddingRight !== "" ? parseInt(defaultPaddingRight) : null,
+        defaultPaddingLeft: defaultPaddingLeft !== undefined && defaultPaddingLeft !== null && defaultPaddingLeft !== "" ? parseInt(defaultPaddingLeft) : null,
+        defaultFontSize: defaultFontSize !== undefined && defaultFontSize !== null && defaultFontSize !== "" ? parseInt(defaultFontSize) : null,
         photoX: parseInt(photoX) ?? 390,
         photoY: parseInt(photoY) ?? 100,
         photoWidth: parseInt(photoWidth) ?? 140,
@@ -207,6 +222,8 @@ export async function POST(req: Request) {
         frameGradientColors: frameGradientColors || [],
         frameComponentId: frameComponentId || null,
         thumbnailUrl,
+        previewPhotoUrl,
+        rawInput: rawInput || undefined,
         bgConfig: bgConfigData || undefined,
         language: language || "English",
         detailsLayout: detailsLayout || "classic",

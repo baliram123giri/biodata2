@@ -176,6 +176,10 @@ export async function PATCH(
     const numericFields = [
       "defaultPadding",
       "defaultYPadding",
+      "defaultPaddingTop",
+      "defaultPaddingRight",
+      "defaultPaddingLeft",
+      "defaultFontSize",
       "photoX",
       "photoY",
       "photoWidth",
@@ -275,6 +279,19 @@ export async function PATCH(
       updateData.thumbnailUrl = body.thumbnailUrl;
     }
 
+    if (body.previewPhotoFile) {
+      if (existing.previewPhotoUrl) {
+        await deleteFromCloudinary(existing.previewPhotoUrl);
+      }
+      updateData.previewPhotoUrl = await uploadToCloudinary(body.previewPhotoFile, "previews");
+    } else if (body.previewPhotoUrl !== undefined) {
+      updateData.previewPhotoUrl = body.previewPhotoUrl;
+    }
+
+    if (body.rawInput !== undefined) {
+      updateData.rawInput = body.rawInput;
+    }
+
     // Process and validate bgConfig JSON schema if provided
     if (body.bgConfig !== undefined) {
       if (body.bgConfig === null) {
@@ -346,6 +363,9 @@ export async function DELETE(
     }
     if (existing.thumbnailUrl) {
       await deleteFromCloudinary(existing.thumbnailUrl);
+    }
+    if (existing.previewPhotoUrl) {
+      await deleteFromCloudinary(existing.previewPhotoUrl);
     }
     if (existing.bgConfig) {
       try {

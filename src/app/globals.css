@@ -637,3 +637,17 @@ textarea::placeholder,
 .prose a:hover {
   opacity: 0.8 !important;
 }
+
+/* ---------------------------------------------
+   ADMIN PANEL DARK MODE FIXES
+--------------------------------------------- */
+.dark .admin-panel input,
+.dark .admin-panel select,
+.dark .admin-panel textarea {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .admin-panel button.bg-primary {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+

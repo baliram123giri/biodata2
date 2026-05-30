@@ -310,7 +310,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
   if (pathname === "/admin/login") {
     return (
       <div className={cn(
-        "min-h-screen bg-background text-foreground flex items-center justify-center font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250 relative overflow-hidden",
+        "admin-panel min-h-screen bg-background text-foreground flex items-center justify-center font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250 relative overflow-hidden",
         wrapperThemeClass
       )}>
         {/* Background ambient theme-based glows */}
@@ -323,7 +323,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
   return (
     <div className={cn(
-      "h-screen overflow-hidden bg-background text-foreground flex font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250",
+      "admin-panel h-screen overflow-hidden bg-background text-foreground flex font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250",
       wrapperThemeClass
     )}>
       {/* Background ambient theme-based glows */}

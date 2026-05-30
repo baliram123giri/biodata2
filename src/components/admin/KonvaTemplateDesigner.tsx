@@ -279,8 +279,18 @@ export function KonvaTemplateDesigner({
   const secondaryColor = formState.defaultSecondary || "#333333";
   const accentColor = formState.defaultAccent || "#C9A84C";
   const bgColor = formState.frameBgColor || "#ffffff";
-  const paddingX = parseFloat(formState.defaultPadding) || 60;
-  const paddingY = formState.defaultYPadding ? (parseFloat(formState.defaultYPadding) || paddingX) : paddingX;
+  const getNum = (val: any, fallback: number) => {
+    if (val === undefined || val === null || val === "") return fallback;
+    const n = parseFloat(val);
+    return isNaN(n) ? fallback : n;
+  };
+
+  const basePad = getNum(formState.defaultPadding, 60);
+  const baseYPad = getNum(formState.defaultYPadding, basePad);
+
+  const paddingTop = getNum(formState.defaultPaddingTop, baseYPad);
+  const paddingLeft = getNum(formState.defaultPaddingLeft, basePad);
+  const paddingRight = getNum(formState.defaultPaddingRight, basePad);
 
   const px = parseFloat(formState.photoX) || 390;
   const py = parseFloat(formState.photoY) || 100;
@@ -571,8 +581,8 @@ export function KonvaTemplateDesigner({
 
   // Layout math calculations mirrored exactly from KonvaPreview.tsx
   const layout = useMemo(() => {
-    let cursorY = paddingY + 20;
-    const baseFontSize = 11;
+    let cursorY = paddingTop + 20;
+    const baseFontSize = getNum(formState.defaultFontSize, 11);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
@@ -581,7 +591,7 @@ export function KonvaTemplateDesigner({
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
     const LINE_SPACING = baseFontSize * 0.5 + 2;
-    const contentWidth = A4_W - paddingX * 2 - 10;
+    const contentWidth = A4_W - paddingLeft - paddingRight - 10;
     const sectionLayouts: any[] = [];
 
     sections.forEach((sec, secIdx) => {
@@ -604,7 +614,7 @@ export function KonvaTemplateDesigner({
           cursorY >= py - 15 &&
           cursorY <= py + ph + 15
         ) {
-          rowWidth = px - paddingX - 20; // Flow text left of photo area
+          rowWidth = px - paddingLeft - 20; // Flow text left of photo area
         }
 
         const isTwoCol = formState.detailsLayout === "two-column";
@@ -681,7 +691,7 @@ export function KonvaTemplateDesigner({
     });
 
     return { sectionLayouts, fSize: baseFontSize };
-  }, [sections, paddingX, paddingY, formState.detailsLayout, px, py, ph, sectionStyles]);
+  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
 
   const isSectionId = useCallback((id: string) => {
     return id.startsWith("sec-") || ["personal", "educationSec", "family", "contact"].includes(id);
@@ -735,7 +745,7 @@ export function KonvaTemplateDesigner({
       const offset = sectionOffsets["header"] || { x: 0, y: 0 };
       return {
         x: offset.x,
-        y: offset.y + paddingY + 10,
+        y: offset.y + paddingTop + 10,
         width: A4_W,
         height: 75
       };
@@ -760,9 +770,9 @@ export function KonvaTemplateDesigner({
         const lastField = sec.fields[sec.fields.length - 1];
         const height = lastField ? (lastField.y + fSize * 2 - sec.titleY) : 40;
         return {
-          x: offset.x + paddingX,
+          x: offset.x + paddingLeft,
           y: offset.y + sec.titleY,
-          width: A4_W - paddingX * 2,
+          width: A4_W - paddingLeft - paddingRight,
           height: height
         };
       }
@@ -787,7 +797,7 @@ export function KonvaTemplateDesigner({
     } else if (id === "header") {
       const nextOffsets = {
         ...getCurrentOffsets(),
-        "header": { x: newX, y: newY - (paddingY + 10) }
+        "header": { x: newX, y: newY - (paddingTop + 10) }
       };
       updates.sectionOffsets = JSON.stringify(nextOffsets);
     } else if (isSectionId(id)) {
@@ -796,7 +806,7 @@ export function KonvaTemplateDesigner({
         const storeKey = sec.key || `sec-${secIdx}`;
         const nextOffsets = {
           ...getCurrentOffsets(),
-          [storeKey]: { x: newX - paddingX, y: newY - sec.titleY }
+          [storeKey]: { x: newX - paddingLeft, y: newY - sec.titleY }
         };
         updates.sectionOffsets = JSON.stringify(nextOffsets);
       }
@@ -839,7 +849,7 @@ export function KonvaTemplateDesigner({
 
     window.addEventListener("keydown", handleArrowKeys);
     return () => window.removeEventListener("keydown", handleArrowKeys);
-  }, [selectedIds, sectionOffsets, paddingX, paddingY, onChange, formState]);
+  }, [selectedIds, sectionOffsets, paddingTop, paddingLeft, paddingRight, onChange, formState]);
 
   const handleDragStart = () => {
     const startPos: Record<string, { x: number; y: number }> = {};
@@ -890,11 +900,11 @@ export function KonvaTemplateDesigner({
       let newY = bounds.y;
 
       if (alignmentType === "left") {
-        newX = isSectionId(id) ? paddingX : 0;
+        newX = isSectionId(id) ? paddingLeft : 0;
       } else if (alignmentType === "center") {
         newX = Math.round((A4_W - bounds.width) / 2);
       } else if (alignmentType === "right") {
-        newX = isSectionId(id) ? A4_W - paddingX - bounds.width : A4_W - bounds.width;
+        newX = isSectionId(id) ? A4_W - paddingLeft - paddingRight - bounds.width : A4_W - bounds.width;
       } else if (alignmentType === "top") {
         newY = 0;
       } else if (alignmentType === "middle") {
@@ -1347,7 +1357,7 @@ export function KonvaTemplateDesigner({
                   onDragStart={handleDragStart}
                   onDragEnd={(e) => {
                     const newX = Math.round(e.target.x());
-                    const newY = Math.round(e.target.y()) + paddingY + 10;
+                    const newY = Math.round(e.target.y()) + paddingTop + 10;
                     handleMultiDragEnd(headerKey, newX, newY);
                   }}
                   onClick={(e) => {
@@ -1367,7 +1377,7 @@ export function KonvaTemplateDesigner({
                   {isSelected && (
                     <Rect
                       x={20}
-                      y={paddingY}
+                      y={paddingTop}
                       width={A4_W - 40}
                       height={75}
                       fill="rgba(201,168,76,0.07)"
@@ -1383,7 +1393,7 @@ export function KonvaTemplateDesigner({
                   {!isSelected && isHovered && (
                     <Rect
                       x={20}
-                      y={paddingY}
+                      y={paddingTop}
                       width={A4_W - 40}
                       height={75}
                       stroke={accentColor + "90"}
@@ -1397,7 +1407,7 @@ export function KonvaTemplateDesigner({
                   {/* Header Mantra */}
                   <Text
                     x={A4_W / 2}
-                    y={paddingY + 10}
+                    y={paddingTop + 10}
                     text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
                     fontSize={layout.fSize * 1.2}
                     fontFamily={fontFamily}
@@ -1410,7 +1420,7 @@ export function KonvaTemplateDesigner({
 
                   {/* Document Title "BIODATA" */}
                   {(() => {
-                    const titleY = paddingY + 10 + layout.fSize * 2;
+                    const titleY = paddingTop + 10 + layout.fSize * 2;
                     const titleHeight = layout.fSize * 2;
 
                     if (formState.titleShape === "ribbon") {
@@ -1536,7 +1546,7 @@ export function KonvaTemplateDesigner({
                   draggable={selectedIds.includes(secKey)}
                   onDragStart={handleDragStart}
                   onDragEnd={(e) => {
-                    const newX = Math.round(e.target.x()) + paddingX;
+                    const newX = Math.round(e.target.x()) + paddingLeft;
                     const newY = Math.round(e.target.y()) + sec.titleY;
                     if (selectedIds.includes(secKey)) {
                       handleMultiDragEnd(secKey, newX, newY);
@@ -1562,9 +1572,9 @@ export function KonvaTemplateDesigner({
                     const boxHeight = lastField ? lastField.y + fSize * 1.45 - sec.titleY + 12 : 50;
                     return (
                       <Rect
-                        x={paddingX - 8}
+                        x={paddingLeft - 8}
                         y={sec.titleY - 8}
-                        width={A4_W - paddingX * 2 + 16}
+                        width={A4_W - paddingLeft - paddingRight + 16}
                         height={boxHeight}
                         fill={primaryColor + "06"}
                         stroke={primaryColor + "1a"}
@@ -1578,9 +1588,9 @@ export function KonvaTemplateDesigner({
                   {/* Selection highlight bg */}
                   {selectedId === secKey && (
                     <Rect
-                      x={paddingX - 12}
+                      x={paddingLeft - 12}
                       y={sec.titleY - 10}
-                      width={A4_W - paddingX * 2 + 24}
+                      width={A4_W - paddingLeft - paddingRight + 24}
                       height={sec.fields.length > 0
                         ? (sec.fields[sec.fields.length - 1].y + fSize * 2 - sec.titleY + 18)
                         : 40}
@@ -1596,9 +1606,9 @@ export function KonvaTemplateDesigner({
                   {/* Hover highlight border */}
                   {hoveredId === secKey && selectedId !== secKey && (
                     <Rect
-                      x={paddingX - 12}
+                      x={paddingLeft - 12}
                       y={sec.titleY - 10}
-                      width={A4_W - paddingX * 2 + 24}
+                      width={A4_W - paddingLeft - paddingRight + 24}
                       height={sec.fields.length > 0
                         ? (sec.fields[sec.fields.length - 1].y + fSize * 2 - sec.titleY + 18)
                         : 40}
@@ -1612,14 +1622,14 @@ export function KonvaTemplateDesigner({
 
                   {/* Section Header Underline Decoration */}
                   <Line
-                    points={[paddingX, sec.titleY + 15, paddingX + 5, sec.titleY + 15]}
+                    points={[paddingLeft, sec.titleY + 15, paddingLeft + 5, sec.titleY + 15]}
                     stroke={accentColor || primaryColor}
                     strokeWidth={3}
                     lineCap="round"
                     listening={false}
                   />
                   <Text
-                    x={paddingX + 10}
+                    x={paddingLeft + 10}
                     y={sec.titleY + 2}
                     text={applyTransform(sec.titleText)}
                     fontSize={Math.round(fSize * 1.4)}
@@ -1632,9 +1642,9 @@ export function KonvaTemplateDesigner({
                   {sec.fields.map((field: any) => {
                     const colX = field.isHalf
                       ? field.colIndex === 0
-                        ? paddingX + 10
-                        : paddingX + 10 + field.halfW + 10
-                      : paddingX + 10;
+                        ? paddingLeft + 10
+                        : paddingLeft + 10 + field.halfW + 10
+                      : paddingLeft + 10;
                     const lblW = field.isHalf ? field.labelW : 130;
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
@@ -1676,7 +1686,7 @@ export function KonvaTemplateDesigner({
                             points={[
                               colX,
                               field.y + fSize * 1.35 + 2,
-                              colX + (field.isHalf ? field.halfW : A4_W - paddingX * 2 - 20),
+                              colX + (field.isHalf ? field.halfW : A4_W - paddingLeft - paddingRight - 20),
                               field.y + fSize * 1.35 + 2,
                             ]}
                             stroke={fieldColor + "15"}
@@ -1755,7 +1765,7 @@ export function KonvaTemplateDesigner({
                 anchorFill="#ffffff"
                 borderStroke={primaryColor}
                 borderStrokeWidth={1.5}
-                keepRatio={selectedId === "photo"}
+                keepRatio={selectedId === "photo" || selectedId === "watermark"}
               />
             )}
           </Layer>
