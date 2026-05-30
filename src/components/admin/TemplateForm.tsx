@@ -64,8 +64,9 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Slider } from "@/components/ui/slider";
 import {
   Tabs,
   TabsList,
@@ -216,6 +217,11 @@ const initialFormState = {
   language: "English",
   detailsLayout: "classic",
   titleShape: "simple",
+  imageFrameOffset: "0",
+  frameImageX: "0",
+  frameImageY: "0",
+  frameImageWidth: "595",
+  frameImageHeight: "842",
   sectionOffsets: "{}",
   sectionStyles: "{}",
   // Pricing
@@ -404,7 +410,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const watchAllFields = methods.watch();
 
   const mockSections = React.useMemo(() => {
-    const currentLang = watchAllFields.language || "English";
+    const currentLang = formState.language || "English";
     const t = translations[currentLang] || translations["English"];
 
     const renderSectionData = (key: string, title: string, fields: any[]) => {
@@ -424,12 +430,20 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       renderSectionData("contact", t.contact || "Contact Details", watchAllFields.contactDetails || []),
     ].filter(Boolean) as any[];
   }, [
-    watchAllFields.language,
+    formState.language,
     watchAllFields.personalDetails,
     watchAllFields.educationDetails,
     watchAllFields.familyDetails,
     watchAllFields.contactDetails,
   ]);
+
+  const currentPreviewMantra = watchAllFields.mantra === defaultBiodataValues.mantra 
+    ? (translations[formState.language || "English"]?.mantra || watchAllFields.mantra) 
+    : watchAllFields.mantra;
+    
+  const currentPreviewTitle = watchAllFields.title === defaultBiodataValues.title 
+    ? (translations[formState.language || "English"]?.title || watchAllFields.title) 
+    : watchAllFields.title;
   // Preview-only photo – stored locally, never sent to server
   const [previewPhotoFile, setPreviewPhotoFile] = React.useState<string | null>(null);
   const previewPhotoInputRef = React.useRef<HTMLInputElement>(null);
@@ -766,6 +780,11 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         bgImageWidth: bgConf ? String(bgConf.width ?? 595) : "595",
         bgImageHeight: bgConf ? String(bgConf.height ?? 842) : "842",
         bgImageOpacity: bgConf ? String(bgConf.opacity ?? 1.0) : "1.0",
+        frameImageX: bgConf?.frameImageX ? String(bgConf.frameImageX) : "0",
+        frameImageY: bgConf?.frameImageY ? String(bgConf.frameImageY) : "0",
+        frameImageWidth: bgConf?.frameImageWidth ? String(bgConf.frameImageWidth) : "595",
+        frameImageHeight: bgConf?.frameImageHeight ? String(bgConf.frameImageHeight) : "842",
+        imageFrameOffset: bgConf?.imageFrameOffset || "0",
         language: template.language || "English",
         detailsLayout: template.detailsLayout || "classic",
         titleShape: template.titleShape || "simple",
@@ -837,8 +856,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         titleShape: formState.titleShape,
         // Pricing
         isPremium: (formState as any).isPremium === true,
-        price: (formState as any).price !== "" && (formState as any).price !== undefined ? parseFloat((formState as any).price) : null,
-        discountPrice: (formState as any).discountPrice !== "" && (formState as any).discountPrice !== undefined ? parseFloat((formState as any).discountPrice) : null,
         currency: (formState as any).currency || "INR",
         pdfPrice: (formState as any).pdfPrice !== "" && (formState as any).pdfPrice !== undefined ? parseFloat((formState as any).pdfPrice) : null,
         pdfDiscountPrice: (formState as any).pdfDiscountPrice !== "" && (formState as any).pdfDiscountPrice !== undefined ? parseFloat((formState as any).pdfDiscountPrice) : null,
@@ -851,6 +868,18 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         comboPrice: (formState as any).comboPrice !== "" && (formState as any).comboPrice !== undefined ? parseFloat((formState as any).comboPrice) : null,
         comboDiscountPrice: (formState as any).comboDiscountPrice !== "" && (formState as any).comboDiscountPrice !== undefined ? parseFloat((formState as any).comboDiscountPrice) : null,
       };
+
+      // Automatically assign the lowest available general price for store badges
+      if (payload.isPremium) {
+        const prices = [payload.pdfPrice, payload.docxPrice, payload.jpgPrice, payload.pngPrice, payload.comboPrice].filter(p => typeof p === "number" && !isNaN(p));
+        const discountPrices = [payload.pdfDiscountPrice, payload.docxDiscountPrice, payload.jpgDiscountPrice, payload.pngDiscountPrice, payload.comboDiscountPrice].filter(p => typeof p === "number" && !isNaN(p));
+        
+        payload.price = prices.length > 0 ? Math.min(...prices) : null;
+        payload.discountPrice = discountPrices.length > 0 ? Math.min(...discountPrices) : null;
+      } else {
+        payload.price = null;
+        payload.discountPrice = null;
+      }
 
       payload.bgConfig = {
         url: formState.bgImageUrl || null,
@@ -866,6 +895,11 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         alignment: formState.defaultAlignment,
         sectionOffsets: formState.sectionOffsets || "{}",
         sectionStyles: formState.sectionStyles || "{}",
+        imageFrameOffset: formState.imageFrameOffset || "0",
+        frameImageX: parseInt(formState.frameImageX) || 0,
+        frameImageY: parseInt(formState.frameImageY) || 0,
+        frameImageWidth: parseInt(formState.frameImageWidth) || 595,
+        frameImageHeight: parseInt(formState.frameImageHeight) || 842,
       };
 
       if (formState.frameType === "svg") {
@@ -1327,33 +1361,33 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                         </Select>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description</Label>
-                        <div className="relative flex items-start">
-                          <Textarea
-                            id="tpl-desc"
-                            value={formState.description}
-                            onChange={e => setFormState({ ...formState, description: e.target.value })}
-                            placeholder="e.g. Traditional gold ornaments, crimson borders"
-                            className="focus-visible:ring-primary rounded-lg min-h-[80px] pr-10 w-full"
-                            rows={3}
-                          />
+                      <div className="space-y-1.5 flex flex-col">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="tpl-desc" className="text-xs font-bold text-muted-foreground">Description (WYSIWYG)</Label>
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
+                            size="sm"
                             onClick={handleGenerateDescription}
                             disabled={isDescGenerating}
-                            className="absolute right-1 top-1 w-8 h-8 rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
+                            className="h-6 px-2 text-[10px] rounded-md text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer font-bold flex items-center gap-1"
                             title="Stream generate description using Gemini"
                           >
                             {isDescGenerating ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
-                              <Sparkles className="w-4 h-4" />
+                              <>
+                                <Sparkles className="w-3 h-3" />
+                                AI Generate
+                              </>
                             )}
                           </Button>
                         </div>
+                        <RichTextEditor
+                          value={formState.description}
+                          onChange={val => setFormState({ ...formState, description: val })}
+                          placeholder="e.g. Traditional gold ornaments, crimson borders"
+                        />
                       </div>
                     </div>
                   </TabsContent>
@@ -1675,6 +1709,20 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                               Tip: Upload a grayscale/white transparent PNG or an SVG frame.
                             </p>
                           </div>
+                        </div>
+                      )}
+
+                      {formState.frameType === "image" && (
+                        <div className="space-y-4 border border-border rounded-xl p-4 bg-muted/10 mt-4">
+                          <SliderInput
+                            label="Stretch Frame (px) to hide borders"
+                            id="image-frame-offset"
+                            min={0}
+                            max={60}
+                            value={formState.imageFrameOffset}
+                            onChange={val => setFormState({ ...formState, imageFrameOffset: val })}
+                          />
+                          <p className="text-[10px] text-muted-foreground leading-tight">Increase this to stretch downloaded frames past the edges, hiding any built-in transparent borders or watermarks.</p>
                         </div>
                       )}
 
@@ -2424,7 +2472,27 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                         <Switch
                           id="isPremium-switch"
                           checked={(formState as any).isPremium === true}
-                          onCheckedChange={(checked) => setFormState({ ...formState, isPremium: checked } as any)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              // Auto-fill default values when turned on if they are currently empty
+                              setFormState({
+                                ...formState,
+                                isPremium: true,
+                                pdfPrice: (formState as any).pdfPrice || "59",
+                                pdfDiscountPrice: (formState as any).pdfDiscountPrice || "39",
+                                docxPrice: (formState as any).docxPrice || "49",
+                                docxDiscountPrice: (formState as any).docxDiscountPrice || "29",
+                                jpgPrice: (formState as any).jpgPrice || "49",
+                                jpgDiscountPrice: (formState as any).jpgDiscountPrice || "29",
+                                pngPrice: (formState as any).pngPrice || "49",
+                                pngDiscountPrice: (formState as any).pngDiscountPrice || "29",
+                                comboPrice: (formState as any).comboPrice || "149",
+                                comboDiscountPrice: (formState as any).comboDiscountPrice || "79",
+                              } as any);
+                            } else {
+                              setFormState({ ...formState, isPremium: false } as any);
+                            }
+                          }}
                           className="data-[state=checked]:bg-amber-500"
                         />
                       </div>
@@ -2817,13 +2885,15 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                       template={template}
                       designerRef={designerRef}
                       sections={mockSections}
+                      mantra={currentPreviewMantra}
+                      title={currentPreviewTitle}
                     />
                     <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "595px", height: "842px", opacity: 0, pointerEvents: "none" }}>
-                      <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} />
+                      <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} mantra={currentPreviewMantra} title={currentPreviewTitle} />
                     </div>
                   </>
                 ) : (
-                  <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} />
+                  <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} mantra={currentPreviewMantra} title={currentPreviewTitle} />
                 )}
               </div>
 
@@ -2850,11 +2920,15 @@ function TemplateSvgPreview({
   template,
   previewPhotoFile,
   sections: propSections,
+  mantra,
+  title,
 }: {
   formState: typeof initialFormState;
   template: Template | null | undefined;
   previewPhotoFile?: string | null;
   sections?: any[];
+  mantra?: string;
+  title?: string;
 }) {
   const A4_W = 595;
   const A4_H = 842;
@@ -3224,29 +3298,36 @@ function TemplateSvgPreview({
         </g>
       )}
 
-      {formState.frameType === "image" && (
-        <g>
-          {frameImageSrc ? (
-            /* Render active PNG image frame overlay scaled and tinted via SVG styling */
+      {formState.frameType === "image" && frameImageSrc && (() => {
+        // Fallback to offset if older template, but prefer new absolute values
+        const offset = parseInt(formState.imageFrameOffset) || 0;
+        const fallbackX = -offset;
+        const fallbackY = -offset;
+        const fallbackW = 595 + (offset * 2);
+        const fallbackH = 842 + (offset * 2);
+        
+        const isDefault = formState.frameImageX === "0" && formState.frameImageY === "0" && formState.frameImageWidth === "595" && formState.frameImageHeight === "842";
+        
+        const x = isDefault && offset !== 0 ? fallbackX : (parseInt(formState.frameImageX) || fallbackX);
+        const y = isDefault && offset !== 0 ? fallbackY : (parseInt(formState.frameImageY) || fallbackY);
+        const width = isDefault && offset !== 0 ? fallbackW : (parseInt(formState.frameImageWidth) || fallbackW);
+        const height = isDefault && offset !== 0 ? fallbackH : (parseInt(formState.frameImageHeight) || fallbackH);
+        
+        return (
+          <g>
+            {/* Render active PNG image frame overlay scaled and tinted via SVG styling */}
             <image
               href={frameImageSrc}
-              x="0"
-              y="0"
-              width="595"
-              height="842"
+              x={x}
+              y={y}
+              width={width}
+              height={height}
               preserveAspectRatio="none"
               style={{ filter: `drop-shadow(0px 0px 1px ${primaryColor})` }}
             />
-          ) : (
-            /* Mock illustration of ornate borders */
-            <g stroke={primaryColor} strokeWidth="3" fill="none">
-              <rect x="15" y="15" width="565" height="812" rx="12" strokeWidth="2" strokeDasharray="10, 5" />
-              <rect x="25" y="25" width="545" height="792" rx="8" strokeWidth="1" opacity="0.6" />
-              <path d="M 15 45 L 45 15 M 580 45 L 550 15 M 15 797 L 45 827 M 580 797 L 550 827" strokeWidth="3" stroke={accentColor} />
-            </g>
-          )}
-        </g>
-      )}
+          </g>
+        );
+      })()}
 
       {formState.frameType === "custom" && (
         <g>
@@ -3308,24 +3389,14 @@ function TemplateSvgPreview({
           fontFamily="sans-serif"
           textAnchor="middle"
         >
-          {currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||"}
+          {mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
         </text>
         
-        {/* Accent Underline */}
-        <line
-          x1="220"
-          y1={paddingY + 28}
-          x2="375"
-          y2={paddingY + 28}
-          stroke={accentColor}
-          strokeWidth="1.5"
-        />
-
         {/* Title Rendering */}
         {(() => {
           const titleY = paddingY + 10 + layout.fSize * 2;
           const titleHeight = layout.fSize * 2;
-          const titleVal = currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA";
+          const titleVal = title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
 
           if (formState.titleShape === "ribbon") {
             const ribbonW = 320;

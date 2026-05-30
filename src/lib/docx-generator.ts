@@ -126,6 +126,81 @@ const noBorders = {
   right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
 } as const;
 
+async function generateBackgroundBuffer(config: any, theme: any, cleanBgColor: string): Promise<Buffer> {
+  const A4_W = 794;
+  const A4_H = 1123;
+  const isTemplateGradient = (config.bgType === "linear" || config.bgType === "radial") && (config.bgGradientColors || []).length > 1;
+  const isThemeGradient = theme.bgColors && theme.bgColors.length > 1;
+
+  if (isThemeGradient) {
+    const stops = theme.bgColors.map((c: string, idx: number) => `<stop offset="${Math.round((idx / (theme.bgColors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+    const bgSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+        <defs>
+          <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            ${stops}
+          </linearGradient>
+        </defs>
+        <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+      </svg>
+    `;
+    return await sharp(Buffer.from(bgSvg)).png().toBuffer();
+  } else if (isTemplateGradient) {
+    const colors = config.bgGradientColors;
+    const stops = colors.map((c: string, idx: number) => `<stop offset="${Math.round((idx / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+    
+    let bgSvg = "";
+    if (config.bgType === "radial") {
+      bgSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+          <defs>
+            <radialGradient id="bg-gradient" cx="50%" cy="50%" r="50%">
+              ${stops}
+            </radialGradient>
+          </defs>
+          <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+        </svg>
+      `;
+    } else {
+      bgSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+          <defs>
+            <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              ${stops}
+            </linearGradient>
+          </defs>
+          <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+        </svg>
+      `;
+    }
+    return await sharp(Buffer.from(bgSvg)).png().toBuffer();
+  } else if (config.frame.type === "gradient") {
+    const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
+    const stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
+    const bgSvg = `
+       <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
+         <defs>
+           <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+             ${stops}
+           </linearGradient>
+         </defs>
+         <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
+       </svg>
+     `;
+    return await sharp(Buffer.from(bgSvg)).png().toBuffer();
+  } else {
+    const hexBg = cleanBgColor.startsWith("#") ? cleanBgColor : `#${cleanBgColor}`;
+    return await sharp({
+      create: {
+        width: A4_W,
+        height: A4_H,
+        channels: 4,
+        background: hexBg
+      }
+    }).png().toBuffer();
+  }
+}
+
 async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: string, theme: any): Promise<Buffer | null> {
   const A4_W = 794;
   const A4_H = 1123;
@@ -157,33 +232,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
       }
 
       if (imgBuffer) {
-        let bgBuffer: Buffer;
-        const isGradient = theme.bgColors && theme.bgColors.length > 1;
-
-        if (isGradient) {
-          const stops = theme.bgColors.map((c: string, idx: number) => `<stop offset="${Math.round((idx / (theme.bgColors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
-          const bgSvg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
-              <defs>
-                <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  ${stops}
-                </linearGradient>
-              </defs>
-              <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
-            </svg>
-          `;
-          bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
-        } else {
-          const hexBg = cleanBgColor.startsWith("#") ? cleanBgColor : `#${cleanBgColor}`;
-          bgBuffer = await sharp({
-            create: {
-              width: A4_W,
-              height: A4_H,
-              channels: 4,
-              background: hexBg
-            }
-          }).png().toBuffer();
-        }
+        let bgBuffer = await generateBackgroundBuffer(config, theme, cleanBgColor);
 
         const resizedFrame = await sharp(imgBuffer).resize(A4_W, A4_H).png().toBuffer();
         
@@ -238,9 +287,8 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
     if (config.frame.type === "custom") {
       const componentId = config.frame.componentId;
       
-      // 1. Create Background Buffer with Solid Background Color
-      const bgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}"><rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" /></svg>`;
-      let bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
+      // 1. Create Background Buffer (Solid or Gradient)
+      let bgBuffer = await generateBackgroundBuffer(config, theme, cleanBgColor);
 
       // 3. Render Custom Frame SVGs (Transparent) ON TOP of the Background + Background Image
       let frameContent = "";
@@ -326,23 +374,7 @@ async function getFrameImageBuffer(config: any, primaryColor: string, bgColor: s
     }
 
     // 1. Create Background Buffer (Solid or Gradient)
-    let bgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}"><rect width="${A4_W}" height="${A4_H}" fill="#${cleanBgColor}" /></svg>`;
-
-    if (config.frame.type === "gradient") {
-      const colors = theme.bgColors || config.frame.gradientColors || ["#2A7B9B", "#57C785", "#EDDD53"];
-      let stops = colors.map((c: string, i: number) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}" />`).join('');
-      bgSvg = `
-         <svg xmlns="http://www.w3.org/2000/svg" width="${A4_W}" height="${A4_H}">
-           <defs>
-             <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-               ${stops}
-             </linearGradient>
-           </defs>
-           <rect width="${A4_W}" height="${A4_H}" fill="url(#bg-gradient)" />
-         </svg>
-       `;
-    }
-    let bgBuffer = await sharp(Buffer.from(bgSvg)).png().toBuffer();
+    let bgBuffer = await generateBackgroundBuffer(config, theme, cleanBgColor);
 
     // 3. Render Frame Borders / Strokes (Transparent SVG) ON TOP of Background + Background Image
     let borderSvgContent = "";
@@ -538,13 +570,19 @@ export async function generateDocxBuffer(opts: {
   const primary = theme.primaryColor || config.defaultPrimary;
   const secondary = theme.secondaryColor || config.defaultSecondary;
   const accent = theme.accentColor || config.defaultAccent;
+  const isTemplateGradient = (config.bgType === "linear" || config.bgType === "radial") && (config.bgGradientColors || []).length > 1;
+  const isStaticGradient = config.frame.type === "gradient" && ((config.frame as any).gradientColors || []).length > 1;
+  const hasTemplateGradient = isTemplateGradient || isStaticGradient;
+
   let bgColor = "ffffff";
-  if (theme.bgColors && theme.bgColors.length > 0) {
+  if (theme.bgColors && theme.bgColors.length > 1) {
     bgColor = theme.bgColors[0].replace("#", "");
+  } else if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined && theme.selectedPaletteName !== "None" && !hasTemplateGradient) {
+    bgColor = getLightBgColor(primary).replace("#", "");
   } else if ((config.frame as any).bgColor) {
     bgColor = (config.frame as any).bgColor.replace("#", "");
-  } else if (theme.selectedPaletteName !== null && theme.selectedPaletteName !== "None") {
-    bgColor = getLightBgColor(primary).replace("#", "");
+  } else if (theme.bgColors && theme.bgColors.length > 0) {
+    bgColor = theme.bgColors[0].replace("#", "");
   }
 
   const currentLang = data.language || "English";

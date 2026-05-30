@@ -37,7 +37,7 @@ const orgSchema = {
 
 export default function AboutUsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4 overflow-hidden relative">
+    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-10 pb-10 px-4 overflow-hidden relative">
       {/* Organisation JSON-LD Schema */}
       <JsonLd schema={orgSchema} />
 

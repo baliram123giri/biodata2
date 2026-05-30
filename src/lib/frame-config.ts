@@ -61,6 +61,11 @@ export interface BgConfig {
   alignment?: string;
   sectionOffsets?: string;
   sectionStyles?: string;
+  imageFrameOffset?: any;
+  frameImageX?: any;
+  frameImageY?: any;
+  frameImageWidth?: any;
+  frameImageHeight?: any;
 }
 
 export interface TemplateConfig {

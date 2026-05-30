@@ -15,7 +15,8 @@ import {
   Tag,
   Smile,
   Copy,
-  Wand2
+  Wand2,
+  BookA
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { MantrasManager } from "@/components/admin/MantrasManager";
 
 interface Template {
   id: string;
@@ -75,7 +77,7 @@ interface Sticker {
 
 export default function AdminTemplates() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = React.useState<"templates" | "backgrounds" | "stickers">("templates");
+  const [activeTab, setActiveTab] = React.useState<"templates" | "backgrounds" | "stickers" | "mantras">("templates");
   const [newBgName, setNewBgName] = React.useState("");
   const [newBgFile, setNewBgFile] = React.useState<string | null>(null);
   const [isUploadingBg, setIsUploadingBg] = React.useState(false);
@@ -461,6 +463,17 @@ export default function AdminTemplates() {
         >
           Custom Stickers
         </button>
+        <button
+          onClick={() => setActiveTab("mantras")}
+          className={cn(
+            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none",
+            activeTab === "mantras" 
+              ? "border-primary text-primary" 
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Mantras
+        </button>
       </div>
 
       {activeTab === "templates" ? (
@@ -786,7 +799,7 @@ export default function AdminTemplates() {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === "stickers" ? (
         /* Stickers Manager */
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Upload panel */}
@@ -984,6 +997,9 @@ export default function AdminTemplates() {
             )}
           </div>
         </div>
+      ) : (
+        /* Mantras Manager */
+        <MantrasManager />
       )}
     </div>
   );

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function ContactUsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
+    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-10 pb-10 px-4">
       {/* JSON-LD Schema */}
       <JsonLd schema={contactPageSchema} />
       <JsonLd schema={generateFaqSchema(faqs)} />

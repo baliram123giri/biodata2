@@ -343,11 +343,8 @@ export function useDownloadBiodata() {
     if (format === "jpg") {
       try {
         const dataUrl = await generateJpgDataUrl();
-
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = `${nameField}.jpeg`;
-        link.click();
+        const { saveAs } = await import("file-saver");
+        saveAs(dataUrl, `${nameField}.jpeg`);
       } catch (err) {
         console.error("JPG Export Error:", err);
       } finally {
@@ -360,11 +357,8 @@ export function useDownloadBiodata() {
     if (format === "png") {
       try {
         const dataUrl = await generatePngDataUrl();
-
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = `${nameField}.png`;
-        link.click();
+        const { saveAs } = await import("file-saver");
+        saveAs(dataUrl, `${nameField}.png`);
       } catch (err) {
         console.error("PNG Export Error:", err);
       } finally {
@@ -377,12 +371,8 @@ export function useDownloadBiodata() {
     try {
       const fileExt = format === "docx" ? "docx" : "pdf";
       const blob = await generateServerBlob(format === "docx" ? "docx" : "pdf");
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${nameField}.${fileExt}`;
-      link.click();
-      URL.revokeObjectURL(url);
+      const { saveAs } = await import("file-saver");
+      saveAs(blob, `${nameField}.${fileExt}`);
     } catch (err) {
       console.error("Export Error:", err);
     } finally {

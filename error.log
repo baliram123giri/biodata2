@@ -1,0 +1,15 @@
+PrismaClientKnownRequestError: 
+Invalid `prisma.sticker.findMany()` invocation:
+
+
+Can't reach database server at 127.0.0.1:5433
+    at Co.handleRequestError (D:\MERN\biodata\biodata2\.next\server\chunks\_0k0ysmc._.js:62:8024)
+    at Co.handleAndLogRequestError (D:\MERN\biodata\biodata2\.next\server\chunks\_0k0ysmc._.js:62:7036)
+    at Co.request (D:\MERN\biodata\biodata2\.next\server\chunks\_0k0ysmc._.js:62:6743)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Q (D:\MERN\biodata\biodata2\.next\server\chunks\_0k0ysmc._.js:72:7385)
+    at async f (D:\MERN\biodata\biodata2\.next\server\chunks\[root-of-the-server]__10~h73t._.js:1:1431)
+    at async rB.do (D:\MERN\biodata\biodata2\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:20926)
+    at async rB.handle (D:\MERN\biodata\biodata2\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:25709)
+    at async l (D:\MERN\biodata\biodata2\.next\server\chunks\[root-of-the-server]__10~h73t._.js:1:5026)
+    at async rB.handleResponse (D:\MERN\biodata\biodata2\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:1:119077)

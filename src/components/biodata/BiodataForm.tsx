@@ -12,23 +12,36 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
+import { MantraAutocomplete } from "./MantraAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2 } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
-import { LANGUAGES, translations, translateDynamicOption } from "@/lib/translations";
+import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
 import { useBiodataStore } from "@/store/useBiodataStore";
+import { useThemeStore } from "@/store/useThemeStore";
+import { Slider } from "@/components/ui/slider";
+import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
 
 export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
+  const photoCornerRadius = useThemeStore(s => s.photoCornerRadius);
+  const photoBorderSize = useThemeStore(s => s.photoBorderSize);
+  const setPhotoCornerRadius = useThemeStore(s => s.setPhotoCornerRadius);
+  const setPhotoBorderSize = useThemeStore(s => s.setPhotoBorderSize);
+
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const currentLang = watchLang || "English";
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
   const [mantraReligion, setMantraReligion] = useState("Hindu");
-  const { addSticker, removeSticker, formData } = useBiodataStore();
+  const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore();
   const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
+
+  const templateConfig = customTemplates.find((t: any) => t.id === selectedTemplate) || TEMPLATE_CONFIGS[selectedTemplate] || TEMPLATE_CONFIGS["royal"];
+  const defaultCornerRadius = templateConfig?.photo?.cornerRadius ?? 8;
+  const defaultBorderSize = templateConfig?.photo?.showBorder !== false ? 2 : 0;
 
   const { data: mantraStickers, isLoading: isLoadingMantras } = useQuery({
     queryKey: ["mantraStickers", mantraReligion],
@@ -41,6 +54,17 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
     enabled: isMantraDialogOpen,
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
     gcTime: 1000 * 60 * 60,    // Keep garbage collection time at 1 hour
+  });
+
+  const { data: dbMantras } = useQuery({
+    queryKey: ["dbMantras"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/mantras`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.mantras || []) as { id: string; text: string; nativeText: string | null; religion: string }[];
+    },
+    staleTime: 1000 * 60 * 30,
   });
 
   const handleLanguageChange = (newLang: string | null) => {
@@ -91,7 +115,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
           </SelectTrigger>
           <SelectContent>
             {LANGUAGES.map(lang => (
-              <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+              <SelectItem key={lang} value={lang}>{LANGUAGE_DISPLAY_NAMES[lang] || lang}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -127,6 +151,32 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                    />
                  )}
                />
+
+               {/* Photo Styling Options */}
+               <div className="grid grid-cols-2 gap-4 mt-2">
+                 <div className="space-y-3">
+                   <Label className="text-xs font-bold text-muted-foreground uppercase">Corner Radius</Label>
+                   <Slider 
+                     value={[photoCornerRadius ?? defaultCornerRadius]}
+                     min={0}
+                     max={100}
+                     step={1}
+                     onValueChange={([val]) => setPhotoCornerRadius(val)}
+                     className="w-full"
+                   />
+                 </div>
+                 <div className="space-y-3">
+                   <Label className="text-xs font-bold text-muted-foreground uppercase">Border Size</Label>
+                   <Slider 
+                     value={[photoBorderSize ?? defaultBorderSize]}
+                     min={0}
+                     max={10}
+                     step={1}
+                     onValueChange={([val]) => setPhotoBorderSize(val)}
+                     className="w-full"
+                   />
+                 </div>
+               </div>
             </div>
 
             <div className="space-y-4">
@@ -169,25 +219,29 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                   </button>
 
                   {/* Mantra Input */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <div className="relative">
-                      <Input 
-                        id="mantra" 
-                        placeholder="e.g. Shree Ganeshay Namah" 
-                        {...register("mantra")} 
-                        className="h-14 pr-12 border-border/80 focus-visible:ring-primary/20 bg-card font-medium text-sm"
-                      />
-                      {currentMantraSticker && (
-                        <button
-                          type="button"
-                          onClick={() => removeSticker(currentMantraSticker.id)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive/80 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/10 transition-all"
-                          title="Remove Sign"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                  <div className="flex-1 flex flex-col justify-center relative">
+                    <Controller
+                      name="mantra"
+                      control={control}
+                      render={({ field }) => (
+                        <MantraAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="e.g. Shree Ganeshay Namah"
+                          mantras={dbMantras || []}
+                        />
                       )}
-                    </div>
+                    />
+                    {currentMantraSticker && (
+                      <button
+                        type="button"
+                        onClick={() => removeSticker(currentMantraSticker.id)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive/80 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/10 transition-all z-10 bg-card shadow-sm"
+                        title="Remove Sign"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

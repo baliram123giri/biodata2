@@ -291,6 +291,12 @@ body[style*="overflow: hidden"] {
   animation: shine 2.5s infinite;
 }
 
+@media (max-width: 1023px) {
+  .animate-shine {
+    display: none !important;
+  }
+}
+
 @keyframes saffron-pulse {
 
   0%,
@@ -378,6 +384,12 @@ body[style*="overflow: hidden"] {
   animation: logo-sweep 6s infinite ease-in-out;
   pointer-events: none;
   z-index: 20;
+}
+
+@media (max-width: 1023px) {
+  .logo-shine-overlay {
+    display: none !important;
+  }
 }
 
 @keyframes logo-sweep {

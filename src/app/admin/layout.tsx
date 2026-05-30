@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { AdminLayoutContent } from "@/components/admin/AdminLayoutContent";
-import { AdminAuthProvider } from "@/components/admin/AdminAuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-
 import Script from "next/script";
+import dynamic from "next/dynamic";
+
+const AdminLayoutContent = dynamic(() => import("@/components/admin/AdminLayoutContent").then(mod => mod.AdminLayoutContent));
+
+const AdminAuthProvider = dynamic(() => import("@/components/admin/AdminAuthProvider").then(mod => mod.AdminAuthProvider));
 
 export const metadata: Metadata = {
   title: "Admin Panel | biodata99.com",

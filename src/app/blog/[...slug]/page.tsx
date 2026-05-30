@@ -243,7 +243,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
+    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-10 pb-10 px-4">
       {/* JSON-LD Article Schema */}
       <JsonLd schema={articleSchema} />
       

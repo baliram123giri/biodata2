@@ -171,4 +171,13 @@ model Sticker {
   createdAt DateTime @default(now())
 }
 
-
+model Mantra {
+  id          String   @id @default(uuid())
+  religion    String
+  text        String
+  nativeText  String?
+  meaning     String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

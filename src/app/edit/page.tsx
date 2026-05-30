@@ -48,9 +48,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { TemplateSelector } from "@/components/editor/TemplateSelector";
-import { StickerSelector } from "@/components/editor/StickerSelector";
-import { BackgroundSelector } from "@/components/editor/BackgroundSelector";
+const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
+const StickerSelector = dynamic(() => import("@/components/editor/StickerSelector").then(mod => mod.StickerSelector));
+const BackgroundSelector = dynamic(() => import("@/components/editor/BackgroundSelector").then(mod => mod.BackgroundSelector));
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
@@ -61,16 +61,16 @@ import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { defaultBiodataValues } from "@/lib/default-biodata";
-import { BiodataForm } from "@/components/biodata/BiodataForm";
+const BiodataForm = dynamic(() => import("@/components/biodata/BiodataForm").then(mod => mod.BiodataForm));
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
-import { FeedbackModal } from "@/components/biodata/FeedbackModal";
-import { PriceModal } from "@/components/biodata/PriceModal";
+const FeedbackModal = dynamic(() => import("@/components/biodata/FeedbackModal").then(mod => mod.FeedbackModal));
+const PriceModal = dynamic(() => import("@/components/biodata/PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
-import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
+const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsAppDeliveryCard").then(mod => mod.WhatsAppDeliveryCard));
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 export default function EditPage() {
   const router = useRouter();
@@ -140,12 +140,7 @@ export default function EditPage() {
   const [hasRated, setHasRated] = useState(false);
   const [filename, setFilename] = useState("biodata");
 
-  // AI Photo Generator states
-  const [aiGender, setAiGender] = useState<"male" | "female">("male");
-  const [aiStyle, setAiStyle] = useState<"traditional" | "professional">("traditional");
-  const [aiAge, setAiAge] = useState("26");
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
-  const [aiResultUrl, setAiResultUrl] = useState("");
+  // AI Photo Generator states removed (migrated to BiodataForm)
 
   // Sync store data to form ONCE when mounted/hydrated
   useEffect(() => {
@@ -178,8 +173,8 @@ export default function EditPage() {
     try {
       const fullName = currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value || modalFilename || "";
       const contactFields = currentData.contactDetails || [];
-      const emailField = contactFields.find((f: any) => 
-        f.id === "email" || 
+      const emailField = contactFields.find((f: any) =>
+        f.id === "email" ||
         f.id === "emailId" ||
         f.id?.toLowerCase()?.includes("email") ||
         f.id?.toLowerCase()?.includes("mail") ||
@@ -189,8 +184,8 @@ export default function EditPage() {
         (f.value || "").includes("@")
       );
       const properEmail = emailField?.value || "";
-      const phoneField = contactFields.find((f: any) => 
-        f.id === "mobileNumber" || 
+      const phoneField = contactFields.find((f: any) =>
+        f.id === "mobileNumber" ||
         f.id === "whatsappNumber" ||
         f.id?.toLowerCase()?.includes("phone") ||
         f.id?.toLowerCase()?.includes("mobile") ||
@@ -199,7 +194,7 @@ export default function EditPage() {
         (f.label || "").toLowerCase().includes("contact")
       );
       const properPhone = phoneField?.value || "";
-      
+
       let finalPrice = 29;
       if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
       else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
@@ -484,32 +479,6 @@ export default function EditPage() {
     }
   };
 
-  const handleGenerateAiPhoto = async () => {
-    setIsAiGenerating(true);
-    try {
-      const res = await fetch("/api/generate-portrait", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gender: aiGender,
-          style: aiStyle,
-          age: aiAge,
-          religion: methods.getValues().personalDetails?.find((f: any) => f.id === "religion")?.value || "Hindu"
-        })
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
-        setAiResultUrl(data.url);
-      } else {
-        console.error("AI Generation failed:", data.error);
-      }
-    } catch (err) {
-      console.error("Error generating AI photo:", err);
-    } finally {
-      setIsAiGenerating(false);
-    }
-  };
-
   /** Generate a JPG data URL for WhatsApp sharing */
   const handleGenerateShareImage = async (): Promise<string> => {
     return await generateJpgDataUrl();
@@ -560,7 +529,7 @@ export default function EditPage() {
           <Button
             variant="ghost"
             className="group gap-1 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
-            onClick={() => router.push("/", { scroll: false })}
+            onClick={() => router.back()}
           >
             <ArrowLeft className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 transition-transform group-hover:-translate-x-1" />
             <span className="hidden md:inline text-sm font-bold tracking-wide">Go Back</span>
@@ -716,12 +685,6 @@ export default function EditPage() {
                 label="Spacing"
                 active={isRightOpen && activeTab === "spacing"}
                 onClick={() => handleTabClick("spacing")}
-              />
-              <ToolButton
-                icon={<ImageIcon />}
-                label="Photo"
-                active={isRightOpen && activeTab === "photo"}
-                onClick={() => handleTabClick("photo")}
               />
               <ToolButton
                 icon={<Sparkles />}
@@ -1153,168 +1116,6 @@ export default function EditPage() {
                 </div>
               )}
 
-
-
-              {activeTab === "photo" && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-200">
-                  <div className="space-y-4">
-                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Profile Photo</Label>
-                    <ImageUpload
-                      value={formData.photo}
-                      onChange={(url) => {
-                        methods.setValue("photo", url || "");
-                        if (url && window.innerWidth < 1024) {
-                          setIsRightOpen(false);
-                        }
-                      }}
-                      aspect={3 / 4}
-                    />
-                    <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed italic">
-                      Tip: A clear portrait with a simple background looks best in matrimonial biodata.
-                    </p>
-                  </div>
-
-                  <div className="border-t border-stitch-outline/10 my-1" />
-
-                  {/* AI Passport Photo Generator */}
-                  <div className="flex flex-col gap-4 bg-stitch-surface-variant/5 p-4 rounded-2xl border border-stitch-outline/5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-stitch-primary animate-pulse" />
-                      <Label className="text-[11px] font-bold uppercase tracking-wider text-stitch-on-surface">AI Passport Photo Generator</Label>
-                    </div>
-
-                    <p className="text-[10px] text-stitch-on-surface-variant/70 leading-relaxed">
-                      Don't have a professional photo? Generate a realistic Indian matrimonial portrait instantly for free!
-                    </p>
-
-                    {/* Gender Selection */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Gender</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setAiGender("male")}
-                          className={cn(
-                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
-                            aiGender === "male"
-                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
-                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
-                          )}
-                        >
-                          Groom (Male)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAiGender("female")}
-                          className={cn(
-                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
-                            aiGender === "female"
-                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
-                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
-                          )}
-                        >
-                          Bride (Female)
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Style Selection */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Attire Style</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setAiStyle("traditional")}
-                          className={cn(
-                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
-                            aiStyle === "traditional"
-                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
-                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
-                          )}
-                        >
-                          Traditional
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAiStyle("professional")}
-                          className={cn(
-                            "py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
-                            aiStyle === "professional"
-                              ? "bg-stitch-primary border-stitch-primary text-white shadow-sm font-extrabold"
-                              : "bg-white border-stitch-outline/10 text-stitch-on-surface hover:bg-stitch-surface"
-                          )}
-                        >
-                          Formal Suit
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Age Input Dropdown */}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-on-surface-variant">Target Age</span>
-                      <select
-                        value={aiAge}
-                        onChange={(e) => setAiAge(e.target.value)}
-                        className="w-full p-2.5 text-xs bg-white border border-stitch-outline/15 rounded-xl text-stitch-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-stitch-primary cursor-pointer"
-                      >
-                        {[22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35].map(a => (
-                          <option key={a} value={a}>{a} Years Old</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Generate Button */}
-                    <Button
-                      type="button"
-                      onClick={handleGenerateAiPhoto}
-                      disabled={isAiGenerating}
-                      className="w-full mt-2 py-5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 hover:opacity-90 text-white font-bold cursor-pointer transition-all duration-300 shadow-md flex items-center justify-center gap-2"
-                    >
-                      {isAiGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin text-white" />
-                          <span>Generating Portrait...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 text-[#E6C97A] fill-[#E6C97A]" />
-                          <span>Generate Free Portrait</span>
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Preview Generated AI Portrait */}
-                    {aiResultUrl && (
-                      <div className="flex flex-col gap-3 mt-2 border border-stitch-outline/10 bg-white p-3 rounded-2xl shadow-sm animate-in zoom-in duration-200">
-                        <span className="text-[9.5px] uppercase tracking-wider font-bold text-stitch-primary text-center">Generated Result</span>
-                        
-                        <div className="relative aspect-[3/4] w-32 mx-auto rounded-xl overflow-hidden border border-black/5 shadow-md">
-                          <img
-                            src={aiResultUrl}
-                            alt="AI Passport Photo"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            methods.setValue("photo", aiResultUrl);
-                            setAiResultUrl(""); // clear preview once applied
-                            if (window.innerWidth < 1024) {
-                              setIsRightOpen(false);
-                            }
-                          }}
-                          className="w-full py-2.5 rounded-xl bg-stitch-primary hover:bg-stitch-primary/95 text-white font-bold cursor-pointer transition-all text-xs"
-                        >
-                          Apply to Biodata
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {activeTab === "graphics" && (
                 <Tabs defaultValue="stickers" className="w-full flex flex-col gap-4">
                   <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl">
@@ -1325,7 +1126,7 @@ export default function EditPage() {
                       BG Images
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="stickers" className="animate-in fade-in duration-200 mt-2">
                     <StickerSelector
                       onSelect={() => {
@@ -1427,15 +1228,15 @@ export default function EditPage() {
               {paymentStep === "downloading"
                 ? "Generating Document..."
                 : paymentStep === "verifying"
-                ? "Verifying Payment..."
-                : "Securing Checkout..."}
+                  ? "Verifying Payment..."
+                  : "Securing Checkout..."}
             </DialogTitle>
             <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
               {paymentStep === "downloading"
                 ? "Payment successful! Creating your high-quality biodata and downloading now."
                 : paymentStep === "verifying"
-                ? "Confirming transaction with payment gateway. Please do not close or refresh."
-                : "Opening payment gateway. Please do not close or refresh this page."}
+                  ? "Confirming transaction with payment gateway. Please do not close or refresh."
+                  : "Opening payment gateway. Please do not close or refresh this page."}
             </DialogDescription>
           </div>
         </DialogContent>

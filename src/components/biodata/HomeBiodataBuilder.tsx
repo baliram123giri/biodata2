@@ -4,7 +4,8 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
-import { BiodataForm } from "@/components/biodata/BiodataForm";
+import dynamic from "next/dynamic";
+const BiodataForm = dynamic(() => import("@/components/biodata/BiodataForm").then(mod => mod.BiodataForm));
 
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
@@ -14,9 +15,9 @@ import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye,
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
-import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
-import { FeedbackModal } from "./FeedbackModal";
-import { PriceModal } from "./PriceModal";
+const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsAppDeliveryCard").then(mod => mod.WhatsAppDeliveryCard));
+const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
+const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 
 
@@ -34,7 +35,7 @@ import { useState, useEffect, useRef } from "react";
 import { translations } from "@/lib/translations";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
-import dynamic from "next/dynamic";
+
 
 import {
   Sheet,
@@ -43,7 +44,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { TemplateSelector } from "@/components/editor/TemplateSelector";
+const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
 import { getTemplateConfig, getFrameImageUrl } from "@/lib/frame-config";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

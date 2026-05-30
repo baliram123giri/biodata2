@@ -64,7 +64,7 @@ const faqsList = [
 
 export default function FAQsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-24 pb-20 px-4">
+    <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-10 pb-10 px-4">
       {/* JSON-LD Schema */}
       <JsonLd schema={generateFaqSchema(faqsList)} />
       <div className="container mx-auto max-w-4xl relative z-10 space-y-12">

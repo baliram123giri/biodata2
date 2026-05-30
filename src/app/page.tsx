@@ -2,11 +2,16 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2 } from "lucide-react";
-import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
-import { HeroCardDeck } from "@/components/home/HeroCardDeck";
+import dynamic from "next/dynamic";
 import { Metadata } from "next";
 import { howToSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
+
+import { HeroCardDeck } from "@/components/home/HeroCardDeck";
+
+const HomeBiodataBuilder = dynamic(
+  () => import("@/components/biodata/HomeBiodataBuilder").then(mod => mod.HomeBiodataBuilder)
+);
 
 export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF & Word",

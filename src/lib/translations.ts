@@ -1,5 +1,18 @@
 export const LANGUAGES = ["English", "हिंदी", "मराठी", "ગુજરાતી", "বাংলা", "தமிழ்", "తెలుగు", "ಕನ್ನಡ", "ਪੰਜਾਬੀ", "اردو"];
 
+export const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+  "English": "English",
+  "हिंदी": "Hindi (हिंदी)",
+  "मराठी": "Marathi (मराठी)",
+  "ગુજરાતી": "Gujarati (ગુજરાતી)",
+  "বাংলা": "Bengali (বাংলা)",
+  "தமிழ்": "Tamil (தமிழ்)",
+  "తెలుగు": "Telugu (తెలుగు)",
+  "ಕನ್ನಡ": "Kannada (ಕನ್ನಡ)",
+  "ਪੰਜਾਬੀ": "Punjabi (ਪੰਜਾਬੀ)",
+  "اردو": "Urdu (اردو)"
+};
+
 export function translateDynamicOption(opt: string, t: Record<string, string>): string {
   if (!opt) return opt;
   if (t[opt]) return t[opt];
@@ -160,7 +173,7 @@ export const translations: Record<string, Record<string, string>> = {
     "mobileNumber": "Mobile Number",
     "email": "Email ID",
     "residentialAddress": "Residential Address",
-    "mantra": "॥ श्री गणेशाय नमः ॥",
+    "mantra": "|| Shree Ganeshay Namah ||",
     "title": "Biodata",
     "customField": "Custom Field",
     "addMoreField": "Add More Field",
@@ -1336,7 +1349,7 @@ export const translations: Record<string, Record<string, string>> = {
     "mobileNumber": "ਮੋਬਾਈਲ ਨੰਬਰ",
     "email": "ਈਮੇਲ ਆਈਡੀ",
     "residentialAddress": "ਰਿਹਾਇਸ਼ੀ ਪਤਾ",
-    "mantra": "॥ ਸ਼੍ਰੀ ਗਣੇਸ਼ਾਯ ਨਮਃ ॥",
+    "mantra": "ੴ ਸਤਿਗੁਰ ਪ੍ਰਸਾਦਿ",
     "title": "ਬਾਇਓਡਾਟਾ",
     "customField": "ਕਸਟਮ ਫੀਲਡ",
     "addMoreField": "ਹੋਰ ਫੀਲਡ ਸ਼ਾਮਲ ਕਰੋ",
@@ -1474,7 +1487,7 @@ export const translations: Record<string, Record<string, string>> = {
     "mobileNumber": "موبائل نمبر",
     "email": "ای میل آئی ڈی",
     "residentialAddress": "رہائشی پتہ",
-    "mantra": "॥ شری گنیشای نمہ ॥",
+    "mantra": "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم",
     "title": "بائیو ڈیٹا",
     "customField": "کسٹم فیلڈ",
     "addMoreField": "مزید فیلڈ شامل کریں",

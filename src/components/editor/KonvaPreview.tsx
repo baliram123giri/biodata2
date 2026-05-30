@@ -45,7 +45,7 @@ const A4_H = 842;
 // SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; }) {
+const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor, borderSize = 2 }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; borderSize?: number }) {
   const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
 
@@ -80,7 +80,7 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
         crop={crop}
         cornerRadius={cornerRadius} 
       />
-      {borderColor && (
+      {borderColor && borderSize > 0 && (
         <Rect
           x={x}
           y={y}
@@ -88,7 +88,7 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
           height={height}
           cornerRadius={cornerRadius}
           stroke={borderColor}
-          strokeWidth={2}
+          strokeWidth={borderSize}
           listening={false}
         />
       )}
@@ -263,14 +263,15 @@ const PageBackground = React.memo(function PageBackground({
   return <Rect width={A4_W} height={A4_H} fill={solidColor} />;
 });
 
-const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig: TemplateConfig["photo"]; }) {
+const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig?: TemplateConfig["photo"] & { borderSize?: number }; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
+  const bSize = photoConfig?.borderSize ?? 2;
   return (
     <Group>
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
-      {hasPhoto && photoConfig && photoConfig.showBorder !== false && (
-        <Rect x={photoConfig.x - 2} y={photoConfig.y - 2} width={photoConfig.width + 4} height={photoConfig.height + 4} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
+      {hasPhoto && photoConfig && photoConfig.showBorder !== false && bSize > 0 && (
+        <Rect x={photoConfig.x - bSize} y={photoConfig.y - bSize} width={photoConfig.width + bSize * 2} height={photoConfig.height + bSize * 2} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
       )}
     </Group>
   );
@@ -783,7 +784,16 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   ].filter(Boolean) as any[], [renderSectionData, formData, t]);
 
   const hasPhoto = !!formData.photo;
-  const photoConfig = templateConfig.photo;
+  const photoConfig = useMemo(() => {
+    if (!templateConfig.photo) return undefined;
+    const base = templateConfig.photo;
+    return {
+      ...base,
+      cornerRadius: theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : base.cornerRadius,
+      showBorder: theme.photoBorderSize !== undefined ? theme.photoBorderSize > 0 : base.showBorder,
+      borderSize: theme.photoBorderSize !== undefined ? theme.photoBorderSize : 2
+    };
+  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize]);
 
   const detailsLayout = templateConfig.detailsLayout || "classic";
   const titleShape = templateConfig.titleShape || "simple";

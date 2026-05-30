@@ -23,6 +23,8 @@ interface KonvaTemplateDesignerProps {
   template?: any;
   designerRef?: React.RefObject<any>;
   sections?: any[];
+  mantra?: string;
+  title?: string;
 }
 
 // ── Subcomponents for Designer ─────────────────────────────────────
@@ -130,6 +132,8 @@ export function KonvaTemplateDesigner({
   template,
   designerRef,
   sections: propSections,
+  mantra,
+  title,
 }: KonvaTemplateDesignerProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -466,6 +470,22 @@ export function KonvaTemplateDesigner({
           }
         }
 
+        // Check Frame Image
+        if (formState.frameType === "image" && frameImage) {
+          const frameBounds = getElementBounds("frame");
+          if (frameBounds) {
+            const overlap = !(
+              frameBounds.x > x2 ||
+              frameBounds.x + frameBounds.width < x1 ||
+              frameBounds.y > y2 ||
+              frameBounds.y + frameBounds.height < y1
+            );
+            if (overlap) {
+              matchedIds.push("frame");
+            }
+          }
+        }
+
         setSelectedIds(matchedIds);
       }
       setSelectionBox(null);
@@ -751,6 +771,13 @@ export function KonvaTemplateDesigner({
   };
 
   const updateElementPos = (id: string, newX: number, newY: number, updates: Record<string, any> = {}) => {
+    const getCurrentOffsets = () => {
+      if (updates.sectionOffsets) {
+        try { return JSON.parse(updates.sectionOffsets); } catch (e) { return sectionOffsets; }
+      }
+      return sectionOffsets;
+    };
+
     if (id === "photo") {
       updates.photoX = String(newX);
       updates.photoY = String(newY);
@@ -759,7 +786,7 @@ export function KonvaTemplateDesigner({
       updates.bgImageY = String(newY);
     } else if (id === "header") {
       const nextOffsets = {
-        ...sectionOffsets,
+        ...getCurrentOffsets(),
         "header": { x: newX, y: newY - (paddingY + 10) }
       };
       updates.sectionOffsets = JSON.stringify(nextOffsets);
@@ -768,13 +795,51 @@ export function KonvaTemplateDesigner({
       if (sec) {
         const storeKey = sec.key || `sec-${secIdx}`;
         const nextOffsets = {
-          ...sectionOffsets,
+          ...getCurrentOffsets(),
           [storeKey]: { x: newX - paddingX, y: newY - sec.titleY }
         };
         updates.sectionOffsets = JSON.stringify(nextOffsets);
       }
     }
   };
+
+  useEffect(() => {
+    const handleArrowKeys = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code) && selectedIds.length > 0) {
+        e.preventDefault();
+        
+        const step = e.shiftKey ? 10 : 1;
+        let deltaX = 0;
+        let deltaY = 0;
+        
+        if (e.code === "ArrowUp") deltaY = -step;
+        if (e.code === "ArrowDown") deltaY = step;
+        if (e.code === "ArrowLeft") deltaX = -step;
+        if (e.code === "ArrowRight") deltaX = step;
+
+        const updates: Record<string, any> = {};
+        
+        selectedIds.forEach(id => {
+          const bounds = getElementBounds(id);
+          if (bounds) {
+            updateElementPos(id, bounds.x + deltaX, bounds.y + deltaY, updates);
+          }
+        });
+
+        if (Object.keys(updates).length > 0) {
+          onChange(updates);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleArrowKeys);
+    return () => window.removeEventListener("keydown", handleArrowKeys);
+  }, [selectedIds, sectionOffsets, paddingX, paddingY, onChange, formState]);
 
   const handleDragStart = () => {
     const startPos: Record<string, { x: number; y: number }> = {};
@@ -981,6 +1046,40 @@ export function KonvaTemplateDesigner({
     });
   };
 
+  // Handle drag coordinates synchronization for Custom Frame Image
+  const handleFrameDragEnd = (e: any) => {
+    const node = e.target;
+    const newX = Math.round(node.x());
+    const newY = Math.round(node.y());
+    if (selectedIds.includes("frame")) {
+      handleMultiDragEnd("frame", newX, newY);
+    } else {
+      onChange({
+        frameImageX: String(newX),
+        frameImageY: String(newY),
+      });
+    }
+  };
+
+  // Handle scale/transform synchronization for Custom Frame Image
+  const handleFrameTransformEnd = (e: any) => {
+    const node = e.target;
+    const newWidth = Math.round(node.width() * node.scaleX());
+    const newHeight = Math.round(node.height() * node.scaleY());
+    const newX = Math.round(node.x());
+    const newY = Math.round(node.y());
+
+    node.scaleX(1);
+    node.scaleY(1);
+
+    onChange({
+      frameImageX: String(newX),
+      frameImageY: String(newY),
+      frameImageWidth: String(newWidth),
+      frameImageHeight: String(newHeight),
+    });
+  };
+
   return (
     <div className="w-full h-full relative flex items-center justify-center">
 
@@ -1105,7 +1204,30 @@ export function KonvaTemplateDesigner({
                 width={parseFloat(formState.bgImageWidth) || 595}
                 height={parseFloat(formState.bgImageHeight) || 842}
                 opacity={parseFloat(formState.bgImageOpacity) ?? 0.15}
-                listening={false}
+                draggable={selectedIds.includes("watermark")}
+                listening={selectedIds.includes("watermark")}
+                onDragStart={handleDragStart}
+                onDragEnd={handleBgDragEnd}
+                onTransformEnd={handleBgTransformEnd}
+                onMouseEnter={() => handleSetCursor('move')}
+                onMouseLeave={() => handleSetCursor('default')}
+              />
+            )}
+            {formState.frameType === "image" && frameImage && (
+              <KonvaImage 
+                id="frame"
+                image={frameImage} 
+                x={parseFloat(formState.frameImageX) || 0}
+                y={parseFloat(formState.frameImageY) || 0}
+                width={parseFloat(formState.frameImageWidth) || A4_W} 
+                height={parseFloat(formState.frameImageHeight) || A4_H} 
+                draggable={selectedIds.includes("frame")}
+                listening={selectedIds.includes("frame")}
+                onDragStart={handleDragStart}
+                onDragEnd={handleFrameDragEnd}
+                onTransformEnd={handleFrameTransformEnd}
+                onMouseEnter={() => handleSetCursor('move')}
+                onMouseLeave={() => handleSetCursor('default')}
               />
             )}
           </Layer>
@@ -1171,9 +1293,7 @@ export function KonvaTemplateDesigner({
               </Group>
             )}
 
-            {formState.frameType === "image" && frameImage && (
-              <KonvaImage image={frameImage} width={A4_W} height={A4_H} />
-            )}
+            {/* image frame moved to active layer for resizing */}
 
             {formState.frameType === "custom" && (
               <Group>
@@ -1278,7 +1398,7 @@ export function KonvaTemplateDesigner({
                   <Text
                     x={A4_W / 2}
                     y={paddingY + 10}
-                    text={currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||"}
+                    text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
                     fontSize={layout.fSize * 1.2}
                     fontFamily={fontFamily}
                     fontStyle="bold"
@@ -1286,13 +1406,6 @@ export function KonvaTemplateDesigner({
                     align="center"
                     width={A4_W}
                     offsetX={A4_W / 2}
-                  />
-
-                  {/* Accent Underline */}
-                  <Line
-                    points={[220, paddingY + 28, 375, paddingY + 28]}
-                    stroke={accentColor}
-                    strokeWidth={1.5}
                   />
 
                   {/* Document Title "BIODATA" */}
@@ -1321,7 +1434,7 @@ export function KonvaTemplateDesigner({
                           <Text
                             x={ribbonX}
                             y={ribbonY + (ribbonH - titleHeight) / 2}
-                            text={currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA"}
+                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
                             fontSize={layout.fSize * 1.8}
                             fontFamily={fontFamily}
                             fontStyle="bold"
@@ -1343,7 +1456,7 @@ export function KonvaTemplateDesigner({
                           <Text
                             x={A4_W / 2}
                             y={titleY}
-                            text={currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA"}
+                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
                             fontSize={layout.fSize * 2}
                             fontFamily={fontFamily}
                             fontStyle="bold"
@@ -1360,7 +1473,7 @@ export function KonvaTemplateDesigner({
                           <Text
                             x={A4_W / 2}
                             y={titleY}
-                            text={currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA"}
+                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
                             fontSize={layout.fSize * 2}
                             fontFamily={fontFamily}
                             fontStyle="bold"
@@ -1381,7 +1494,7 @@ export function KonvaTemplateDesigner({
                         <Text
                           x={A4_W / 2}
                           y={titleY}
-                          text={currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA"}
+                          text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
                           fontSize={layout.fSize * 2.2}
                           fontFamily={fontFamily}
                           fontStyle="bold"

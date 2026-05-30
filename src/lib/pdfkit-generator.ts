@@ -301,6 +301,9 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     layout = calculateLayout(currentFontSize);
   }
 
+  const pCornerRadius = theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : (config.photo?.cornerRadius ?? 8);
+  const pBorderSize = theme.photoBorderSize !== undefined ? theme.photoBorderSize : (config.photo?.showBorder !== false ? 2 : 0);
+
   const styles = StyleSheet.create({
     page: { backgroundColor: bgColor, padding: 0, margin: 0 },
     container: { position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H },
@@ -311,18 +314,16 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       top: config.photo.y, 
       width: config.photo.width, 
       height: config.photo.height, 
-      borderRadius: config.photo.cornerRadius,
-      borderWidth: 2,
-      borderColor: primary
+      borderRadius: pCornerRadius,
     },
     photoBorder: {
       position: 'absolute',
-      left: config.photo.x,
-      top: config.photo.y,
-      width: config.photo.width,
-      height: config.photo.height,
-      borderRadius: config.photo.cornerRadius,
-      borderWidth: 2,
+      left: config.photo.x - pBorderSize,
+      top: config.photo.y - pBorderSize,
+      width: config.photo.width + pBorderSize * 2,
+      height: config.photo.height + pBorderSize * 2,
+      borderRadius: pCornerRadius + (pBorderSize > 0 ? 2 : 0),
+      borderWidth: pBorderSize,
       borderColor: primary,
       backgroundColor: 'transparent'
     },
@@ -372,8 +373,22 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       React.createElement(View, { style: styles.container as any, wrap: false },
         ...([
           renderPDFBackground(),
-          config.frame.type === 'image' ? 
-            React.createElement(Image, { 
+          config.frame.type === 'image' ? (() => {
+            const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
+            const fallbackX = -offset;
+            const fallbackY = -offset;
+            const fallbackW = A4_W + (offset * 2);
+            const fallbackH = A4_H + (offset * 2);
+            
+            const isDefault = (config.bgConfig?.frameImageX === "0" || config.bgConfig?.frameImageX == null) && 
+                              (config.bgConfig?.frameImageY === "0" || config.bgConfig?.frameImageY == null);
+            
+            const x = isDefault && offset !== 0 ? fallbackX : (parseInt(config.bgConfig?.frameImageX) || fallbackX);
+            const y = isDefault && offset !== 0 ? fallbackY : (parseInt(config.bgConfig?.frameImageY) || fallbackY);
+            const width = isDefault && offset !== 0 ? fallbackW : (parseInt(config.bgConfig?.frameImageWidth) || fallbackW);
+            const height = isDefault && offset !== 0 ? fallbackH : (parseInt(config.bgConfig?.frameImageHeight) || fallbackH);
+
+            return React.createElement(Image, { 
               src: theme?.rasterizedFrameBase64 || (() => {
                 let url = getFrameImageUrl(config.frame, primary);
                 // Force PNG format by replacing f_auto with f_png and translating .svg to .png
@@ -386,8 +401,16 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                 }
                 return url;
               })(), 
-              style: [styles.frame, { objectFit: 'fill' }] as any
-            })
+              style: [{ 
+                position: 'absolute', 
+                top: y, 
+                left: x, 
+                width: width, 
+                height: height,
+                objectFit: 'fill' 
+              }] as any
+            });
+          })()
           : config.frame.type === 'gradient' ?
             React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
               React.createElement(Rect, { 
@@ -700,8 +723,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             })
           );
         })(),
-        data.photo ? React.createElement(Image, { src: data.photo, style: { ...styles.photo, borderWidth: 0 } as any }) : null,
-        data.photo && config.photo.showBorder !== false ? React.createElement(View, { style: styles.photoBorder as any }) : null,
+        data.photo ? React.createElement(Image, { src: data.photo, style: styles.photo as any }) : null,
+        data.photo && pBorderSize > 0 ? React.createElement(View, { style: styles.photoBorder as any }) : null,
         ...layout.sectionLayouts.flatMap((sec, si) => {
           const secKey = `sec-${si}`;
           const lookupKey = sec.key || secKey;

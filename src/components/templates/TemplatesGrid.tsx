@@ -60,26 +60,31 @@ function MiniTemplatePreview({ color }: { id: string; color: string; scale?: num
 
 function TemplateDescription({ text }: { text: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 120; // limit to 120 characters for clean typography balance
 
-  if (!text || text.length <= maxLength) {
-    return <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>;
+  if (!text) {
+    return null;
   }
 
+  // Quick check if the text contains HTML tags (to support both old plain text and new WYSIWYG text)
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
   return (
-    <p className="text-sm text-muted-foreground leading-relaxed">
-      {isExpanded ? text : `${text.slice(0, maxLength)}... `}
+    <div className="flex flex-col items-start gap-2 w-full">
+      <div
+        className={`prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-black prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-ul:list-disc prose-ul:pl-5 space-y-2 w-full ${!isExpanded ? "line-clamp-4" : ""}`}
+        dangerouslySetInnerHTML={{ __html: isHtml ? text : `<p>${text}</p>` }}
+      />
       <button
         onClick={(e) => {
           e.preventDefault();
-          e.stopPropagation(); // Prevents card container hover/quick-view triggers
+          e.stopPropagation();
           setIsExpanded(!isExpanded);
         }}
-        className="text-[#9B1B30] dark:text-[#C9A84C] font-black text-xs hover:underline inline-flex items-center ml-1 cursor-pointer focus:outline-none"
+        className="text-[#9B1B30] dark:text-[#C9A84C] font-black text-[11px] uppercase tracking-wider hover:underline inline-flex items-center cursor-pointer focus:outline-none"
       >
         {isExpanded ? "Read Less" : "Read More"}
       </button>
-    </p>
+    </div>
   );
 }
 
@@ -178,8 +183,8 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="border border-[#C9A84C]/15 bg-card overflow-hidden shadow-md flex flex-col h-[480px] animate-pulse">
-            <div className="h-56 bg-muted/40" />
+          <Card key={i} className="border border-[#C9A84C]/15 bg-card overflow-hidden shadow-md flex flex-col animate-pulse">
+            <div className="w-full aspect-[1/1.414] bg-muted/40" />
             <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
               <div className="space-y-3">
                 <div className="h-4 bg-muted/50 rounded-full w-1/4" />
@@ -210,11 +215,11 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
           {visibleTemplates.map((tpl) => (
             <Card
               key={tpl.id}
-              className="border border-[#C9A84C]/25 bg-card overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group"
+              className="border pt-0 border-[#C9A84C]/25 bg-card overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col group"
             >
               {/* Visual HTML Preview Cover */}
-              <div className="h-56 relative overflow-hidden flex items-center justify-center px-3 pb-3 pt-0 select-none">
-                <div className="w-full h-full relative flex items-center justify-center transform scale-[0.95] group-hover:scale-100 transition-transform duration-500">
+              <div className="w-full aspect-[1/1.414] relative overflow-hidden flex items-center justify-center select-none bg-muted/10">
+                <div className="w-full h-full relative flex items-center justify-center transform scale-100 group-hover:scale-[1.03] transition-transform duration-500">
                   {tpl.thumbnailUrl ? (
                     <Image
                       src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
@@ -224,7 +229,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                       alt={tpl.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
-                      className="object-contain rounded-md"
+                      className="object-cover object-center transition-transform duration-500"
                       loading="lazy"
                     />
                   ) : (
@@ -308,7 +313,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
 
         {/* All Loaded Message */}
         {!loadingMore && allTemplates.length > 0 && visibleCount >= allTemplates.length && (
-          <div className="flex items-center justify-center gap-4 py-8 animate-in fade-in duration-500">
+          <div className="flex items-center justify-center gap-4 animate-in fade-in duration-500">
             <div className="h-px bg-[#C9A84C]/25 flex-1 max-w-[150px]" />
             <span className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#C9A84C]" />
@@ -398,9 +403,14 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4 md:mb-6 line-clamp-4">
-                  {selectedTpl.description || "A premium matrimonial biodata template with elegant design and comprehensive fields."}
-                </p>
+                <div
+                  className="w-full overflow-y-auto max-h-[300px] custom-scrollbar prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-black prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-ul:list-disc prose-ul:pl-5 space-y-3 mb-4 md:mb-6 pr-2"
+                  dangerouslySetInnerHTML={{
+                    __html: (selectedTpl.description && /<[a-z][\s\S]*>/i.test(selectedTpl.description))
+                      ? selectedTpl.description
+                      : `<p>${selectedTpl.description || "A premium matrimonial biodata template with elegant design and comprehensive fields."}</p>`
+                  }}
+                />
 
                 {/* Spacer to push CTA to the bottom */}
                 <div className="flex-1 min-h-[16px] md:min-h-0" />
