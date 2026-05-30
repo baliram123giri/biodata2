@@ -198,13 +198,9 @@ export default function HowItWorksPage() {
               <div className="bg-[#FFFBF8] dark:bg-[#1A0A0E]/30 rounded-xl p-5 border border-border/40 space-y-2">
                 <div className="text-xs font-black uppercase text-[#9B1B30] dark:text-[#E6C97A] tracking-wider mb-2">You get:</div>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
-                    <span>High-resolution PDF — ready to print or share digitally</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
-                    <span>Microsoft Word (.docx) — fully editable offline document</span>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>High-Resolution PDF — perfect for printing</span>
                   </li>
                   <li className="flex items-center gap-2 sm:col-span-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />

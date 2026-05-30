@@ -208,8 +208,8 @@ export default function AdminBiodatas() {
             </SelectTrigger>
             <SelectContent className="bg-popover border border-border text-popover-foreground text-xs">
               <SelectItem value="all">All Formats</SelectItem>
+              <SelectItem value="jpg">Image (JPG)</SelectItem>
               <SelectItem value="pdf">PDF File</SelectItem>
-              <SelectItem value="docx">Word File</SelectItem>
             </SelectContent>
           </Select>
 

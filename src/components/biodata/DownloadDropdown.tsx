@@ -4,7 +4,7 @@ import React from "react";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DownloadFormat = "pdf" | "docx" | "jpg" | "png" | "combo";
+export type DownloadFormat = "pdf" | "jpg" | "png" | "combo";
 
 function getCurrencySymbol(currency?: string | null) {
   if (currency === "USD") return "$";
@@ -29,8 +29,6 @@ interface DownloadDropdownProps {
   currency?: string | null;
   pdfPrice?: number | null;
   pdfDiscountPrice?: number | null;
-  docxPrice?: number | null;
-  docxDiscountPrice?: number | null;
   jpgPrice?: number | null;
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;

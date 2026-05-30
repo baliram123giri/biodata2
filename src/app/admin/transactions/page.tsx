@@ -109,8 +109,6 @@ export default function AdminTransactions() {
     switch (norm) {
       case "pdf":
         return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
-      case "docx":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
       case "combo":
         return "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 font-black";
       default:
@@ -304,7 +302,6 @@ export default function AdminTransactions() {
                 <SelectContent>
                   <SelectItem value="ALL">All Formats</SelectItem>
                   <SelectItem value="PDF">PDF Only</SelectItem>
-                  <SelectItem value="DOCX">Word (DOCX)</SelectItem>
                   <SelectItem value="JPG">JPEG Image</SelectItem>
                   <SelectItem value="PNG">PNG Image</SelectItem>
                   <SelectItem value="COMBO">Combo Pack</SelectItem>

@@ -105,8 +105,6 @@ export interface TemplateConfig {
   // Format-specific Pricing
   pdfPrice?: number | null;
   pdfDiscountPrice?: number | null;
-  docxPrice?: number | null;
-  docxDiscountPrice?: number | null;
   jpgPrice?: number | null;
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
@@ -297,8 +295,6 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     currency: dbTpl.currency || "INR",
     pdfPrice: (dbTpl as any).pdfPrice ?? null,
     pdfDiscountPrice: (dbTpl as any).pdfDiscountPrice ?? null,
-    docxPrice: (dbTpl as any).docxPrice ?? null,
-    docxDiscountPrice: (dbTpl as any).docxDiscountPrice ?? null,
     jpgPrice: (dbTpl as any).jpgPrice ?? null,
     jpgDiscountPrice: (dbTpl as any).jpgDiscountPrice ?? null,
     pngPrice: (dbTpl as any).pngPrice ?? null,

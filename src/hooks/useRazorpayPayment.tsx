@@ -74,7 +74,7 @@ export function useRazorpayPayment() {
         }
 
         const data = await res.json();
-        
+
         if (!data.success) {
           throw new Error(data.error || "Failed to create payment order");
         }
@@ -130,9 +130,9 @@ export function useRazorpayPayment() {
           key: data.keyId,
           amount: data.order.amount,
           currency: data.order.currency,
-          name: "Premium Matrimonial Biodata",
+          name: "Biodata99",
           description: `Premium download for ${params.format.toUpperCase()} format`,
-          image: "/images/logo.png",
+          image: "./logo.svg",
           order_id: data.order.id,
           method: {
             upi: true,        // GPay, PhonePe, Paytm, BHIM, etc.
@@ -209,7 +209,7 @@ export function useRazorpayPayment() {
           setPaymentStep("idle");
           reject(new Error(response.error.description));
         });
-        
+
         setIsProcessing(false);
         setPaymentStep("idle");
         rzp.open();
@@ -228,7 +228,7 @@ export function useRazorpayPayment() {
     if (!sandboxOrder || !paymentPromiseRef.current) return;
     setIsProcessing(true);
     const orderId = sandboxOrder.id;
-    
+
     try {
       const res = await fetch("/api/razorpay/verify-payment", {
         method: "POST",
@@ -284,7 +284,7 @@ export function useRazorpayPayment() {
         if (!open) handleSandboxFailure();
       }}>
         <DialogContent className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl overflow-hidden ring-1 ring-border/50">
-          
+
           {/* Shine Sweep Header */}
           <div className="bg-gradient-primary py-5 px-6 text-white relative select-none flex items-center gap-4 border-b border-primary/20 shrink-0 overflow-hidden shadow-sm">
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />

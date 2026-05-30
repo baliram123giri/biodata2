@@ -32,6 +32,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
 
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
+  const watchPhoto = useWatch({ control, name: "photo" });
   const currentLang = watchLang || "English";
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
@@ -153,30 +154,32 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                />
 
                {/* Photo Styling Options */}
-               <div className="grid grid-cols-2 gap-4 mt-2">
-                 <div className="space-y-3">
-                   <Label className="text-xs font-bold text-muted-foreground uppercase">Corner Radius</Label>
-                   <Slider 
-                     value={[photoCornerRadius ?? defaultCornerRadius]}
-                     min={0}
-                     max={100}
-                     step={1}
-                     onValueChange={([val]) => setPhotoCornerRadius(val)}
-                     className="w-full"
-                   />
+               {watchPhoto && (
+                 <div className="grid grid-cols-2 gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                   <div className="space-y-3">
+                     <Label className="text-xs font-bold text-muted-foreground uppercase">Corner Radius</Label>
+                     <Slider 
+                       value={[photoCornerRadius ?? defaultCornerRadius]}
+                       min={0}
+                       max={100}
+                       step={1}
+                       onValueChange={([val]) => setPhotoCornerRadius(val)}
+                       className="w-full"
+                     />
+                   </div>
+                   <div className="space-y-3">
+                     <Label className="text-xs font-bold text-muted-foreground uppercase">Border Size</Label>
+                     <Slider 
+                       value={[photoBorderSize ?? defaultBorderSize]}
+                       min={0}
+                       max={10}
+                       step={1}
+                       onValueChange={([val]) => setPhotoBorderSize(val)}
+                       className="w-full"
+                     />
+                   </div>
                  </div>
-                 <div className="space-y-3">
-                   <Label className="text-xs font-bold text-muted-foreground uppercase">Border Size</Label>
-                   <Slider 
-                     value={[photoBorderSize ?? defaultBorderSize]}
-                     min={0}
-                     max={10}
-                     step={1}
-                     onValueChange={([val]) => setPhotoBorderSize(val)}
-                     className="w-full"
-                   />
-                 </div>
-               </div>
+               )}
             </div>
 
             <div className="space-y-4">

@@ -138,8 +138,7 @@ export default function AdminDashboard() {
 
   const systemServices = [
     { name: "PDF Rendering Engine", status: "Healthy", type: "success", uptime: "99.99%", load: "12%" },
-    { name: "DOCX Export Module", status: "Healthy", type: "success", uptime: "100%", load: "4%" },
-    { name: "WhatsApp Cloud API Gateway", status: "Healthy", type: "success", uptime: "99.95%", load: "34%" },
+    { name: "Image Processing", status: "Healthy", type: "success", uptime: "100%", load: "8%" },
     { name: "Database PostgreSQL Node", status: "Healthy", type: "success", uptime: "100%", load: "8%" },
   ];
 

@@ -133,8 +133,6 @@ export async function POST(req: Request) {
       // Format-specific Pricing
       pdfPrice,
       pdfDiscountPrice,
-      docxPrice,
-      docxDiscountPrice,
       jpgPrice,
       jpgDiscountPrice,
       pngPrice,
@@ -223,8 +221,6 @@ export async function POST(req: Request) {
         // Format-specific Pricing
         pdfPrice: pdfPrice !== undefined && pdfPrice !== null && pdfPrice !== "" ? parseFloat(pdfPrice) : null,
         pdfDiscountPrice: pdfDiscountPrice !== undefined && pdfDiscountPrice !== null && pdfDiscountPrice !== "" ? parseFloat(pdfDiscountPrice) : null,
-        docxPrice: docxPrice !== undefined && docxPrice !== null && docxPrice !== "" ? parseFloat(docxPrice) : null,
-        docxDiscountPrice: docxDiscountPrice !== undefined && docxDiscountPrice !== null && docxDiscountPrice !== "" ? parseFloat(docxDiscountPrice) : null,
         jpgPrice: jpgPrice !== undefined && jpgPrice !== null && jpgPrice !== "" ? parseFloat(jpgPrice) : null,
         jpgDiscountPrice: jpgDiscountPrice !== undefined && jpgDiscountPrice !== null && jpgDiscountPrice !== "" ? parseFloat(jpgDiscountPrice) : null,
         pngPrice: pngPrice !== undefined && pngPrice !== null && pngPrice !== "" ? parseFloat(pngPrice) : null,

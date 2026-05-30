@@ -230,12 +230,6 @@ export async function PATCH(
     if (body.pdfDiscountPrice !== undefined) {
       updateData.pdfDiscountPrice = body.pdfDiscountPrice !== null && body.pdfDiscountPrice !== "" ? parseFloat(body.pdfDiscountPrice) : null;
     }
-    if (body.docxPrice !== undefined) {
-      updateData.docxPrice = body.docxPrice !== null && body.docxPrice !== "" ? parseFloat(body.docxPrice) : null;
-    }
-    if (body.docxDiscountPrice !== undefined) {
-      updateData.docxDiscountPrice = body.docxDiscountPrice !== null && body.docxDiscountPrice !== "" ? parseFloat(body.docxDiscountPrice) : null;
-    }
     if (body.jpgPrice !== undefined) {
       updateData.jpgPrice = body.jpgPrice !== null && body.jpgPrice !== "" ? parseFloat(body.jpgPrice) : null;
     }

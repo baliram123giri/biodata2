@@ -255,11 +255,10 @@ export function HomeBiodataBuilder() {
       const properPhone = phoneField?.value || "";
       
       let finalPrice = 29;
-      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
-      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      if (format === "combo") finalPrice = activeTemplate?.comboDiscountPrice ?? activeTemplate?.comboPrice ?? 99;
+      else if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 49;
       else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
-      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
-      else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
+      else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 29;
 
       await startPayment({
         amount: finalPrice,
@@ -641,8 +640,6 @@ export function HomeBiodataBuilder() {
           downloadFormat={pendingDownloadFormat}
           pdfPrice={activeTemplate?.pdfPrice}
           pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
-          docxPrice={activeTemplate?.docxPrice}
-          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
           jpgPrice={activeTemplate?.jpgPrice}
           jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
           pngPrice={activeTemplate?.pngPrice}
@@ -669,8 +666,6 @@ export function HomeBiodataBuilder() {
 
           pdfPrice={activeTemplate?.pdfPrice}
           pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
-          docxPrice={activeTemplate?.docxPrice}
-          docxDiscountPrice={activeTemplate?.docxDiscountPrice}
           jpgPrice={activeTemplate?.jpgPrice}
           jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
           pngPrice={activeTemplate?.pngPrice}

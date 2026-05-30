@@ -122,8 +122,6 @@ interface Template {
   currency?: string | null;
   pdfPrice?: number | null;
   pdfDiscountPrice?: number | null;
-  docxPrice?: number | null;
-  docxDiscountPrice?: number | null;
   jpgPrice?: number | null;
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
@@ -231,8 +229,6 @@ const initialFormState = {
   currency: "INR",
   pdfPrice: "",
   pdfDiscountPrice: "",
-  docxPrice: "",
-  docxDiscountPrice: "",
   jpgPrice: "",
   jpgDiscountPrice: "",
   pngPrice: "",
@@ -797,8 +793,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         currency: template.currency || "INR",
         pdfPrice: (template as any).pdfPrice !== null && (template as any).pdfPrice !== undefined ? String((template as any).pdfPrice) : "",
         pdfDiscountPrice: (template as any).pdfDiscountPrice !== null && (template as any).pdfDiscountPrice !== undefined ? String((template as any).pdfDiscountPrice) : "",
-        docxPrice: (template as any).docxPrice !== null && (template as any).docxPrice !== undefined ? String((template as any).docxPrice) : "",
-        docxDiscountPrice: (template as any).docxDiscountPrice !== null && (template as any).docxDiscountPrice !== undefined ? String((template as any).docxDiscountPrice) : "",
         jpgPrice: (template as any).jpgPrice !== null && (template as any).jpgPrice !== undefined ? String((template as any).jpgPrice) : "",
         jpgDiscountPrice: (template as any).jpgDiscountPrice !== null && (template as any).jpgDiscountPrice !== undefined ? String((template as any).jpgDiscountPrice) : "",
         pngPrice: (template as any).pngPrice !== null && (template as any).pngPrice !== undefined ? String((template as any).pngPrice) : "",
@@ -859,8 +853,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         currency: (formState as any).currency || "INR",
         pdfPrice: (formState as any).pdfPrice !== "" && (formState as any).pdfPrice !== undefined ? parseFloat((formState as any).pdfPrice) : null,
         pdfDiscountPrice: (formState as any).pdfDiscountPrice !== "" && (formState as any).pdfDiscountPrice !== undefined ? parseFloat((formState as any).pdfDiscountPrice) : null,
-        docxPrice: (formState as any).docxPrice !== "" && (formState as any).docxPrice !== undefined ? parseFloat((formState as any).docxPrice) : null,
-        docxDiscountPrice: (formState as any).docxDiscountPrice !== "" && (formState as any).docxDiscountPrice !== undefined ? parseFloat((formState as any).docxDiscountPrice) : null,
         jpgPrice: (formState as any).jpgPrice !== "" && (formState as any).jpgPrice !== undefined ? parseFloat((formState as any).jpgPrice) : null,
         jpgDiscountPrice: (formState as any).jpgDiscountPrice !== "" && (formState as any).jpgDiscountPrice !== undefined ? parseFloat((formState as any).jpgDiscountPrice) : null,
         pngPrice: (formState as any).pngPrice !== "" && (formState as any).pngPrice !== undefined ? parseFloat((formState as any).pngPrice) : null,
@@ -871,8 +863,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
 
       // Automatically assign the lowest available general price for store badges
       if (payload.isPremium) {
-        const prices = [payload.pdfPrice, payload.docxPrice, payload.jpgPrice, payload.pngPrice, payload.comboPrice].filter(p => typeof p === "number" && !isNaN(p));
-        const discountPrices = [payload.pdfDiscountPrice, payload.docxDiscountPrice, payload.jpgDiscountPrice, payload.pngDiscountPrice, payload.comboDiscountPrice].filter(p => typeof p === "number" && !isNaN(p));
+        const prices = [payload.pdfPrice, payload.jpgPrice, payload.pngPrice, payload.comboPrice].filter(p => typeof p === "number" && !isNaN(p));
+        const discountPrices = [payload.pdfDiscountPrice, payload.jpgDiscountPrice, payload.pngDiscountPrice, payload.comboDiscountPrice].filter(p => typeof p === "number" && !isNaN(p));
         
         payload.price = prices.length > 0 ? Math.min(...prices) : null;
         payload.discountPrice = discountPrices.length > 0 ? Math.min(...discountPrices) : null;
@@ -2480,8 +2472,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                 isPremium: true,
                                 pdfPrice: (formState as any).pdfPrice || "59",
                                 pdfDiscountPrice: (formState as any).pdfDiscountPrice || "39",
-                                docxPrice: (formState as any).docxPrice || "49",
-                                docxDiscountPrice: (formState as any).docxDiscountPrice || "29",
                                 jpgPrice: (formState as any).jpgPrice || "49",
                                 jpgDiscountPrice: (formState as any).jpgDiscountPrice || "29",
                                 pngPrice: (formState as any).pngPrice || "49",
@@ -2556,43 +2546,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                                         type="number"
                                         value={(formState as any).pdfDiscountPrice}
                                         onChange={(e) => setFormState({ ...formState, pdfDiscountPrice: e.target.value } as any)}
-                                        placeholder="Default Template Sale Price"
-                                        className="pl-7 focus-visible:ring-primary rounded-lg w-full h-10 text-sm"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* DOCX Pricing */}
-                              <div className="p-4 rounded-lg border border-border bg-muted/20 space-y-4">
-                                <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wide">Word (DOCX) Price Overrides</span>
-                                <div className="space-y-3">
-                                  <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-muted-foreground">Price</Label>
-                                    <div className="relative">
-                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                                        {(formState as any).currency === "USD" ? "$" : (formState as any).currency === "EUR" ? "€" : (formState as any).currency === "GBP" ? "£" : "₹"}
-                                      </span>
-                                      <Input
-                                        type="number"
-                                        value={(formState as any).docxPrice}
-                                        onChange={(e) => setFormState({ ...formState, docxPrice: e.target.value } as any)}
-                                        placeholder="Default Template Price"
-                                        className="pl-7 focus-visible:ring-primary rounded-lg w-full h-10 text-sm"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-muted-foreground">Sale / Discount Price</Label>
-                                    <div className="relative">
-                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                                        {(formState as any).currency === "USD" ? "$" : (formState as any).currency === "EUR" ? "€" : (formState as any).currency === "GBP" ? "£" : "₹"}
-                                      </span>
-                                      <Input
-                                        type="number"
-                                        value={(formState as any).docxDiscountPrice}
-                                        onChange={(e) => setFormState({ ...formState, docxDiscountPrice: e.target.value } as any)}
                                         placeholder="Default Template Sale Price"
                                         className="pl-7 focus-visible:ring-primary rounded-lg w-full h-10 text-sm"
                                       />

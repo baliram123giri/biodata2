@@ -746,8 +746,12 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const secondaryColor = theme.secondaryColor;
   const accentColor = theme.accentColor;
   const baseFontSize = theme.fontSize || 11;
-  const padding = theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding;
-  const paddingY = theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : padding);
+  const paddingLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
+  const paddingRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
+  const paddingTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : paddingLeft));
+  const paddingBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : paddingLeft));
+  const padding = paddingLeft;
+  const paddingY = paddingTop;
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
 
   const sectionOffsets = useMemo(() => {
@@ -787,13 +791,16 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const photoConfig = useMemo(() => {
     if (!templateConfig.photo) return undefined;
     const base = templateConfig.photo;
+    const origPad = templateConfig.defaultPadding || 45;
+    const diffX = paddingRight - origPad;
     return {
       ...base,
+      x: base.x - diffX,
       cornerRadius: theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : base.cornerRadius,
       showBorder: theme.photoBorderSize !== undefined ? theme.photoBorderSize > 0 : base.showBorder,
       borderSize: theme.photoBorderSize !== undefined ? theme.photoBorderSize : 2
     };
-  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize]);
+  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize, paddingRight]);
 
   const detailsLayout = templateConfig.detailsLayout || "classic";
   const titleShape = templateConfig.titleShape || "simple";
@@ -809,7 +816,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const LABEL_WIDTH = 130;
       const COLON_WIDTH = 20;
       const LINE_SPACING = fSize * 0.5 + 2;
-      const contentWidth = A4_W - padding * 2 - 10;
+      const contentWidth = A4_W - paddingLeft - paddingRight - 10;
       const sectionLayouts: any[] = [];
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -905,16 +912,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       }
       return { sectionLayouts, totalHeight: cursorY };
     };
-    const MAX_H = A4_H - paddingY;
     let bestSize = baseFontSize;
     let finalLayout = calculateForSize(bestSize);
-    if (finalLayout.totalHeight > MAX_H) {
-      for (let s = baseFontSize - 0.5; s >= 7; s -= 0.5) {
-        const test = calculateForSize(s);
-        if (test.totalHeight <= MAX_H) { bestSize = s; finalLayout = test; break; }
-        bestSize = s; finalLayout = test;
-      }
-    }
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
 
@@ -1083,7 +1082,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             listening={false}
           />
           
-          <Text x={0} y={A4_H - 30} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
+          <Text x={0} y={A4_H - paddingBottom + 10} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
@@ -1299,7 +1298,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               const style = sectionStyles[secKey] || sectionStyles[`sec-${secIdx}`] || {};
               const titleColor = style.titleColor || primaryColor;
               const fieldColor = style.fieldColor || secondaryColor;
-              const fSize = style.fontSize ? Number(style.fontSize) : layout.fSize;
+              const fSize = layout.fSize;
               const fontStyle = style.fontStyle || "bold";
               const textTransform = style.textTransform || "none";
               const applyTransform = (text: string) => {
@@ -1319,7 +1318,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                       <Rect
                         x={padding - 8}
                         y={sec.titleY - 8}
-                        width={A4_W - padding * 2 + 16}
+                        width={A4_W - paddingLeft - paddingRight + 16}
                         height={boxHeight}
                         fill={titleColor + "06"} // Light title color tint (opacity ~3%)
                         stroke={titleColor + "1a"} // Soft title color stroke (opacity ~10%)
@@ -1380,7 +1379,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                           <Line
                             points={[
                               colX, field.y + fSize * 1.35 + 2,
-                              colX + (field.isHalf ? field.halfW : (A4_W - padding * 2 - 20)), field.y + fSize * 1.35 + 2
+                              colX + (field.isHalf ? field.halfW : (A4_W - paddingLeft - paddingRight - 20)), field.y + fSize * 1.35 + 2
                             ]}
                             stroke={fieldColor + "15"} // Ultra-soft opacity
                             strokeWidth={0.8}

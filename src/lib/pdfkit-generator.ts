@@ -93,9 +93,14 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const bgColor = (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined && (!theme.bgColors || theme.bgColors.length <= 1) && !hasTemplateGradient)
     ? getLightBgColor(primary)
     : (config.frame as any).bgColor || "#ffffff";
-  const padding = theme.padding ?? config.defaultPadding;
-  const paddingY = theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding ?? padding);
+  const padLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
+  const padRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
+  const padTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding !== undefined ? config.defaultYPadding : padLeft));
+  const padBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding !== undefined ? config.defaultYPadding : padLeft));
+  const padding = padLeft;
+  const paddingY = padTop;
   const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 11;
+  const photoX = config.photo ? config.photo.x - (padRight - (config.defaultPadding || 45)) : 0;
 
   const renderPDFBackground = () => {
     // 1. If a theme palette has a custom background gradient (length > 1), respect the palette background settings
@@ -194,7 +199,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
     const LINE_SPACING = fSize * 0.5 + 2;
-    const contentWidth = A4_W - padding * 2 - 10;
+    const contentWidth = A4_W - padLeft - padRight - 10;
     const sectionLayouts: any[] = [];
     const sectionKeys = [
       { key: 'personal', fields: data.personalDetails, label: t.personal || "Personal Details" },
@@ -207,8 +212,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
       const secIdx = sectionKeys.indexOf(sec);
       const secKey = `sec-${secIdx}`;
       const lookupKey = sec.key || secKey;
-      const style = sectionStyles[lookupKey] || sectionStyles[secKey] || {};
-      const secFontSize = style.fontSize ? Number(style.fontSize) : fSize;
+      const secFontSize = fSize;
       const secLineSpacing = secFontSize * 0.5 + 2;
 
       const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
@@ -225,7 +229,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
         
         let rowWidth = contentWidth;
         if (data.photo && config.photo && cursorY >= config.photo.y - 15 && cursorY <= config.photo.y + config.photo.height + 15) {
-           rowWidth = config.photo.x - padding - 20;
+           rowWidth = photoX - padding - 20;
         }
         
         const f2 = fields[i + 1];
@@ -290,16 +294,8 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     return { headerItems, sectionLayouts, totalHeight: cursorY };
   };
 
-  // Find optimal font size to fit on one page
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
-  const MAX_Y = A4_H - paddingY;
-
-  // Reduce font size if content exceeds page height
-  while (layout.totalHeight > MAX_Y && currentFontSize > 7) {
-    currentFontSize -= 0.5;
-    layout = calculateLayout(currentFontSize);
-  }
 
   const pCornerRadius = theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : (config.photo?.cornerRadius ?? 8);
   const pBorderSize = theme.photoBorderSize !== undefined ? theme.photoBorderSize : (config.photo?.showBorder !== false ? 2 : 0);
@@ -310,7 +306,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     frame: { position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H },
     photo: { 
       position: 'absolute', 
-      left: config.photo.x, 
+      left: photoX, 
       top: config.photo.y, 
       width: config.photo.width, 
       height: config.photo.height, 
@@ -318,7 +314,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     },
     photoBorder: {
       position: 'absolute',
-      left: config.photo.x - pBorderSize,
+      left: photoX - pBorderSize,
       top: config.photo.y - pBorderSize,
       width: config.photo.width + pBorderSize * 2,
       height: config.photo.height + pBorderSize * 2,
@@ -732,7 +728,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
           const style = sectionStyles[lookupKey] || sectionStyles[secKey] || {};
           const titleColor = style.titleColor || primary;
           const fieldColor = style.fieldColor || secondary;
-          const fSize = style.fontSize ? Number(style.fontSize) : currentFontSize;
+          const fSize = currentFontSize;
           const fontStyle = style.fontStyle || "bold";
           const textTransform = style.textTransform || "none";
           const applyTransform = (rawText: any) => {
@@ -757,14 +753,14 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                   position: 'absolute',
                   left: padding - 8 + offset.x,
                   top: absTitleY - 8,
-                  width: A4_W - padding * 2 + 16,
+                  width: A4_W - padLeft - padRight + 16,
                   height: boxHeight,
                 } as any
               },
                 React.createElement(Rect, {
                   x: 0,
                   y: 0,
-                  width: A4_W - padding * 2 + 16,
+                  width: A4_W - padLeft - padRight + 16,
                   height: boxHeight,
                   fill: titleColor,
                   fillOpacity: 0.04,
@@ -899,11 +895,11 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
                 detailsLayout === "elegant-divided" && (!f.isHalf || f.colIndex === 1) ? React.createElement(Svg, {
                   key: `div-${si}-${fi}`,
                   height: 1,
-                  width: f.isHalf ? f.halfW : (A4_W - padding * 2 - 20),
+                  width: f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20),
                   style: { position: 'absolute', top: absFieldY + fSize * 1.35 + 2, left: colX + offset.x } as any
                 },
                   React.createElement(Path, {
-                    d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padding * 2 - 20)} 0`,
+                    d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20)} 0`,
                     stroke: fieldColor + "15",
                     strokeWidth: 0.8,
                     strokeDasharray: "2,2"

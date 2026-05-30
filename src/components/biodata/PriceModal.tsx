@@ -15,15 +15,13 @@ function getCurrencySymbol(currency?: string | null) {
 interface PriceModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectFormat: (format: "pdf" | "docx" | "jpg" | "png" | "combo", couponCode?: string) => void;
+  onSelectFormat: (format: "pdf" | "jpg" | "png" | "combo", couponCode?: string) => void;
 
   currency?: string | null;
   price?: number | null;
   discountPrice?: number | null;
   pdfPrice?: number | null;
   pdfDiscountPrice?: number | null;
-  docxPrice?: number | null;
-  docxDiscountPrice?: number | null;
   jpgPrice?: number | null;
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
@@ -41,8 +39,6 @@ export function PriceModal({
   discountPrice = null,
   pdfPrice = null,
   pdfDiscountPrice = null,
-  docxPrice = null,
-  docxDiscountPrice = null,
   jpgPrice = null,
   jpgDiscountPrice = null,
   pngPrice = null,
@@ -159,9 +155,6 @@ export function PriceModal({
   // Format-wise prices with sensible distinct format-specific fallbacks
   const formatPdfPrice = calculateDiscountedPrice(pdfDiscountPrice ?? pdfPrice ?? 29);
   const formatPdfOriginal = pdfPrice ?? getOriginalPrice(pdfDiscountPrice, null, 1.6) ?? 49;
-
-  const formatDocxPrice = calculateDiscountedPrice(docxDiscountPrice ?? docxPrice ?? 29);
-  const formatDocxOriginal = docxPrice ?? getOriginalPrice(docxDiscountPrice, null, 1.6) ?? 49;
 
   const formatJpgPrice = calculateDiscountedPrice(jpgDiscountPrice ?? jpgPrice ?? 19);
   const formatJpgOriginal = jpgPrice ?? getOriginalPrice(jpgDiscountPrice, null, 1.6) ?? 29;
@@ -293,7 +286,7 @@ export function PriceModal({
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">All-in-One Combo Pack</span>
-                <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">PDF + Word + JPEG + PNG</span>
+                <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">PDF + JPEG + PNG</span>
               </div>
               <div className="text-right leading-none shrink-0 flex flex-col items-end">
                 {formatComboOriginalPrice && (
@@ -312,10 +305,6 @@ export function PriceModal({
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
                 <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">PDF (HD Vector Print Quality)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">Word (100% Editable Text)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
@@ -362,36 +351,6 @@ export function PriceModal({
                 ) : (
                   <span className="text-sm font-black text-red-600 dark:text-red-500">
                     {currencySymbol}{formatPdfPrice.toFixed(2)}
-                  </span>
-                )}
-              </div>
-            </button>
- 
-            {/* Word Card */}
-            <button
-              onClick={() => onSelectFormat("docx", appliedCoupon?.code || undefined)}
-              className="flex flex-col items-center p-4 rounded-2xl bg-card border border-border/80 hover:border-blue-500/50 hover:bg-blue-500/[0.04] transition-all duration-300 group cursor-pointer text-center shadow-sm hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all shadow-inner border border-blue-500/10 mb-3 relative">
-                <FileType className="w-6 h-6 text-blue-600 dark:text-blue-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-500 bg-blue-500/15 border border-blue-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">Edit</span>
-              </div>
-              <span className="text-[11px] sm:text-xs font-black text-blue-700 dark:text-blue-400 leading-tight">Word (DOCX)</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">Modify details in Microsoft Word</span>
-              
-              <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
-                {formatDocxOriginal && formatDocxOriginal > formatDocxPrice ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold text-muted-foreground/60 line-through">
-                      {currencySymbol}{formatDocxOriginal.toFixed(2)}
-                    </span>
-                    <span className="text-sm font-black text-blue-600 dark:text-blue-500">
-                      {currencySymbol}{formatDocxPrice.toFixed(2)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm font-black text-blue-600 dark:text-blue-500">
-                    {currencySymbol}{formatDocxPrice.toFixed(2)}
                   </span>
                 )}
               </div>

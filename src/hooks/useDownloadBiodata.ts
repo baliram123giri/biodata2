@@ -274,9 +274,9 @@ export function useDownloadBiodata() {
       }),
     }).catch((err) => console.error("Failed to log download:", err));
 
-    // Helper to generate server-side documents (PDF/DOCX)
-    const generateServerBlob = async (docFormat: "pdf" | "docx") => {
-      const apiUrl = docFormat === "docx" ? "/api/generate-docx" : "/api/generate-pdf";
+    // Helper to generate server-side documents (PDF)
+    const generateServerBlob = async () => {
+      const apiUrl = "/api/generate-pdf";
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -311,12 +311,8 @@ export function useDownloadBiodata() {
         const zip = new JSZip();
 
         // 1. PDF
-        const pdfBlob = await generateServerBlob("pdf");
+        const pdfBlob = await generateServerBlob();
         zip.file(`${nameField}_biodata.pdf`, pdfBlob);
-
-        // 2. DOCX
-        const docxBlob = await generateServerBlob("docx");
-        zip.file(`${nameField}_biodata.docx`, docxBlob);
 
         // 3. JPG
         const jpgDataUrl = await generateJpgDataUrl();
@@ -367,12 +363,11 @@ export function useDownloadBiodata() {
       return;
     }
 
-    // ── PDF / DOCX Export: server-side ──────────────────────────────
+    // ── PDF Export: server-side ──────────────────────────────
     try {
-      const fileExt = format === "docx" ? "docx" : "pdf";
-      const blob = await generateServerBlob(format === "docx" ? "docx" : "pdf");
+      const blob = await generateServerBlob();
       const { saveAs } = await import("file-saver");
-      saveAs(blob, `${nameField}.${fileExt}`);
+      saveAs(blob, `${nameField}.pdf`);
     } catch (err) {
       console.error("Export Error:", err);
     } finally {

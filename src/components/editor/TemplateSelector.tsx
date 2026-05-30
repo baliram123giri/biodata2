@@ -153,7 +153,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
               {tpl.thumbnailUrl && (
                 <Image
                   src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
-                    ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,q_100/")
+                    ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,f_auto,q_auto/")
                     : tpl.thumbnailUrl
                   }
                   alt={tpl.name}

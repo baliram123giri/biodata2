@@ -23,18 +23,16 @@ interface FeedbackModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   initialName: string;
-  onSubmit: (rating: number, name: string, comment: string, format: "pdf" | "docx" | "jpg" | "png" | "combo") => void;
-  onSkip: (name: string, format: "pdf" | "docx" | "jpg" | "png" | "combo") => void;
+  onSubmit: (rating: number, name: string, comment: string, format: "pdf" | "jpg" | "png" | "combo") => void;
+  onSkip: (name: string, format: "pdf" | "jpg" | "png" | "combo") => void;
   isPremium?: boolean;
   price?: number | null;
   discountPrice?: number | null;
   currency?: string | null;
   // Format-specific pricing overrides
-  downloadFormat?: "pdf" | "docx" | "jpg" | "png" | "combo" | null;
+  downloadFormat?: "pdf" | "jpg" | "png" | "combo" | null;
   pdfPrice?: number | null;
   pdfDiscountPrice?: number | null;
-  docxPrice?: number | null;
-  docxDiscountPrice?: number | null;
   jpgPrice?: number | null;
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
@@ -56,8 +54,6 @@ export function FeedbackModal({
   downloadFormat = null,
   pdfPrice = null,
   pdfDiscountPrice = null,
-  docxPrice = null,
-  docxDiscountPrice = null,
   jpgPrice = null,
   jpgDiscountPrice = null,
   pngPrice = null,
@@ -69,7 +65,7 @@ export function FeedbackModal({
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [filename, setFilename] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
-  const [selectedFormat, setSelectedFormat] = useState<"pdf" | "docx" | "jpg" | "png" | "combo">("pdf");
+  const [selectedFormat, setSelectedFormat] = useState<"pdf" | "jpg" | "png" | "combo">("pdf");
 
   // Sync initialName and format when modal opens
   useEffect(() => {
@@ -102,9 +98,6 @@ export function FeedbackModal({
   if (selectedFormat === "pdf") {
     resolvedPrice = pdfPrice ?? price;
     resolvedDiscountPrice = pdfDiscountPrice ?? discountPrice;
-  } else if (selectedFormat === "docx") {
-    resolvedPrice = docxPrice ?? price;
-    resolvedDiscountPrice = docxDiscountPrice ?? discountPrice;
   } else if (selectedFormat === "jpg") {
     resolvedPrice = jpgPrice ?? price;
     resolvedDiscountPrice = jpgDiscountPrice ?? discountPrice;
@@ -269,7 +262,6 @@ export function FeedbackModal({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {[
                   { id: "pdf", label: "PDF", desc: "Best for print", color: "hover:bg-red-500/5 hover:border-red-500/40", textColor: "text-red-700 dark:text-red-400", descColor: "text-red-600/70 dark:text-red-400/70", activeClass: "border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_4px_15px_rgba(239,68,68,0.35)] ring-red-500" },
-                  { id: "docx", label: "Word", desc: "Editable Doc", color: "hover:bg-blue-500/5 hover:border-blue-500/40", textColor: "text-blue-700 dark:text-blue-400", descColor: "text-blue-600/70 dark:text-blue-400/70", activeClass: "border-blue-500 bg-blue-500 text-white hover:bg-blue-600 hover:border-blue-600 shadow-[0_4px_15px_rgba(59,130,246,0.35)] ring-blue-500" },
                   { id: "jpg", label: "JPEG", desc: "Standard Image", color: "hover:bg-green-500/5 hover:border-green-500/40", textColor: "text-green-700 dark:text-green-400", descColor: "text-green-600/70 dark:text-green-400/70", activeClass: "border-green-500 bg-green-500 text-white hover:bg-green-600 hover:border-green-600 shadow-[0_4px_15px_rgba(34,197,94,0.35)] ring-green-500" },
                   { id: "png", label: "PNG", desc: "Lossless Image", color: "hover:bg-purple-500/5 hover:border-purple-500/40", textColor: "text-purple-700 dark:text-purple-400", descColor: "text-purple-600/70 dark:text-purple-400/70", activeClass: "border-purple-500 bg-purple-500 text-white hover:bg-purple-600 hover:border-purple-600 shadow-[0_4px_15px_rgba(168,85,247,0.35)] ring-purple-500" },
                   { id: "combo", label: "Combo Pack", desc: "All-in-One", color: "col-span-2 sm:col-span-1 hover:bg-[#9B1B30]/5 hover:border-[#9B1B30]", textColor: "text-[#9B1B30]", descColor: "text-[#9B1B30]/70", activeClass: "border-[#9B1B30] bg-[#9B1B30] text-white hover:bg-[#7A1323] hover:border-[#7A1323] shadow-[0_4px_15px_rgba(155,27,48,0.35)] ring-[#9B1B30]" }

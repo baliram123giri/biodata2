@@ -51,6 +51,10 @@ export interface ThemeState {
   bgColors: string[];
   padding: number;
   paddingY?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
   borderRadius: number;
   selectedElement: string | null;
   selectedPaletteName: string | null;
@@ -70,6 +74,10 @@ export interface ThemeState {
   setPalette: (palette: Palette) => void;
   setPadding: (padding: number) => void;
   setPaddingY: (paddingY: number | undefined) => void;
+  setPaddingTop: (padding: number | undefined) => void;
+  setPaddingBottom: (padding: number | undefined) => void;
+  setPaddingLeft: (padding: number | undefined) => void;
+  setPaddingRight: (padding: number | undefined) => void;
   setBorderRadius: (radius: number) => void;
   setSelectedElement: (elementId: string | null) => void;
   setBgImageUrl: (url: string | null) => void;
@@ -125,6 +133,10 @@ export const useThemeStore = create<ThemeState>()(
         }),
         setPadding: (padding) => set({ padding: padding }),
         setPaddingY: (paddingY) => set({ paddingY: paddingY }),
+        setPaddingTop: (paddingTop) => set({ paddingTop }),
+        setPaddingBottom: (paddingBottom) => set({ paddingBottom }),
+        setPaddingLeft: (paddingLeft) => set({ paddingLeft }),
+        setPaddingRight: (paddingRight) => set({ paddingRight }),
         setBorderRadius: (radius) => set({ borderRadius: radius }),
         setSelectedElement: (elementId) => set({ selectedElement: elementId }),
         setBgImageUrl: (url) => set({ 

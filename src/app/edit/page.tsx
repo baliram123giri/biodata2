@@ -196,8 +196,7 @@ export default function EditPage() {
       const properPhone = phoneField?.value || "";
 
       let finalPrice = 29;
-      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 29;
-      else if (format === "docx") finalPrice = activeTemplate?.docxDiscountPrice ?? activeTemplate?.docxPrice ?? 29;
+      if (format === "pdf") finalPrice = activeTemplate?.pdfDiscountPrice ?? activeTemplate?.pdfPrice ?? 49;
       else if (format === "jpg") finalPrice = activeTemplate?.jpgDiscountPrice ?? activeTemplate?.jpgPrice ?? 19;
       else if (format === "png") finalPrice = activeTemplate?.pngDiscountPrice ?? activeTemplate?.pngPrice ?? 19;
       else if (format === "combo") finalPrice = (activeTemplate as any)?.comboDiscountPrice ?? (activeTemplate as any)?.comboPrice ?? 79;
@@ -969,20 +968,20 @@ export default function EditPage() {
 
                         <div className="flex flex-col gap-3">
                           {/* Primary Color Picker */}
-                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
+                          <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
                               <input
                                 type="color"
                                 value={theme.primaryColor}
                                 onChange={(e) => theme.setPrimaryColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
                               />
-                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
                             </label>
-                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Primary</span>
-                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Titles & Headers</span>
+                            <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5 overflow-hidden">
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Primary</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Titles & Headers</span>
                               </div>
                               <Input
                                 type="text"
@@ -995,26 +994,26 @@ export default function EditPage() {
                                   }
                                   theme.setPrimaryColor(val);
                                 }}
-                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                                className="h-8 w-16 sm:w-28 text-center text-[10px] sm:text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary px-1 sm:px-3"
                               />
                             </div>
                           </div>
 
                           {/* Secondary Color Picker */}
-                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
+                          <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
                               <input
                                 type="color"
                                 value={theme.secondaryColor}
                                 onChange={(e) => theme.setSecondaryColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
                               />
-                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
                             </label>
-                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Secondary</span>
-                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Field Values</span>
+                            <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5 overflow-hidden">
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Secondary</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Field Values</span>
                               </div>
                               <Input
                                 type="text"
@@ -1027,26 +1026,26 @@ export default function EditPage() {
                                   }
                                   theme.setSecondaryColor(val);
                                 }}
-                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                                className="h-8 w-16 sm:w-28 text-center text-[10px] sm:text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary px-1 sm:px-3"
                               />
                             </div>
                           </div>
 
                           {/* Accent Color Picker */}
-                          <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-10 h-10 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
+                          <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
+                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
                               <input
                                 type="color"
                                 value={theme.accentColor}
                                 onChange={(e) => theme.setAccentColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
                               />
-                              <Sparkles className="w-4 h-4 text-white drop-shadow" />
+                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
                             </label>
-                            <div className="flex-1 flex gap-3 items-center justify-between pr-1">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-stitch-on-surface text-[11px] font-bold leading-tight">Accent</span>
-                                <span className="text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none">Labels & Ornaments</span>
+                            <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
+                              <div className="flex flex-col gap-0.5 overflow-hidden">
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Accent</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Labels & Ornaments</span>
                               </div>
                               <Input
                                 type="text"
@@ -1059,7 +1058,7 @@ export default function EditPage() {
                                   }
                                   theme.setAccentColor(val);
                                 }}
-                                className="h-8 w-28 text-center text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary"
+                                className="h-8 w-16 sm:w-28 text-center text-[10px] sm:text-xs font-mono font-bold bg-white/70 border-stitch-outline/15 rounded-lg focus-visible:ring-1 focus-visible:ring-stitch-primary px-1 sm:px-3"
                               />
                             </div>
                           </div>
@@ -1084,31 +1083,63 @@ export default function EditPage() {
                     <div className="space-y-4">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Horizontal Padding (X)</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.padding}px</span>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Top Padding</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">
+                            {theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding))}px
+                          </span>
                         </div>
                         <Slider
-                          value={[theme.padding]}
-                          onValueChange={([v]) => theme.setPadding(v)}
-                          min={40}
-                          max={100}
-                          step={4}
+                          value={[theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding))]}
+                          onValueChange={([v]) => theme.setPaddingTop(v)}
+                          min={20}
+                          max={200}
+                          step={2}
+                        />
+                      </div>
+
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Left Padding</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingLeft !== undefined ? theme.paddingLeft : theme.padding}px</span>
+                        </div>
+                        <Slider
+                          value={[theme.paddingLeft !== undefined ? theme.paddingLeft : theme.padding]}
+                          onValueChange={([v]) => theme.setPaddingLeft(v)}
+                          min={20}
+                          max={150}
+                          step={2}
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Vertical Padding (Y)</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">
-                            {theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding)}px
-                          </span>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Right Padding</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingRight !== undefined ? theme.paddingRight : theme.padding}px</span>
                         </div>
                         <Slider
-                          value={[theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding)]}
-                          onValueChange={([v]) => theme.setPaddingY(v)}
+                          value={[theme.paddingRight !== undefined ? theme.paddingRight : theme.padding]}
+                          onValueChange={([v]) => theme.setPaddingRight(v)}
                           min={20}
                           max={150}
                           step={2}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Typography Section */}
+                    <div className="pt-5 border-t border-stitch-outline/10 space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Base Font Size</Label>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.fontSize ?? 16}px</span>
+                        </div>
+                        <Slider
+                          value={[theme.fontSize ?? 16]}
+                          onValueChange={([v]) => theme.setFontSize(v)}
+                          min={10}
+                          max={24}
+                          step={0.5}
                         />
                       </div>
                     </div>
@@ -1174,8 +1205,6 @@ export default function EditPage() {
         downloadFormat={pendingDownloadFormat}
         pdfPrice={activeTemplate?.pdfPrice}
         pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
-        docxPrice={activeTemplate?.docxPrice}
-        docxDiscountPrice={activeTemplate?.docxDiscountPrice}
         jpgPrice={activeTemplate?.jpgPrice}
         jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
         pngPrice={activeTemplate?.pngPrice}
@@ -1199,8 +1228,6 @@ export default function EditPage() {
         discountPrice={activeTemplate?.discountPrice}
         pdfPrice={activeTemplate?.pdfPrice}
         pdfDiscountPrice={activeTemplate?.pdfDiscountPrice}
-        docxPrice={activeTemplate?.docxPrice}
-        docxDiscountPrice={activeTemplate?.docxDiscountPrice}
         jpgPrice={activeTemplate?.jpgPrice}
         jpgDiscountPrice={activeTemplate?.jpgDiscountPrice}
         pngPrice={activeTemplate?.pngPrice}

@@ -223,7 +223,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {tpl.thumbnailUrl ? (
                     <Image
                       src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
-                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_80,f_auto/")
+                        ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,f_auto,q_auto/")
                         : tpl.thumbnailUrl
                       }
                       alt={tpl.name}
@@ -350,7 +350,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   {selectedTpl.thumbnailUrl ? (
                     <Image
                       src={selectedTpl.thumbnailUrl.includes("res.cloudinary.com") && selectedTpl.thumbnailUrl.includes("/image/upload/")
-                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,q_80,f_auto/")
+                        ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,f_auto,q_auto/")
                         : selectedTpl.thumbnailUrl
                       }
                       alt={selectedTpl.name}

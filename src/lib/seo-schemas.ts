@@ -64,7 +64,7 @@ export const howToSchema = {
       "@type": "HowToStep" as const,
       "position": 4,
       "name": "Download and Share",
-      "text": "When you are happy with how it looks, click Download. Your biodata is generated instantly as PDF, JPG, or DOCX formats."
+      "text": "When you are happy with how it looks, click Download. Your biodata is generated instantly as PDF, or JPG formats."
     }
   ]
 };
