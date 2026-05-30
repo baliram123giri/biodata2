@@ -143,6 +143,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let body: any = null;
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser || (sessionUser.role !== "admin" && sessionUser.role !== "superadmin")) {
@@ -150,7 +151,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await req.json();
+    body = await req.json();
 
     const existing = await prisma.template.findUnique({
       where: { id },
@@ -345,6 +346,16 @@ export async function PATCH(
     return NextResponse.json({ success: true, template: updated });
   } catch (error: any) {
     console.error("Update template error:", error);
+    try {
+      const fs = require("fs");
+      fs.writeFileSync("d:\\MERN\/\/biodata\\biodata2\\prisma-update-error.log", JSON.stringify({
+        errorMessage: error.message,
+        errorStack: error.stack,
+        requestBody: body
+      }, null, 2));
+    } catch (e) {
+      console.error("Failed to write prisma-update-error.log:", e);
+    }
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }

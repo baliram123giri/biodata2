@@ -4,7 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient;
+  prisma_v2: PrismaClient;
   pgPool: pg.Pool;
 };
 
@@ -43,10 +43,10 @@ if (typeof window === "undefined") {
     if (!globalForPrisma.pgPool) {
       globalForPrisma.pgPool = createPool();
     }
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = createPrisma(globalForPrisma.pgPool);
+    if (!globalForPrisma.prisma_v2) {
+      globalForPrisma.prisma_v2 = createPrisma(globalForPrisma.pgPool);
     }
-    prismaInstance = globalForPrisma.prisma;
+    prismaInstance = globalForPrisma.prisma_v2;
   }
 } else {
   prismaInstance = null as any;

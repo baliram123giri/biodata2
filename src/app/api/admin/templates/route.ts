@@ -97,13 +97,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  let body: any = null;
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser || (sessionUser.role !== "admin" && sessionUser.role !== "superadmin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    body = await req.json();
     const {
       name,
       description,
@@ -265,6 +266,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, template });
   } catch (error: any) {
     console.error("Create template error:", error);
+    try {
+      const fs = require("fs");
+      fs.writeFileSync("d:\\MERN\/\/biodata\\biodata2\\prisma-create-error.log", JSON.stringify({
+        errorMessage: error.message,
+        errorStack: error.stack,
+        requestBody: body
+      }, null, 2));
+    } catch (e) {
+      console.error("Failed to write prisma-create-error.log:", e);
+    }
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
