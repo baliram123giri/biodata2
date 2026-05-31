@@ -301,11 +301,15 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const pCornerRadius = theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : (config.photo?.cornerRadius ?? 8);
   const pBorderSize = theme.photoBorderSize !== undefined ? theme.photoBorderSize : (config.photo?.showBorder !== false ? 2 : 0);
   const pScale = theme.photoScale !== undefined ? theme.photoScale / 100 : 1;
+  const pRotation = theme.photoRotation || 0;
   
+  const pXOffset = theme.photoXOffset || 0;
+  const pYOffset = theme.photoYOffset || 0;
+
   const scaledPhotoW = config.photo ? config.photo.width * pScale : 0;
   const scaledPhotoH = config.photo ? config.photo.height * pScale : 0;
-  const scaledPhotoX = config.photo ? (photoX + config.photo.width / 2 - scaledPhotoW / 2) : 0;
-  const scaledPhotoY = config.photo ? (config.photo.y + config.photo.height / 2 - scaledPhotoH / 2) : 0;
+  const scaledPhotoX = config.photo ? (photoX + config.photo.width / 2 - scaledPhotoW / 2 + pXOffset) : 0;
+  const scaledPhotoY = config.photo ? (config.photo.y + config.photo.height / 2 - scaledPhotoH / 2 + pYOffset) : 0;
 
   // Calculate object-fit: contain dimensions for PDF
   let drawPhotoW = scaledPhotoW;
@@ -337,6 +341,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       width: drawPhotoW, 
       height: drawPhotoH, 
       borderRadius: pCornerRadius,
+      ...(pRotation ? { transform: `rotate(${pRotation}deg)` } : {}),
     },
     photoBorder: {
       position: 'absolute',
@@ -347,7 +352,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       borderRadius: pCornerRadius + (pBorderSize > 0 ? 2 : 0),
       borderWidth: pBorderSize,
       borderColor: primary,
-      backgroundColor: 'transparent'
+      backgroundColor: 'transparent',
+      ...(pRotation ? { transform: `rotate(${pRotation}deg)` } : {}),
     },
     sectionTitleBar: { 
       position: 'absolute', 

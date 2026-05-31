@@ -45,11 +45,44 @@ const A4_H = 842;
 // SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor, borderSize = 2, scale = 1 }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; borderSize?: number, scale?: number }) {
+// PhotoImage is a forwardRef component so the parent can attach a Konva Transformer to it
+const PhotoImage = React.forwardRef<Konva.Group, { 
+  src: string; 
+  x: number; 
+  y: number; 
+  width: number; 
+  height: number; 
+  cornerRadius: number; 
+  borderColor: string; 
+  borderSize?: number; 
+  scale?: number;
+  rotation?: number;
+  isDesigner?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  onDragEnd?: (newX: number, newY: number) => void;
+  onTransformEnd?: (x: number, y: number, scaleX: number, scaleY: number, rotation: number) => void;
+}>(function PhotoImage({ 
+  src, 
+  x, 
+  y, 
+  width, 
+  height, 
+  cornerRadius, 
+  borderColor, 
+  borderSize = 2, 
+  scale = 1,
+  rotation = 0,
+  isDesigner = false,
+  isSelected = false,
+  onSelect,
+  onDragEnd,
+  onTransformEnd,
+}, ref) {
   const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
 
-  // Implement object-fit: contain logic manually for Konva
+  // object-fit: contain — fill the container without cropping
   const imgWidth = image.width;
   const imgHeight = image.height;
   const containerRatio = width / height;
@@ -57,33 +90,95 @@ const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, co
 
   let drawWidth = width;
   let drawHeight = height;
-  let drawX = x;
-  let drawY = y;
 
   if (containerRatio > imageRatio) {
-    // Container is wider than the image -> constrain by height
     drawWidth = height * imageRatio;
-    drawX = x + (width - drawWidth) / 2;
   } else {
-    // Container is taller than the image -> constrain by width
     drawHeight = width / imageRatio;
-    drawY = y + (height - drawHeight) / 2;
   }
 
+  // Center within container
+  const offsetX = drawWidth / 2;
+  const offsetY = drawHeight / 2;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+
   return (
-    <Group>
+    <Group
+      ref={ref}
+      name="photo-group"
+      x={centerX}
+      y={centerY}
+      offsetX={offsetX}
+      offsetY={offsetY}
+      width={drawWidth}
+      height={drawHeight}
+      rotation={rotation}
+      draggable={isDesigner}
+      onClick={(e) => {
+        if (isDesigner) {
+          e.cancelBubble = true;
+          onSelect?.();
+        }
+      }}
+      onTap={(e) => {
+        if (isDesigner) {
+          e.cancelBubble = true;
+          onSelect?.();
+        }
+      }}
+      onDragStart={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = "grabbing";
+        }
+      }}
+      onDragEnd={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = "move";
+          onDragEnd?.(e.target.x(), e.target.y());
+        }
+      }}
+      onTransformEnd={() => {
+        const node = (ref as React.RefObject<Konva.Group>)?.current;
+        if (!node) return;
+        onTransformEnd?.(
+          node.x(),
+          node.y(),
+          node.scaleX(),
+          node.scaleY(),
+          node.rotation(),
+        );
+        // Reset scale on node since we store it in theme
+        node.scaleX(1);
+        node.scaleY(1);
+      }}
+      onMouseEnter={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = isSelected ? "move" : "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (isDesigner) {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = "default";
+        }
+      }}
+    >
       <KonvaImage 
         image={image} 
-        x={drawX} 
-        y={drawY} 
+        x={0} 
+        y={0} 
         width={drawWidth} 
         height={drawHeight} 
         cornerRadius={cornerRadius} 
       />
       {borderColor && borderSize > 0 && (
         <Rect
-          x={drawX - borderSize / 2}
-          y={drawY - borderSize / 2}
+          x={-borderSize / 2}
+          y={-borderSize / 2}
           width={drawWidth + borderSize}
           height={drawHeight + borderSize}
           cornerRadius={cornerRadius + borderSize / 2}
@@ -432,8 +527,11 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  const [isPhotoSelected, setIsPhotoSelected] = useState(false);
   const mantraSticker = formData.stickers?.find(s => s.isMantra);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const photoTransformerRef = useRef<Konva.Transformer>(null);
+  const photoGroupRef = useRef<Konva.Group>(null);
   const previewWatermarkRef = useRef<Konva.Text>(null);
   const lastDistRef = useRef<number | null>(null);
   const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
@@ -443,6 +541,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
+  // Wire sticker transformer
   useEffect(() => {
     if (selectedStickers.length > 0 && transformerRef.current && isDesigner) {
       const stage = transformerRef.current.getStage();
@@ -455,6 +554,24 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       transformerRef.current?.nodes([]);
     }
   }, [selectedStickers, isDesigner]);
+
+  // Wire photo transformer
+  useEffect(() => {
+    if (isPhotoSelected && photoTransformerRef.current && photoGroupRef.current && isDesigner) {
+      photoTransformerRef.current.nodes([photoGroupRef.current]);
+      photoTransformerRef.current.getLayer()?.batchDraw();
+    } else {
+      photoTransformerRef.current?.nodes([]);
+    }
+  }, [isPhotoSelected, isDesigner]);
+
+  // Deselect photo when clicking empty stage area
+  const handleStageClick = useCallback((e: any) => {
+    if (e.target === e.target.getStage() || e.target.name() === 'bg-rect') {
+      setIsPhotoSelected(false);
+      setSelectedStickers([]);
+    }
+  }, []);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("biodata:selection-changed", { detail: selectedStickers }));
@@ -496,10 +613,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     const updateSize = () => {
       const { width, height } = el.getBoundingClientRect();
       setStageSize({ width, height });
-      if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
+      if (propScale) {
+        // Embedded preview: anchor to top-left, no centering offset
+        setScale(propScale);
+        setStagePos({ x: 0, y: 0 });
+      } else if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
         const initialScale = Math.min(width / A4_W, height / A4_H);
-        if (!propScale) setScale(initialScale);
-        setStagePos({ x: (width - A4_W * (propScale || initialScale)) / 2, y: (height - A4_H * (propScale || initialScale)) / 2 });
+        setScale(initialScale);
+        setStagePos({ x: (width - A4_W * initialScale) / 2, y: (height - A4_H * initialScale) / 2 });
       }
     };
     updateSize();
@@ -796,10 +917,13 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     const cx = (base.x - diffX) + base.width / 2;
     const cy = base.y + base.height / 2;
 
+    const xOffset = theme.photoXOffset || 0;
+    const yOffset = theme.photoYOffset || 0;
+
     return {
       ...base,
-      x: cx - scaledWidth / 2,
-      y: cy - scaledHeight / 2,
+      x: cx - scaledWidth / 2 + xOffset,
+      y: cy - scaledHeight / 2 + yOffset,
       width: scaledWidth,
       height: scaledHeight,
       cornerRadius: theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : base.cornerRadius,
@@ -807,7 +931,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       borderSize: theme.photoBorderSize !== undefined ? theme.photoBorderSize : 2,
       scale: 1
     };
-  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize, paddingRight, theme.photoScale]);
+  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize, paddingRight, theme.photoScale, theme.photoXOffset, theme.photoYOffset]);
 
   const detailsLayout = templateConfig.detailsLayout || "classic";
   const titleShape = templateConfig.titleShape || "simple";
@@ -978,14 +1102,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     <div 
       ref={containerRef} 
       className="w-full h-full relative overflow-hidden"
-      style={{
+      style={isDesigner ? {
         backgroundColor: "#ffffff",
         backgroundImage: `
           linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px)
         `,
         backgroundSize: "24px 24px",
-      }}
+      } : { backgroundColor: "#ffffff" }}
     >
       <Stage
         ref={stageRef}
@@ -1010,11 +1134,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             if (stage) stage.container().style.cursor = 'grab';
           }
         }}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setSelectedStickers([]);
-          }
-        }}
+        onClick={handleStageClick}
         style={{ cursor: isDesigner ? 'grab' : 'default' }}
       >
         <Layer listening={false}>
@@ -1404,6 +1524,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
             {hasPhoto && photoConfig && (
               <PhotoImage
+                ref={photoGroupRef}
                 src={formData.photo!}
                 x={photoConfig.x}
                 y={photoConfig.y}
@@ -1413,6 +1534,35 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 borderColor={photoConfig.showBorder !== false ? primaryColor : ""}
                 borderSize={photoConfig.borderSize}
                 scale={photoConfig.scale}
+                rotation={theme.photoRotation || 0}
+                isDesigner={isDesigner}
+                isSelected={isPhotoSelected}
+                onSelect={() => {
+                  setIsPhotoSelected(true);
+                  setSelectedStickers([]);
+                }}
+                onDragEnd={(newX, newY) => {
+                  // newX/newY are the group center coords; convert back to offset
+                  const baseX = photoConfig.x + photoConfig.width / 2;
+                  const baseY = photoConfig.y + photoConfig.height / 2;
+                  const xOff = theme.photoXOffset || 0;
+                  const yOff = theme.photoYOffset || 0;
+                  theme.setPhotoXOffset(xOff + (newX - (baseX)));
+                  theme.setPhotoYOffset(yOff + (newY - (baseY)));
+                }}
+                onTransformEnd={(nx, ny, sx, sy, rot) => {
+                  const baseX = photoConfig.x + photoConfig.width / 2;
+                  const baseY = photoConfig.y + photoConfig.height / 2;
+                  const xOff = theme.photoXOffset || 0;
+                  const yOff = theme.photoYOffset || 0;
+                  theme.setPhotoXOffset(xOff + (nx - baseX));
+                  theme.setPhotoYOffset(yOff + (ny - baseY));
+                  // Scale drives photoScale (average of sx/sy relative to current)
+                  const currentScale = (theme.photoScale ?? 100) / 100;
+                  const newScale = Math.round(currentScale * ((sx + sy) / 2) * 100);
+                  theme.setPhotoScale(Math.max(20, Math.min(300, newScale)));
+                  theme.setPhotoRotation(rot);
+                }}
               />
             )}
 
@@ -1448,10 +1598,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               ref={transformerRef}
               centeredScaling={true}
               boundBoxFunc={(oldBox, newBox) => {
-                // Minimum size
-                if (newBox.width < 20 || newBox.height < 20) {
-                  return oldBox;
-                }
+                if (newBox.width < 20 || newBox.height < 20) return oldBox;
                 return newBox;
               }}
               rotateEnabled={true}
@@ -1466,6 +1613,32 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               anchorFill="#ffffff"
               borderStroke="#D4AF37"
               keepRatio={true}
+            />
+          )}
+
+          {/* Photo Transformer — same styling as sticker transformer */}
+          {isDesigner && isPhotoSelected && (
+            <Transformer
+              ref={photoTransformerRef}
+              centeredScaling={true}
+              boundBoxFunc={(oldBox, newBox) => {
+                if (newBox.width < 30 || newBox.height < 30) return oldBox;
+                return newBox;
+              }}
+              rotateEnabled={true}
+              keepRatio={false}
+              enabledAnchors={
+                isMobile 
+                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] 
+                  : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']
+              }
+              anchorSize={isMobile ? 14 : 10}
+              anchorCornerRadius={5}
+              anchorStroke="#6366f1"
+              anchorFill="#ffffff"
+              borderStroke="#6366f1"
+              borderDash={[6, 3]}
+              rotateAnchorOffset={20}
             />
           )}
         </Layer>

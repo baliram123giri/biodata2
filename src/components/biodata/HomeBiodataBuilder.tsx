@@ -716,17 +716,50 @@ function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) 
   const formData = useWatch();
   const [isClientMounted, setIsClientMounted] = useState(false);
   const customTemplates = useBiodataStore((state) => state.customTemplates);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     setIsClientMounted(true);
   }, []);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const A4_W = 595;
+    const A4_H = 842;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        setPreviewScale(Math.min(width / A4_W, height / A4_H));
+      }
+    };
+
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none flex items-center justify-center">
+    <div
+      id="biodata-preview-home"
+      ref={containerRef}
+      className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none"
+    >
       {!isClientMounted || customTemplates.length === 0 ? (
         <PreviewLoader />
+      ) : previewScale !== undefined ? (
+        <KonvaPreview
+          liveFormData={formData as BiodataFormValues}
+          templateId={storedTemplate}
+          scale={previewScale}
+        />
       ) : (
-        <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
+        <PreviewLoader />
       )}
     </div>
   );

@@ -702,8 +702,15 @@ const PhotoCustomizationSliders = memo(function PhotoCustomizationSliders({ watc
   const setPhotoBorderSize = useThemeStore(s => s.setPhotoBorderSize);
   const photoScale = useThemeStore(s => s.photoScale);
   const setPhotoScale = useThemeStore(s => s.setPhotoScale);
+  
+  const photoXOffset = useThemeStore(s => s.photoXOffset);
+  const photoYOffset = useThemeStore(s => s.photoYOffset);
+  const setPhotoXOffset = useThemeStore(s => s.setPhotoXOffset);
+  const setPhotoYOffset = useThemeStore(s => s.setPhotoYOffset);
 
   if (!watchPhoto) return null;
+
+  const hasOffset = (photoXOffset !== 0) || (photoYOffset !== 0);
 
   return (
     <div className="grid grid-cols-2 gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -742,6 +749,26 @@ const PhotoCustomizationSliders = memo(function PhotoCustomizationSliders({ watc
           onValueChange={([val]) => setPhotoScale(val)}
           className="w-full"
         />
+      </div>
+      <div className="col-span-2 pt-2 border-t border-border/50 flex flex-col gap-2">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Drag photo on preview to reposition
+          </span>
+          {hasOffset && (
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoXOffset(0);
+                setPhotoYOffset(0);
+              }}
+              className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 px-2 py-1 rounded transition-colors"
+            >
+              Reset Position
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

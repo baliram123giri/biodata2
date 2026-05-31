@@ -200,6 +200,9 @@ export async function prepareDataForGeneration(
     photoCornerRadius: theme.photoCornerRadius,
     photoBorderSize: theme.photoBorderSize,
     photoScale: theme.photoScale,
+    photoRotation: theme.photoRotation,
+    photoXOffset: theme.photoXOffset,
+    photoYOffset: theme.photoYOffset,
   };
 
   return { formData: preparedFormData, theme: preparedTheme };

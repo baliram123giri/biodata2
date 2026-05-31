@@ -88,9 +88,15 @@ export interface ThemeState {
   photoCornerRadius?: number;
   photoBorderSize?: number;
   photoScale?: number;
+  photoRotation?: number;
+  photoXOffset?: number;
+  photoYOffset?: number;
   setPhotoCornerRadius: (radius: number | undefined) => void;
   setPhotoBorderSize: (size: number | undefined) => void;
   setPhotoScale: (scale: number | undefined) => void;
+  setPhotoRotation: (rotation: number) => void;
+  setPhotoXOffset: (x: number) => void;
+  setPhotoYOffset: (y: number) => void;
   resetTheme: () => void;
 }
 
@@ -119,6 +125,9 @@ export const useThemeStore = create<ThemeState>()(
         photoCornerRadius: undefined,
         photoBorderSize: undefined,
         photoScale: undefined,
+        photoRotation: 0,
+        photoXOffset: 0,
+        photoYOffset: 0,
 
         setFontFamily: (font) => set({ fontFamily: font }),
         setFontWeight: (weight) => set({ fontWeight: weight }),
@@ -156,6 +165,9 @@ export const useThemeStore = create<ThemeState>()(
         setPhotoCornerRadius: (radius) => set({ photoCornerRadius: radius }),
         setPhotoBorderSize: (size) => set({ photoBorderSize: size }),
         setPhotoScale: (scale) => set({ photoScale: scale }),
+        setPhotoRotation: (rotation) => set({ photoRotation: rotation }),
+        setPhotoXOffset: (x) => set({ photoXOffset: x }),
+        setPhotoYOffset: (y) => set({ photoYOffset: y }),
         resetTheme: () => set({
           fontFamily: "noto",
           fontWeight: "medium",
@@ -175,6 +187,12 @@ export const useThemeStore = create<ThemeState>()(
           bgImageScale: 1.0,
           bgImageXOffset: 0,
           bgImageYOffset: 0,
+          photoCornerRadius: undefined,
+          photoBorderSize: undefined,
+          photoScale: undefined,
+          photoRotation: 0,
+          photoXOffset: 0,
+          photoYOffset: 0,
         }),
       })
     ),
