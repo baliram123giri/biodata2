@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { generatePdfBlob, prepareDataForGeneration } from "@/hooks/useDownloadBiodata";
+import { translateUI } from "@/lib/translations";
 
 // Inline WhatsApp SVG with custom sizing
 function WhatsAppLogo({ className }: { className?: string }) {
@@ -33,6 +34,7 @@ export function WhatsAppDeliveryCard({
   isGenerating = false,
   className,
 }: WhatsAppDeliveryCardProps) {
+  const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [optIn, setOptIn] = useState(true);
@@ -42,12 +44,12 @@ export function WhatsAppDeliveryCard({
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber) {
-      setErrorMessage("Please enter your mobile number");
+      setErrorMessage(translateUI("enterMobileNumber", currentLang));
       setStatus("error");
       return;
     }
     if (!/^\d{10}$/.test(phoneNumber.trim())) {
-      setErrorMessage("Please enter a valid 10-digit number");
+      setErrorMessage(translateUI("enterValidNumber", currentLang));
       setStatus("error");
       return;
     }
@@ -176,7 +178,7 @@ export function WhatsAppDeliveryCard({
       setTimeout(() => setStatus("idle"), 5000);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err instanceof Error ? err.message : "Failed to deliver. Please try again.");
+      setErrorMessage(err instanceof Error ? err.message : translateUI("failedToDeliver", currentLang));
       setStatus("error");
     }
   };
@@ -199,26 +201,26 @@ export function WhatsAppDeliveryCard({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-black text-[#062B36] tracking-tight mb-1">
-            Get Your Marriage Biodata Delivered on WhatsApp - Instantly
+            {translateUI("whatsappCardTitle", currentLang)}
           </h3>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
               <div className="w-4 h-4 rounded-full bg-[#E8F8EF] flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 text-[#25D366]" />
               </div>
-              Instant PDF delivery
+              {translateUI("instantPdfDelivery", currentLang)}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
               <div className="w-4 h-4 rounded-full bg-[#E8F8EF] flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 text-[#25D366]" />
               </div>
-              No quality loss
+              {translateUI("noQualityLoss", currentLang)}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
               <div className="w-4 h-4 rounded-full bg-[#E8F8EF] flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 text-[#25D366]" />
               </div>
-              Works on all phones
+              {translateUI("worksOnAllPhones", currentLang)}
             </div>
           </div>
         </div>
@@ -228,7 +230,7 @@ export function WhatsAppDeliveryCard({
         {/* Input Row */}
         <div className="space-y-1.5">
           <label htmlFor="whatsapp-number-input" className="text-[10px] font-black tracking-widest text-stone-600 uppercase block">
-            WhatsApp Number
+            {translateUI("whatsappNumber", currentLang)}
           </label>
           <div className="flex gap-2">
             <div className="relative shrink-0">
@@ -282,7 +284,7 @@ export function WhatsAppDeliveryCard({
             htmlFor="opt-in"
             className="text-xs font-semibold text-stone-600 leading-normal select-none cursor-pointer"
           >
-            Yes, send me my biodata and updates on WhatsApp. I can opt-out anytime.
+            {translateUI("whatsappConsentLabel", currentLang)}
           </label>
         </div>
 
@@ -301,17 +303,17 @@ export function WhatsAppDeliveryCard({
           {status === "generating" ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating & Delivering...
+              {translateUI("generatingDelivering", currentLang)}
             </>
           ) : status === "success" ? (
             <>
               <Check className="w-4 h-4" />
-              PDF Delivered to WhatsApp!
+              {translateUI("pdfDelivered", currentLang)}
             </>
           ) : (
             <>
               <Send className="w-4 h-4" />
-              Get Biodata on WhatsApp
+              {translateUI("getBiodataOnWhatsapp", currentLang)}
             </>
           )}
         </button>
@@ -327,7 +329,7 @@ export function WhatsAppDeliveryCard({
         <div className="bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 flex items-start gap-2.5">
           <Lock className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-stone-500 font-semibold leading-normal">
-            Your number is used only to send your biodata. We never share it or store it after delivery.
+            {translateUI("whatsappPrivacyNotice", currentLang)}
           </p>
         </div>
       </form>

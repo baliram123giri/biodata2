@@ -88,13 +88,22 @@ const PhotoImage = React.forwardRef<Konva.Group, {
   const containerRatio = width / height;
   const imageRatio = imgWidth / imgHeight;
 
-  let drawWidth = width;
-  let drawHeight = height;
+  // Force database coordinates for photo width, height, and border
+  const drawWidth = width;
+  const drawHeight = height;
 
-  if (containerRatio > imageRatio) {
-    drawWidth = height * imageRatio;
-  } else {
-    drawHeight = width / imageRatio;
+  let crop = undefined;
+  if (image) {
+    crop = { x: 0, y: 0, width: imgWidth, height: imgHeight };
+    if (containerRatio > imageRatio) {
+      const newHeight = imgWidth / containerRatio;
+      crop.y = (imgHeight - newHeight) / 2;
+      crop.height = newHeight;
+    } else {
+      const newWidth = imgHeight * containerRatio;
+      crop.x = (imgWidth - newWidth) / 2;
+      crop.width = newWidth;
+    }
   }
 
   // Center within container
@@ -173,6 +182,7 @@ const PhotoImage = React.forwardRef<Konva.Group, {
         y={0}
         width={drawWidth}
         height={drawHeight}
+        crop={crop}
         cornerRadius={cornerRadius}
       />
       {borderColor && borderSize > 0 && (
@@ -955,7 +965,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
       for (const sec of sections as any[]) {
         const titleY = cursorY;
-        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12; // Extra padding for beautiful headings
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 4; // Extra padding for beautiful headings
         const fieldLayouts: any[] = [];
 
         let i = 0;

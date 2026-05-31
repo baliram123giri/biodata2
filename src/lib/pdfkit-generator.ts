@@ -219,7 +219,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 12;
+      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 4;
       const fieldRows: any[] = [];
 
       let i = 0;
@@ -311,24 +311,11 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const scaledPhotoX = config.photo ? (photoX + config.photo.width / 2 - scaledPhotoW / 2 + pXOffset) : 0;
   const scaledPhotoY = config.photo ? (config.photo.y + config.photo.height / 2 - scaledPhotoH / 2 + pYOffset) : 0;
 
-  // Calculate object-fit: contain dimensions for PDF
-  let drawPhotoW = scaledPhotoW;
-  let drawPhotoH = scaledPhotoH;
-  let drawPhotoX = scaledPhotoX;
-  let drawPhotoY = scaledPhotoY;
-
-  if (hasPhoto && photoWidth > 0 && photoHeight > 0) {
-    const containerRatio = scaledPhotoW / scaledPhotoH;
-    const imageRatio = photoWidth / photoHeight;
-
-    if (containerRatio > imageRatio) {
-      drawPhotoW = scaledPhotoH * imageRatio;
-      drawPhotoX = scaledPhotoX + (scaledPhotoW - drawPhotoW) / 2;
-    } else {
-      drawPhotoH = scaledPhotoW / imageRatio;
-      drawPhotoY = scaledPhotoY + (scaledPhotoH - drawPhotoH) / 2;
-    }
-  }
+  // Force template-default photo geometry and border settings directly from database configuration
+  const drawPhotoW = scaledPhotoW;
+  const drawPhotoH = scaledPhotoH;
+  const drawPhotoX = scaledPhotoX;
+  const drawPhotoY = scaledPhotoY;
 
   const styles = StyleSheet.create({
     page: { backgroundColor: bgColor, padding: 0, margin: 0 },
@@ -753,7 +740,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
         })(),
         data.photo ? React.createElement(Image, { 
           src: data.photo, 
-          style: { ...styles.photo, objectFit: 'contain' } as any 
+          style: { ...styles.photo, objectFit: 'cover' } as any 
         }) : null,
         data.photo && pBorderSize > 0 ? React.createElement(View, { style: styles.photoBorder as any }) : null,
         ...layout.sectionLayouts.flatMap((sec, si) => {

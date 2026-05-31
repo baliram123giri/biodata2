@@ -135,8 +135,8 @@ function sanitizeTemplateConfig(config: TemplateConfig): TemplateConfig {
     ...config,
     photo: config.photo ? {
       ...config.photo,
-      cornerRadius: 0,
-    } : { x: 390, y: 100, width: 140, height: 175, cornerRadius: 0 },
+      cornerRadius: config.photo.cornerRadius ?? 8,
+    } : { x: 390, y: 100, width: 140, height: 175, cornerRadius: 8 },
     frame: frame as any,
   };
 }
@@ -277,7 +277,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
       y: dbTpl.photoY,
       width: dbTpl.photoWidth,
       height: dbTpl.photoHeight,
-      cornerRadius: 0,
+      cornerRadius: dbTpl.photoCornerRadius ?? 8,
       showBorder: dbTpl.photoShowBorder !== false,
     },
     frame,

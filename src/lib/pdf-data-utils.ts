@@ -30,7 +30,10 @@ export const processPDFField = (
   let logoUrl;
 
   // 2. Translate Label
-  if (t[field.label]) {
+  const fieldKey = field.id || (field.label?.toLowerCase() === "company name" ? "companyName" : "");
+  if (fieldKey && t[fieldKey]) {
+    displayLabel = t[fieldKey];
+  } else if (t[field.label]) {
     displayLabel = t[field.label];
   } else {
     const englishT = translations["English"];

@@ -74,6 +74,7 @@ const PriceModal = dynamic(() => import("@/components/biodata/PriceModal").then(
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsAppDeliveryCard").then(mod => mod.WhatsAppDeliveryCard));
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
+import { translateUI } from "@/lib/translations";
 export default function EditPage() {
   const router = useRouter();
   const { formData, selectedTemplate, customTemplates, setFormData } = useBiodataStore();
@@ -91,6 +92,7 @@ export default function EditPage() {
   const activeTemplate = customTemplates.find((t) => t.id === selectedTemplate) || getTemplateConfig(selectedTemplate);
   const canUndo = biodataHistory.pastStates.length > 0 || themeHistory.pastStates.length > 0;
   const canRedo = biodataHistory.futureStates.length > 0 || themeHistory.futureStates.length > 0;
+  const currentLang = methods.watch("language") || formData.language || "English";
 
 
 
@@ -574,23 +576,27 @@ export default function EditPage() {
             <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
             <Dialog>
               <DialogTrigger asChild>
-                <ToolbarItem icon={<RefreshCcw />} label="Reset" />
+                <ToolbarItem icon={<RefreshCcw />} label={translateUI("reset", currentLang)} />
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Reset Layout Positions?</DialogTitle>
+                  <DialogTitle>{translateUI("resetDesignTitle", currentLang)}</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to reset all layout positions to their defaults? This action cannot be undone.
+                    {translateUI("resetDesignDesc", currentLang)}
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0 mt-4">
                   <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button variant="outline">{translateUI("cancel", currentLang)}</Button>
                   </DialogClose>
-                  <DialogClose asChild onClick={() => useBiodataStore.getState().resetStore()}>
+                  <DialogClose asChild onClick={() => {
+                    useBiodataStore.getState().resetDesignOnly();
+                    useThemeStore.getState().resetTheme();
+                    methods.reset(useBiodataStore.getState().formData);
+                  }}>
                     <Button className="relative overflow-hidden bg-gradient-primary text-white border-0">
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-                      <span className="relative">Reset Layout</span>
+                      <span className="relative">{translateUI("resetDesignBtn", currentLang)}</span>
                     </Button>
                   </DialogClose>
                 </DialogFooter>
@@ -627,32 +633,32 @@ export default function EditPage() {
         )}>
           <ToolButton
             icon={<LayoutDashboard />}
-            label="Templates"
+            label={translateUI("templates", currentLang)}
             active={isRightOpen && activeTab === "templates"}
             onClick={() => handleTabClick("templates")}
           />
           <ToolButton
             icon={<TypeIcon />}
-            label="Fields"
+            label={translateUI("fields", currentLang)}
             active={isRightOpen && activeTab === "fields"}
             onClick={() => handleTabClick("fields")}
           />
           <ToolButton
             icon={<Palette />}
-            label="Theme"
+            label={translateUI("theme", currentLang)}
             active={isRightOpen && activeTab === "theme"}
             onClick={() => handleTabClick("theme")}
           />
           <ToolButton
             icon={<Sliders className="w-5 h-5" />}
-            label="Spacing"
+            label={translateUI("spacing", currentLang)}
             active={isRightOpen && activeTab === "spacing"}
             onClick={() => handleTabClick("spacing")}
           />
 
           <ToolButton
             icon={<Sparkles />}
-            label="Graphics"
+            label={translateUI("graphics", currentLang)}
             active={isRightOpen && activeTab === "graphics"}
             onClick={() => handleTabClick("graphics")}
           />
@@ -671,31 +677,31 @@ export default function EditPage() {
             <nav className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center py-4 px-2 gap-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-black/5">
               <ToolButton
                 icon={<LayoutDashboard />}
-                label="Templates"
+                label={translateUI("templates", currentLang)}
                 active={isRightOpen && activeTab === "templates"}
                 onClick={() => handleTabClick("templates")}
               />
               <ToolButton
                 icon={<TypeIcon />}
-                label="Fields"
+                label={translateUI("fields", currentLang)}
                 active={isRightOpen && activeTab === "fields"}
                 onClick={() => handleTabClick("fields")}
               />
               <ToolButton
                 icon={<Palette />}
-                label="Theme"
+                label={translateUI("theme", currentLang)}
                 active={isRightOpen && activeTab === "theme"}
                 onClick={() => handleTabClick("theme")}
               />
               <ToolButton
                 icon={<Sliders className="w-5 h-5" />}
-                label="Spacing"
+                label={translateUI("spacing", currentLang)}
                 active={isRightOpen && activeTab === "spacing"}
                 onClick={() => handleTabClick("spacing")}
               />
               <ToolButton
                 icon={<Sparkles />}
-                label="Graphics"
+                label={translateUI("graphics", currentLang)}
                 active={isRightOpen && activeTab === "graphics"}
                 onClick={() => handleTabClick("graphics")}
               />
@@ -757,10 +763,10 @@ export default function EditPage() {
           <div className="select-none shrink-0 border-b border-stitch-outline/5">
             <div className="p-6 pb-4 relative">
               <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
-                {activeTab}
+                {translateUI(activeTab, currentLang)}
               </h2>
               <p className="text-[11px] text-stitch-on-surface-variant font-bold uppercase tracking-widest mt-1">
-                Customize Design Properties
+                {translateUI("customizeDesignProperties", currentLang)}
               </p>
 
               {/* Close Button for Mobile Drawer */}
@@ -781,9 +787,9 @@ export default function EditPage() {
               {activeTab === "fields" && (
                 <div className="flex flex-col gap-6 text-left">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Edit Form Details</Label>
+                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">{translateUI("editFormDetails", currentLang)}</Label>
                     <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
-                      Modify your biodata details in real-time. Changes will update instantly on the canvas.
+                      {translateUI("modifyBiodataInstructions", currentLang)}
                     </p>
                   </div>
                   <FormProvider {...methods}>
@@ -797,16 +803,16 @@ export default function EditPage() {
                   <Tabs defaultValue="bg" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl mb-6">
                       <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
-                        Background Themes
+                        {translateUI("backgroundThemes", currentLang)}
                       </TabsTrigger>
                       <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
-                        Text Themes
+                        {translateUI("textThemes", currentLang)}
                       </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="bg" className="flex flex-col gap-4 animate-in fade-in duration-200">
                       <div className="flex flex-col gap-3">
-                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Theme Palettes</Label>
+                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">{translateUI("themePalettes", currentLang)}</Label>
                         <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto p-1.5 border border-stitch-outline/5 rounded-2xl bg-stitch-surface-variant/5 shadow-inner">
                           {/* None / Reset option */}
                           {(() => {
@@ -815,9 +821,6 @@ export default function EditPage() {
                               <button
                                 onClick={() => {
                                   theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
-                                  if (window.innerWidth < 1024) {
-                                    setIsRightOpen(false);
-                                  }
                                 }}
                                 className={cn(
                                   "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
@@ -830,7 +833,7 @@ export default function EditPage() {
                                     <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
                                   </svg>
                                 </div>
-                                <span className="text-[11px] font-bold text-stitch-on-surface-variant">None</span>
+                                <span className="text-[11px] font-bold text-stitch-on-surface-variant">{translateUI("none", currentLang)}</span>
                                 {isNone && (
                                   <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-stitch-primary flex items-center justify-center shadow-sm">
                                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -888,9 +891,6 @@ export default function EditPage() {
                                         accent: theme.accentColor,
                                         bgColors: colorsArr
                                       });
-                                      if (window.innerWidth < 1024) {
-                                        setIsRightOpen(false);
-                                      }
                                     }}
                                     className={cn(
                                       "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
@@ -931,9 +931,6 @@ export default function EditPage() {
                                     } else {
                                       theme.setPalette(p);
                                     }
-                                    if (window.innerWidth < 1024) {
-                                      setIsRightOpen(false);
-                                    }
                                   }}
                                   className={cn(
                                     "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",
@@ -972,7 +969,7 @@ export default function EditPage() {
 
                     <TabsContent value="text" className="flex flex-col gap-4 animate-in fade-in duration-200">
                       <div className="flex flex-col gap-4">
-                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Custom Colors</Label>
+                        <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">{translateUI("customColors", currentLang)}</Label>
 
                         <div className="flex flex-col gap-3">
                           {/* Primary Color Picker */}
@@ -993,8 +990,8 @@ export default function EditPage() {
                             </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
-                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Primary</span>
-                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Titles & Headers</span>
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">{translateUI("primary", currentLang)}</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">{translateUI("titlesHeaders", currentLang)}</span>
                               </div>
                               <Input
                                 type="text"
@@ -1030,8 +1027,8 @@ export default function EditPage() {
                             </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
-                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Secondary</span>
-                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Field Values</span>
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">{translateUI("secondary", currentLang)}</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">{translateUI("fieldValues", currentLang)}</span>
                               </div>
                               <Input
                                 type="text"
@@ -1067,8 +1064,8 @@ export default function EditPage() {
                             </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
-                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Accent</span>
-                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">Labels & Ornaments</span>
+                                <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">{translateUI("accent", currentLang)}</span>
+                                <span className="text-[7px] sm:text-[8px] text-stitch-on-surface-variant/50 font-bold uppercase tracking-wider leading-none truncate">{translateUI("labelsOrnaments", currentLang)}</span>
                               </div>
                               <Input
                                 type="text"
@@ -1095,9 +1092,9 @@ export default function EditPage() {
               {activeTab === "spacing" && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">Spacing & Padding</Label>
+                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">{translateUI("spacingMargins", currentLang)}</Label>
                     <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
-                      Adjust horizontal and vertical page margins to perfectly compact or space out your content layout.
+                      {translateUI("adjustMarginsDesc", currentLang)}
                     </p>
                   </div>
 
@@ -1106,7 +1103,7 @@ export default function EditPage() {
                     <div className="space-y-4">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Top Padding</Label>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("topPadding", currentLang)}</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">
                             {theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding))}px
                           </span>
@@ -1123,7 +1120,7 @@ export default function EditPage() {
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Left Padding</Label>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("leftPadding", currentLang)}</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingLeft !== undefined ? theme.paddingLeft : theme.padding}px</span>
                         </div>
                         <Slider
@@ -1137,7 +1134,7 @@ export default function EditPage() {
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Right Padding</Label>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("rightPadding", currentLang)}</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingRight !== undefined ? theme.paddingRight : theme.padding}px</span>
                         </div>
                         <Slider
@@ -1154,7 +1151,7 @@ export default function EditPage() {
                     <div className="pt-5 border-t border-stitch-outline/10 space-y-4">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">Base Font Size</Label>
+                          <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("fontSize", currentLang)}</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">{theme.fontSize ?? 9}px</span>
                         </div>
                         <Slider
@@ -1174,31 +1171,19 @@ export default function EditPage() {
                 <Tabs defaultValue="stickers" className="w-full flex flex-col gap-4">
                   <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl">
                     <TabsTrigger value="stickers" className="font-bold py-2 rounded-lg transition-all text-xs">
-                      Stickers
+                      {translateUI("stickers", currentLang)}
                     </TabsTrigger>
                     <TabsTrigger value="backgrounds" className="font-bold py-2 rounded-lg transition-all text-xs">
-                      BG Images
+                      {translateUI("bgImages", currentLang)}
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="stickers" className="animate-in fade-in duration-200 mt-2">
-                    <StickerSelector
-                      onSelect={() => {
-                        if (window.innerWidth < 1024) {
-                          setIsRightOpen(false);
-                        }
-                      }}
-                    />
+                    <StickerSelector />
                   </TabsContent>
 
                   <TabsContent value="backgrounds" className="animate-in fade-in duration-200 mt-2">
-                    <BackgroundSelector
-                      onSelect={() => {
-                        if (window.innerWidth < 1024) {
-                          setIsRightOpen(false);
-                        }
-                      }}
-                    />
+                    <BackgroundSelector />
                   </TabsContent>
                 </Tabs>
               )}
@@ -1261,7 +1246,7 @@ export default function EditPage() {
       <SandboxModal />
 
       <Dialog open={isPaymentProcessing}>
-        <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+        <DialogContent aria-describedby={undefined} className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
           {paymentStep === "download_failed" ? (
             <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
               <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mb-2">

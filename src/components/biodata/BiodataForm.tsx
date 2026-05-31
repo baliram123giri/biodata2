@@ -83,7 +83,10 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
     (["personalDetails", "educationDetails", "familyDetails", "contactDetails"] as const).forEach(section => {
       const sectionFields = getValues(section);
       sectionFields?.forEach((field, index) => {
-        if (field.isDefault && t[field.id]) {
+        const fieldKey = field.id || (field.label?.toLowerCase() === "company name" ? "companyName" : "");
+        if (fieldKey && t[fieldKey]) {
+          setValue(`${section}.${index}.label`, t[fieldKey]);
+        } else if (field.isDefault && t[field.id]) {
           setValue(`${section}.${index}.label`, t[field.id]);
         }
       });
@@ -240,7 +243,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
       </Accordion>
 
       <Dialog open={isMantraDialogOpen} onOpenChange={setIsMantraDialogOpen}>
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden bg-card border-stitch-outline/20">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden bg-card border-stitch-outline/20">
           <DialogHeader className="p-4 md:p-6 pb-2 md:pb-4 border-b border-border/50 sticky top-0 bg-card z-10">
             <DialogTitle className="text-lg md:text-xl font-bold flex items-center gap-2 text-primary">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -545,7 +548,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
           setCustomInput("");
         }
       }}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{t.addNew || "Add New"} {dialogState?.label}</DialogTitle>
           </DialogHeader>

@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FileText, FileType, ImageIcon, Sparkles, Crown, Check, Tag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBiodataStore } from "@/store/useBiodataStore";
+import { translateUI } from "@/lib/translations";
 
 function getCurrencySymbol(currency?: string | null) {
   if (currency === "USD") return "$";
@@ -46,6 +48,7 @@ export function PriceModal({
   comboPrice = null,
   comboDiscountPrice = null,
 }: PriceModalProps) {
+  const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const currencySymbol = getCurrencySymbol(currency);
 
   const [couponCode, setCouponCode] = useState("");
@@ -168,7 +171,7 @@ export function PriceModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl [&>button]:text-white [&>button]:focus:ring-primary [&>button]:opacity-90 ring-1 ring-border/50">
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl [&>button]:text-white [&>button]:focus:ring-primary [&>button]:opacity-90 ring-1 ring-border/50">
         {/* Compact Header Banner with Shine */}
         <div className="bg-gradient-primary py-5 px-6 text-white relative select-none flex items-center gap-4 border-b border-primary/20 shrink-0 overflow-hidden shadow-sm">
           {/* Shine Sweep animation across header */}
@@ -179,93 +182,81 @@ export function PriceModal({
           </div>
           <div className="text-left flex-1 min-w-0 relative z-10">
             <DialogTitle className="text-lg sm:text-xl font-black tracking-wide text-white leading-tight drop-shadow-sm">
-              Select Package & Download
+              {translateUI("selectPackageDownload", currentLang)}
             </DialogTitle>
             <DialogDescription className="text-[11px] sm:text-xs text-white/90 mt-1 font-semibold leading-tight">
-              Unlock edits & download premium formats
+              {translateUI("unlockEditsPremiumDesc", currentLang)}
             </DialogDescription>
           </div>
         </div>
 
         {/* Scrollable Container */}
         <div className="p-5 sm:p-6 pb-8 sm:pb-12 flex-1 overflow-y-auto flex flex-col gap-4">
-          
-          {/* Coupon Input Area */}
-          <div className="border border-emerald-500/25 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] rounded-2xl p-4 flex flex-col gap-3 shadow-sm shrink-0">
-            <div className="flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wide">Have a Promo Coupon?</span>
-            </div>
-            
-            {appliedCoupon ? (
-              <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
-                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 stroke-[3px]" />
-                  <div className="flex flex-col text-left">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-450">{appliedCoupon.code} applied!</span>
-                    <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-500/80">
-                      {appliedCoupon.discountType === "percentage" 
-                        ? `${appliedCoupon.discountValue}% discount applied`
-                        : `Flat ${currencySymbol}${appliedCoupon.discountValue} discount applied`}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleRemoveCoupon}
-                  className="p-1 rounded-full hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 transition-colors border-0 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+              {/* Coupon Input Area */}
+          {(isLoadingCoupons || availableCoupons.length > 0 || appliedCoupon) && (
+            <div className="border border-emerald-500/25 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] rounded-2xl p-4 flex flex-col gap-3 shadow-sm shrink-0">
+              <div className="flex items-center gap-2">
+                <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wide">{translateUI("havePromoCoupon", currentLang)}</span>
               </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Enter code (e.g. WELCOME50)"
-                    className="flex-1 px-3 py-2 text-xs bg-card border border-emerald-500/20 focus:border-emerald-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 placeholder:text-muted-foreground/40 font-bold text-foreground transition-all uppercase"
-                  />
-                  <button
-                    onClick={handleApplyCoupon}
-                    disabled={isValidating || !couponCode.trim()}
-                    className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-muted disabled:to-muted text-white disabled:text-muted-foreground text-xs font-black uppercase tracking-wide rounded-xl shadow-md border border-emerald-500/20 cursor-pointer disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-95 transition-all select-none flex items-center justify-center min-w-[65px]"
-                  >
-                    {isValidating ? "..." : "Apply"}
-                  </button>
-                </div>
-                {couponError && (
-                  <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 text-left pl-1">
-                    ⚠️ {couponError}
-                  </span>
-                )}
-                
-                {/* Available Coupons list */}
-                {availableCoupons.length > 0 && (
-                  <div className="flex flex-col gap-1.5 mt-1.5 pt-2 border-t border-emerald-500/10">
-                    <span className="text-[8px] font-black uppercase text-emerald-800/60 dark:text-emerald-400/60 tracking-wider">Available Offers (Click to Apply):</span>
-                    <div className="flex flex-wrap gap-1.5 max-h-[85px] overflow-y-auto pr-1">
-                      {availableCoupons.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => handleQuickApply(c.code)}
-                          className="text-[9px] font-black text-emerald-700 dark:text-emerald-350 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-[1.02] px-2.5 py-1 rounded-lg cursor-pointer transition-all flex items-center gap-1 select-none"
-                        >
-                          <Tag className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>{c.code}</span>
-                          <span className="text-[8px] opacity-75 font-semibold">
-                            ({c.discountType === "percentage" ? `${c.discountValue}% OFF` : `Flat ${currencySymbol}${c.discountValue} OFF`})
-                          </span>
-                        </button>
-                      ))}
+              
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
+                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 stroke-[3px]" />
+                    <div className="flex flex-col text-left">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-450">{appliedCoupon.code} {translateUI("appliedSuccess", currentLang)}</span>
+                      <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-500/80">
+                        {appliedCoupon.discountType === "percentage" 
+                          ? `${appliedCoupon.discountValue}% ${translateUI("discountApplied", currentLang)}`
+                          : `${translateUI("flatDiscountApplied", currentLang)}`}
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  <button
+                    onClick={handleRemoveCoupon}
+                    className="p-1 rounded-full hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 transition-colors border-0 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {couponError && (
+                    <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 text-left pl-1">
+                      ⚠️ {couponError}
+                    </span>
+                  )}
+                  
+                  {/* Available Coupons list */}
+                  {isLoadingCoupons ? (
+                    <span className="text-[10px] text-muted-foreground animate-pulse text-left">{translateUI("loadingActiveOffers", currentLang)}</span>
+                  ) : availableCoupons.length > 0 ? (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-black uppercase text-emerald-800/80 dark:text-emerald-400/80 tracking-wider text-left">{translateUI("availableOffers", currentLang)}</span>
+                      <div className="flex flex-wrap gap-1.5 max-h-[85px] overflow-y-auto pr-1">
+                        {availableCoupons.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            disabled={isValidating}
+                            onClick={() => handleQuickApply(c.code)}
+                            className="text-[9px] font-black text-emerald-700 dark:text-emerald-350 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-[1.02] px-2.5 py-1 rounded-lg cursor-pointer transition-all flex items-center gap-1 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Tag className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>{c.code}</span>
+                            <span className="text-[8px] opacity-75 font-semibold">
+                              ({c.discountType === "percentage" ? `${c.discountValue}% ${translateUI("off", currentLang)}` : `${translateUI("flat", currentLang)} ${currencySymbol}${c.discountValue} ${translateUI("off", currentLang)}`})
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* HERO CARD: All-in-One Combo Pack (Premium Golden Gradient Background with Shine) */}
           <button
@@ -277,7 +268,7 @@ export function PriceModal({
 
             {/* Recommended Sparkles Badge */}
             <div className="absolute right-0 top-0 bg-primary text-[9px] font-black uppercase text-white px-2.5 py-0.5 rounded-bl-lg tracking-wider flex items-center gap-0.5 shadow-xs z-10">
-              <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> Popular Choice
+              <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> {translateUI("popularChoice", currentLang)}
             </div>
 
             <div className="flex items-center gap-3 w-full relative z-10">
@@ -285,8 +276,8 @@ export function PriceModal({
                 <Crown className="w-5 h-5 text-[#9B1B30] fill-[#9B1B30]/20 animate-wiggle" />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">All-in-One Combo Pack</span>
-                <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">PDF + JPEG + PNG</span>
+                <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">{translateUI("comboPackTitle", currentLang)}</span>
+                <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">{translateUI("pdfJpgPngCombo", currentLang)}</span>
               </div>
               <div className="text-right leading-none shrink-0 flex flex-col items-end">
                 {formatComboOriginalPrice && (
@@ -304,15 +295,15 @@ export function PriceModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mt-4 border-t border-[#9B1B30]/15 pt-3.5 w-full relative z-10">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">PDF (HD Vector Print Quality)</span>
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("pdfHdVectorPrint", currentLang)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">JPEG (Quick WhatsApp Share)</span>
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("jpegQuickWhatsApp", currentLang)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">PNG (Lossless High Details)</span>
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("pngLosslessHighDetails", currentLang)}</span>
               </div>
             </div>
           </button>
@@ -320,7 +311,7 @@ export function PriceModal({
           {/* Section Divider */}
           <div className="flex items-center my-1 select-none shrink-0">
             <div className="flex-1 h-[1px] bg-border" />
-            <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Or Single Format</span>
+            <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">{translateUI("orSingleFormat", currentLang)}</span>
             <div className="flex-1 h-[1px] bg-border" />
           </div>
 
@@ -333,10 +324,10 @@ export function PriceModal({
             >
               <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 group-hover:scale-110 transition-all shadow-inner border border-red-500/10 mb-3 relative">
                 <FileText className="w-6 h-6 text-red-600 dark:text-red-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-red-600 dark:text-red-500 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">Print</span>
+                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-red-600 dark:text-red-500 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("print", currentLang)}</span>
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-red-700 dark:text-red-400 leading-tight">PDF Document</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">High resolution vector, print ready</span>
+              <span className="text-[11px] sm:text-xs font-black text-red-700 dark:text-red-400 leading-tight">{translateUI("pdfDocument", currentLang)}</span>
+              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("highResVectorPrintReady", currentLang)}</span>
               
               <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
                 {formatPdfOriginal && formatPdfOriginal > formatPdfPrice ? (
@@ -363,10 +354,10 @@ export function PriceModal({
             >
               <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 group-hover:scale-110 transition-all shadow-inner border border-green-500/10 mb-3 relative">
                 <ImageIcon className="w-6 h-6 text-green-600 dark:text-green-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-green-600 dark:text-green-500 bg-green-500/15 border border-green-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">Share</span>
+                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-green-600 dark:text-green-500 bg-green-500/15 border border-green-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("share", currentLang)}</span>
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-green-700 dark:text-green-400 leading-tight">JPEG Image</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">Standard quality, best for WhatsApp</span>
+              <span className="text-[11px] sm:text-xs font-black text-green-700 dark:text-green-400 leading-tight">{translateUI("jpegImage", currentLang)}</span>
+              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("standardQualityWhatsApp", currentLang)}</span>
               
               <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
                 {formatJpgOriginal && formatJpgOriginal > formatJpgPrice ? (
@@ -393,10 +384,10 @@ export function PriceModal({
             >
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 group-hover:scale-110 transition-all shadow-inner border border-purple-500/10 mb-3 relative">
                 <ImageIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-500 bg-purple-500/15 border border-purple-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">Clear</span>
+                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-500 bg-purple-500/15 border border-purple-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("clear", currentLang)}</span>
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-purple-700 dark:text-purple-400 leading-tight">PNG Image</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">Lossless rendering with high details</span>
+              <span className="text-[11px] sm:text-xs font-black text-purple-700 dark:text-purple-400 leading-tight">{translateUI("pngImage", currentLang)}</span>
+              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("losslessRenderingHighDetails", currentLang)}</span>
               
               <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
                 {formatPngOriginal && formatPngOriginal > formatPngPrice ? (

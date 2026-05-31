@@ -50,6 +50,7 @@ interface BiodataState {
   fetchCustomStickers: () => Promise<void>;
   resetStore: () => void;
   resetFormDataOnly: () => void;
+  resetDesignOnly: () => void;
 }
 
 export const useBiodataStore = create<BiodataState>()(
@@ -182,6 +183,19 @@ export const useBiodataStore = create<BiodataState>()(
             },
             stickers: []
           }
+        })),
+        resetDesignOnly: () => set((state) => ({
+          formData: {
+            ...state.formData,
+            layout: {
+              header: { x: 0, y: 80 },
+              personalDetails: { x: 60, y: 280 },
+              education: { x: 320, y: 280 },
+              footer: { x: 0, y: 1023 },
+            },
+            stickers: []
+          },
+          selectedTemplate: "royal"
         })),
       })
     ),

@@ -11,6 +11,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useBiodataStore } from "@/store/useBiodataStore";
+import { translateUI } from "@/lib/translations";
 
 function getCurrencySymbol(currency?: string | null) {
   if (currency === "USD") return "$";
@@ -61,6 +63,7 @@ export function FeedbackModal({
   comboPrice = null,
   comboDiscountPrice = null,
 }: FeedbackModalProps) {
+  const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [filename, setFilename] = useState("");
@@ -138,12 +141,12 @@ export function FeedbackModal({
           </div>
           <div className="text-left flex-1 min-w-0 relative z-10">
             <DialogTitle className="text-lg sm:text-xl font-black tracking-wide text-white leading-tight drop-shadow-sm">
-              {isPremium ? "Unlock Premium Design" : "Help Us Improve"}
+              {isPremium ? translateUI("unlockPremiumDesign", currentLang) : translateUI("helpUsImprove", currentLang)}
             </DialogTitle>
             <DialogDescription className="text-[11px] sm:text-xs text-white/90 mt-1 font-semibold leading-tight">
               {isPremium 
-                ? "Get premium access with high-resolution download" 
-                : "Help us make the platform even better."}
+                ? translateUI("premiumAccessDesc", currentLang) 
+                : translateUI("helpUsImproveDesc", currentLang)}
             </DialogDescription>
           </div>
         </div>
@@ -157,8 +160,8 @@ export function FeedbackModal({
                   <Crown className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-xs font-black text-foreground uppercase tracking-wider">Premium Template</h4>
-                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5">One-time payment for unlimited edits</p>
+                  <h4 className="text-xs font-black text-foreground uppercase tracking-wider">{translateUI("premiumTemplate", currentLang)}</h4>
+                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{translateUI("oneTimePaymentEdits", currentLang)}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -182,7 +185,7 @@ export function FeedbackModal({
 
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Your Rating
+              {translateUI("yourRating", currentLang)}
             </span>
             <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => {
@@ -211,11 +214,11 @@ export function FeedbackModal({
               })}
             </div>
             <span className="text-[11px] font-bold text-primary mt-1 uppercase tracking-wide">
-              {rating === 5 && "Excellent! Love it 😍"}
-              {rating === 4 && "Great experience! 🙂"}
-              {rating === 3 && "Good / Average 😐"}
-              {rating === 2 && "Needs improvement 🙁"}
-              {rating === 1 && "Very poor experience 😡"}
+              {rating === 5 && translateUI("excellentRating", currentLang)}
+              {rating === 4 && translateUI("greatRating", currentLang)}
+              {rating === 3 && translateUI("goodRating", currentLang)}
+              {rating === 2 && translateUI("needsImprovementRating", currentLang)}
+              {rating === 1 && translateUI("poorRating", currentLang)}
             </span>
           </div>
  
@@ -225,14 +228,14 @@ export function FeedbackModal({
               htmlFor="file-name-input"
               className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
             >
-              Your Name
+              {translateUI("yourName", currentLang)}
             </label>
             <input
               id="file-name-input"
               type="text"
               value={filename}
               onChange={(e) => setFilename(e.target.value)}
-              placeholder="Enter your name..."
+              placeholder={translateUI("enterYourName", currentLang)}
               className="w-full p-3.5 text-xs bg-card/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/50 shadow-sm hover:shadow-md font-semibold text-foreground hover:bg-card"
             />
           </div>
@@ -242,13 +245,13 @@ export function FeedbackModal({
               htmlFor="feedback-comment"
               className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
             >
-              Any suggestions? (Optional)
+              {translateUI("suggestionsOptional", currentLang)}
             </label>
             <textarea
               id="feedback-comment"
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="What can we do to make it even better?..."
+              placeholder={translateUI("suggestionsPlaceholder", currentLang)}
               className="w-full min-h-[90px] p-3.5 text-xs bg-card/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all duration-300 placeholder:text-muted-foreground/50 shadow-sm hover:shadow-md text-foreground hover:bg-card"
             />
           </div>
@@ -258,7 +261,7 @@ export function FeedbackModal({
             <div className="flex flex-col gap-3">
               <div className="flex items-center my-1 select-none shrink-0">
                 <div className="flex-1 h-[1px] bg-border" />
-                <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Download Format</span>
+                <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">{translateUI("selectDownloadFormat", currentLang)}</span>
                 <div className="flex-1 h-[1px] bg-border" />
               </div>
 
@@ -277,15 +280,15 @@ export function FeedbackModal({
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
                 )}
                 <div className="absolute right-0 top-0 bg-primary text-[9px] font-black uppercase text-white px-2.5 py-0.5 rounded-bl-lg tracking-wider flex items-center gap-0.5 shadow-xs z-10">
-                  <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> Popular Choice
+                  <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> {translateUI("popularChoice", currentLang)}
                 </div>
                 <div className="flex items-center gap-3 w-full relative z-10">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#9B1B30]/5 flex items-center justify-center shrink-0 border border-[#9B1B30]/15 shadow-inner">
                     <Crown className="w-5 h-5 text-[#9B1B30] fill-[#9B1B30]/20 group-hover:animate-wiggle" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">All-in-One Combo Pack</span>
-                    <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">PDF + JPEG + PNG</span>
+                    <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">{translateUI("comboPackTitle", currentLang)}</span>
+                    <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">{translateUI("comboPackDesc", currentLang)}</span>
                   </div>
                   {selectedFormat === "combo" && (
                     <div className="w-5 h-5 rounded-full bg-[#9B1B30] text-white flex items-center justify-center shadow-md">
@@ -312,7 +315,7 @@ export function FeedbackModal({
                     <FileText className="w-4 h-4 text-red-600 dark:text-red-500" />
                   </div>
                   <span className="text-[10px] font-black text-red-700 dark:text-red-400 leading-tight">PDF</span>
-                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Best for print</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">{translateUI("bestForPrint", currentLang)}</span>
                 </button>
 
                 {/* JPEG Card */}
@@ -330,7 +333,7 @@ export function FeedbackModal({
                     <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-500" />
                   </div>
                   <span className="text-[10px] font-black text-green-700 dark:text-green-400 leading-tight">JPEG</span>
-                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Standard Share</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">{translateUI("standardShare", currentLang)}</span>
                 </button>
 
                 {/* PNG Card */}
@@ -348,7 +351,7 @@ export function FeedbackModal({
                     <ImageIcon className="w-4 h-4 text-purple-600 dark:text-purple-500" />
                   </div>
                   <span className="text-[10px] font-black text-purple-700 dark:text-purple-400 leading-tight">PNG</span>
-                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Lossless Detail</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">{translateUI("losslessDetail", currentLang)}</span>
                 </button>
               </div>
             </div>
@@ -361,8 +364,8 @@ export function FeedbackModal({
             >
               <Sparkles className="w-4 h-4" />
               {isPremium 
-                ? `Submit & Pay ${currencySymbol}${finalPrice}`
-                : `Submit & Download Free (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
+                ? `${translateUI("submitPay", currentLang)} ${currencySymbol}${finalPrice}`
+                : `${translateUI("submitDownloadFree", currentLang)} (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
             </Button>
  
             <Button
@@ -372,8 +375,8 @@ export function FeedbackModal({
               className="w-full py-5 rounded-2xl border border-border/80 hover:bg-muted/50 hover:border-border text-muted-foreground font-bold tracking-wide transition-all duration-300 cursor-pointer text-xs hover:-translate-y-0.5 active:scale-[0.98]"
             >
               {isPremium 
-                ? `Skip & Pay ${currencySymbol}${finalPrice}`
-                : `Skip & Download (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
+                ? `${translateUI("skipPay", currentLang)} ${currencySymbol}${finalPrice}`
+                : `${translateUI("skipDownload", currentLang)} (${selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()})`}
             </Button>
           </div>
         </form>

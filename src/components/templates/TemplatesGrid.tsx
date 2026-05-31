@@ -323,18 +323,17 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
           </div>
         )}
 
-
         {/* Quick View Dialog / Modal */}
         {selectedTpl && (
           <DialogContent
             showCloseButton={true}
-            className="sm:max-w-3xl max-w-3xl w-[95vw] p-0 rounded-2xl overflow-hidden border border-[#C9A84C]/35 bg-card shadow-2xl"
+            className="sm:max-w-3xl max-w-3xl w-[95vw] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-2xl overflow-hidden border border-[#C9A84C]/35 bg-card shadow-2xl flex flex-col"
           >
-            <div className="flex flex-col md:flex-row h-auto md:h-[560px]">
+            <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden md:h-[560px]">
 
               {/* LEFT: Large Template Preview Panel */}
               <div
-                className="md:w-[45%] w-full flex-shrink-0 relative flex items-center justify-center p-4 md:p-8 min-h-[220px] md:min-h-0 overflow-hidden"
+                className="md:w-[45%] w-full flex-shrink-0 relative flex items-center justify-center p-3 sm:p-4 md:p-8 min-h-[160px] sm:min-h-[220px] md:min-h-0 overflow-hidden"
                 style={{ background: `linear-gradient(145deg, ${selectedTpl.color}12 0%, ${selectedTpl.color}22 100%)` }}
               >
                 {/* Decorative soft ring */}
@@ -345,7 +344,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
 
                 {/* Template image / mini-preview */}
                 <div
-                  className="relative z-10 rounded-xl overflow-hidden shadow-[0_20px_60px_-8px_rgba(0,0,0,0.35)] border border-white/20 transition-transform duration-500 hover:scale-[1.02] w-[150px] h-[200px] md:w-[200px] md:h-[265px]"
+                  className="relative z-10 rounded-xl overflow-hidden shadow-[0_15px_40px_-8px_rgba(0,0,0,0.3)] border border-white/20 transition-transform duration-500 hover:scale-[1.02] w-[110px] h-[155px] sm:w-[150px] sm:h-[200px] md:w-[200px] md:h-[265px]"
                 >
                   {selectedTpl.thumbnailUrl ? (
                     <Image
@@ -355,7 +354,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                       }
                       alt={selectedTpl.name}
                       fill
-                      sizes="(max-width: 768px) 150px, 200px"
+                      sizes="(max-width: 768px) 110px, 200px"
                       className="object-contain"
                       loading="lazy"
                     />
@@ -372,14 +371,14 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
               </div>
 
               {/* RIGHT: Details Panel */}
-              <div className="flex-1 flex flex-col md:overflow-y-auto overflow-visible p-5 md:p-8 bg-card border-t md:border-t-0 md:border-l border-border/40">
+              <div className="flex-1 flex flex-col md:overflow-y-auto overflow-visible p-4 sm:p-5 md:p-8 bg-card border-t md:border-t-0 md:border-l border-border/40 min-h-0">
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-2.5 md:mb-4">
+                <div className="flex flex-wrap gap-1.5 mb-2 md:mb-4">
                   {selectedTpl.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/25"
+                      className="px-2 py-0.5 rounded-full text-[8.5px] md:text-[10px] font-black tracking-wider uppercase bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#9B1B30] dark:text-[#E6C97A] border border-[#C9A84C]/25"
                     >
                       {tag}
                     </span>
@@ -387,24 +386,24 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                 </div>
 
                 {/* Name */}
-                <DialogHeader className="p-0 text-left mb-2.5 md:mb-3">
-                  <DialogTitle className="text-2xl md:text-3xl font-black leading-tight text-foreground">
+                <DialogHeader className="p-0 text-left mb-1.5 md:mb-3">
+                  <DialogTitle className="text-xl md:text-3xl font-black leading-tight text-foreground">
                     {selectedTpl.name}
                   </DialogTitle>
                 </DialogHeader>
 
                 {/* Color accent dot */}
-                <div className="flex items-center gap-2 mb-3 md:mb-4">
+                <div className="flex items-center gap-2 mb-2 md:mb-4">
                   <span
-                    className="w-3 h-3 rounded-full border-2 border-white shadow"
+                    className="w-2.5 h-2.5 rounded-full border-2 border-white shadow"
                     style={{ backgroundColor: selectedTpl.color }}
                   />
-                  <span className="text-xs font-bold text-muted-foreground">{selectedTpl.accent}</span>
+                  <span className="text-[10.5px] md:text-xs font-bold text-muted-foreground">{selectedTpl.accent}</span>
                 </div>
 
                 {/* Description */}
                 <div
-                  className="w-full overflow-y-auto max-h-[300px] custom-scrollbar prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-black prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-ul:list-disc prose-ul:pl-5 space-y-3 mb-4 md:mb-6 pr-2"
+                  className="w-full md:overflow-y-auto max-h-[85px] sm:max-h-[140px] md:max-h-[220px] custom-scrollbar prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:font-black prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-[11.5px] md:prose-p:text-sm prose-li:text-muted-foreground prose-ul:list-disc prose-ul:pl-5 space-y-2 mb-3 md:mb-6 pr-2"
                   dangerouslySetInnerHTML={{
                     __html: (selectedTpl.description && /<[a-z][\s\S]*>/i.test(selectedTpl.description))
                       ? selectedTpl.description
@@ -413,28 +412,12 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                 />
 
                 {/* Spacer to push CTA to the bottom */}
-                <div className="flex-1 min-h-[16px] md:min-h-0" />
-
-                {/* Stats Row */}
-                <div className="flex items-center gap-4 mb-4 md:mb-5 p-3 rounded-xl bg-muted/40 border border-border/30">
-                  <div className="flex flex-col items-center flex-1 border-r border-border/30">
-                    <span className="text-lg font-black text-foreground">A4</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Format</span>
-                  </div>
-                  <div className="flex flex-col items-center flex-1 border-r border-border/30">
-                    <span className="text-lg font-black text-foreground">PDF</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Export</span>
-                  </div>
-                  <div className="flex flex-col items-center flex-1">
-                    <span className="text-lg font-black text-foreground">∞</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Colors</span>
-                  </div>
-                </div>
+                <div className="flex-1 min-h-[10px] md:min-h-0" />
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
-                    className="flex-1 rounded-full bg-gradient-primary border-0 font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 h-11"
+                    className="flex-1 rounded-full bg-gradient-primary border-0 font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 h-9.5 md:h-11 text-xs md:text-sm"
                     asChild
                   >
                     <Link href={`/edit?template=${selectedTpl.id}`}>
@@ -444,7 +427,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   </Button>
                   <Button
                     variant="outline"
-                    className="rounded-full border-[#C9A84C]/50 hover:bg-[#FBF5E6]/50 font-bold h-11 px-5 transition-all duration-200"
+                    className="rounded-full border-[#C9A84C]/50 hover:bg-[#FBF5E6]/50 font-bold h-9.5 md:h-11 px-5 transition-all duration-200 text-xs md:text-sm"
                     asChild
                   >
                     <Link href={`/edit?template=${selectedTpl.id}`}>

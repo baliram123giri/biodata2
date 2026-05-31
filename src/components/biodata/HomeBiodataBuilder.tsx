@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 
-import { translations } from "@/lib/translations";
+import { translations, translateUI } from "@/lib/translations";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 
@@ -65,7 +65,7 @@ const KonvaPreview = dynamic(
  * Includes form, live preview, template picker, and download/export actions.
  */
 export function HomeBiodataBuilder() {
-  const { formData: storedData, selectedTemplate: storedTemplate, customTemplates, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly } = useBiodataStore();
+  const { formData: storedData, selectedTemplate: storedTemplate, customTemplates, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly, resetDesignOnly } = useBiodataStore();
   const theme = useThemeStore();
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -128,7 +128,7 @@ export function HomeBiodataBuilder() {
     mode: "onBlur",
   });
 
-  // Handle hydration and initial load (resets form details so homepage stays clean, but preserves selected template/theme)
+  // Handle hydration and initial load: preserves form data values, but resets template, theme, and stickers when landing back on the homepage
   useEffect(() => {
     setIsHydrated(true);
 
@@ -136,21 +136,34 @@ export function HomeBiodataBuilder() {
     useBiodataStore.getState().fetchCustomTemplates?.();
     useBiodataStore.getState().fetchCustomStickers?.();
 
+    const performHomeReset = () => {
+      // 1. Reset template, layout and stickers in biodata store while preserving form values
+      useBiodataStore.getState().resetDesignOnly();
+      // 2. Reset custom theme settings (colors, background, fonts, padding, etc.)
+      useThemeStore.getState().resetTheme();
+      
+      // 3. Reset form methods to the preserved stored data
+      const currentStoredData = useBiodataStore.getState().formData;
+      methods.reset(currentStoredData);
+    };
+
     // Register a listener for when hydration completes
     const unsub = useBiodataStore.persist.onFinishHydration(() => {
-      resetFormDataOnly();
+      performHomeReset();
     });
 
     // If store is already hydrated, run reset immediately
     if (useBiodataStore.persist.hasHydrated()) {
-      resetFormDataOnly();
+      performHomeReset();
+    } else {
+      const currentStoredData = useBiodataStore.getState().formData;
+      methods.reset(currentStoredData || defaultBiodataValues);
     }
 
-    methods.reset(defaultBiodataValues);
     setHasInitialized(true);
 
     return () => unsub();
-  }, [resetFormDataOnly, methods]);
+  }, [methods]);
 
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
@@ -502,7 +515,7 @@ export function HomeBiodataBuilder() {
                     ) : (
                       <Sparkles className="w-3.5 h-3.5" />
                     )}
-                    <span>{isNavigating ? "Loading..." : "Edit in Designer"}</span>
+                    <span>{isNavigating ? translateUI("loading", currentLang) : translateUI("editInDesigner", currentLang)}</span>
                     {!isNavigating && <ArrowRight className="w-3.5 h-3.5" />}
                   </Button>
 
@@ -556,17 +569,17 @@ export function HomeBiodataBuilder() {
                 <SheetTrigger asChild>
                   <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14">
                     <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary" />
-                    <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">Templates</span>
+                    <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
                   <SheetHeader className="mb-6">
                     <SheetTitle className="flex items-center gap-2">
                       <LayoutDashboard className="w-5 h-5 text-primary" />
-                      Pick a Template
+                      {translateUI("pickTemplate", currentLang)}
                     </SheetTitle>
                   </SheetHeader>
-                  <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
+                  <TemplateSelector />
                 </SheetContent>
               </Sheet>
 
@@ -579,7 +592,7 @@ export function HomeBiodataBuilder() {
                 className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11"
               >
                 <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Preview</span>
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("preview", currentLang)}</span>
               </button>
 
               {/* Designer Option */}
@@ -593,7 +606,7 @@ export function HomeBiodataBuilder() {
                 ) : (
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
-                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Design</span>
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("design", currentLang)}</span>
               </button>
 
 
@@ -604,7 +617,7 @@ export function HomeBiodataBuilder() {
                 className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">Reset</span>
+                <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("reset", currentLang)}</span>
               </button>
 
             </div>
@@ -695,7 +708,7 @@ export function HomeBiodataBuilder() {
 
         {/* Full-screen secure checkout loading screen */}
         <Dialog open={isPaymentProcessing}>
-          <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
+          <DialogContent aria-describedby={undefined} className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
             {paymentStep === "download_failed" ? (
               <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
                 <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mb-2">

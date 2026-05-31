@@ -3,6 +3,8 @@
 import React from "react";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBiodataStore } from "@/store/useBiodataStore";
+import { translateUI } from "@/lib/translations";
 
 export type DownloadFormat = "pdf" | "jpg" | "png" | "combo";
 
@@ -52,6 +54,7 @@ export function DownloadDropdown({
   discountPrice = null,
   currency = "INR",
 }: DownloadDropdownProps) {
+  const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const currencySymbol = getCurrencySymbol(currency);
   const finalPrice = discountPrice ?? price ?? 49;
 
@@ -81,18 +84,18 @@ export function DownloadDropdown({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span>{labels?.generating || "..."}</span>
+              <span>{translateUI("generating", currentLang)}</span>
             </>
           ) : (
             <>
               {isPremium ? (
                 <span className="flex items-center gap-1.5">
-                  <span>👑 Premium</span>
+                  <span>👑 {translateUI("download", currentLang)}</span>
                 </span>
               ) : (
                 <>
                   <Download className="w-3.5 h-3.5" />
-                  <span>{labels?.download || "Download"}</span>
+                  <span>{translateUI("download", currentLang)}</span>
                 </>
               )}
             </>
@@ -120,19 +123,19 @@ export function DownloadDropdown({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span className="hidden sm:inline">{labels?.generating || "Generating..."}</span>
-            <span className="inline sm:hidden">{labels?.generating || "..."}</span>
+            <span className="hidden sm:inline">{translateUI("generating", currentLang)}</span>
+            <span className="inline sm:hidden">{translateUI("generating", currentLang)}</span>
           </>
         ) : (
           <>
             {isPremium ? (
               <span className="flex items-center gap-1 font-bold">
-                <span className="hidden sm:inline">👑 Premium Download</span>
-                <span className="inline sm:hidden">👑 Download</span>
+                <span className="hidden sm:inline">👑 {translateUI("premiumDownload", currentLang)}</span>
+                <span className="inline sm:hidden">👑 {translateUI("download", currentLang)}</span>
               </span>
             ) : (
               <>
-                <span>{labels?.download || "Download"}</span>
+                <span>{translateUI("download", currentLang)}</span>
                 <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
               </>
             )}
