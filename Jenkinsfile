@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     PROD_BASE = "/var/www/biodata99"
     KEEP_RELEASES = "3"
@@ -97,6 +96,6 @@ post {
         echo 'Deployment failed. Review the logs above.'
     }
 }
-```
+
 
 }
