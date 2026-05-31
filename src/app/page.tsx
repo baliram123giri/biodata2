@@ -127,6 +127,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════════════════
           BIODATA BUILDER - Full create experience embedded on homepage
           ═══════════════════════════════════════════════════════════════════ */}
+      <div id="builder" className="scroll-mt-4" />
       <HomeBiodataBuilder />
 
       {/* Features Section */}

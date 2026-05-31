@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Star, Sparkles, X, Crown } from "lucide-react";
+import { Star, Sparkles, X, Crown, FileText, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -255,35 +255,101 @@ export function FeedbackModal({
  
           {/* Format Selection (Only for Free templates) */}
           {!isPremium && (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Select Download Format
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {[
-                  { id: "pdf", label: "PDF", desc: "Best for print", color: "hover:bg-red-500/5 hover:border-red-500/40", textColor: "text-red-700 dark:text-red-400", descColor: "text-red-600/70 dark:text-red-400/70", activeClass: "border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_4px_15px_rgba(239,68,68,0.35)] ring-red-500" },
-                  { id: "jpg", label: "JPEG", desc: "Standard Image", color: "hover:bg-green-500/5 hover:border-green-500/40", textColor: "text-green-700 dark:text-green-400", descColor: "text-green-600/70 dark:text-green-400/70", activeClass: "border-green-500 bg-green-500 text-white hover:bg-green-600 hover:border-green-600 shadow-[0_4px_15px_rgba(34,197,94,0.35)] ring-green-500" },
-                  { id: "png", label: "PNG", desc: "Lossless Image", color: "hover:bg-purple-500/5 hover:border-purple-500/40", textColor: "text-purple-700 dark:text-purple-400", descColor: "text-purple-600/70 dark:text-purple-400/70", activeClass: "border-purple-500 bg-purple-500 text-white hover:bg-purple-600 hover:border-purple-600 shadow-[0_4px_15px_rgba(168,85,247,0.35)] ring-purple-500" },
-                  { id: "combo", label: "Combo Pack", desc: "All-in-One", color: "col-span-2 sm:col-span-1 hover:bg-[#9B1B30]/5 hover:border-[#9B1B30]", textColor: "text-[#9B1B30]", descColor: "text-[#9B1B30]/70", activeClass: "border-[#9B1B30] bg-[#9B1B30] text-white hover:bg-[#7A1323] hover:border-[#7A1323] shadow-[0_4px_15px_rgba(155,27,48,0.35)] ring-[#9B1B30]" }
-                ].map((fmt) => {
-                  const isSelected = selectedFormat === fmt.id;
-                  return (
-                    <button
-                      key={fmt.id}
-                      type="button"
-                      onClick={() => setSelectedFormat(fmt.id as any)}
-                      className={cn(
-                        "flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5",
-                        isSelected
-                          ? cn("ring-2 ring-offset-1 ring-offset-background", fmt.activeClass)
-                          : cn("border-border bg-card/50 hover:bg-card", fmt.color)
-                      )}
-                    >
-                      <span className={cn("text-xs font-black tracking-wide leading-none", isSelected ? "text-white" : fmt.textColor)}>{fmt.label}</span>
-                      <span className={cn("text-[9px] font-bold mt-1", isSelected ? "text-white/80" : fmt.descColor)}>{fmt.desc}</span>
-                    </button>
-                  );
-                })}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center my-1 select-none shrink-0">
+                <div className="flex-1 h-[1px] bg-border" />
+                <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Download Format</span>
+                <div className="flex-1 h-[1px] bg-border" />
+              </div>
+
+              {/* Combo Pack Hero Card (Free) */}
+              <button
+                type="button"
+                onClick={() => setSelectedFormat("combo")}
+                className={cn(
+                  "flex flex-col w-full p-4 sm:p-5 rounded-2xl text-left border-2 transition-all duration-300 group cursor-pointer shadow-sm relative overflow-hidden active:scale-[0.98] shrink-0",
+                  selectedFormat === "combo"
+                    ? "bg-gradient-saffron border-[#9B1B30] shadow-[0_8px_30px_rgba(155,27,48,0.25)] ring-2 ring-offset-2 ring-offset-background ring-[#9B1B30]"
+                    : "bg-card border-border hover:border-[#9B1B30]/50 hover:shadow-md"
+                )}
+              >
+                {selectedFormat === "combo" && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
+                )}
+                <div className="absolute right-0 top-0 bg-primary text-[9px] font-black uppercase text-white px-2.5 py-0.5 rounded-bl-lg tracking-wider flex items-center gap-0.5 shadow-xs z-10">
+                  <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> Popular Choice
+                </div>
+                <div className="flex items-center gap-3 w-full relative z-10">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#9B1B30]/5 flex items-center justify-center shrink-0 border border-[#9B1B30]/15 shadow-inner">
+                    <Crown className="w-5 h-5 text-[#9B1B30] fill-[#9B1B30]/20 group-hover:animate-wiggle" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">All-in-One Combo Pack</span>
+                    <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">PDF + JPEG + PNG</span>
+                  </div>
+                  {selectedFormat === "combo" && (
+                    <div className="w-5 h-5 rounded-full bg-[#9B1B30] text-white flex items-center justify-center shadow-md">
+                      <Star className="w-3 h-3 fill-white" />
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {/* Individual Formats Grid */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
+                {/* PDF Card */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedFormat("pdf")}
+                  className={cn(
+                    "flex flex-col items-center p-3 rounded-2xl bg-card border transition-all duration-300 group cursor-pointer text-center shadow-sm active:scale-[0.98]",
+                    selectedFormat === "pdf"
+                      ? "border-red-500 bg-red-500/[0.08] shadow-[0_4px_15px_rgba(239,68,68,0.2)] ring-2 ring-offset-2 ring-offset-background ring-red-500"
+                      : "border-border/80 hover:border-red-500/50 hover:bg-red-500/[0.04] hover:shadow-md hover:-translate-y-0.5"
+                  )}
+                >
+                  <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 group-hover:scale-110 transition-all shadow-inner border border-red-500/10 mb-2 relative">
+                    <FileText className="w-4 h-4 text-red-600 dark:text-red-500" />
+                  </div>
+                  <span className="text-[10px] font-black text-red-700 dark:text-red-400 leading-tight">PDF</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Best for print</span>
+                </button>
+
+                {/* JPEG Card */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedFormat("jpg")}
+                  className={cn(
+                    "flex flex-col items-center p-3 rounded-2xl bg-card border transition-all duration-300 group cursor-pointer text-center shadow-sm active:scale-[0.98]",
+                    selectedFormat === "jpg"
+                      ? "border-green-500 bg-green-500/[0.08] shadow-[0_4px_15px_rgba(34,197,94,0.2)] ring-2 ring-offset-2 ring-offset-background ring-green-500"
+                      : "border-border/80 hover:border-green-500/50 hover:bg-green-500/[0.04] hover:shadow-md hover:-translate-y-0.5"
+                  )}
+                >
+                  <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 group-hover:scale-110 transition-all shadow-inner border border-green-500/10 mb-2 relative">
+                    <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-500" />
+                  </div>
+                  <span className="text-[10px] font-black text-green-700 dark:text-green-400 leading-tight">JPEG</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Standard Share</span>
+                </button>
+
+                {/* PNG Card */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedFormat("png")}
+                  className={cn(
+                    "flex flex-col items-center p-3 rounded-2xl bg-card border transition-all duration-300 group cursor-pointer text-center shadow-sm active:scale-[0.98]",
+                    selectedFormat === "png"
+                      ? "border-purple-500 bg-purple-500/[0.08] shadow-[0_4px_15px_rgba(168,85,247,0.2)] ring-2 ring-offset-2 ring-offset-background ring-purple-500"
+                      : "border-border/80 hover:border-purple-500/50 hover:bg-purple-500/[0.04] hover:shadow-md hover:-translate-y-0.5"
+                  )}
+                >
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 group-hover:scale-110 transition-all shadow-inner border border-purple-500/10 mb-2 relative">
+                    <ImageIcon className="w-4 h-4 text-purple-600 dark:text-purple-500" />
+                  </div>
+                  <span className="text-[10px] font-black text-purple-700 dark:text-purple-400 leading-tight">PNG</span>
+                  <span className="text-[8px] text-muted-foreground font-semibold leading-tight mt-0.5">Lossless Detail</span>
+                </button>
               </div>
             </div>
           )}

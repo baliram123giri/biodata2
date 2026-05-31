@@ -45,48 +45,48 @@ const A4_H = 842;
 // SUB-COMPONENTS
 // ════════════════════════════════════════════════════════════════════
 
-const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor, borderSize = 2 }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; borderSize?: number }) {
+const PhotoImage = React.memo(function PhotoImage({ src, x, y, width, height, cornerRadius, borderColor, borderSize = 2, scale = 1 }: { src: string; x: number; y: number; width: number; height: number; cornerRadius: number; borderColor: string; borderSize?: number, scale?: number }) {
   const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
 
-  // Implement object-fit: cover logic manually for Konva
+  // Implement object-fit: contain logic manually for Konva
   const imgWidth = image.width;
   const imgHeight = image.height;
   const containerRatio = width / height;
   const imageRatio = imgWidth / imgHeight;
 
-  let crop = { x: 0, y: 0, width: imgWidth, height: imgHeight };
+  let drawWidth = width;
+  let drawHeight = height;
+  let drawX = x;
+  let drawY = y;
 
   if (containerRatio > imageRatio) {
-    // Container is wider than the image
-    const newHeight = imgWidth / containerRatio;
-    crop.y = (imgHeight - newHeight) / 2;
-    crop.height = newHeight;
+    // Container is wider than the image -> constrain by height
+    drawWidth = height * imageRatio;
+    drawX = x + (width - drawWidth) / 2;
   } else {
-    // Container is taller than the image
-    const newWidth = imgHeight * containerRatio;
-    crop.x = (imgWidth - newWidth) / 2;
-    crop.width = newWidth;
+    // Container is taller than the image -> constrain by width
+    drawHeight = width / imageRatio;
+    drawY = y + (height - drawHeight) / 2;
   }
 
   return (
     <Group>
       <KonvaImage 
         image={image} 
-        x={x} 
-        y={y} 
-        width={width} 
-        height={height} 
-        crop={crop}
+        x={drawX} 
+        y={drawY} 
+        width={drawWidth} 
+        height={drawHeight} 
         cornerRadius={cornerRadius} 
       />
       {borderColor && borderSize > 0 && (
         <Rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          cornerRadius={cornerRadius}
+          x={drawX - borderSize / 2}
+          y={drawY - borderSize / 2}
+          width={drawWidth + borderSize}
+          height={drawHeight + borderSize}
+          cornerRadius={cornerRadius + borderSize / 2}
           stroke={borderColor}
           strokeWidth={borderSize}
           listening={false}
@@ -263,16 +263,12 @@ const PageBackground = React.memo(function PageBackground({
   return <Rect width={A4_W} height={A4_H} fill={solidColor} />;
 });
 
-const ImageFrame = React.memo(function ImageFrame({ config, primaryColor, hasPhoto, photoConfig }: { config: FrameImageConfig; primaryColor: string; hasPhoto: boolean; photoConfig?: TemplateConfig["photo"] & { borderSize?: number }; }) {
+const ImageFrame = React.memo(function ImageFrame({ config, primaryColor }: { config: FrameImageConfig; primaryColor: string; }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const [image] = useImage(frameUrl, "anonymous");
-  const bSize = photoConfig?.borderSize ?? 2;
   return (
     <Group>
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
-      {hasPhoto && photoConfig && photoConfig.showBorder !== false && bSize > 0 && (
-        <Rect x={photoConfig.x - bSize} y={photoConfig.y - bSize} width={photoConfig.width + bSize * 2} height={photoConfig.height + bSize * 2} fill={primaryColor} cornerRadius={photoConfig.cornerRadius} />
-      )}
     </Group>
   );
 });
@@ -793,14 +789,25 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     const base = templateConfig.photo;
     const origPad = templateConfig.defaultPadding || 45;
     const diffX = paddingRight - origPad;
+    const scale = theme.photoScale !== undefined ? theme.photoScale / 100 : 1;
+    const scaledWidth = base.width * scale;
+    const scaledHeight = base.height * scale;
+    
+    const cx = (base.x - diffX) + base.width / 2;
+    const cy = base.y + base.height / 2;
+
     return {
       ...base,
-      x: base.x - diffX,
+      x: cx - scaledWidth / 2,
+      y: cy - scaledHeight / 2,
+      width: scaledWidth,
+      height: scaledHeight,
       cornerRadius: theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : base.cornerRadius,
       showBorder: theme.photoBorderSize !== undefined ? theme.photoBorderSize > 0 : base.showBorder,
-      borderSize: theme.photoBorderSize !== undefined ? theme.photoBorderSize : 2
+      borderSize: theme.photoBorderSize !== undefined ? theme.photoBorderSize : 2,
+      scale: 1
     };
-  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize, paddingRight]);
+  }, [templateConfig.photo, theme.photoCornerRadius, theme.photoBorderSize, paddingRight, theme.photoScale]);
 
   const detailsLayout = templateConfig.detailsLayout || "classic";
   const titleShape = templateConfig.titleShape || "simple";
@@ -1018,7 +1025,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             primaryColor={primaryColor}
           />
           {templateConfig.frame.type === "image" ? (
-            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} hasPhoto={hasPhoto} photoConfig={photoConfig} />
+            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} />
           ) : templateConfig.frame.type === "gradient" ? (
             <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
           ) : templateConfig.frame.type === "custom" ? (
@@ -1404,6 +1411,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                 height={photoConfig.height}
                 cornerRadius={photoConfig.cornerRadius}
                 borderColor={photoConfig.showBorder !== false ? primaryColor : ""}
+                borderSize={photoConfig.borderSize}
+                scale={photoConfig.scale}
               />
             )}
 

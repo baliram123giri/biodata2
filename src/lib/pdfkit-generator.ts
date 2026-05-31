@@ -69,7 +69,7 @@ function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; pr
   return React.createElement(View, {});
 }
 
-const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
+const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight = 0 }: any) => {
   const config = getTemplateConfig(templateId);
 
   const sectionOffsets = (() => {
@@ -297,8 +297,34 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
 
+  const hasPhoto = !!data.photo;
   const pCornerRadius = theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : (config.photo?.cornerRadius ?? 8);
   const pBorderSize = theme.photoBorderSize !== undefined ? theme.photoBorderSize : (config.photo?.showBorder !== false ? 2 : 0);
+  const pScale = theme.photoScale !== undefined ? theme.photoScale / 100 : 1;
+  
+  const scaledPhotoW = config.photo ? config.photo.width * pScale : 0;
+  const scaledPhotoH = config.photo ? config.photo.height * pScale : 0;
+  const scaledPhotoX = config.photo ? (photoX + config.photo.width / 2 - scaledPhotoW / 2) : 0;
+  const scaledPhotoY = config.photo ? (config.photo.y + config.photo.height / 2 - scaledPhotoH / 2) : 0;
+
+  // Calculate object-fit: contain dimensions for PDF
+  let drawPhotoW = scaledPhotoW;
+  let drawPhotoH = scaledPhotoH;
+  let drawPhotoX = scaledPhotoX;
+  let drawPhotoY = scaledPhotoY;
+
+  if (hasPhoto && photoWidth > 0 && photoHeight > 0) {
+    const containerRatio = scaledPhotoW / scaledPhotoH;
+    const imageRatio = photoWidth / photoHeight;
+
+    if (containerRatio > imageRatio) {
+      drawPhotoW = scaledPhotoH * imageRatio;
+      drawPhotoX = scaledPhotoX + (scaledPhotoW - drawPhotoW) / 2;
+    } else {
+      drawPhotoH = scaledPhotoW / imageRatio;
+      drawPhotoY = scaledPhotoY + (scaledPhotoH - drawPhotoH) / 2;
+    }
+  }
 
   const styles = StyleSheet.create({
     page: { backgroundColor: bgColor, padding: 0, margin: 0 },
@@ -306,18 +332,18 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
     frame: { position: 'absolute', top: 0, left: 0, width: A4_W, height: A4_H },
     photo: { 
       position: 'absolute', 
-      left: photoX, 
-      top: config.photo.y, 
-      width: config.photo.width, 
-      height: config.photo.height, 
+      left: drawPhotoX, 
+      top: drawPhotoY, 
+      width: drawPhotoW, 
+      height: drawPhotoH, 
       borderRadius: pCornerRadius,
     },
     photoBorder: {
       position: 'absolute',
-      left: photoX - pBorderSize,
-      top: config.photo.y - pBorderSize,
-      width: config.photo.width + pBorderSize * 2,
-      height: config.photo.height + pBorderSize * 2,
+      left: drawPhotoX - pBorderSize,
+      top: drawPhotoY - pBorderSize,
+      width: drawPhotoW + pBorderSize * 2,
+      height: drawPhotoH + pBorderSize * 2,
       borderRadius: pCornerRadius + (pBorderSize > 0 ? 2 : 0),
       borderWidth: pBorderSize,
       borderColor: primary,
@@ -719,7 +745,10 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
             })
           );
         })(),
-        data.photo ? React.createElement(Image, { src: data.photo, style: styles.photo as any }) : null,
+        data.photo ? React.createElement(Image, { 
+          src: data.photo, 
+          style: { ...styles.photo, objectFit: 'contain' } as any 
+        }) : null,
         data.photo && pBorderSize > 0 ? React.createElement(View, { style: styles.photoBorder as any }) : null,
         ...layout.sectionLayouts.flatMap((sec, si) => {
           const secKey = `sec-${si}`;
@@ -1156,11 +1185,44 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
       }
     }
 
+    let photoWidth = 0;
+    let photoHeight = 0;
+    if (formData.photo) {
+      try {
+        let photoBuffer: Buffer | null = null;
+        if (formData.photo.startsWith("data:image/")) {
+          const commaIdx = formData.photo.indexOf(",");
+          photoBuffer = Buffer.from(formData.photo.substring(commaIdx + 1), "base64");
+        } else if (formData.photo.startsWith("http")) {
+          const res = await fetch(formData.photo);
+          if (res.ok) {
+            photoBuffer = Buffer.from(await res.arrayBuffer());
+          }
+        } else if (formData.photo.startsWith("/")) {
+          const fs = require("fs");
+          const localPath = path.join(process.cwd(), "public", formData.photo);
+          if (fs.existsSync(localPath)) {
+            photoBuffer = fs.readFileSync(localPath);
+          }
+        }
+        if (photoBuffer) {
+          const sharp = require("sharp");
+          const metadata = await sharp(photoBuffer).metadata();
+          photoWidth = metadata.width || 0;
+          photoHeight = metadata.height || 0;
+        }
+      } catch (err) {
+        console.error("Error reading photo metadata for PDF:", err);
+      }
+    }
+
     const stream = await renderToBuffer(
       React.createElement(ExactBiodataPDF, { 
         data: formData, 
         templateId: tId, 
-        theme 
+        theme,
+        photoWidth,
+        photoHeight
       }) as any
     );
     return Buffer.from(stream);

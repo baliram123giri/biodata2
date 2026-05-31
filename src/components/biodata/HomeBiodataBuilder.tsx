@@ -442,7 +442,7 @@ export function HomeBiodataBuilder() {
 
             {/* Form Side */}
             <div className="md:col-span-6 flex flex-col w-full md:premium-gold-border md:p-8 md:shadow-xl p-0 shadow-none bg-transparent">
-              <BiodataForm />
+              <BiodataForm hideSliders />
             </div>
 
             {/* Mobile Preview - shown AFTER the form on small screens (mobile only) */}

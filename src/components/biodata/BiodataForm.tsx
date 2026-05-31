@@ -24,12 +24,7 @@ import { Slider } from "@/components/ui/slider";
 import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
 
-export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
-  const photoCornerRadius = useThemeStore(s => s.photoCornerRadius);
-  const photoBorderSize = useThemeStore(s => s.photoBorderSize);
-  const setPhotoCornerRadius = useThemeStore(s => s.setPhotoCornerRadius);
-  const setPhotoBorderSize = useThemeStore(s => s.setPhotoBorderSize);
-
+export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: boolean; hideSliders?: boolean } = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const watchPhoto = useWatch({ control, name: "photo" });
@@ -77,7 +72,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
     // Translate main titles if they match standard
     const currentMantra = getValues("mantra");
     const currentTitle = getValues("title");
-    
+
     // Check if they are standard (or just overwrite them if default)
     // For simplicity, we just safely overwrite if it's currently a default mantra of ANY language
     // But it's safer to just set it always to the language's default
@@ -100,8 +95,8 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
   const FormComponent = asDiv ? "div" : "form";
 
   return (
-    <FormComponent 
-      className="space-y-6 pb-0" 
+    <FormComponent
+      className="space-y-6 pb-0"
       onSubmit={asDiv ? (e: any) => { e.preventDefault(); e.stopPropagation(); } : undefined}
     >
       {/* Language Selector */}
@@ -127,7 +122,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
       </p>
 
       <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
-        
+
         {/* CUSTOMIZATION */}
         <AccordionItem id="photo-customization-section" value="customization" className="bg-card px-4 rounded-lg border-0 mb-4 shadow-sm hover:shadow-md transition-shadow premium-gold-border">
           <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
@@ -140,46 +135,26 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
           </AccordionTrigger>
           <AccordionContent className="space-y-6 pt-4">
             <div className="space-y-4">
-               <Label className="text-base font-semibold">Profile Photo</Label>
-               <Controller
-                 name="photo"
-                 control={control}
-                 render={({ field }) => (
-                   <ImageUpload 
-                     value={field.value} 
-                     onChange={field.onChange} 
-                     aspect={3 / 4} 
-                   />
-                 )}
-               />
+              <Label className="text-base font-semibold">Profile Photo</Label>
+              <Controller
+                name="photo"
+                control={control}
+                render={({ field }) => (
+                  <ImageUpload
+                    value={field.value}
+                    onChange={field.onChange}
+                    aspect={3 / 4}
+                  />
+                )}
+              />
 
-               {/* Photo Styling Options */}
-               {watchPhoto && (
-                 <div className="grid grid-cols-2 gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                   <div className="space-y-3">
-                     <Label className="text-xs font-bold text-muted-foreground uppercase">Corner Radius</Label>
-                     <Slider 
-                       value={[photoCornerRadius ?? defaultCornerRadius]}
-                       min={0}
-                       max={100}
-                       step={1}
-                       onValueChange={([val]) => setPhotoCornerRadius(val)}
-                       className="w-full"
-                     />
-                   </div>
-                   <div className="space-y-3">
-                     <Label className="text-xs font-bold text-muted-foreground uppercase">Border Size</Label>
-                     <Slider 
-                       value={[photoBorderSize ?? defaultBorderSize]}
-                       min={0}
-                       max={10}
-                       step={1}
-                       onValueChange={([val]) => setPhotoBorderSize(val)}
-                       className="w-full"
-                     />
-                   </div>
-                 </div>
-               )}
+              {/* Photo Styling Options */}
+              {!hideSliders && (
+                <PhotoCustomizationSliders
+                  watchPhoto={watchPhoto}
+                  defaultCornerRadius={defaultCornerRadius}
+                  defaultBorderSize={defaultBorderSize}
+                />)}
             </div>
 
             <div className="space-y-4">
@@ -188,7 +163,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                   <span>Mantra / Heading</span>
                   <span className="text-xs font-normal text-muted-foreground">Appears at top of page</span>
                 </Label>
-                
+
                 <div className="flex items-stretch gap-3">
                   {/* Premium Sign Selector Thumbnail Button */}
                   <button
@@ -196,18 +171,18 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                     onClick={() => setIsMantraDialogOpen(true)}
                     className={cn(
                       "relative group w-14 h-14 shrink-0 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden p-1 shadow-sm",
-                      currentMantraSticker 
-                        ? "border-primary bg-primary/5 hover:bg-primary/10" 
+                      currentMantraSticker
+                        ? "border-primary bg-primary/5 hover:bg-primary/10"
                         : "border-dashed border-border/80 bg-muted/20 hover:bg-muted/30 hover:border-primary/40"
                     )}
                     title={currentMantraSticker ? "Change Sign" : "Add Sign"}
                   >
                     {currentMantraSticker ? (
                       <>
-                        <img 
-                          src={currentMantraSticker.type} 
-                          alt="Selected Sign" 
-                          className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110" 
+                        <img
+                          src={currentMantraSticker.type}
+                          alt="Selected Sign"
+                          className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                           <Pencil className="w-3.5 h-3.5 text-white" />
@@ -272,7 +247,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
               Select Mantra Sign
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin">
             <div className="space-y-3">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Religion</Label>
@@ -297,7 +272,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                 Available Signs
                 {isLoadingMantras && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
               </Label>
-              
+
               {!isLoadingMantras && mantraStickers?.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-xl bg-muted/10">
                   No signs available for {mantraReligion} yet.
@@ -319,8 +294,8 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
                         }}
                         className={cn(
                           "aspect-square flex items-center justify-center rounded-xl border-2 bg-white transition-all group overflow-hidden p-2 relative cursor-pointer",
-                          isSelected 
-                            ? "border-primary bg-primary/5 shadow-md" 
+                          isSelected
+                            ? "border-primary bg-primary/5 shadow-md"
                             : "border-border/50 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md"
                         )}
                       >
@@ -337,7 +312,7 @@ export function BiodataForm({ asDiv = false }: { asDiv?: boolean } = {}) {
               )}
             </div>
           </div>
-          
+
           <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsMantraDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
@@ -400,155 +375,156 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
             }
             const liveLabel = watchedLabels[index] || field.label;
             return (
-            <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
-              <div className="flex items-center justify-between mb-1">
-                <EditableLabel name={`${name}.${index}.label`} value={liveLabel} />
-                
-                <div className="flex items-center gap-0.5">
-                  <button type="button" disabled={index === 0} onClick={() => swap(index, index - 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Up">
-                    <ArrowUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button type="button" disabled={index === fields.length - 1} onClick={() => swap(index, index + 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Down">
-                    <ArrowDown className="w-3.5 h-3.5" />
-                  </button>
-                  <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+              <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
+                <div className="flex items-center justify-between mb-1">
+                  <EditableLabel name={`${name}.${index}.label`} value={liveLabel} />
 
-              {field.type === "select" ? (
-                <Controller
-                  name={`${name}.${index}.value` as const}
-                  control={control}
-                  render={({ field: selectField }) => {
-                    const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options;
-                    return (
-                    <Select onValueChange={(val) => {
-                      if (val === "Other") {
-                        setDialogState({ isOpen: true, index, options: liveOptions || [], label: liveLabel });
-                        selectField.onChange("Other");
-                      } else {
-                        selectField.onChange(val);
-                      }
-                    }} value={selectField.value}>
-                      <SelectTrigger aria-label={`Select ${liveLabel}`}>
-                        <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
-                          {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {liveOptions?.map((opt: string) => (
-                           <SelectItem key={opt} value={opt}>{translateDynamicOption(opt, t)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}}
-                />
-              ) : field.type === "company" ? (
-                <>
-                  <input type="hidden" {...register(`${name}.${index}.logo` as any)} />
+                  <div className="flex items-center gap-0.5">
+                    <button type="button" disabled={index === 0} onClick={() => swap(index, index - 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Up">
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" disabled={index === fields.length - 1} onClick={() => swap(index, index + 1)} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer" title="Move Down">
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" onClick={() => remove(index)} className="text-destructive/70 hover:text-destructive transition-colors p-1 shrink-0 cursor-pointer" title="Remove Field">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {field.type === "select" ? (
                   <Controller
                     name={`${name}.${index}.value` as const}
                     control={control}
-                    render={({ field: compField }) => {
+                    render={({ field: selectField }) => {
+                      const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options;
                       return (
-                        <CompanyAutocomplete 
-                          value={compField.value} 
-                          logo={getValues(`${name}.${index}.logo` as any)}
-                          onChange={(val, logo) => {
-                             compField.onChange(val);
-                             setValue(`${name}.${index}.logo` as any, logo || "");
-                             
-                             // Backwards compatibility sync for separate hidden logo field
-                             const logoIndex = fields.findIndex(f => f.id === "companyLogo");
-                             if (logoIndex !== -1) {
-                                 setValue(`${name}.${logoIndex}.value`, logo || "");
-                             } else {
-                                 setValue(`${name}.${fields.length}`, {
-                                   id: "companyLogo",
-                                   label: "Company Logo",
-                                   value: logo || "",
-                                   type: "hidden",
-                                   isDefault: false
-                                 } as any);
-                             }
-                          }} 
-                          placeholder={`${t.enter || "Enter"} ${liveLabel}...`} 
-                        />
-                      );
-                    }}
-                  />
-                </>
-              ) : field.type === "time12" ? (
-                <Controller
-                  name={`${name}.${index}.value` as const}
-                  control={control}
-                  render={({ field: timeField }) => {
-                    const timeValue = timeField.value || "10:00 (Morning)";
-                    const parts = timeValue.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
-                    const hhPart: string = (parts?.[1] ?? "10");
-                    const mmPart: string = (parts?.[2] ?? "00");
-                    const periodPart: string = (parts?.[3] ?? "Morning");
-
-                    const updateValue = (h: string, m: string, p: string) => {
-                      timeField.onChange(`${h}:${m} (${p})`);
-                    };
-
-                    const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-                    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-
-                    return (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
-                            <SelectTrigger className="flex-1" aria-label="Select Hour">
-                              <SelectValue placeholder="HH" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
-                            <SelectTrigger className="flex-1" aria-label="Select Minute">
-                              <SelectValue placeholder="MM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
-                          <SelectTrigger className="w-full" aria-label="Select AM/PM Period">
-                            <SelectValue placeholder={t.select || "Select Period"}>
-                              {periodPart ? (t[periodPart] || periodPart) : undefined}
+                        <Select onValueChange={(val) => {
+                          if (val === "Other") {
+                            setDialogState({ isOpen: true, index, options: liveOptions || [], label: liveLabel });
+                            selectField.onChange("Other");
+                          } else {
+                            selectField.onChange(val);
+                          }
+                        }} value={selectField.value}>
+                          <SelectTrigger aria-label={`Select ${liveLabel}`}>
+                            <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
+                              {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Early Morning">{t["Early Morning"] || "Early Morning"}</SelectItem>
-                            <SelectItem value="Morning">{t.Morning || "Morning"}</SelectItem>
-                            <SelectItem value="Afternoon">{t.Afternoon || "Afternoon"}</SelectItem>
-                            <SelectItem value="Evening">{t.Evening || "Evening"}</SelectItem>
-                            <SelectItem value="Night">{t.Night || "Night"}</SelectItem>
+                            {liveOptions?.map((opt: string) => (
+                              <SelectItem key={opt} value={opt}>{translateDynamicOption(opt, t)}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                    );
-                  }}
-                />
-              ) : field.type === "textarea" ? (
-                <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
-              ) : (
-                <Input type={field.type} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
-              )}
-            </motion.div>
+                      )
+                    }}
+                  />
+                ) : field.type === "company" ? (
+                  <>
+                    <input type="hidden" {...register(`${name}.${index}.logo` as any)} />
+                    <Controller
+                      name={`${name}.${index}.value` as const}
+                      control={control}
+                      render={({ field: compField }) => {
+                        return (
+                          <CompanyAutocomplete
+                            value={compField.value}
+                            logo={getValues(`${name}.${index}.logo` as any)}
+                            onChange={(val, logo) => {
+                              compField.onChange(val);
+                              setValue(`${name}.${index}.logo` as any, logo || "");
+
+                              // Backwards compatibility sync for separate hidden logo field
+                              const logoIndex = fields.findIndex(f => f.id === "companyLogo");
+                              if (logoIndex !== -1) {
+                                setValue(`${name}.${logoIndex}.value`, logo || "");
+                              } else {
+                                setValue(`${name}.${fields.length}`, {
+                                  id: "companyLogo",
+                                  label: "Company Logo",
+                                  value: logo || "",
+                                  type: "hidden",
+                                  isDefault: false
+                                } as any);
+                              }
+                            }}
+                            placeholder={`${t.enter || "Enter"} ${liveLabel}...`}
+                          />
+                        );
+                      }}
+                    />
+                  </>
+                ) : field.type === "time12" ? (
+                  <Controller
+                    name={`${name}.${index}.value` as const}
+                    control={control}
+                    render={({ field: timeField }) => {
+                      const timeValue = timeField.value || "10:00 (Morning)";
+                      const parts = timeValue.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
+                      const hhPart: string = (parts?.[1] ?? "10");
+                      const mmPart: string = (parts?.[2] ?? "00");
+                      const periodPart: string = (parts?.[3] ?? "Morning");
+
+                      const updateValue = (h: string, m: string, p: string) => {
+                        timeField.onChange(`${h}:${m} (${p})`);
+                      };
+
+                      const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+                      const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+                      return (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
+                              <SelectTrigger className="flex-1" aria-label="Select Hour">
+                                <SelectValue placeholder="HH" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
+                              <SelectTrigger className="flex-1" aria-label="Select Minute">
+                                <SelectValue placeholder="MM" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
+                            <SelectTrigger className="w-full" aria-label="Select AM/PM Period">
+                              <SelectValue placeholder={t.select || "Select Period"}>
+                                {periodPart ? (t[periodPart] || periodPart) : undefined}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Early Morning">{t["Early Morning"] || "Early Morning"}</SelectItem>
+                              <SelectItem value="Morning">{t.Morning || "Morning"}</SelectItem>
+                              <SelectItem value="Afternoon">{t.Afternoon || "Afternoon"}</SelectItem>
+                              <SelectItem value="Evening">{t.Evening || "Evening"}</SelectItem>
+                              <SelectItem value="Night">{t.Night || "Night"}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      );
+                    }}
+                  />
+                ) : field.type === "textarea" ? (
+                  <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
+                ) : (
+                  <Input type={field.type} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
+                )}
+              </motion.div>
             );
           })}
         </div>
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="sm" 
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
           className="mt-4 w-full border-dashed text-muted-foreground hover:text-primary"
           onClick={() => append({ id: Date.now().toString(), label: customFieldLabel, value: "", type: "text" })}
         >
@@ -570,10 +546,10 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
           <DialogHeader>
             <DialogTitle>{t.addNew || "Add New"} {dialogState?.label}</DialogTitle>
           </DialogHeader>
-          <Input 
-            value={customInput} 
-            onChange={e => setCustomInput(e.target.value)} 
-            placeholder={`${t.enter || "Enter"} ${dialogState?.label || ""}...`} 
+          <Input
+            value={customInput}
+            onChange={e => setCustomInput(e.target.value)}
+            placeholder={`${t.enter || "Enter"} ${dialogState?.label || ""}...`}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -652,8 +628,8 @@ const EditableLabel = memo(function EditableLabel({ name, value }: { name: strin
   }
 
   return (
-    <div 
-      className="flex items-center gap-1 cursor-pointer group/label" 
+    <div
+      className="flex items-center gap-1 cursor-pointer group/label"
       onClick={() => setIsEditing(true)}
       title="Click to edit label"
     >
@@ -718,3 +694,55 @@ function PremiumSelect({ value, onChange, options, placeholder }: PremiumSelectP
     </div>
   );
 }
+
+const PhotoCustomizationSliders = memo(function PhotoCustomizationSliders({ watchPhoto, defaultCornerRadius, defaultBorderSize }: { watchPhoto: any, defaultCornerRadius: number, defaultBorderSize: number }) {
+  const photoCornerRadius = useThemeStore(s => s.photoCornerRadius);
+  const photoBorderSize = useThemeStore(s => s.photoBorderSize);
+  const setPhotoCornerRadius = useThemeStore(s => s.setPhotoCornerRadius);
+  const setPhotoBorderSize = useThemeStore(s => s.setPhotoBorderSize);
+  const photoScale = useThemeStore(s => s.photoScale);
+  const setPhotoScale = useThemeStore(s => s.setPhotoScale);
+
+  if (!watchPhoto) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="space-y-3">
+        <Label className="text-xs font-bold text-muted-foreground uppercase">Corner Radius</Label>
+        <Slider
+          value={[photoCornerRadius ?? defaultCornerRadius]}
+          min={0}
+          max={100}
+          step={1}
+          onValueChange={([val]) => setPhotoCornerRadius(val)}
+          className="w-full"
+        />
+      </div>
+      <div className="space-y-3">
+        <Label className="text-xs font-bold text-muted-foreground uppercase">Border Size {photoBorderSize}</Label>
+        <Slider
+          value={[photoBorderSize ?? defaultBorderSize]}
+          min={0}
+          max={5}
+          step={0.5}
+          onValueChange={([val]) => setPhotoBorderSize(val)}
+          className="w-full"
+        />
+      </div>
+      <div className="space-y-3 col-span-2 pt-2 border-t border-border/50">
+        <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center justify-between">
+          <span>Photo Scale</span>
+          <span className="text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded text-[10px]">{photoScale ?? 100}%</span>
+        </Label>
+        <Slider
+          value={[photoScale ?? 100]}
+          min={50}
+          max={200}
+          step={1}
+          onValueChange={([val]) => setPhotoScale(val)}
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
+});

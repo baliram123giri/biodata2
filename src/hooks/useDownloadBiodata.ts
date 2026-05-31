@@ -185,6 +185,10 @@ export async function prepareDataForGeneration(
     fontSize: theme.fontSize,
     padding: theme.padding,
     paddingY: theme.paddingY,
+    paddingTop: theme.paddingTop,
+    paddingBottom: theme.paddingBottom,
+    paddingLeft: theme.paddingLeft,
+    paddingRight: theme.paddingRight,
     selectedPaletteName: theme.selectedPaletteName,
     bgColors: theme.bgColors,
     bgImageUrl: theme.bgImageUrl,
@@ -193,6 +197,9 @@ export async function prepareDataForGeneration(
     bgImageScale: theme.bgImageScale,
     bgImageXOffset: theme.bgImageXOffset,
     bgImageYOffset: theme.bgImageYOffset,
+    photoCornerRadius: theme.photoCornerRadius,
+    photoBorderSize: theme.photoBorderSize,
+    photoScale: theme.photoScale,
   };
 
   return { formData: preparedFormData, theme: preparedTheme };

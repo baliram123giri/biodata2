@@ -39,10 +39,26 @@ export function PageProgressBar() {
       const href = anchor.getAttribute("href");
       if (!href) return;
 
+      // Handle pure hash links globally for smooth scrolling without URL change
+      const isHashLink = href.startsWith("#") || href.startsWith("/#");
+      if (isHashLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const hashPart = href.substring(href.indexOf("#") + 1);
+        if (hashPart.length > 0) {
+          const element = document.getElementById(hashPart);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+        return;
+      }
+
       // Filter out links that shouldn't trigger transition
       if (
         href.startsWith("http") || 
-        href.startsWith("#") || 
         href.startsWith("mailto:") ||
         href.startsWith("tel:") ||
         anchor.target === "_blank" ||
@@ -78,11 +94,11 @@ export function PageProgressBar() {
       startLoading();
     };
 
-    document.addEventListener("click", handleAnchorClick);
+    window.addEventListener("click", handleAnchorClick, { capture: true });
     window.addEventListener("popstate", handlePopState);
 
     return () => {
-      document.removeEventListener("click", handleAnchorClick);
+      window.removeEventListener("click", handleAnchorClick, { capture: true });
       window.removeEventListener("popstate", handlePopState);
     };
   }, [pathname, searchParams]);
