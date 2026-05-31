@@ -1,108 +1,116 @@
 pipeline {
-  agent any
+agent any
 
-  environment {
+```
+environment {
     PROD_BASE     = "/var/www/biodata99"
     KEEP_RELEASES = "3"
     APP_NAME      = "biodata99"
-  }
+}
 
-  stages {
+stages {
 
     stage('Checkout') {
-      steps {
-        checkout scm
-      }
+        steps {
+            checkout scm
+        }
     }
 
-    /* =======================
-       PROD DEPLOY (main only)
-       ======================= */
     stage('Deploy PROD') {
-      steps {
-        // Prevent shell command echoing - no secrets leak into logs
-        sh '''
-          set -e
-          set +x
+        steps {
+            sh '''
+                set -e
 
-          echo "🚀 Starting Zero-Downtime Deployment..."
+                echo "🚀 Starting Deployment"
 
-          TS=$(date +%Y%m%d_%H%M%S)
-          RELEASE="$PROD_BASE/releases/$TS"
+                TS=$(date +%Y%m%d_%H%M%S)
+                RELEASE="$PROD_BASE/releases/$TS"
 
-          echo "📂 Creating new release folder: $RELEASE"
-          mkdir -p "$RELEASE"
+                echo "📂 Creating release directory"
+                mkdir -p "$RELEASE"
 
-          # Sync source only - explicitly exclude secrets and build artifacts
-          rsync -a \
-             --exclude=node_modules \
-             --exclude=.next \
-             --exclude=.git \
-             --exclude=.env \
-             --exclude=.env.local \
-             --exclude=.env.production \
-             --exclude=.env.development \
-             --exclude="*.pem" \
-             --exclude="*.key" \
-            ./ "$RELEASE/"
+                echo "📋 Copying source code"
 
-          # Lock down release directory permissions immediately
-          chmod -R o-rwx "$RELEASE"
+                rsync -av \
+                    --exclude=node_modules \
+                    --exclude=.next \
+                    --exclude=.git \
+                    --exclude=.env \
+                    --exclude=.env.local \
+                    --exclude=.env.production \
+                    --exclude=.env.development \
+                    --exclude="*.pem" \
+                    --exclude="*.key" \
+                    ./ "$RELEASE/"
 
-          cd "$RELEASE"
+                cd "$RELEASE"
 
-          # Symlink the shared .env file into the isolated release folder
-          echo "🔗 Linking .env file"
-          ln -sfn "$PROD_BASE/.env" ./.env
+                echo "🔗 Linking shared env"
+                ln -sfn "$PROD_BASE/.env" .env
 
-          echo "Cleaning old cache"
-          rm -rf .next || true
-          
-          # Install deps
-          echo "📦 Installing dependencies"
-          npm ci
+                echo "🧹 Cleaning build cache"
+                rm -rf .next || true
+                rm -rf node_modules || true
 
-          # Generate Prisma Client
-          echo "🗄️ Generating Prisma Client"
-          npx prisma generate
+                echo "📦 Installing dependencies"
+                npm install
 
-          # Build silently - no env values echoed
-          echo "🏗 Building Next.js"
-          NODE_ENV=production npm run build --silent
+                echo "🗄️ Generating Prisma Client"
+                npx prisma generate
 
-          # Atomic symlink swap (no downtime window)
-          echo "🔗 Swapping 'current' symlink"
-          ln -sfn "$RELEASE" "$PROD_BASE/current"
+                echo "🏗️ Building application"
+                NODE_ENV=production npm run build
 
-          # Sync PM2 in-memory daemon to local CLI version
-          echo "🔄 Syncing PM2 Daemon"
-          pm2 update || true
+                echo "🔐 Fixing permissions"
+                chown -R jenkins:jenkins "$RELEASE" || true
+                chmod -R 755 "$RELEASE" || true
 
-          # Zero-downtime PM2 restart/reload with updated environment and symlinks
-          echo "🔄 Gracefully restarting PM2"
-          cd "$PROD_BASE/current"
-          pm2 restart ecosystem.config.js --only "$APP_NAME" --update-env --silent \
-            || pm2 start ecosystem.config.js --only "$APP_NAME" --silent
+                echo "🔄 Switching current release"
+                ln -sfn "$RELEASE" "$PROD_BASE/current"
 
-          pm2 save --force 2>/dev/null
+                echo "♻️ Restarting PM2"
 
-          # Prune old releases
-          echo "🧹 Cleaning up old releases"
-          cd "$PROD_BASE/releases"
-          ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | xargs -r rm -rf
-          
-          echo "✅ Release $TS is live!"
-        '''
-      }
+                cd "$PROD_BASE/current"
+
+                pm2 describe "$APP_NAME" > /dev/null 2>&1
+
+                if [ $? -eq 0 ]; then
+                    pm2 reload ecosystem.config.js \
+                        --only "$APP_NAME" \
+                        --update-env
+                else
+                    pm2 start ecosystem.config.js \
+                        --only "$APP_NAME"
+                fi
+
+                pm2 save --force
+
+                echo "🧹 Removing old releases"
+
+                cd "$PROD_BASE/releases"
+
+                ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | while read OLD
+                do
+                    echo "Removing $OLD"
+                    chmod -R u+w "$OLD" || true
+                    rm -rf "$OLD" || true
+                done
+
+                echo "✅ Deployment Successful"
+            '''
+        }
     }
-  }
+}
 
-  post {
+post {
     success {
-      echo "Deployment completed successfully."
+        echo '✅ Deployment completed successfully.'
     }
+
     failure {
-      echo "Deployment failed. Review the pipeline steps above."
+        echo '❌ Deployment failed.'
     }
-  }
+}
+```
+
 }
