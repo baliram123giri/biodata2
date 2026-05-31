@@ -4,10 +4,16 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { TEMPLATE_CONFIGS, getFrameImageUrl } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
-import { Check, Crown } from "lucide-react";
+import { Check, Crown, Globe } from "lucide-react";
 import Image from "next/image";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   royal: "Royal Gold",
@@ -49,32 +55,35 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
 
   return (
     <div className="space-y-3">
-      {/* Horizontal scrollable language filters using Radix UI Tabs */}
+      {/* Language filter dropdown using Radix UI Select */}
       {languagesList.length > 1 && (
-        <Tabs value={langFilter} onValueChange={setLangFilter} className="w-full">
-          <TabsList className="flex items-center justify-start gap-1 w-full overflow-x-auto no-scrollbar bg-stone-100/40 p-1 rounded-xl border border-stone-200/50 dark:bg-stone-900/40 dark:border-stone-800/50">
-            {languagesList.map((lang) => {
-              const isActive = langFilter === lang;
-              return (
-                <TabsTrigger
-                  key={lang}
-                  value={lang}
-                  className={cn(
-                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap outline-none border border-transparent",
-                    isActive
-                      ? "bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 !text-white shadow-[0_4px_12px_rgba(244,63,94,0.25)]"
-                      : "text-stone-500 hover:bg-stone-200/30 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800/30 dark:hover:text-stone-200"
-                  )}
-                >
-                  {lang === "all" ? "All Languages" : lang}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        </Tabs>
+        <div className="sticky top-0 z-30 -mx-1 px-1 pb-2 pt-1 bg-white/80 dark:bg-stone-950/80 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <Globe className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <Select value={langFilter} onValueChange={setLangFilter}>
+              <SelectTrigger
+                id="template-language-filter"
+                className="h-8 text-xs font-bold rounded-lg border border-stone-200/70 bg-stone-50/80 dark:bg-stone-900/60 dark:border-stone-800/60 focus:ring-1 focus:ring-rose-400/50 w-full"
+              >
+                <SelectValue placeholder="Filter by language" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border border-stone-200/70 dark:border-stone-800/60 shadow-xl">
+                {languagesList.map((lang) => (
+                  <SelectItem
+                    key={lang}
+                    value={lang}
+                    className="text-xs font-bold cursor-pointer"
+                  >
+                    {lang === "all" ? "All Languages" : lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-2 gap-3">
       {filteredTemplates.map((tpl) => {
         const isSelected = selectedTemplate === tpl.id;
 

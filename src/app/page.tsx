@@ -14,8 +14,8 @@ const HomeBiodataBuilder = dynamic(
 );
 
 export const metadata: Metadata = {
-  title: "Free Marriage Biodata Format with Photo - PDF & Word",
-  description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, editable in Word or PDF. Ready to share on WhatsApp instantly.",
+  title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
+  description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
 };
 
 export default function Home() {
@@ -45,7 +45,7 @@ export default function Home() {
             </h1>
 
             <p className="text-stone-600 dark:text-stone-300 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
-              Pick a stylish format, fill your details, add your photo and download as a print-ready PDF or editable Word file. No account needed. Your data stays on your device.
+              Pick a stylish format, fill your details, add your photo and download as a print-ready PDF, JPEG or PNG. No account needed. Your data stays on your device.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
@@ -67,7 +67,7 @@ export default function Home() {
                 <span className="text-stone-400 dark:text-stone-500 uppercase tracking-wider text-[9px] mr-1 shrink-0">Features:</span>
                 {[
                   "With photo",
-                  "PDF & Word",
+                  "PDF, JPEG & PNG",
                   "WhatsApp-ready",
                   "No data stored",
                   "Boy & Girl formats"
@@ -137,7 +137,7 @@ export default function Home() {
               Why Families Use Our <span className="text-gradient-primary">Free Marriage Biodata Maker</span>
             </h2>
             <p className="text-base md:text-lg text-muted-foreground font-semibold max-w-2xl mx-auto">
-              No design skills needed. Fill your details, pick a stylish biodata format, and download as PDF or Word - all in under 5 minutes.
+              No design skills needed. Fill your details, pick a stylish biodata format, and download as PDF, JPEG or PNG - all in under 5 minutes.
             </p>
           </div>
 
@@ -159,8 +159,8 @@ export default function Home() {
             />
             <FeatureCard
               icon={<Download className="w-8 h-8 text-primary" />}
-              title="Free PDF &amp; Word Download"
-              description="Download as print-ready PDF or editable Word file. Share on WhatsApp or print on A4."
+              title="Free PDF, JPEG &amp; PNG Download"
+              description="Download as print-ready PDF, high-res JPEG or PNG. Share on WhatsApp or print on A4."
             />
             <FeatureCard
               icon={<span className="text-2xl font-bold text-white font-sans">Aअ</span>}
@@ -199,7 +199,7 @@ export default function Home() {
             <StepCard number="01" title="Fill In Your Details" description="Enter your personal info, family background, education, and contact details - step by step." icon="📝" />
             <StepCard number="02" title="Pick a Biodata Format" description="Browse stylish marriage biodata templates - traditional, modern, or community-specific for boy or girl." icon="🎨" />
             <StepCard number="03" title="Add Photo & Customise" description="Upload your photo, choose a colour theme, and add your religious mantra or heading." icon="✨" />
-            <StepCard number="04" title="Download & Share Free" description="Download as PDF or editable Word. Share directly on WhatsApp, email, or matrimony sites." icon="📥" />
+            <StepCard number="04" title="Download & Share Free" description="Download as PDF, JPEG or PNG. Share directly on WhatsApp, email, or matrimony sites." icon="📥" />
           </div>
 
           {/* CTA */}

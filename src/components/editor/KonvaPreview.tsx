@@ -749,7 +749,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const paddingLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
   const paddingRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
   const paddingTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : paddingLeft));
-  const paddingBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : paddingLeft));
+  const paddingBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : paddingLeft);
   const padding = paddingLeft;
   const paddingY = paddingTop;
   const fontFamily = getKonvaFontFamily(theme.fontFamily);

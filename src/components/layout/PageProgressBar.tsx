@@ -54,22 +54,27 @@ export function PageProgressBar() {
         return;
       }
 
-      // Check if navigating to the same URL path and query
+      // Check if navigating to the same URL path and query (hash-only = scroll, skip it)
       try {
         const targetUrl = new URL(href, window.location.href);
         const currentUrl = new URL(window.location.href);
+        // Same pathname + search means it's a hash/scroll navigation — skip
         if (targetUrl.pathname === currentUrl.pathname && targetUrl.search === currentUrl.search) {
           return;
         }
       } catch (err) {
         // Handle relative URLs
-        if (href === pathname) return;
+        if (href === pathname || href.startsWith(pathname + "#")) return;
       }
 
       startLoading();
     };
 
     const handlePopState = () => {
+      const currentSearch = searchParams.toString() ? `?${searchParams.toString()}` : "";
+      if (window.location.pathname === pathname && window.location.search === currentSearch) {
+        return; // just a hash change
+      }
       startLoading();
     };
 
@@ -80,7 +85,7 @@ export function PageProgressBar() {
       document.removeEventListener("click", handleAnchorClick);
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   // Simulate progress steps when status is loading
   useEffect(() => {

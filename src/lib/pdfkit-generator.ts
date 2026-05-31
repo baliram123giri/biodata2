@@ -96,7 +96,7 @@ const ExactBiodataPDF = ({ data, templateId, theme }: any) => {
   const padLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
   const padRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
   const padTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding !== undefined ? config.defaultYPadding : padLeft));
-  const padBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding !== undefined ? config.defaultYPadding : padLeft));
+  const padBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : padLeft);
   const padding = padLeft;
   const paddingY = padTop;
   const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 11;

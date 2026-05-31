@@ -48,6 +48,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChromePicker } from "react-color";
 const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
 const StickerSelector = dynamic(() => import("@/components/editor/StickerSelector").then(mod => mod.StickerSelector));
 const BackgroundSelector = dynamic(() => import("@/components/editor/BackgroundSelector").then(mod => mod.BackgroundSelector));
@@ -969,15 +971,20 @@ export default function EditPage() {
                         <div className="flex flex-col gap-3">
                           {/* Primary Color Picker */}
                           <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
-                              <input
-                                type="color"
-                                value={theme.primaryColor}
-                                onChange={(e) => theme.setPrimaryColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
-                              />
-                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
-                            </label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.primaryColor }}>
+                                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 border-none rounded-xl overflow-hidden shadow-2xl z-[100]" sideOffset={10}>
+                                <ChromePicker
+                                  color={theme.primaryColor}
+                                  onChange={(color: any) => theme.setPrimaryColor(color.hex)}
+                                  disableAlpha={true}
+                                />
+                              </PopoverContent>
+                            </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
                                 <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Primary</span>
@@ -1001,15 +1008,20 @@ export default function EditPage() {
 
                           {/* Secondary Color Picker */}
                           <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
-                              <input
-                                type="color"
-                                value={theme.secondaryColor}
-                                onChange={(e) => theme.setSecondaryColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
-                              />
-                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
-                            </label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.secondaryColor }}>
+                                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 border-none rounded-xl overflow-hidden shadow-2xl z-[100]" sideOffset={10}>
+                                <ChromePicker
+                                  color={theme.secondaryColor}
+                                  onChange={(color: any) => theme.setSecondaryColor(color.hex)}
+                                  disableAlpha={true}
+                                />
+                              </PopoverContent>
+                            </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
                                 <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Secondary</span>
@@ -1033,15 +1045,20 @@ export default function EditPage() {
 
                           {/* Accent Color Picker */}
                           <div className="flex items-center gap-2 sm:gap-4 bg-white/50 p-2 rounded-2xl border border-stitch-outline/5 hover:bg-white transition-all shadow-sm">
-                            <label className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
-                              <input
-                                type="color"
-                                value={theme.accentColor}
-                                onChange={(e) => theme.setAccentColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full block"
-                              />
-                              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
-                            </label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] sm:border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95 overflow-hidden shrink-0 focus-within:ring-2 focus-within:ring-stitch-primary focus-within:ring-offset-2 focus-within:scale-105 outline-none" style={{ backgroundColor: theme.accentColor }}>
+                                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white drop-shadow" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 border-none rounded-xl overflow-hidden shadow-2xl z-[100]" sideOffset={10}>
+                                <ChromePicker
+                                  color={theme.accentColor}
+                                  onChange={(color: any) => theme.setAccentColor(color.hex)}
+                                  disableAlpha={true}
+                                />
+                              </PopoverContent>
+                            </Popover>
                             <div className="flex-1 flex gap-2 sm:gap-3 items-center justify-between pr-1">
                               <div className="flex flex-col gap-0.5 overflow-hidden">
                                 <span className="text-stitch-on-surface text-[10px] sm:text-[11px] font-bold leading-tight truncate">Accent</span>
