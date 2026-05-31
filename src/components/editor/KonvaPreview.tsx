@@ -46,15 +46,15 @@ const A4_H = 842;
 // ════════════════════════════════════════════════════════════════════
 
 // PhotoImage is a forwardRef component so the parent can attach a Konva Transformer to it
-const PhotoImage = React.forwardRef<Konva.Group, { 
-  src: string; 
-  x: number; 
-  y: number; 
-  width: number; 
-  height: number; 
-  cornerRadius: number; 
-  borderColor: string; 
-  borderSize?: number; 
+const PhotoImage = React.forwardRef<Konva.Group, {
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  cornerRadius: number;
+  borderColor: string;
+  borderSize?: number;
   scale?: number;
   rotation?: number;
   isDesigner?: boolean;
@@ -62,15 +62,15 @@ const PhotoImage = React.forwardRef<Konva.Group, {
   onSelect?: () => void;
   onDragEnd?: (newX: number, newY: number) => void;
   onTransformEnd?: (x: number, y: number, scaleX: number, scaleY: number, rotation: number) => void;
-}>(function PhotoImage({ 
-  src, 
-  x, 
-  y, 
-  width, 
-  height, 
-  cornerRadius, 
-  borderColor, 
-  borderSize = 2, 
+}>(function PhotoImage({
+  src,
+  x,
+  y,
+  width,
+  height,
+  cornerRadius,
+  borderColor,
+  borderSize = 2,
   scale = 1,
   rotation = 0,
   isDesigner = false,
@@ -81,7 +81,7 @@ const PhotoImage = React.forwardRef<Konva.Group, {
 }, ref) {
   const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
-
+  console.log(image.width, "image.width")
   // object-fit: contain — fill the container without cropping
   const imgWidth = image.width;
   const imgHeight = image.height;
@@ -167,13 +167,13 @@ const PhotoImage = React.forwardRef<Konva.Group, {
         }
       }}
     >
-      <KonvaImage 
-        image={image} 
-        x={0} 
-        y={0} 
-        width={drawWidth} 
-        height={drawHeight} 
-        cornerRadius={cornerRadius} 
+      <KonvaImage
+        image={image}
+        x={0}
+        y={0}
+        width={drawWidth}
+        height={drawHeight}
+        cornerRadius={cornerRadius}
       />
       {borderColor && borderSize > 0 && (
         <Rect
@@ -210,9 +210,9 @@ const CustomKonvaFrame = React.memo(function CustomKonvaFrame({ componentId, pri
 const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }: { visible?: boolean }) {
   const [watermarkImg] = useImage(WATERMARK_CONFIG.url, "anonymous");
   if (!watermarkImg || !WATERMARK_CONFIG.isEnabled) return null;
-  
+
   const coords = getWatermarkCoordinates(A4_W, A4_H);
-  
+
   return (
     <KonvaImage
       id="watermark"
@@ -230,17 +230,17 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
   );
 });
 
-const BgWatermarkImage = React.memo(function BgWatermarkImage({ 
+const BgWatermarkImage = React.memo(function BgWatermarkImage({
   bgConfig,
   isCustom = false
-}: { 
+}: {
   bgConfig?: TemplateConfig["bgConfig"];
   isCustom?: boolean;
 }) {
   const bgUrl = bgConfig?.url || "";
   const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
   if (!bgConfig || !bgUrl || !image) return null;
-  
+
   let x = bgConfig.x;
   let y = bgConfig.y;
   let width = bgConfig.width;
@@ -255,7 +255,7 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
     x = bgConfig.x + (maxW - width) / 2;
     y = bgConfig.y + (maxH - height) / 2;
   }
-  
+
   return (
     <KonvaImage
       image={image}
@@ -269,23 +269,23 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
   );
 });
 
-const PageBackground = React.memo(function PageBackground({ 
-  templateConfig, 
-  themeBgColors, 
+const PageBackground = React.memo(function PageBackground({
+  templateConfig,
+  themeBgColors,
   themeSelectedPalette,
   primaryColor
-}: { 
-  templateConfig: TemplateConfig; 
-  themeBgColors: string[]; 
+}: {
+  templateConfig: TemplateConfig;
+  themeBgColors: string[];
   themeSelectedPalette: string | null;
   primaryColor: string;
 }) {
   // 1. If a theme palette is selected and has a custom background gradient (length > 1), respect the palette background settings
   if (themeSelectedPalette !== null && themeBgColors && themeBgColors.length > 1) {
     return (
-      <Rect 
-        width={A4_W} 
-        height={A4_H} 
+      <Rect
+        width={A4_W}
+        height={A4_H}
         fillLinearGradientStartPoint={{ x: 0, y: 0 }}
         fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
         fillLinearGradientColorStops={
@@ -298,13 +298,13 @@ const PageBackground = React.memo(function PageBackground({
   // 2. Otherwise, check if the template itself has a gradient background (linear or radial)
   const bgType = templateConfig.bgType || "solid";
   const bgGradientColors = templateConfig.bgGradientColors || [];
-  
+
   if ((bgType === "linear" || bgType === "radial") && bgGradientColors.length > 1) {
     if (bgType === "linear") {
       return (
-        <Rect 
-          width={A4_W} 
-          height={A4_H} 
+        <Rect
+          width={A4_W}
+          height={A4_H}
           fillLinearGradientStartPoint={{ x: 0, y: 0 }}
           fillLinearGradientEndPoint={{ x: 0, y: A4_H }}
           fillLinearGradientColorStops={
@@ -314,9 +314,9 @@ const PageBackground = React.memo(function PageBackground({
       );
     } else {
       return (
-        <Rect 
-          width={A4_W} 
-          height={A4_H} 
+        <Rect
+          width={A4_W}
+          height={A4_H}
           fillRadialGradientStartPoint={{ x: A4_W / 2, y: A4_H / 2 }}
           fillRadialGradientStartRadius={0}
           fillRadialGradientEndPoint={{ x: A4_W / 2, y: A4_H / 2 }}
@@ -334,9 +334,9 @@ const PageBackground = React.memo(function PageBackground({
     const gradColors = (templateConfig.frame as FrameGradientConfig).gradientColors || [];
     if (gradColors.length > 1) {
       return (
-        <Rect 
-          width={A4_W} 
-          height={A4_H} 
+        <Rect
+          width={A4_W}
+          height={A4_H}
           fillLinearGradientStartPoint={{ x: 0, y: 0 }}
           fillLinearGradientEndPoint={{ x: A4_W, y: 0 }}
           fillLinearGradientColorStops={
@@ -368,16 +368,16 @@ const ImageFrame = React.memo(function ImageFrame({ config, primaryColor }: { co
   );
 });
 
-function StickerItem({ 
-  sticker, 
-  color, 
-  isDesigner, 
-  isSelected, 
-  onClick 
-}: { 
-  sticker: Sticker; 
-  color: string; 
-  isDesigner: boolean; 
+function StickerItem({
+  sticker,
+  color,
+  isDesigner,
+  isSelected,
+  onClick
+}: {
+  sticker: Sticker;
+  color: string;
+  isDesigner: boolean;
   isSelected: boolean;
   onClick: (e: any) => void;
 }) {
@@ -386,9 +386,9 @@ function StickerItem({
   if (!asset && sticker.type) {
     asset = { id: sticker.type, type: 'image', url: sticker.type, name: 'Custom', path: '', viewBox: '' };
   }
-  
+
   const groupRef = useRef<Konva.Group>(null);
-  
+
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -399,11 +399,11 @@ function StickerItem({
 
 
   return (
-    <Group 
+    <Group
       ref={groupRef}
       name={sticker.id}
-      x={sticker.x} 
-      y={sticker.y} 
+      x={sticker.x}
+      y={sticker.y}
       scaleX={sticker.scaleX}
       scaleY={sticker.scaleY}
       rotation={sticker.rotation || 0}
@@ -414,7 +414,7 @@ function StickerItem({
         if (isDesigner) {
           const stage = e.target.getStage();
           if (stage) stage.container().style.cursor = 'grabbing';
-          
+
           // Duplicate sticker if Alt key is pressed
           if (e.evt.altKey) {
             addSticker({
@@ -485,23 +485,23 @@ const SvgFrame = React.memo(function SvgFrame({ config, primaryColor }: { config
 const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }: { config: FrameGradientConfig; primaryColor: string; }) {
   return (
     <Group>
-      <Rect 
-        x={config.outerInset} 
-        y={config.outerInset} 
-        width={A4_W - config.outerInset * 2} 
-        height={A4_H - config.outerInset * 2} 
-        stroke={primaryColor} 
-        strokeWidth={config.outerStrokeWidth} 
-        cornerRadius={config.outerCornerRadius} 
+      <Rect
+        x={config.outerInset}
+        y={config.outerInset}
+        width={A4_W - config.outerInset * 2}
+        height={A4_H - config.outerInset * 2}
+        stroke={primaryColor}
+        strokeWidth={config.outerStrokeWidth}
+        cornerRadius={config.outerCornerRadius}
       />
-      <Rect 
-        x={config.innerInset} 
-        y={config.innerInset} 
-        width={A4_W - config.innerInset * 2} 
-        height={A4_H - config.innerInset * 2} 
-        stroke={primaryColor} 
-        strokeWidth={config.innerStrokeWidth} 
-        cornerRadius={config.innerCornerRadius} 
+      <Rect
+        x={config.innerInset}
+        y={config.innerInset}
+        width={A4_W - config.innerInset * 2}
+        height={A4_H - config.innerInset * 2}
+        stroke={primaryColor}
+        strokeWidth={config.innerStrokeWidth}
+        cornerRadius={config.innerCornerRadius}
         opacity={0.3}
       />
     </Group>
@@ -520,7 +520,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   const [stageSize, setStageSize] = useState({ width: A4_W, height: A4_H });
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(propScale || 1);
@@ -589,7 +589,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isDesigner) return;
-      
+
       // Delete selected
       if ((e.key === "Delete" || e.key === "Backspace") && selectedStickers.length > 0) {
         selectedStickers.forEach(id => removeSticker(id));
@@ -613,14 +613,10 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     const updateSize = () => {
       const { width, height } = el.getBoundingClientRect();
       setStageSize({ width, height });
-      if (propScale) {
-        // Embedded preview: anchor to top-left, no centering offset
-        setScale(propScale);
-        setStagePos({ x: 0, y: 0 });
-      } else if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
+      if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
         const initialScale = Math.min(width / A4_W, height / A4_H);
-        setScale(initialScale);
-        setStagePos({ x: (width - A4_W * initialScale) / 2, y: (height - A4_H * initialScale) / 2 });
+        if (!propScale) setScale(initialScale);
+        setStagePos({ x: (width - A4_W * (propScale || initialScale)) / 2, y: (height - A4_H * (propScale || initialScale)) / 2 });
       }
     };
     updateSize();
@@ -663,7 +659,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   useEffect(() => {
     let active = true;
     let container: HTMLDivElement | null = null;
-    
+
     // Custom touch listener handlers
     let onTouchStartNative: any;
     let onTouchMoveNative: any;
@@ -675,7 +671,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         if (active) setTimeout(setupTouchListeners, 50);
         return;
       }
-      
+
       container = stage.container() as HTMLDivElement;
       if (!container) {
         if (active) setTimeout(setupTouchListeners, 50);
@@ -690,7 +686,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           const p2 = { x: touches[1].clientX, y: touches[1].clientY };
           const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
           lastDistRef.current = dist;
-          
+
           const rect = container!.getBoundingClientRect();
           const centerX = ((p1.x + p2.x) / 2) - rect.left;
           const centerY = ((p1.y + p2.y) / 2) - rect.top;
@@ -705,30 +701,30 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           const p1 = { x: touches[0].clientX, y: touches[0].clientY };
           const p2 = { x: touches[1].clientX, y: touches[1].clientY };
           const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-          
+
           const oldScale = stage.scaleX();
           const rect = container!.getBoundingClientRect();
           const centerX = ((p1.x + p2.x) / 2) - rect.left;
           const centerY = ((p1.y + p2.y) / 2) - rect.top;
-          
+
           const ratio = dist / lastDistRef.current;
           const newScale = oldScale * ratio;
           const clampedScale = Math.min(Math.max(newScale, 0.4), 2.0);
-          
+
           const stageX = stage.x();
           const stageY = stage.y();
-          
+
           const mousePointTo = {
             x: (lastCenterRef.current.x - stageX) / oldScale,
             y: (lastCenterRef.current.y - stageY) / oldScale,
           };
-          
+
           setScale(clampedScale);
           setStagePos({
             x: centerX - mousePointTo.x * clampedScale,
             y: centerY - mousePointTo.y * clampedScale,
           });
-          
+
           lastDistRef.current = dist;
           lastCenterRef.current = { x: centerX, y: centerY };
         }
@@ -862,7 +858,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const primaryColor = theme.primaryColor;
   const secondaryColor = theme.secondaryColor;
   const accentColor = theme.accentColor;
-  const baseFontSize = theme.fontSize || 11;
+  const baseFontSize = theme.fontSize || 9;
   const paddingLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
   const paddingRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : templateConfig.defaultPadding);
   const paddingTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (templateConfig.defaultYPadding !== undefined ? templateConfig.defaultYPadding : paddingLeft));
@@ -913,7 +909,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     const scale = theme.photoScale !== undefined ? theme.photoScale / 100 : 1;
     const scaledWidth = base.width * scale;
     const scaledHeight = base.height * scale;
-    
+
     const cx = (base.x - diffX) + base.width / 2;
     const cy = base.y + base.height / 2;
 
@@ -939,7 +935,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const layout = useMemo(() => {
     const calculateForSize = (fSize: number) => {
       let cursorY = paddingY + 20; // Extra room for Mantra
-      
+
       // 1. Calculate Mantra & Title Height
       if (formData.mantra) cursorY += fSize * 2;
       if (formData.title) cursorY += fSize * 2.8;
@@ -961,32 +957,32 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
         const titleY = cursorY;
         cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12; // Extra padding for beautiful headings
         const fieldLayouts: any[] = [];
-        
+
         let i = 0;
         while (i < sec.fields.length) {
           const field = sec.fields[i];
           const valText = String(field.displayValue);
-          
+
           let rowWidth = contentWidth;
           if (hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15) {
-             rowWidth = photoConfig.x - padding - 20; // Prevent photo overlap
+            rowWidth = photoConfig.x - padding - 20; // Prevent photo overlap
           }
-          
+
           // Decide if we should render this field as two-column side-by-side grid
           const nextField = sec.fields[i + 1];
           const isTwoCol = detailsLayout === "two-column";
-          
+
           // Pair fields if we are in two-column mode, both values are short, and we are not in the photo Y range
-          const canPair = isTwoCol && nextField && 
-                          (valText.length < 16 && String(field.displayLabel).length < 13) && 
-                          (String(nextField.displayValue).length < 16 && String(nextField.displayLabel).length < 13) &&
-                          !(hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15);
-                          
+          const canPair = isTwoCol && nextField &&
+            (valText.length < 16 && String(field.displayLabel).length < 13) &&
+            (String(nextField.displayValue).length < 16 && String(nextField.displayLabel).length < 13) &&
+            !(hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15);
+
           if (canPair) {
             const halfW = (rowWidth - 12) / 2;
             const labelW = Math.round(halfW * 0.45);
             const valueW = halfW - labelW - 10;
-            
+
             fieldLayouts.push({
               id: field.id,
               label: field.displayLabel,
@@ -999,7 +995,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               halfW,
               labelW,
             });
-            
+
             fieldLayouts.push({
               id: nextField.id,
               label: nextField.displayLabel,
@@ -1012,7 +1008,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               halfW,
               labelW,
             });
-            
+
             cursorY += fSize * 1.35 + LINE_SPACING;
             i += 2;
           } else {
@@ -1020,7 +1016,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             if (field.logoUrl) {
               valueW -= (fSize + 4);
             }
-            
+
             const valW = measure(valText, fSize);
             const lines = Math.ceil(valW / valueW) || 1;
             const rowHeight = Math.max(fSize, lines * fSize * 1.1);
@@ -1037,7 +1033,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             i += 1;
           }
         }
-        
+
         sectionLayouts.push({ key: sec.key, titleText: sec.title, titleY, fields: fieldLayouts });
         cursorY += fSize * 1.5;
       }
@@ -1052,7 +1048,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
     if (!mantraSticker) return null;
     const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
     const halfW = textWidth / 2;
-    const gap = 5;
+    const gap = 7;
     const imgW = 45; // 100 * 0.45
     return {
       leftX: A4_W / 2 - halfW - gap - imgW,
@@ -1062,7 +1058,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
-    
+
     const nodes = selectedStickers.map(id => stageRef.current?.findOne('.' + id)).filter(Boolean) as Konva.Node[];
     if (nodes.length < 2) return;
 
@@ -1099,17 +1095,17 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="w-full h-full relative overflow-hidden"
-      style={isDesigner ? {
+      style={{
         backgroundColor: "#ffffff",
         backgroundImage: `
           linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px)
         `,
         backgroundSize: "24px 24px",
-      } : { backgroundColor: "#ffffff" }}
+      }}
     >
       <Stage
         ref={stageRef}
@@ -1157,22 +1153,22 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             const isCustomBg = !!theme.bgImageUrl;
             const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
             const baseH = isCustomBg ? 300 : (templateConfig.bgConfig?.height ?? 842);
-            
+
             const scale = theme.bgImageScale ?? 1.0;
             const width = baseW * scale;
             const height = baseH * scale;
-            
+
             const baseLeft = isCustomBg ? 147.5 : (templateConfig.bgConfig?.x ?? 0);
             const baseTop = isCustomBg ? 271 : (templateConfig.bgConfig?.y ?? 0);
-            
+
             const xOffset = theme.bgImageXOffset ?? 0;
             const yOffset = theme.bgImageYOffset ?? 0;
-            
+
             const x = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
             const y = baseTop + yOffset - (baseH * (scale - 1)) / 2;
-            
+
             return (
-              <BgWatermarkImage 
+              <BgWatermarkImage
                 bgConfig={{
                   url: theme.bgImageUrl || templateConfig.bgConfig?.url,
                   x,
@@ -1180,15 +1176,15 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                   width,
                   height,
                   opacity: theme.bgImageUrl ? theme.bgImageOpacity : (templateConfig.bgConfig?.opacity ?? 0.15),
-                }} 
+                }}
                 isCustom={isCustomBg}
               />
             );
           })()}
-          
+
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
-          
+
           {/* Diagonal Preview Watermark overlay */}
           <Text
             ref={previewWatermarkRef}
@@ -1208,7 +1204,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             rotation={-35}
             listening={false}
           />
-          
+
           <Text x={0} y={A4_H - paddingBottom + 10} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
         </Layer>
         <Layer>
@@ -1240,14 +1236,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                           color={primaryColor}
                           isDesigner={false}
                           isSelected={false}
-                          onClick={() => {}}
+                          onClick={() => { }}
                         />
                         <StickerItem
                           sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: -6, scaleX: -0.45, scaleY: 0.45 }}
                           color={primaryColor}
                           isDesigner={false}
                           isSelected={false}
-                          onClick={() => {}}
+                          onClick={() => { }}
                         />
                       </>
                     )}
@@ -1257,7 +1253,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                   {formData.title && (() => {
                     const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
                     const titleHeight = layout.fSize * 2;
-                    
+
                     if (titleShape === "ribbon") {
                       const ribbonW = 320;
                       const ribbonH = layout.fSize * 2.8;
@@ -1265,7 +1261,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                       const ribbonY = titleY - 4;
                       const tailW = 30;
                       const tailH = ribbonH;
-                      
+
                       return (
                         <Group>
                           {/* Ribbon Left Tail (polygon) */}
@@ -1458,18 +1454,18 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                   {/* Section Header */}
                   <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || titleColor} strokeWidth={3} lineCap="round" />
                   <Text x={padding + 10} y={sec.titleY + 2} text={applyTransform(sec.titleText)} fontSize={Math.round(fSize * 1.4)} fontFamily={fontFamily} fontStyle={fontStyle} fill={titleColor} />
-                  
+
                   {/* Section Fields */}
                   {sec.fields.map((field: any) => {
-                    const colX = field.isHalf 
-                      ? (field.colIndex === 0 
-                          ? (padding + 10) 
-                          : (padding + 10 + field.halfW + 10))
+                    const colX = field.isHalf
+                      ? (field.colIndex === 0
+                        ? (padding + 10)
+                        : (padding + 10 + field.halfW + 10))
                       : (padding + 10);
                     const lblW = field.isHalf ? field.labelW : 130;
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
-                    
+
                     return (
                       <Group key={field.id}>
                         <Text x={colX} y={field.y} width={lblW} text={applyTransform(field.label)} fontSize={fSize} fontFamily={fontFamily} fontStyle={fontStyle} fill={fieldColor} />
@@ -1568,20 +1564,20 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
 
             {/* Stickers Rendering */}
             {formData.stickers?.filter(s => !s.isMantra).map((sticker) => (
-              <StickerItem 
-                key={sticker.id} 
-                sticker={sticker} 
-                color={primaryColor} 
-                isDesigner={isDesigner} 
+              <StickerItem
+                key={sticker.id}
+                sticker={sticker}
+                color={primaryColor}
+                isDesigner={isDesigner}
                 isSelected={selectedStickers.includes(sticker.id)}
                 onClick={(e) => {
                   if (isDesigner) {
                     e.cancelBubble = true;
                     const isShift = e.evt.shiftKey || e.evt.metaKey;
                     if (isShift) {
-                      setSelectedStickers(prev => 
-                        prev.includes(sticker.id) 
-                          ? prev.filter(id => id !== sticker.id) 
+                      setSelectedStickers(prev =>
+                        prev.includes(sticker.id)
+                          ? prev.filter(id => id !== sticker.id)
                           : [...prev, sticker.id]
                       );
                     } else {
@@ -1603,8 +1599,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               }}
               rotateEnabled={true}
               enabledAnchors={
-                isMobile 
-                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] 
+                isMobile
+                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
                   : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']
               }
               anchorSize={isMobile ? 12 : 8}
@@ -1628,8 +1624,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               rotateEnabled={true}
               keepRatio={false}
               enabledAnchors={
-                isMobile 
-                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] 
+                isMobile
+                  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
                   : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']
               }
               anchorSize={isMobile ? 14 : 10}

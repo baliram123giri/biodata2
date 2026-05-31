@@ -332,15 +332,17 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
   });
 
   // Watch ONLY the labels of the fields to prevent typing in values from causing re-renders
+  const labelNames = React.useMemo(() => fields.map((_, idx) => `${name}.${idx}.label` as const), [fields.length, name]);
   const watchedLabels = useWatch({
     control,
-    name: fields.map((_, idx) => `${name}.${idx}.label` as const)
+    name: labelNames
   });
 
   // Watch ONLY the options of the fields to prevent typing in values from causing re-renders
+  const optionNames = React.useMemo(() => fields.map((_, idx) => `${name}.${idx}.options` as const), [fields.length, name]);
   const watchedOptions = useWatch({
     control,
-    name: fields.map((_, idx) => `${name}.${idx}.options` as const)
+    name: optionNames
   });
 
   const [dialogState, setDialogState] = useState<{ isOpen: boolean; index: number; options: string[]; label: string } | null>(null);
@@ -408,14 +410,15 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                           }
                         }} value={selectField.value}>
                           <SelectTrigger aria-label={`Select ${liveLabel}`}>
-                            <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`}>
-                              {selectField.value ? translateDynamicOption(selectField.value, t) : undefined}
-                            </SelectValue>
+                            <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`} />
                           </SelectTrigger>
                           <SelectContent>
                             {liveOptions?.map((opt: string) => (
                               <SelectItem key={opt} value={opt}>{translateDynamicOption(opt, t)}</SelectItem>
                             ))}
+                            {selectField.value && !liveOptions?.includes(selectField.value) && (
+                              <SelectItem key={selectField.value} value={selectField.value}>{translateDynamicOption(selectField.value, t)}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       )

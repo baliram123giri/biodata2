@@ -301,5 +301,6 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     pngDiscountPrice: (dbTpl as any).pngDiscountPrice ?? null,
     comboPrice: (dbTpl as any).comboPrice ?? null,
     comboDiscountPrice: (dbTpl as any).comboDiscountPrice ?? null,
+    fontSize: dbTpl.defaultFontSize ?? undefined,
   });
 }

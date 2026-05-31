@@ -19,6 +19,7 @@ const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsApp
 const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
 const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
+import { toast } from "sonner";
 
 
 import {
@@ -69,7 +70,7 @@ export function HomeBiodataBuilder() {
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
-  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep } = useRazorpayPayment();
+  const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep, paymentIdInfo, setPaymentStep, setIsProcessing } = useRazorpayPayment();
   const [isHydrated, setIsHydrated] = useState(false);
 
 
@@ -185,6 +186,9 @@ export function HomeBiodataBuilder() {
         theme.setPadding(config.defaultPadding);
       }
       theme.setPaddingY(config.defaultYPadding !== null && config.defaultYPadding !== undefined ? config.defaultYPadding : undefined);
+      
+      // Apply template's default font size
+      theme.setFontSize(config.fontSize || 9);
     }
   }, [storedTemplate, customTemplates, isHydrated, theme]);
 
@@ -270,7 +274,10 @@ export function HomeBiodataBuilder() {
         currency: activeTemplate?.currency || "INR",
         couponCode: couponCode,
         onDownload: async () => {
-          await triggerDownload(currentData, storedTemplate, format, modalFilename);
+          const result = await triggerDownload(currentData, storedTemplate, format, modalFilename);
+          if (result && !result.success) {
+            throw result.error || new Error("Download failed");
+          }
         }
       });
     } catch (paymentErr) {
@@ -299,7 +306,11 @@ export function HomeBiodataBuilder() {
     if (activeTemplate?.isPremium) {
       await processPremiumPaymentAndDownload(currentData, format, modalFilename);
     } else {
-      await triggerDownload(currentData, storedTemplate, format, modalFilename);
+      try {
+        await triggerDownload(currentData, storedTemplate, format, modalFilename);
+      } catch (err: any) {
+        toast.error("Failed to generate download. Please try again later.");
+      }
     }
   };
 
@@ -309,7 +320,14 @@ export function HomeBiodataBuilder() {
     if (activeTemplate?.isPremium) {
       await processPremiumPaymentAndDownload(currentData, format, modalFilename);
     } else {
-      await triggerDownload(currentData, storedTemplate, format, modalFilename);
+      try {
+        const result = await triggerDownload(currentData, storedTemplate, format, modalFilename);
+        if (result && !result.success) {
+          throw result.error || new Error("Download failed");
+        }
+      } catch (err: any) {
+        toast.error("Failed to generate download. Please try again later.");
+      }
     }
   };
 
@@ -678,32 +696,67 @@ export function HomeBiodataBuilder() {
         {/* Full-screen secure checkout loading screen */}
         <Dialog open={isPaymentProcessing}>
           <DialogContent className="max-w-[90%] sm:max-w-xs p-6 border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center [&>button]:hidden ring-1 ring-border/50">
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
-              {paymentStep === "downloading" ? (
-                <Download className="w-6 h-6 text-emerald-600 animate-bounce" />
-              ) : paymentStep === "verifying" ? (
-                <ShieldCheck className="w-6 h-6 text-emerald-600 animate-pulse" />
-              ) : (
-                <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
-              )}
-            </div>
-            <div className="space-y-1 select-none">
-              <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">
-                {paymentStep === "downloading"
-                  ? "Generating Document..."
-                  : paymentStep === "verifying"
-                  ? "Verifying Payment..."
-                  : "Securing Checkout..."}
-              </DialogTitle>
-              <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
-                {paymentStep === "downloading"
-                  ? "Payment successful! Creating your high-quality biodata and downloading now."
-                  : paymentStep === "verifying"
-                  ? "Confirming transaction with payment gateway. Please do not close or refresh."
-                  : "Opening payment gateway. Please do not close or refresh this page."}
-              </DialogDescription>
-            </div>
+            {paymentStep === "download_failed" ? (
+              <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
+                <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mb-2">
+                  <X className="w-8 h-8 text-rose-600" />
+                </div>
+                <div className="space-y-2">
+                  <DialogTitle className="text-base font-black text-rose-600 uppercase tracking-wider text-rose-600">
+                    DOWNLOAD FAILED
+                  </DialogTitle>
+                  <div className="text-[11.5px] text-muted-foreground font-semibold leading-relaxed bg-rose-50 p-3.5 rounded-xl border border-rose-100/80">
+                    Your payment was successful, but something went wrong on our end while preparing your file.
+                    <br /><br />
+                    We're sorry for the trouble! Your amount will be automatically refunded within 3 to 7 working days.
+                  </div>
+                </div>
+                {paymentIdInfo && (
+                  <div className="w-full bg-stone-100 p-2.5 rounded-lg flex flex-col gap-1 items-center border border-stone-200">
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">TRANSACTION ID</span>
+                    <span className="text-xs font-mono font-bold text-foreground select-all">{paymentIdInfo}</span>
+                  </div>
+                )}
+                <Button 
+                  onClick={() => {
+                    setIsProcessing(false);
+                    setPaymentStep("idle");
+                  }}
+                  className="w-full rounded-full bg-stone-900 hover:bg-stone-800 text-white font-bold h-11 mt-2"
+                >
+                  Close Window
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+                  {paymentStep === "downloading" ? (
+                    <Download className="w-6 h-6 text-emerald-600 animate-bounce" />
+                  ) : paymentStep === "verifying" ? (
+                    <ShieldCheck className="w-6 h-6 text-emerald-600 animate-pulse" />
+                  ) : (
+                    <Crown className="w-6 h-6 text-emerald-600 fill-emerald-500/10 animate-pulse" />
+                  )}
+                </div>
+                <div className="space-y-1 select-none">
+                  <DialogTitle className="text-sm font-black text-foreground uppercase tracking-wide">
+                    {paymentStep === "downloading"
+                      ? "Generating Document..."
+                      : paymentStep === "verifying"
+                      ? "Verifying Payment..."
+                      : "Securing Checkout..."}
+                  </DialogTitle>
+                  <DialogDescription className="text-[10px] text-muted-foreground font-semibold leading-relaxed">
+                    {paymentStep === "downloading"
+                      ? "Payment successful! Creating your high-quality biodata and downloading now."
+                      : paymentStep === "verifying"
+                      ? "Confirming transaction with payment gateway. Please do not close or refresh."
+                      : "Opening payment gateway. Please do not close or refresh this page."}
+                  </DialogDescription>
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </section>
@@ -716,50 +769,17 @@ function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) 
   const formData = useWatch();
   const [isClientMounted, setIsClientMounted] = useState(false);
   const customTemplates = useBiodataStore((state) => state.customTemplates);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [previewScale, setPreviewScale] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     setIsClientMounted(true);
   }, []);
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const A4_W = 595;
-    const A4_H = 842;
-
-    const update = () => {
-      const { width, height } = el.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        setPreviewScale(Math.min(width / A4_W, height / A4_H));
-      }
-    };
-
-    update();
-
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
   return (
-    <div
-      id="biodata-preview-home"
-      ref={containerRef}
-      className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none"
-    >
+    <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none flex items-center justify-center">
       {!isClientMounted || customTemplates.length === 0 ? (
         <PreviewLoader />
-      ) : previewScale !== undefined ? (
-        <KonvaPreview
-          liveFormData={formData as BiodataFormValues}
-          templateId={storedTemplate}
-          scale={previewScale}
-        />
       ) : (
-        <PreviewLoader />
+        <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
       )}
     </div>
   );

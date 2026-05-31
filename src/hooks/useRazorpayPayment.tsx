@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, X, ShieldAlert, Sparkles, Receipt, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 
 // Load Razorpay script dynamically on demand
 function loadRazorpayScript(): Promise<boolean> {
@@ -46,8 +47,9 @@ interface PaymentParams {
 
 export function useRazorpayPayment() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentStep, setPaymentStep] = useState<"idle" | "securing" | "verifying" | "downloading">("idle");
+  const [paymentStep, setPaymentStep] = useState<"idle" | "securing" | "verifying" | "downloading" | "download_failed">("idle");
   const [sandboxOrder, setSandboxOrder] = useState<any | null>(null);
+  const [paymentIdInfo, setPaymentIdInfo] = useState<string | null>(null);
 
   // Keep resolve/reject promises so we can trigger them from the sandbox UI
   const paymentPromiseRef = useRef<{
@@ -56,44 +58,76 @@ export function useRazorpayPayment() {
     onDownload?: () => void | Promise<void>;
   } | null>(null);
 
+  const paymentSuccessOrVerifyingRef = useRef(false);
+
+  const createOrderMutation = useMutation({
+    mutationFn: async (data: PaymentParams) => {
+      const res = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Failed to initiate transaction");
+      }
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Failed to create payment order");
+      return json;
+    }
+  });
+
+  const verifyPaymentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/razorpay/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Payment verification failed");
+      }
+      return res.json();
+    }
+  });
+
+  const updateDownloadStatusMutation = useMutation({
+    mutationFn: async (data: { orderId: string; downloadStatus: string }) => {
+      const res = await fetch("/api/razorpay/update-download-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      return res.json();
+    }
+  });
+
   const startPayment = useCallback((params: PaymentParams): Promise<any> => {
     return new Promise(async (resolve, reject) => {
+      paymentSuccessOrVerifyingRef.current = false;
       setPaymentStep("securing");
       setIsProcessing(true);
       try {
         // 1. Create order on Next.js backend
-        const res = await fetch("/api/razorpay/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(errText || "Failed to initiate transaction");
-        }
-
-        const data = await res.json();
-
-        if (!data.success) {
-          throw new Error(data.error || "Failed to create payment order");
-        }
+        const data = await createOrderMutation.mutateAsync(params);
 
         // 1.5 Handle 100% free checkout from promo code
         if (data.isFreeOrder) {
           toast.success("Promo code applied! 100% discount unlocked.");
           setPaymentStep("downloading");
           setIsProcessing(true);
+          setPaymentIdInfo(data.order?.id || "free_order");
           resolve(data);
           if (params.onDownload) {
             try {
               await params.onDownload();
-            } catch (dlErr) {
-              console.error("Auto-download failed:", dlErr);
-              toast.error("Auto-download failed, but transaction is safe. Please retry download.");
-            } finally {
               setIsProcessing(false);
               setPaymentStep("idle");
+            } catch (dlErr) {
+              console.error("Auto-download failed:", dlErr);
+              setPaymentStep("download_failed");
             }
           } else {
             setIsProcessing(false);
@@ -142,44 +176,52 @@ export function useRazorpayPayment() {
             wallet: true,     // Paytm wallet, Amazon Pay, etc.
           },
           handler: async function (response: any) {
+            paymentSuccessOrVerifyingRef.current = true;
             setIsProcessing(true);
             setPaymentStep("verifying");
+            let verifyData: any;
             try {
               // Verify payment on Next.js backend
-              const verifyRes = await fetch("/api/razorpay/verify-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  razorpay_contact: response.razorpay_contact || null,
-                  razorpay_email: response.razorpay_email || null,
-                  isSandbox: false,
-                }),
+              verifyData = await verifyPaymentMutation.mutateAsync({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                razorpay_contact: response.razorpay_contact || null,
+                razorpay_email: response.razorpay_email || null,
+                isSandbox: false,
               });
 
-              if (!verifyRes.ok) {
-                const verifyErr = await verifyRes.json();
-                throw new Error(verifyErr.error || "Payment verification failed");
-              }
-
-              const verifyData = await verifyRes.json();
-              toast.success("Payment successful! Your download is ready.");
+              toast.success("Payment completed successfully!");
               setPaymentStep("downloading");
+              setPaymentIdInfo(response.razorpay_payment_id || response.razorpay_order_id);
               resolve(verifyData);
-              if (params.onDownload) {
-                try {
-                  await params.onDownload();
-                } catch (dlErr) {
-                  console.error("Auto-download failed:", dlErr);
-                  toast.error("Auto-download failed, but transaction is safe. Please retry download.");
-                }
-              }
             } catch (err: any) {
               toast.error(err.message || "Payment verification failed");
               reject(err);
-            } finally {
+              setIsProcessing(false);
+              setPaymentStep("idle");
+              return;
+            }
+
+            if (params.onDownload) {
+              try {
+                await params.onDownload();
+                setIsProcessing(false);
+                setPaymentStep("idle");
+                toast.success("Download started successfully!");
+                updateDownloadStatusMutation.mutate(
+                  { orderId: response.razorpay_order_id, downloadStatus: "success" },
+                  { onError: (err) => console.error("Failed to update status:", err) }
+                );
+              } catch (dlErr: any) {
+                console.error("Auto-download failed:", dlErr?.message || String(dlErr));
+                setPaymentStep("download_failed");
+                updateDownloadStatusMutation.mutate(
+                  { orderId: response.razorpay_order_id, downloadStatus: "failed" },
+                  { onError: (err) => console.error("Failed to update status:", err) }
+                );
+              }
+            } else {
               setIsProcessing(false);
               setPaymentStep("idle");
             }
@@ -194,10 +236,12 @@ export function useRazorpayPayment() {
           },
           modal: {
             ondismiss: function () {
-              setIsProcessing(false);
-              setPaymentStep("idle");
-              toast.info("Payment cancelled");
-              reject(new Error("Payment cancelled by user"));
+              if (!paymentSuccessOrVerifyingRef.current) {
+                setIsProcessing(false);
+                setPaymentStep("idle");
+                toast.info("Payment cancelled");
+                reject(new Error("Payment cancelled by user"));
+              }
             },
           },
         };
@@ -227,44 +271,54 @@ export function useRazorpayPayment() {
   const handleSandboxSuccess = async () => {
     if (!sandboxOrder || !paymentPromiseRef.current) return;
     setIsProcessing(true);
+    setPaymentStep("verifying");
     const orderId = sandboxOrder.id;
+    const mockPaymentId = `mock_pay_${Date.now()}`;
 
     try {
-      const res = await fetch("/api/razorpay/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razorpay_order_id: orderId,
-          razorpay_payment_id: `mock_pay_${Date.now()}`,
-          razorpay_signature: "mock_signature",
-          razorpay_contact: sandboxOrder.customerPhone || null,
-          isSandbox: true,
-        }),
+      const verifyData = await verifyPaymentMutation.mutateAsync({
+        razorpay_order_id: orderId,
+        razorpay_payment_id: mockPaymentId,
+        razorpay_signature: "mock_signature",
+        razorpay_contact: sandboxOrder.customerPhone || null,
+        isSandbox: true,
       });
 
-      if (!res.ok) {
-        throw new Error("Sandbox payment verification failed");
-      }
-
-      const verifyData = await res.json();
       toast.success("Sandbox simulated payment successful!");
-
-      if (paymentPromiseRef.current.onDownload) {
-        try {
-          await paymentPromiseRef.current.onDownload();
-        } catch (dlErr) {
-          console.error("Auto-download failed:", dlErr);
-          toast.error("Auto-download failed, but transaction is safe. Please retry download.");
-        }
-      }
-
+      
+      setPaymentStep("downloading");
+      setPaymentIdInfo(mockPaymentId);
       paymentPromiseRef.current.resolve(verifyData);
       setSandboxOrder(null);
     } catch (err: any) {
       toast.error(err.message || "Failed to process sandbox payment");
       paymentPromiseRef.current.reject(err);
-    } finally {
       setIsProcessing(false);
+      setPaymentStep("idle");
+      return;
+    }
+
+    if (paymentPromiseRef.current.onDownload) {
+      try {
+        await paymentPromiseRef.current.onDownload();
+        setIsProcessing(false);
+        setPaymentStep("idle");
+        toast.success("Download started successfully!");
+        updateDownloadStatusMutation.mutate(
+          { orderId: "sandbox", downloadStatus: "success" },
+          { onError: (err) => console.error("Failed to update status:", err) }
+        );
+      } catch (dlErr: any) {
+        console.error("Auto-download failed:", dlErr?.message || String(dlErr));
+        setPaymentStep("download_failed");
+        updateDownloadStatusMutation.mutate(
+          { orderId: "sandbox", downloadStatus: "failed" },
+          { onError: (err) => console.error("Failed to update status:", err) }
+        );
+      }
+    } else {
+      setIsProcessing(false);
+      setPaymentStep("idle");
     }
   };
 
@@ -385,6 +439,9 @@ export function useRazorpayPayment() {
   return {
     isProcessing,
     paymentStep,
+    paymentIdInfo,
+    setPaymentStep,
+    setIsProcessing,
     startPayment,
     SandboxModal,
   };

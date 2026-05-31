@@ -243,6 +243,18 @@ export async function generatePdfBlob(
 }
 
 
+export function dataURItoBlob(dataURI: string): Blob {
+  const splitDataURI = dataURI.split(',');
+  const byteString = splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
+  const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
+  const ia = new Uint8Array(byteString.length);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ia], { type: mimeString });
+}
+
+
 export function useDownloadBiodata() {
   const [isGenerating, setIsGenerating] = useState(false);
   const theme = useThemeStore();
@@ -252,7 +264,7 @@ export function useDownloadBiodata() {
     templateId: string,
     format: DownloadFormat = "pdf",
     customFilename?: string
-  ) => {
+  ): Promise<{ success: boolean; error?: any }> => {
     setIsGenerating(true);
 
     const { formData: preparedData, theme: preparedTheme } = await prepareDataForGeneration(formData, theme, templateId);
@@ -337,40 +349,45 @@ export function useDownloadBiodata() {
         // Generate and download ZIP
         const zipBlob = await zip.generateAsync({ type: "blob" });
         saveAs(zipBlob, `${nameField}_Combo_Pack.zip`);
+        return { success: true };
       } catch (err) {
-        console.error("Combo Pack Download Error:", err);
+        console.error("Combo Pack Download Error:", err instanceof Error ? err.message : String(err));
+        return { success: false, error: err };
       } finally {
         setIsGenerating(false);
       }
-      return;
     }
 
     // ── JPEG Export: fully client-side via Konva canvas ──────────────
     if (format === "jpg") {
       try {
         const dataUrl = await generateJpgDataUrl();
+        const blob = dataURItoBlob(dataUrl);
         const { saveAs } = await import("file-saver");
-        saveAs(dataUrl, `${nameField}.jpeg`);
+        saveAs(blob, `${nameField}.jpeg`);
+        return { success: true };
       } catch (err) {
-        console.error("JPG Export Error:", err);
+        console.error("JPG Export Error:", err instanceof Error ? err.message : String(err));
+        return { success: false, error: err };
       } finally {
         setIsGenerating(false);
       }
-      return;
     }
 
     // ── PNG Export: fully client-side via Konva canvas ──────────────
     if (format === "png") {
       try {
         const dataUrl = await generatePngDataUrl();
+        const blob = dataURItoBlob(dataUrl);
         const { saveAs } = await import("file-saver");
-        saveAs(dataUrl, `${nameField}.png`);
+        saveAs(blob, `${nameField}.png`);
       } catch (err) {
-        console.error("PNG Export Error:", err);
+        console.error("PNG Export Error:", err instanceof Error ? err.message : String(err));
+        return { success: false, error: err };
       } finally {
         setIsGenerating(false);
       }
-      return;
+      return { success: true };
     }
 
     // ── PDF Export: server-side ──────────────────────────────
@@ -379,10 +396,13 @@ export function useDownloadBiodata() {
       const { saveAs } = await import("file-saver");
       saveAs(blob, `${nameField}.pdf`);
     } catch (err) {
-      console.error("Export Error:", err);
+      console.error("Export Error:", err instanceof Error ? err.message : String(err));
+      return { success: false, error: err };
     } finally {
       setIsGenerating(false);
     }
+    
+    return { success: true };
   };
 
   return {

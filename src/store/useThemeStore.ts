@@ -106,7 +106,7 @@ export const useThemeStore = create<ThemeState>()(
       (set) => ({
         fontFamily: "noto",
         fontWeight: "medium",
-        fontSize: 16,
+        fontSize: 9,
         alignment: "center",
         primaryColor: "#800000",
         secondaryColor: "#333333",
@@ -171,7 +171,7 @@ export const useThemeStore = create<ThemeState>()(
         resetTheme: () => set({
           fontFamily: "noto",
           fontWeight: "medium",
-          fontSize: 16,
+          fontSize: 9,
           alignment: "center",
           primaryColor: "#800000",
           secondaryColor: "#333333",

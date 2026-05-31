@@ -25,6 +25,7 @@ interface KonvaTemplateDesignerProps {
   sections?: any[];
   mantra?: string;
   title?: string;
+  mantraSignUrl?: string | null;
 }
 
 // ── Subcomponents for Designer ─────────────────────────────────────
@@ -134,6 +135,7 @@ export function KonvaTemplateDesigner({
   sections: propSections,
   mantra,
   title,
+  mantraSignUrl,
 }: KonvaTemplateDesignerProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -297,8 +299,8 @@ export function KonvaTemplateDesigner({
 
   const px = parseFloat(formState.photoX) || 390;
   const py = parseFloat(formState.photoY) || 100;
-  const pw = parseFloat(formState.photoWidth) || 140;
-  const ph = parseFloat(formState.photoHeight) || 175;
+  const pw = parseFloat(formState.photoWidth) || 100;
+  const ph = parseFloat(formState.photoHeight) || 130;
   const pr = parseFloat(formState.photoCornerRadius) || 8;
 
   const outerInset = parseFloat(formState.frameOuterInset) || 10;
@@ -541,51 +543,209 @@ export function KonvaTemplateDesigner({
     if (propSections && propSections.length > 0) {
       return propSections;
     }
+    
+    const lang = formState.language || "English";
+    const getDummyVal = (key: string, defaultVal: string) => {
+      const dummies: Record<string, Record<string, string>> = {
+        "English": {
+          "p1": "Rahul Anil Sharma",
+          "p2": "15 October 1995",
+          "p3": "10:15 AM",
+          "p4": "Mumbai, Maharashtra",
+          "p5": "5 ft 10 in",
+          "e1": "B.Tech in Computer Science",
+          "e2": "Senior Software Engineer",
+          "e3": "₹ 28,00,000 PA",
+          "f1": "Mr. Anil Kumar Sharma",
+          "f2": "Mrs. Sunita Sharma",
+          "f3": "Pune, Maharashtra",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "हिंदी": {
+          "p1": "राहुल अनिल शर्मा",
+          "p2": "15 अक्टूबर 1995",
+          "p3": "10:15 AM",
+          "p4": "मुंबई, महाराष्ट्र",
+          "p5": "5 फीट 10 इंच",
+          "e1": "बी.टेक कंप्यूटर साइंस",
+          "e2": "वरिष्ठ सॉफ्टवेयर इंजीनियर",
+          "e3": "₹ 28,00,000 प्रति वर्ष",
+          "f1": "श्री अनिल कुमार शर्मा",
+          "f2": "श्रीमती सुनीता शर्मा",
+          "f3": "पुणे, महाराष्ट्र",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "मराठी": {
+          "p1": "राहुल अनिल शर्मा",
+          "p2": "15 ऑक्टोबर 1995",
+          "p3": "10:15 AM",
+          "p4": "मुंबई, महाराष्ट्र",
+          "p5": "5 फूट 10 इंच",
+          "e1": "बी.टेक संगणक शास्त्र",
+          "e2": "वरिष्ठ सॉफ्टवेअर इंजिनिअर",
+          "e3": "₹ 28,00,000 प्रति वर्ष",
+          "f1": "श्री अनिल कुमार शर्मा",
+          "f2": "श्रीमتی सुनीता शर्मा",
+          "f3": "पुणे, महाराष्ट्र",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ગુજરાતી": {
+          "p1": "રાહુલ અનિલ શર્મા",
+          "p2": "15 ઓક્ટોબર 1995",
+          "p3": "10:15 AM",
+          "p4": "મુંબઈ, મહારાષ્ટ્ર",
+          "p5": "5 ફૂટ 10 ઇંચ",
+          "e1": "બી.ટેક કમ્પ્યુટર સાયન્સ",
+          "e2": "સીનિયર સોફ્ટવેર એન્જિનિયર",
+          "e3": "₹ 28,00,000 પ્રતિ વર્ષ",
+          "f1": "શ્રી અનિલ કુમાર શર્મા",
+          "f2": "શ્રીમતી સુનીતા શર્મા",
+          "f3": "પુણે, મહારાષ્ટ્ર",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "বাংলা": {
+          "p1": "রাহুল অনিল শর্মা",
+          "p2": "15 অক্টোবর ১৯৯৫",
+          "p3": "10:15 AM",
+          "p4": "মুম্বাই, মহারাষ্ট্র",
+          "p5": "5 ফুট 10 ইঞ্চি",
+          "e1": "বি.টেক কম্পিউটার সায়েন্স",
+          "e2": "সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার",
+          "e3": "₹ 28,00,000 প্রতি বছর",
+          "f1": "শ্রী অনিল কুমার শর্মা",
+          "f2": "শ্রীমতী সুনীতা শর্মা",
+          "f3": "পুনে, মহারাষ্ট্র",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "தமிழ்": {
+          "p1": "ராகுல் அனில் சர்மா",
+          "p2": "15 அக்டோபர் 1995",
+          "p3": "முற்பகல் 10:15",
+          "p4": "மும்பை, மகாராஷ்டிரா",
+          "p5": "5 அடி 10 அங்குலம்",
+          "e1": "பி.டெக் கணினி அறிவியல்",
+          "e2": "மூத்த மென்பொருள் பொறியாளர்",
+          "e3": "₹ 28,00,000 ஆண்டுக்கு",
+          "f1": "திரு. அனில் குமார் சர்மா",
+          "f2": "திருமதி. சுனிதா சர்மா",
+          "f3": "புனே, மகாராஷ்டிரா",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "తెలుగు": {
+          "p1": "రాహుల్ అనిల్ శర్మ",
+          "p2": "15 అక్టోబర్ 1995",
+          "p3": "ఉదయం 10:15",
+          "p4": "ముంబై, మహారాష్ట్ర",
+          "p5": "5 అడుగుల 10 అంగుళాలు",
+          "e1": "బి.టెక్ కంప్యూటర్ సైన్స్",
+          "e2": "సీనియర్ సాఫ్ట్‌వేర్ ఇంజనీర్",
+          "e3": "₹ 28,00,000 సంవత్సరానికి",
+          "f1": "శ్రీ అనిల్ కుమార్ శర్మ",
+          "f2": "శ్రీమతి సునీత శర్మ",
+          "f3": "పూణే, మహారాష్ట్ర",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ಕನ್ನಡ": {
+          "p1": "ರಾಹುಲ್ ಅನಿಲ್ ಶರ್ಮ",
+          "p2": "15 ಅಕ್ಟೋಬರ್ 1995",
+          "p3": "ಬೆಳಿಗ್ಗೆ 10:15",
+          "p4": "ಮುಂಬೈ, ಮಹಾರಾಷ್ಟ್ರ",
+          "p5": "5 ಅಡಿ 10 ಇಂಚು",
+          "e1": "ಬಿ.ಟೆಕ್ ಕಂಪ್ಯೂಟರ್ ಸೈನ್ಸ್",
+          "e2": "ಹಿರಿಯ ಸಾಫ್ಟ್‌ವೇರ್ ಎಂಜಿನಿಯರ್",
+          "e3": "₹ 28,00,000 ವಾರ್ಷಿಕ",
+          "f1": "ಶ್ರೀ ಅನಿಲ್ ಕುಮಾರ್ ಶರ್ಮ",
+          "f2": "ಶ್ರೀಮತಿ ಸುನೀತ ಶರ್ಮ",
+          "f3": "ಪುಣೆ, ಮಹಾರಾಷ್ಟ್ರ",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ਪੰਜਾਬੀ": {
+          "p1": "ਰਾਹੁਲ ਅਨਿਲ ਸ਼ਰਮਾ",
+          "p2": "15 ਅਕਤੂਬਰ 1995",
+          "p3": "ਸਵੇਰੇ 10:15",
+          "p4": "ਮੁੰਬਈ, ਮਹਾਰਾਸ਼ਟਰ",
+          "p5": "5 ਫੁੱਟ 10 ਇੰਚ",
+          "e1": "ਬੀ.ਟੈਕ ਕੰਪਿਊਟਰ ਸਾਇੰਸ",
+          "e2": "ਸੀਨੀਅਰ ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ",
+          "e3": "₹ 28,00,000 ਸਾਲਾਨਾ",
+          "f1": "ਸ਼੍ਰੀ ਅਨਿਲ ਕੁਮਾਰ ਸ਼ਰਮਾ",
+          "f2": "ਸ਼੍ਰੀਮਤੀ ਸੁਨੀਤਾ ਸ਼ਰਮਾ",
+          "f3": "ਪੁਣੇ, ਮਹਾਰਾਸ਼ਟਰ",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "Urdu": {
+          "p1": "راہول انیل شرما",
+          "p2": "15 اکتوبر 1995",
+          "p3": "10:15 صبح",
+          "p4": "ممبئی، مہاراشٹر",
+          "p5": "5 فٹ 10 انچ",
+          "e1": "بی ٹیک کمپیوٹر سائنس",
+          "e2": "سینئر سافٹ ویئر انجینئر",
+          "e3": "₹ 28,00,000 سالانہ",
+          "f1": "جناب انیلکمار شرما",
+          "f2": "محترمہ سنیتا شرما",
+          "f3": "پونے، مہاراشٹر",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        }
+      };
+      return dummies[lang]?.[key] || dummies["English"][key] || defaultVal;
+    };
+
     return [
       {
         key: "personal",
         title: t.personal || "Personal Details",
         fields: [
-          { id: "p1", displayLabel: t.fullName || "Full Name", displayValue: "Rahul Anil Sharma" },
-          { id: "p2", displayLabel: t.dateOfBirth || "Date of Birth", displayValue: "15 October 1995" },
-          { id: "p3", displayLabel: t.timeOfBirth || "Time of Birth", displayValue: "10:15 AM" },
-          { id: "p4", displayLabel: t.placeOfBirth || "Place of Birth", displayValue: "Mumbai, Maharashtra" },
-          { id: "p5", displayLabel: t.height || "Height", displayValue: "5 ft 10 in" },
+          { id: "p1", displayLabel: t.fullName || "Full Name", displayValue: getDummyVal("p1", "Rahul Anil Sharma") },
+          { id: "p2", displayLabel: t.dateOfBirth || "Date of Birth", displayValue: getDummyVal("p2", "15 October 1995") },
+          { id: "p3", displayLabel: t.timeOfBirth || "Time of Birth", displayValue: getDummyVal("p3", "10:15 AM") },
+          { id: "p4", displayLabel: t.placeOfBirth || "Place of Birth", displayValue: getDummyVal("p4", "Mumbai, Maharashtra") },
+          { id: "p5", displayLabel: t.height || "Height", displayValue: getDummyVal("p5", "5 ft 10 in") },
         ],
       },
       {
         key: "educationSec",
         title: t.educationSec || "Education & Career",
         fields: [
-          { id: "e1", displayLabel: t.education || "Education", displayValue: "B.Tech in Computer Science" },
-          { id: "e2", displayLabel: t.occupation || "Occupation", displayValue: "Senior Software Engineer" },
-          { id: "e3", displayLabel: t.annualIncome || "Annual Income", displayValue: "₹ 28,0,000 PA" },
+          { id: "e1", displayLabel: t.education || "Education", displayValue: getDummyVal("e1", "B.Tech in Computer Science") },
+          { id: "e2", displayLabel: t.occupation || "Occupation", displayValue: getDummyVal("e2", "Senior Software Engineer") },
+          { id: "e3", displayLabel: t.annualIncome || "Annual Income", displayValue: getDummyVal("e3", "₹ 28,00,000 PA") },
         ],
       },
       {
         key: "family",
         title: t.family || "Family Background",
         fields: [
-          { id: "f1", displayLabel: t.fatherName || "Father's Name", displayValue: "Mr. Anil Kumar Sharma" },
-          { id: "f2", displayLabel: t.motherName || "Mother's Name", displayValue: "Mrs. Sunita Sharma" },
-          { id: "f3", displayLabel: t.nativePlace || "Native Place", displayValue: "Pune, Maharashtra" },
+          { id: "f1", displayLabel: t.fatherName || "Father's Name", displayValue: getDummyVal("f1", "Mr. Anil Kumar Sharma") },
+          { id: "f2", displayLabel: t.motherName || "Mother's Name", displayValue: getDummyVal("f2", "Mrs. Sunita Sharma") },
+          { id: "f3", displayLabel: t.nativePlace || "Native Place", displayValue: getDummyVal("f3", "Pune, Maharashtra") },
         ],
       },
       {
         key: "contact",
         title: t.contact || "Contact Details",
         fields: [
-          { id: "c1", displayLabel: t.mobile || "Mobile", displayValue: "+91 98765 43210" },
-          { id: "c2", displayLabel: t.email || "Email", displayValue: "rahul.sharma@example.com" },
+          { id: "c1", displayLabel: t.mobile || "Mobile", displayValue: getDummyVal("c1", "+91 98765 43210") },
+          { id: "c2", displayLabel: t.email || "Email", displayValue: getDummyVal("c2", "rahul.sharma@example.com") },
         ],
       },
     ];
-  }, [t, propSections]);
+  }, [t, propSections, formState.language]);
 
   // Layout math calculations mirrored exactly from KonvaPreview.tsx
   const layout = useMemo(() => {
     let cursorY = paddingTop + 20;
-    const baseFontSize = getNum(formState.defaultFontSize, 11);
+    const baseFontSize = getNum(formState.defaultFontSize, 9);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
@@ -695,6 +855,21 @@ export function KonvaTemplateDesigner({
 
     return { sectionLayouts, fSize: baseFontSize };
   }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
+
+  const [signImage] = useImage(mantraSignUrl || "", mantraSignUrl?.startsWith("data:") ? undefined : "anonymous");
+
+  const mantraGeometry = useMemo(() => {
+    if (!mantraSignUrl) return null;
+    const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
+    const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
+    const halfW = textWidth / 2;
+    const gap = 7;
+    const imgW = 45;
+    return {
+      leftX: A4_W / 2 - halfW - gap - imgW,
+      rightX: A4_W / 2 + halfW + gap + imgW,
+    };
+  }, [mantra, mantraSignUrl, layout.fSize, currentLang]);
 
   const isSectionId = useCallback((id: string) => {
     return id.startsWith("sec-") || ["personal", "educationSec", "family", "contact"].includes(id);
@@ -1403,18 +1578,39 @@ export function KonvaTemplateDesigner({
                   )}
 
                   {/* Header Mantra */}
-                  <Text
-                    x={A4_W / 2}
-                    y={paddingTop + 10}
-                    text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
-                    fontSize={layout.fSize * 1.2}
-                    fontFamily={fontFamily}
-                    fontStyle="bold"
-                    fill={primaryColor}
-                    align="center"
-                    width={A4_W}
-                    offsetX={A4_W / 2}
-                  />
+                  <Group y={paddingTop + 10}>
+                    <Text
+                      x={A4_W / 2}
+                      y={0}
+                      text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
+                      fontSize={layout.fSize * 1.2}
+                      fontFamily={fontFamily}
+                      fontStyle="bold"
+                      fill={primaryColor}
+                      align="center"
+                      width={A4_W}
+                      offsetX={A4_W / 2}
+                    />
+                    {signImage && mantraGeometry && (
+                      <>
+                        <KonvaImage
+                          image={signImage}
+                          x={mantraGeometry.leftX}
+                          y={-6}
+                          width={45}
+                          height={45}
+                        />
+                        <KonvaImage
+                          image={signImage}
+                          x={mantraGeometry.rightX}
+                          y={-6}
+                          width={45}
+                          height={45}
+                          scaleX={-1}
+                        />
+                      </>
+                    )}
+                  </Group>
 
                   {/* Document Title "BIODATA" */}
                   {(() => {

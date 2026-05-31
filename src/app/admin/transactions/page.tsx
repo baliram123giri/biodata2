@@ -402,13 +402,25 @@ export default function AdminTransactions() {
 
                     {/* Status badge */}
                     <td className="p-4 text-center">
-                      <span className={cn(
-                        "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center select-none",
-                        getStatusBadgeStyle(order.status)
-                      )}>
-                        {getStatusIcon(order.status)}
-                        {order.status}
-                      </span>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className={cn(
+                          "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center select-none",
+                          getStatusBadgeStyle(order.status)
+                        )}>
+                          {getStatusIcon(order.status)}
+                          {order.status}
+                        </span>
+                        {(order.status === "paid" || order.downloadStatus === "failed") && (
+                          <span className={cn(
+                            "text-[8px] font-bold px-1.5 py-[1px] rounded-[3px] border uppercase tracking-widest inline-flex items-center",
+                            order.downloadStatus === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20" :
+                            order.downloadStatus === "failed" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" :
+                            "bg-amber-500/10 text-amber-600 dark:text-amber-450 border-amber-500/20"
+                          )}>
+                            DL: {order.downloadStatus || "PENDING"}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Date */}
@@ -501,13 +513,25 @@ export default function AdminTransactions() {
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Net Charged</span>
                   <span className="text-2xl font-black text-foreground mt-0.5">₹{Number(selectedTransaction.amount).toFixed(2)}</span>
                 </div>
-                <span className={cn(
-                  "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center",
-                  getStatusBadgeStyle(selectedTransaction.status)
-                )}>
-                  {getStatusIcon(selectedTransaction.status)}
-                  {selectedTransaction.status}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={cn(
+                    "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center",
+                    getStatusBadgeStyle(selectedTransaction.status)
+                  )}>
+                    {getStatusIcon(selectedTransaction.status)}
+                    {selectedTransaction.status}
+                  </span>
+                  {(selectedTransaction.status === "paid" || selectedTransaction.downloadStatus === "failed") && (
+                    <span className={cn(
+                      "text-[9px] font-bold px-2 py-[2px] rounded-[4px] border uppercase tracking-widest inline-flex items-center",
+                      selectedTransaction.downloadStatus === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20" :
+                      selectedTransaction.downloadStatus === "failed" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" :
+                      "bg-amber-500/10 text-amber-600 dark:text-amber-450 border-amber-500/20"
+                    )}>
+                      DL: {selectedTransaction.downloadStatus || "PENDING"}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Grid 1: Customer Details */}

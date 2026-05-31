@@ -99,7 +99,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const padBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : padLeft);
   const padding = padLeft;
   const paddingY = padTop;
-  const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 11;
+  const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 9;
   const photoX = config.photo ? config.photo.x - (padRight - (config.defaultPadding || 45)) : 0;
 
   const renderPDFBackground = () => {
@@ -690,7 +690,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   // Estimate text width
                   const textWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
                   const halfW = textWidth / 2;
-                  const gap = 5;
+                  const gap = 7;
                   const imgW = 45;
                   const imgH = 45;
                   

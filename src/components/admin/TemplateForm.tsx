@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
+import { useBiodataStore } from "@/store/useBiodataStore";
 import {
   Loader2,
   Upload,
@@ -75,7 +76,7 @@ import {
   TabsContent
 } from "@/components/ui/tabs";
 import { LANGUAGES, translations } from "@/lib/translations";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { BiodataForm } from "@/components/biodata/BiodataForm";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 import { processPDFField } from "@/lib/pdf-data-utils";
@@ -127,6 +128,7 @@ interface Template {
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
   pngDiscountPrice?: number | null;
+  previewPhotoUrl?: string | null;
 }
 
 interface TemplateFormProps {
@@ -186,8 +188,8 @@ const initialFormState = {
     defaultAlignment: "center",
   photoX: "390",
   photoY: "100",
-  photoWidth: "140",
-  photoHeight: "140",
+  photoWidth: "100",
+  photoHeight: "130",
   photoCornerRadius: "0",
   photoShowBorder: true,
   frameType: "image",
@@ -204,6 +206,7 @@ const initialFormState = {
   frameGradientColors: "#4F46E5,#06B6D4",
   frameComponentId: "new-generation-arch",
   frameFile: "",
+  frameUrlTemplate: "",
   thumbnailFile: "",
   bgImageUrl: "",
   bgImageFile: "",
@@ -215,7 +218,7 @@ const initialFormState = {
   defaultPaddingTop: "",
   defaultPaddingRight: "",
   defaultPaddingLeft: "",
-  defaultFontSize: "16",
+  defaultFontSize: "9",
   language: "English",
   detailsLayout: "classic",
   titleShape: "simple",
@@ -407,43 +410,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
     defaultValues: defaultBiodataValues,
   });
 
-  const watchAllFields = methods.watch();
-
-  const mockSections = React.useMemo(() => {
-    const currentLang = formState.language || "English";
-    const t = translations[currentLang] || translations["English"];
-
-    const renderSectionData = (key: string, title: string, fields: any[]) => {
-      if (!fields || fields.length === 0) return null;
-      const hasValues = fields.some((f: any) => f.value && f.type !== "hidden");
-      if (!hasValues) return null;
-      const processedFields = fields
-        .map(f => processPDFField(f, fields, watchAllFields, t))
-        .filter(f => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified");
-      return { key, title, fields: processedFields };
-    };
-
-    return [
-      renderSectionData("personal", t.personal || "Personal Details", watchAllFields.personalDetails || []),
-      renderSectionData("educationSec", t.educationSec || "Education & Career", watchAllFields.educationDetails || []),
-      renderSectionData("family", t.family || "Family Details", watchAllFields.familyDetails || []),
-      renderSectionData("contact", t.contact || "Contact Details", watchAllFields.contactDetails || []),
-    ].filter(Boolean) as any[];
-  }, [
-    formState.language,
-    watchAllFields.personalDetails,
-    watchAllFields.educationDetails,
-    watchAllFields.familyDetails,
-    watchAllFields.contactDetails,
-  ]);
-
-  const currentPreviewMantra = watchAllFields.mantra === defaultBiodataValues.mantra 
-    ? (translations[formState.language || "English"]?.mantra || watchAllFields.mantra) 
-    : watchAllFields.mantra;
-    
-  const currentPreviewTitle = watchAllFields.title === defaultBiodataValues.title 
-    ? (translations[formState.language || "English"]?.title || watchAllFields.title) 
-    : watchAllFields.title;
   // Preview-only photo – stored locally, never sent to server
   const [previewPhotoFile, setPreviewPhotoFile] = React.useState<string | null>(null);
   const previewPhotoInputRef = React.useRef<HTMLInputElement>(null);
@@ -492,11 +458,61 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       const saved = localStorage.getItem(key);
       if (saved) {
         setPreviewPhotoFile(saved);
+      } else if (template?.previewPhotoUrl) {
+        setPreviewPhotoFile(template.previewPhotoUrl);
       } else {
         setPreviewPhotoFile(null);
       }
     }
-  }, [template?.id]);
+  }, [template?.id, template?.previewPhotoUrl]);
+
+  // Synchronize language state bi-directionally between formState and mock fields (methods) via subscription
+  React.useEffect(() => {
+    const subscription = methods.watch((value, { name }) => {
+      if (name === "language" && value.language && value.language !== formState.language) {
+        setFormState(prev => ({ ...prev, language: value.language || "English" }));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [methods, formState.language]);
+
+  React.useEffect(() => {
+    const newLang = formState.language || "English";
+    const t = translations[newLang] || translations["English"];
+    
+    // Sync Hook Form language
+    if (methods.getValues("language") !== newLang) {
+      methods.setValue("language", newLang);
+    }
+
+    // Translate default fields in React Hook Form state
+    const currentMantra = methods.getValues("mantra");
+    const currentTitle = methods.getValues("title");
+    
+    // Check if the current mantra or title match the default values of any supported language translation
+    const isDefaultMantra = !currentMantra || Object.values(translations).some(trans => trans.mantra === currentMantra);
+    const isDefaultTitle = !currentTitle || Object.values(translations).some(trans => trans.title === currentTitle);
+    
+    if (isDefaultMantra && t.mantra) {
+      methods.setValue("mantra", t.mantra, { shouldDirty: true });
+    }
+    if (isDefaultTitle && t.title) {
+      methods.setValue("title", t.title, { shouldDirty: true });
+    }
+
+    // Translate other standard default field labels
+    const sectionsToTranslate = ["personalDetails", "educationDetails", "familyDetails", "contactDetails"] as const;
+    sectionsToTranslate.forEach((section) => {
+      const fields = methods.getValues(section);
+      if (fields && Array.isArray(fields)) {
+        fields.forEach((field, index) => {
+          if (field.isDefault && t[field.id]) {
+            methods.setValue(`${section}.${index}.label` as any, t[field.id], { shouldDirty: true });
+          }
+        });
+      }
+    });
+  }, [formState.language, methods]);
 
   React.useEffect(() => {
     const fetchBgs = async () => {
@@ -772,6 +788,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameGradientColors: template.frameGradientColors ? template.frameGradientColors.join(",") : "#4F46E5,#06B6D4",
         frameComponentId: template.frameComponentId || "new-generation-arch",
         frameFile: "",
+        frameUrlTemplate: template.frameUrlTemplate || "",
         thumbnailFile: "",
         bgImageUrl: bgConf?.url || "",
         bgImageFile: "",
@@ -783,7 +800,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         defaultPaddingTop: (template as any).defaultPaddingTop ? String((template as any).defaultPaddingTop) : "",
         defaultPaddingRight: (template as any).defaultPaddingRight ? String((template as any).defaultPaddingRight) : "",
         defaultPaddingLeft: (template as any).defaultPaddingLeft ? String((template as any).defaultPaddingLeft) : "",
-        defaultFontSize: (template as any).defaultFontSize ? String((template as any).defaultFontSize) : "16",
+        defaultFontSize: (template as any).defaultFontSize ? String((template as any).defaultFontSize) : "9",
         frameImageX: bgConf?.frameImageX ? String(bgConf.frameImageX) : "0",
         frameImageY: bgConf?.frameImageY ? String(bgConf.frameImageY) : "0",
         frameImageWidth: bgConf?.frameImageWidth ? String(bgConf.frameImageWidth) : "595",
@@ -849,8 +866,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         defaultYPadding: formState.defaultPaddingTop ? parseInt(formState.defaultPaddingTop) : (formState.defaultYPadding ? parseInt(formState.defaultYPadding) : null),
         photoX: parseInt(formState.photoX) || 390,
         photoY: parseInt(formState.photoY) || 100,
-        photoWidth: parseInt(formState.photoWidth) || 140,
-        photoHeight: parseInt(formState.photoHeight) || 140,
+        photoWidth: parseInt(formState.photoWidth) || 100,
+        photoHeight: parseInt(formState.photoHeight) || 130,
         photoCornerRadius: parseInt(formState.photoCornerRadius) || 8,
         photoShowBorder: formState.photoShowBorder !== false,
         frameType: formState.frameType,
@@ -895,7 +912,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         opacity: parseFloat(formState.bgImageOpacity) || 1.0,
         fontFamily: formState.defaultFontFamily,
         fontWeight: formState.defaultFontWeight,
-        fontSize: parseInt(formState.defaultFontSize) || 11,
+        fontSize: parseInt(formState.defaultFontSize) || 9,
         alignment: formState.defaultAlignment,
         sectionOffsets: formState.sectionOffsets || "{}",
         sectionStyles: formState.sectionStyles || "{}",
@@ -928,6 +945,14 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
 
       if (formState.frameFile) {
         payload.frameFile = formState.frameFile;
+      } else if (formState.frameUrlTemplate) {
+        payload.frameUrlTemplate = formState.frameUrlTemplate;
+      }
+
+      if (previewPhotoFile && previewPhotoFile.startsWith("data:")) {
+        payload.previewPhotoFile = previewPhotoFile;
+      } else if (template?.previewPhotoUrl) {
+        payload.previewPhotoUrl = template.previewPhotoUrl;
       }
 
       // If a custom thumbnail was manually uploaded, use it directly. Otherwise, capture automatically.
@@ -1562,7 +1587,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           id="tpl-font-size"
                           min={9}
                           max={24}
-                          value={formState.defaultFontSize || "16"}
+                          value={formState.defaultFontSize || "9"}
                           onChange={val => setFormState({ ...formState, defaultFontSize: val })}
                         />
                       </div>
@@ -2759,25 +2784,15 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                   ? "w-full h-full"
                   : "h-full aspect-[595/842] max-h-full max-w-full shadow-2xl bg-white border border-border"
               )}>
-                {previewMode === "designer" ? (
-                  <>
-                    <KonvaTemplateDesigner
-                      formState={formState}
-                      onChange={handleDesignerChange}
-                      previewPhotoFile={previewPhotoFile}
-                      template={template}
-                      designerRef={designerRef}
-                      sections={mockSections}
-                      mantra={currentPreviewMantra}
-                      title={currentPreviewTitle}
-                    />
-                    <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "595px", height: "842px", opacity: 0, pointerEvents: "none" }}>
-                      <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} mantra={currentPreviewMantra} title={currentPreviewTitle} />
-                    </div>
-                  </>
-                ) : (
-                  <TemplateSvgPreview formState={formState} template={template} previewPhotoFile={previewPhotoFile} sections={mockSections} mantra={currentPreviewMantra} title={currentPreviewTitle} />
-                )}
+                <OptimizedPreviewArea
+                  control={methods.control}
+                  formState={formState}
+                  handleDesignerChange={handleDesignerChange}
+                  previewPhotoFile={previewPhotoFile}
+                  template={template}
+                  designerRef={designerRef}
+                  previewMode={previewMode}
+                />
               </div>
 
             </div>
@@ -2798,6 +2813,432 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   );
 }
 
+interface OptimizedPreviewAreaProps {
+  control: any;
+  formState: any;
+  handleDesignerChange: any;
+  previewPhotoFile: any;
+  template: any;
+  designerRef: any;
+  previewMode: "designer" | "svg";
+}
+
+function OptimizedPreviewArea({
+  control,
+  formState,
+  handleDesignerChange,
+  previewPhotoFile,
+  template,
+  designerRef,
+  previewMode,
+}: OptimizedPreviewAreaProps) {
+  // Watch necessary preview fields in an isolated manner
+  const watchPersonal = useWatch({ control, name: "personalDetails" });
+  const watchEducation = useWatch({ control, name: "educationDetails" });
+  const watchFamily = useWatch({ control, name: "familyDetails" });
+  const watchContact = useWatch({ control, name: "contactDetails" });
+  const watchMantra = useWatch({ control, name: "mantra" });
+  const watchTitle = useWatch({ control, name: "title" });
+  const watchLanguage = useWatch({ control, name: "language" });
+
+  // Use a debounced local state so that fast typing inside inputs does not cause any lag
+  const [debouncedValues, setDebouncedValues] = React.useState<any>({
+    personalDetails: watchPersonal,
+    educationDetails: watchEducation,
+    familyDetails: watchFamily,
+    contactDetails: watchContact,
+    mantra: watchMantra,
+    title: watchTitle,
+    language: watchLanguage,
+  });
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValues({
+        personalDetails: watchPersonal,
+        educationDetails: watchEducation,
+        familyDetails: watchFamily,
+        contactDetails: watchContact,
+        mantra: watchMantra,
+        title: watchTitle,
+        language: watchLanguage,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [watchPersonal, watchEducation, watchFamily, watchContact, watchMantra, watchTitle, watchLanguage]);
+
+  const currentLang = formState.language || "English";
+  const t = translations[currentLang] || translations["English"];
+
+  const getDummyVal = (id: string, defaultVal: string) => {
+    const dummies: Record<string, Record<string, string>> = {
+      "English": {
+        "fullName": "Rahul Anil Sharma",
+        "dateOfBirth": "15 October 1995",
+        "timeOfBirth": "10:15 AM",
+        "placeOfBirth": "Mumbai, Maharashtra",
+        "height": "5 ft 10 in",
+        "education": "B.Tech in Computer Science",
+        "occupation": "Senior Software Engineer",
+        "annualIncome": "₹ 28,00,000 PA",
+        "fatherName": "Mr. Anil Kumar Sharma",
+        "motherName": "Mrs. Sunita Sharma",
+        "nativePlace": "Pune, Maharashtra",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "Single",
+        "bloodGroup": "B+",
+        "complexion": "Fair",
+        "religion": "Hindu",
+        "caste": "Sharma",
+        "gotra": "Bharadwaja",
+        "rashi": "Mesh (Aries)",
+        "nakshatra": "Ashwini",
+        "manglik": "No",
+        "college": "IIT Bombay",
+        "companyName": "Google Inc",
+        "fatherOccupation": "Business",
+        "motherOccupation": "Homemaker",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "Flat 402, Royal Residency, Andheri West, Mumbai",
+      },
+      "हिंदी": {
+        "fullName": "राहुल अनिल शर्मा",
+        "dateOfBirth": "15 अक्टूबर 1995",
+        "timeOfBirth": "10:15 AM",
+        "placeOfBirth": "मुंबई, महाराष्ट्र",
+        "height": "5 फीट 10 इंच",
+        "education": "बी.टेक कंप्यूटर साइंस",
+        "occupation": "वरिष्ठ सॉफ्टवेयर इंजीनियर",
+        "annualIncome": "₹ 28,00,000 प्रति वर्ष",
+        "fatherName": "श्री अनिल कुमार शर्मा",
+        "motherName": "श्रीमती सुनीता शर्मा",
+        "nativePlace": "पुणे, महाराष्ट्र",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "अविवाहित",
+        "bloodGroup": "B+",
+        "complexion": "गोरा",
+        "religion": "हिंदू",
+        "caste": "शर्मा",
+        "gotra": "भारद्वाज",
+        "rashi": "मेष",
+        "nakshatra": "अश्विनी",
+        "manglik": "नहीं",
+        "college": "आईआईटी बॉम्बे",
+        "companyName": "गूगल",
+        "fatherOccupation": "व्यवसाय",
+        "motherOccupation": "गृहणी",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "फ्लैट 402, रॉयल रेजीडेंसी, अंधेरी वेस्ट, मुंबई",
+      },
+      "मराठी": {
+        "fullName": "राहुल अनिल शर्मा",
+        "dateOfBirth": "15 ऑक्टोबर 1995",
+        "timeOfBirth": "10:15 AM",
+        "placeOfBirth": "मुंबई, महाराष्ट्र",
+        "height": "5 फूट 10 इंच",
+        "education": "बी.टेक संगणक शास्त्र",
+        "occupation": "वरिष्ठ सॉफ्टवेअर इंजिनिअर",
+        "annualIncome": "₹ 28,00,000 प्रति वर्ष",
+        "fatherName": "श्री अनिल कुमार शर्मा",
+        "motherName": "श्रीमती सुनीता शर्मा",
+        "nativePlace": "पुणे, महाराष्ट्र",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "अविवाहित",
+        "bloodGroup": "B+",
+        "complexion": "गोरा",
+        "religion": "हिंदू",
+        "caste": "शर्मा",
+        "gotra": "भारद्वाज",
+        "rashi": "मेष",
+        "nakshatra": "अश्विनी",
+        "manglik": "नाही",
+        "college": "आयआयटी मुंबई",
+        "companyName": "गुगल",
+        "fatherOccupation": "व्यवसाय",
+        "motherOccupation": "गृहिणी",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "फ्लॅट 402, रॉयल रेसिडेन्सी, अंधेरी वेस्ट, मुंबई",
+      },
+      "ગુજરાતી": {
+        "fullName": "રાહુલ અનિલ શર્મા",
+        "dateOfBirth": "15 ઓક્ટોબર 1995",
+        "timeOfBirth": "10:15 AM",
+        "placeOfBirth": "મુંબઈ, મહારાષ્ટ્ર",
+        "height": "5 ફૂટ 10 ઇંચ",
+        "education": "બી.ટેક કમ્પ્યુટર સાયન્સ",
+        "occupation": "સીનિયર સોફ્ટવેર એન્જિનિયર",
+        "annualIncome": "₹ 28,00,000 પ્રતિ વર્ષ",
+        "fatherName": "શ્રી અનિલ કુમાર શર્મા",
+        "motherName": "શ્રીમતી સુનીતા શર્મા",
+        "nativePlace": "પુણે, મહારાષ્ટ્ર",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "અપરિણીત",
+        "bloodGroup": "B+",
+        "complexion": "ગોરો",
+        "religion": "હિન્દુ",
+        "caste": "શર્મા",
+        "gotra": "ભારદ્વાજ",
+        "rashi": "મેષ",
+        "nakshatra": "અશ્વિની",
+        "manglik": "ના",
+        "college": "આઈઆઈટી બોમ્બે",
+        "companyName": "ગુગલ",
+        "fatherOccupation": "વ્યવસાય",
+        "motherOccupation": "ગૃહિણી",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "ફ્લેટ 402, રોયલ રેસીડેન્સી, અંધેરી વેસ્ટ, મુંબઈ",
+      },
+      "বাংলা": {
+        "fullName": "রাহুল অনিল শর্মা",
+        "dateOfBirth": "15 অক্টোবর ১৯৯৫",
+        "timeOfBirth": "10:15 AM",
+        "placeOfBirth": "মুম্বাই, মহারাষ্ট্র",
+        "height": "5 ফুট 10 ইঞ্চি",
+        "education": "বি.টেক কম্পিউটার সায়েন্স",
+        "occupation": "সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার",
+        "annualIncome": "₹ 28,00,000 প্রতি বছর",
+        "fatherName": "শ্রী অনিল কুমার শর্মা",
+        "motherName": "শ্রীমতী সুনীতা শর্মা",
+        "nativePlace": "পুনে, বাংলা",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "অবিবাহিত",
+        "bloodGroup": "B+",
+        "complexion": "ফর্সা",
+        "religion": "हिंदू",
+        "caste": "শর্মা",
+        "gotra": "ভরদ্বাজ",
+        "rashi": "মেষ",
+        "nakshatra": "অশ্বিনী",
+        "manglik": "না",
+        "college": "আইআইটি বোম্বে",
+        "companyName": "গুগল",
+        "fatherOccupation": "ব্যবসা",
+        "motherOccupation": "गृहणी",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "ফ্ল্যাট ৪০২, রয়্যাল রেসিডেন্সি, আন্ধেরি ওয়েস্ট, মুম্বাই",
+      },
+      "தமிழ்": {
+        "fullName": "ராகுல் அனில் சர்மா",
+        "dateOfBirth": "15 அக்டோபர் 1995",
+        "timeOfBirth": "முற்பகல் 10:15",
+        "placeOfBirth": "மும்பை, மகாராஷ்டிரா",
+        "height": "5 அடி 10 அங்குலம்",
+        "education": "பி.டெக் கணினி அறிவியல்",
+        "occupation": "மூத்த மென்பொருள் பொறியாளர்",
+        "annualIncome": "₹ 28,00,000 ஆண்டுக்கு",
+        "fatherName": "திரு. அனில் குமார் சர்மா",
+        "motherName": "திருமதி. சுனிதா சர்மா",
+        "nativePlace": "புனே, மகாராஷ்டிரா",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "திருமணமாகாதவர்",
+        "bloodGroup": "B+",
+        "complexion": "சிகப்பு",
+        "religion": "இந்து",
+        "caste": "சர்மா",
+        "gotra": "பாரத்வாஜ்",
+        "rashi": "மேஷம்",
+        "nakshatra": "அஸ்வினி",
+        "manglik": "இல்லை",
+        "college": "ஐஐடி பம்பாய்",
+        "companyName": "கூகிள்",
+        "fatherOccupation": "தொழில்",
+        "motherOccupation": "இல்லத்தரசி",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "பிளாட் 402, ராயல் ரெசிடென்சி, அந்தேரி மேற்கு, மும்பை",
+      },
+      "తెలుగు": {
+        "fullName": "రాహుల్ అనిల్ శర్మ",
+        "dateOfBirth": "15 అక్టోబర్ 1995",
+        "timeOfBirth": "ఉదయం 10:15",
+        "placeOfBirth": "ముంబై, మహారాష్ట్ర",
+        "height": "5 అడుగుల 10 అంగుళాలు",
+        "education": "బి.టెక్ కంప్యూటర్ సైన్స్",
+        "occupation": "సీనియర్ సాఫ్ట్‌వేర్ ఇంజనీర్",
+        "annualIncome": "₹ 28,00,000 సంవత్సరానికి",
+        "fatherName": "శ్రీ అనిల్ కుమార్ శర్మ",
+        "motherName": "శ్రీమతి సునీత శర్మ",
+        "nativePlace": "పూణే, మహారాష్ట్ర",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "అవివాహితుడు",
+        "bloodGroup": "B+",
+        "complexion": "తెలుపు",
+        "religion": "హిందూ",
+        "caste": "శర్మ",
+        "gotra": "భారద్వాజ",
+        "rashi": "మేషం",
+        "nakshatra": "అశ్విని",
+        "manglik": "లేదు",
+        "college": "ఐఐటి బాంబే",
+        "companyName": "గూగుల్",
+        "fatherOccupation": "వ్యాపారం",
+        "motherOccupation": "గృహిణి",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "ఫ్లాట్ 402, రాయల్ రెసిడెన్సీ, అంధేరి వెస్ట్, ముంబై",
+      },
+      "ಕನ್ನಡ": {
+        "fullName": "ರಾಹುಲ್ ಅನಿಲ್ ಶರ್ಮ",
+        "dateOfBirth": "15 ಅಕ್ಟೋಬರ್ 1995",
+        "timeOfBirth": "ಬೆಳಿಗ್ಗೆ 10:15",
+        "placeOfBirth": "ಮುಂಬೈ, ಮಹಾರಾಷ್ಟ್ರ",
+        "height": "5 ಅಡಿ 10 ಇಂಚು",
+        "education": "ಬಿ.ಟೆಕ್ ಕಂಪ್ಯೂಟರ್ ಸೈನ್ಸ್",
+        "occupation": "ಹಿರಿಯ ಸಾಫ್ಟ್‌ವೇರ್ ಎಂಜಿನಿಯರ್",
+        "annualIncome": "₹ 28,00,000 ವಾರ್ಷಿಕ",
+        "fatherName": "ಶ್ರೀ ಅನಿಲ್ ಕುಮาร์ ಶರ್ಮ",
+        "motherName": "ಶ್ರೀಮತಿ ಸುನೀತ ಶರ್ಮ",
+        "nativePlace": "ಪುಣೆ, ಮಹಾರಾಷ್ಟ್ರ",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "ಅವಿವಾಹಿತ",
+        "bloodGroup": "B+",
+        "complexion": "ಗೌರವರ್ಣ",
+        "religion": "ಹಿಂದೂ",
+        "caste": "ಶರ್ಮ",
+        "gotra": "ಭರದ್ವಾಜ",
+        "rashi": "ಮೇಷ",
+        "nakshatra": "ಅಶ್ವಿನಿ",
+        "manglik": "ಇಲ್ಲ",
+        "college": "ಐ意ಟಿ ಮುಂಬೈ",
+        "companyName": "ಗೂಗಲ್",
+        "fatherOccupation": "ವ್ಯವಸಾಯ",
+        "motherOccupation": "ಗೃಹಿಣಿ",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "ಫ್ಲಾಟ್ 402, ರಾಯಲ್ ರೆಸಿಡೆನ್ಸಿ, ಅಂಧೇರಿ ವೆಸ್ಟ್, ಮುಂಬೈ",
+      },
+      "Urdu": {
+        "fullName": "راہول انیل شرما",
+        "dateOfBirth": "15 اکتوبر 1995",
+        "timeOfBirth": "10:15 صبح",
+        "placeOfBirth": "ممبئی، مہاراشٹر",
+        "height": "5 فٹ 10 انچ",
+        "education": "بی ٹیک کمپیوٹر سائنس",
+        "occupation": "سینئر سافٹ ویئر انجینئر",
+        "annualIncome": "₹ 28,00,000 سالانہ",
+        "fatherName": "جناب انیلکمار شرما",
+        "motherName": "محترمہ سنیتا شرما",
+        "nativePlace": "پونے، مہاراشٹر",
+        "mobileNumber": "+91 98765 43210",
+        "email": "rahul.sharma@example.com",
+        "maritalStatus": "غیر شادی شدہ",
+        "bloodGroup": "B+",
+        "complexion": "گورا",
+        "religion": "ہندو",
+        "caste": "شرما",
+        "gotra": "بھاردواج",
+        "rashi": "میش",
+        "nakshatra": "اشونی",
+        "manglik": "نہیں",
+        "college": "آئی آئی ٹی بمبئی",
+        "companyName": "گوگل",
+        "fatherOccupation": "کاروبار",
+        "motherOccupation": "گھریلو خاتون",
+        "totalBrothers": "1",
+        "totalSisters": "0",
+        "residentialAddress": "فلیٹ 402، رائل ریزیڈنسی، اندھیری ویسٹ, ممبئی",
+      }
+    };
+    return dummies[currentLang]?.[id] || dummies["English"][id] || "";
+  };
+
+  const mockSections = React.useMemo(() => {
+    const renderSectionData = (key: string, title: string, fields: any[]) => {
+      if (!fields || fields.length === 0) return null;
+
+      // Merge empty user inputs with beautiful mock values so that sections don't vanish!
+      const filledFields = fields.map(f => {
+        const dummyVal = getDummyVal(f.id, "");
+        return {
+          ...f,
+          value: f.value !== undefined && f.value !== "" ? f.value : dummyVal
+        };
+      });
+
+      const processedFields = filledFields
+        .map(f => processPDFField(f, filledFields, debouncedValues, t))
+        .filter(f => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified");
+
+      return { key, title, fields: processedFields };
+    };
+
+    return [
+      renderSectionData("personal", t.personal || "Personal Details", debouncedValues.personalDetails || []),
+      renderSectionData("educationSec", t.educationSec || "Education & Career", debouncedValues.educationDetails || []),
+      renderSectionData("family", t.family || "Family Details", debouncedValues.familyDetails || []),
+      renderSectionData("contact", t.contact || "Contact Details", debouncedValues.contactDetails || []),
+    ].filter(Boolean) as any[];
+  }, [
+    currentLang,
+    debouncedValues.personalDetails,
+    debouncedValues.educationDetails,
+    debouncedValues.familyDetails,
+    debouncedValues.contactDetails,
+  ]);
+
+  const currentPreviewMantra = debouncedValues.mantra === defaultBiodataValues.mantra 
+    ? (translations[currentLang]?.mantra || debouncedValues.mantra) 
+    : debouncedValues.mantra;
+    
+  const currentPreviewTitle = debouncedValues.title === defaultBiodataValues.title 
+    ? (translations[currentLang]?.title || debouncedValues.title) 
+    : debouncedValues.title;
+
+  const stickers = useBiodataStore(s => s.formData?.stickers);
+  const mantraSticker = stickers?.find(s => s.isMantra);
+  const mantraSignUrl = mantraSticker?.type || null;
+
+  return previewMode === "designer" ? (
+    <>
+      <KonvaTemplateDesigner
+        formState={formState}
+        onChange={handleDesignerChange}
+        previewPhotoFile={previewPhotoFile}
+        template={template}
+        designerRef={designerRef}
+        sections={mockSections}
+        mantra={currentPreviewMantra}
+        title={currentPreviewTitle}
+        mantraSignUrl={mantraSignUrl}
+      />
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "595px", height: "842px", opacity: 0, pointerEvents: "none" }}>
+        <TemplateSvgPreview
+          formState={formState}
+          template={template}
+          previewPhotoFile={previewPhotoFile}
+          sections={mockSections}
+          mantra={currentPreviewMantra}
+          title={currentPreviewTitle}
+          mantraSignUrl={mantraSignUrl}
+        />
+      </div>
+    </>
+  ) : (
+    <TemplateSvgPreview
+      formState={formState}
+      template={template}
+      previewPhotoFile={previewPhotoFile}
+      sections={mockSections}
+      mantra={currentPreviewMantra}
+      title={currentPreviewTitle}
+      mantraSignUrl={mantraSignUrl}
+    />
+  );
+}
+
 function TemplateSvgPreview({
   formState,
   template,
@@ -2805,6 +3246,7 @@ function TemplateSvgPreview({
   sections: propSections,
   mantra,
   title,
+  mantraSignUrl,
 }: {
   formState: typeof initialFormState;
   template: Template | null | undefined;
@@ -2812,14 +3254,15 @@ function TemplateSvgPreview({
   sections?: any[];
   mantra?: string;
   title?: string;
+  mantraSignUrl?: string | null;
 }) {
   const A4_W = 595;
   const A4_H = 842;
 
   const px = parseFloat(formState.photoX) || 390;
   const py = parseFloat(formState.photoY) || 100;
-  const pw = parseFloat(formState.photoWidth) || 140;
-  const ph = parseFloat(formState.photoHeight) || 140;
+  const pw = parseFloat(formState.photoWidth) || 100;
+  const ph = parseFloat(formState.photoHeight) || 130;
   const pr = parseFloat(formState.photoCornerRadius) || 8;
 
   const outerInset = parseFloat(formState.frameOuterInset) || 10;
@@ -2876,50 +3319,207 @@ function TemplateSvgPreview({
     if (propSections && propSections.length > 0) {
       return propSections;
     }
+    const lang = formState.language || "English";
+    const getDummyVal = (key: string, defaultVal: string) => {
+      const dummies: Record<string, Record<string, string>> = {
+        "English": {
+          "p1": "Rahul Anil Sharma",
+          "p2": "15 October 1995",
+          "p3": "10:15 AM",
+          "p4": "Mumbai, Maharashtra",
+          "p5": "5 ft 10 in",
+          "e1": "B.Tech in Computer Science",
+          "e2": "Senior Software Engineer",
+          "e3": "₹ 28,00,000 PA",
+          "f1": "Mr. Anil Kumar Sharma",
+          "f2": "Mrs. Sunita Sharma",
+          "f3": "Pune, Maharashtra",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "हिंदी": {
+          "p1": "राहुल अनिल शर्मा",
+          "p2": "15 अक्टूबर 1995",
+          "p3": "10:15 AM",
+          "p4": "मुंबई, महाराष्ट्र",
+          "p5": "5 फीट 10 इंच",
+          "e1": "बी.टेक कंप्यूटर साइंस",
+          "e2": "वरिष्ठ सॉफ्टवेयर इंजीनियर",
+          "e3": "₹ 28,00,000 प्रति वर्ष",
+          "f1": "श्री अनिल कुमार शर्मा",
+          "f2": "श्रीमती सुनीता शर्मा",
+          "f3": "पुणे, महाराष्ट्र",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "मराठी": {
+          "p1": "राहुल अनिल शर्मा",
+          "p2": "15 ऑक्टोबर 1995",
+          "p3": "10:15 AM",
+          "p4": "मुंबई, महाराष्ट्र",
+          "p5": "5 फूट 10 इंच",
+          "e1": "बी.टेक संगणक शास्त्र",
+          "e2": "वरिष्ठ सॉफ्टवेअर इंजिनिअर",
+          "e3": "₹ 28,00,000 प्रति वर्ष",
+          "f1": "श्री अनिल कुमार शर्मा",
+          "f2": "श्रीमती सुनीता शर्मा",
+          "f3": "पुणे, महाराष्ट्र",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ગુજરાતી": {
+          "p1": "રાહુલ અનિલ શર્મા",
+          "p2": "15 ઓક્ટોબર 1995",
+          "p3": "10:15 AM",
+          "p4": "મુંબઈ, મહારાષ્ટ્ર",
+          "p5": "5 ફૂટ 10 ઇંચ",
+          "e1": "બી.ટેક કમ્પ્યુટર સાયન્સ",
+          "e2": "સીનિયર સોફ્ટવેર એન્જિનિયર",
+          "e3": "₹ 28,00,000 પ્રતિ વર્ષ",
+          "f1": "શ્રી અનિલ કુમાર શર્મા",
+          "f2": "શ્રીમતી સુનીતા શર્મા",
+          "f3": "પુણે, મહારાષ્ટ્ર",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "বাংলা": {
+          "p1": "রাহুল অনিল শর্মা",
+          "p2": "15 অক্টোবর ১৯৯৫",
+          "p3": "10:15 AM",
+          "p4": "মুম্বাই, মহারাষ্ট্র",
+          "p5": "5 ফুট 10 ইঞ্চি",
+          "e1": "বি.টেক কম্পিউটার সায়েন্স",
+          "e2": "সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার",
+          "e3": "₹ 28,00,000 প্রতি বছর",
+          "f1": "শ্রী অনিল কুমার শর্মা",
+          "f2": "শ্রীমতী সুনীতা শর্মা",
+          "f3": "পুনে, महाराष्ट्र",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "தமிழ்": {
+          "p1": "ராகுல் அனில் சர்மா",
+          "p2": "15 அக்டோபர் 1995",
+          "p3": "முற்பகல் 10:15",
+          "p4": "மும்பை, மகாராஷ்டிரா",
+          "p5": "5 அடி 10 அங்குலம்",
+          "e1": "பி.டெக் கணினி அறிவியல்",
+          "e2": "மூத்த மென்பொருள் பொறியாளர்",
+          "e3": "₹ 28,00,000 ஆண்டுக்கு",
+          "f1": "திரு. அனில் குமார் சர்மா",
+          "f2": "திருமதி. சுனிதா சர்மா",
+          "f3": "புனே, மகாராஷ்டிரா",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "తెలుగు": {
+          "p1": "రాహుల్ అనిల్ శర్మ",
+          "p2": "15 అక్టోబర్ 1995",
+          "p3": "ఉదయం 10:15",
+          "p4": "ముంబై, మహారాష్ట్ర",
+          "p5": "5 అడుగుల 10 అంగుళాలు",
+          "e1": "బి.టెక్ కంప్యూటర్ సైన్స్",
+          "e2": "సీనియర్ సాఫ్ట్‌వేర్ ఇంజనీర్",
+          "e3": "₹ 28,00,000 సంవత్సరానికి",
+          "f1": "శ్రీ అనిల్ కుమార్ శర్మ",
+          "f2": "శ్రీమతి సునీత శర్మ",
+          "f3": "పూణే, మహారాష్ట్ర",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ಕನ್ನಡ": {
+          "p1": "ರಾಹುಲ್ ಅನಿಲ್ ಶರ್ಮ",
+          "p2": "15 ಅಕ್ಟೋಬರ್ 1995",
+          "p3": "ಬೆಳಿಗ್ಗೆ 10:15",
+          "p4": "ಮುಂಬೈ, ಮುಂಬಯಿ",
+          "p5": "5 ಅಡಿ 10 ಇಂಚು",
+          "e1": "ಬಿ.ಟೆಕ್ ಕಂಪ್ಯೂಟರ್ ಸೈನ್ಸ್",
+          "e2": "ಹಿರಿಯ ಸಾಫ್ಟ್‌ವೇರ್ ಎಂಜಿನಿಯರ್",
+          "e3": "₹ 28,00,000 ವಾರ್ಷಿಕ",
+          "f1": "ಶ್ರೀ ಅನಿಲ್ ಕುಮาร์ ಶರ್ಮ",
+          "f2": "ಶ್ರೀಮತಿ ಸುನೀತ ಶರ್ಮ",
+          "f3": "ಪುಣೆ, ಮಹಾರಾಷ್ಟ್ರ",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "ਪੰਜਾਬੀ": {
+          "p1": "ਰਾਹੁਲ ਅਨਿਲ ਸ਼ਰਮਾ",
+          "p2": "15 ਅਕਤੂਬਰ 1995",
+          "p3": "ਸਵੇਰੇ 10:15",
+          "p4": "ਮੁੰਬਈ, ਮਹਾਰਾਸ਼ਟਰ",
+          "p5": "5 ਫੁੱਟ 10 ਇੰਚ",
+          "e1": "ਬੀ.ਟੈਕ ਕੰਪਿਊਟਰ ਸਾਇੰਸ",
+          "e2": "ਸੀਨੀਅਰ ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ",
+          "e3": "₹ 28,00,000 ਸਾਲਾਨਾ",
+          "f1": "ਸ਼੍ਰੀ ਅਨਿਲ ਕੁਮਾਰ ਸ਼ਰਮਾ",
+          "f2": "ਸ਼੍ਰੀਮਤੀ ਸੁਨੀਤਾ ਸ਼ਰਮਾ",
+          "f3": "ਪੁਣੇ, ਮਹਾਰਾਸ਼ਟਰ",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        },
+        "Urdu": {
+          "p1": "راہول انیل شرما",
+          "p2": "15 اکتوبر 1995",
+          "p3": "10:15 صبح",
+          "p4": "ممبئی، مہاراشٹر",
+          "p5": "5 فٹ 10 انچ",
+          "e1": "بی ٹیک کمپیوٹر سائنس",
+          "e2": "سینئر سافٹ ویئر انجینئر",
+          "e3": "₹ 28,00,000 سالانہ",
+          "f1": "جناب انیل کمار شرما",
+          "f2": "محترمہ سنیتا شرما",
+          "f3": "پونے، مہاراشٹر",
+          "c1": "+91 98765 43210",
+          "c2": "rahul.sharma@example.com",
+        }
+      };
+      return dummies[lang]?.[key] || dummies["English"][key] || defaultVal;
+    };
+
     return [
       {
         key: "personal",
         title: t.personal || "Personal Details",
         fields: [
-          { id: "p1", displayLabel: t.fullName || "Full Name", displayValue: "Rahul Anil Sharma" },
-          { id: "p2", displayLabel: t.dateOfBirth || "Date of Birth", displayValue: "15 October 1995" },
-          { id: "p3", displayLabel: t.timeOfBirth || "Time of Birth", displayValue: "10:15 AM" },
-          { id: "p4", displayLabel: t.placeOfBirth || "Place of Birth", displayValue: "Mumbai, Maharashtra" },
-          { id: "p5", displayLabel: t.height || "Height", displayValue: "5 ft 10 in" },
+          { id: "p1", displayLabel: t.fullName || "Full Name", displayValue: getDummyVal("p1", "Rahul Anil Sharma") },
+          { id: "p2", displayLabel: t.dateOfBirth || "Date of Birth", displayValue: getDummyVal("p2", "15 October 1995") },
+          { id: "p3", displayLabel: t.timeOfBirth || "Time of Birth", displayValue: getDummyVal("p3", "10:15 AM") },
+          { id: "p4", displayLabel: t.placeOfBirth || "Place of Birth", displayValue: getDummyVal("p4", "Mumbai, Maharashtra") },
+          { id: "p5", displayLabel: t.height || "Height", displayValue: getDummyVal("p5", "5 ft 10 in") },
         ],
       },
       {
         key: "educationSec",
         title: t.educationSec || "Education & Career",
         fields: [
-          { id: "e1", displayLabel: t.education || "Education", displayValue: "B.Tech in Computer Science" },
-          { id: "e2", displayLabel: t.occupation || "Occupation", displayValue: "Senior Software Engineer" },
-          { id: "e3", displayLabel: t.annualIncome || "Annual Income", displayValue: "₹ 28,0,000 PA" },
+          { id: "e1", displayLabel: t.education || "Education", displayValue: getDummyVal("e1", "B.Tech in Computer Science") },
+          { id: "e2", displayLabel: t.occupation || "Occupation", displayValue: getDummyVal("e2", "Senior Software Engineer") },
+          { id: "e3", displayLabel: t.annualIncome || "Annual Income", displayValue: getDummyVal("e3", "₹ 28,00,000 PA") },
         ],
       },
       {
         key: "family",
         title: t.family || "Family Background",
         fields: [
-          { id: "f1", displayLabel: t.fatherName || "Father's Name", displayValue: "Mr. Anil Kumar Sharma" },
-          { id: "f2", displayLabel: t.motherName || "Mother's Name", displayValue: "Mrs. Sunita Sharma" },
-          { id: "f3", displayLabel: t.nativePlace || "Native Place", displayValue: "Pune, Maharashtra" },
+          { id: "f1", displayLabel: t.fatherName || "Father's Name", displayValue: getDummyVal("f1", "Mr. Anil Kumar Sharma") },
+          { id: "f2", displayLabel: t.motherName || "Mother's Name", displayValue: getDummyVal("f2", "Mrs. Sunita Sharma") },
+          { id: "f3", displayLabel: t.nativePlace || "Native Place", displayValue: getDummyVal("f3", "Pune, Maharashtra") },
         ],
       },
       {
         key: "contact",
         title: t.contact || "Contact Details",
         fields: [
-          { id: "c1", displayLabel: t.mobile || "Mobile", displayValue: "+91 98765 43210" },
-          { id: "c2", displayLabel: t.email || "Email", displayValue: "rahul.sharma@example.com" },
+          { id: "c1", displayLabel: t.mobile || "Mobile", displayValue: getDummyVal("c1", "+91 98765 43210") },
+          { id: "c2", displayLabel: t.email || "Email", displayValue: getDummyVal("c2", "rahul.sharma@example.com") },
         ],
       },
     ];
-  }, [t, propSections]);
+  }, [t, propSections, formState.language]);
 
   const layout = React.useMemo(() => {
     let cursorY = paddingTop + 20;
-    const baseFontSize = getNum(formState.defaultFontSize, 11);
+    const baseFontSize = getNum(formState.defaultFontSize, 9);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
@@ -3029,6 +3629,19 @@ function TemplateSvgPreview({
 
     return { sectionLayouts, fSize: baseFontSize };
   }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
+
+  const mantraGeometry = React.useMemo(() => {
+    if (!mantraSignUrl) return null;
+    const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
+    const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
+    const halfW = textWidth / 2;
+    const gap = 7;
+    const imgW = 45;
+    return {
+      leftX: A4_W / 2 - halfW - gap - imgW,
+      rightX: A4_W / 2 + halfW + gap + imgW,
+    };
+  }, [mantra, mantraSignUrl, layout.fSize, currentLang]);
 
   const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
 
@@ -3284,6 +3897,26 @@ function TemplateSvgPreview({
         >
           {mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
         </text>
+        
+        {mantraSignUrl && mantraGeometry && (
+          <>
+            <image
+              x={mantraGeometry.leftX}
+              y={paddingTop + 4}
+              width="45"
+              height="45"
+              href={mantraSignUrl}
+            />
+            <image
+              x={-mantraGeometry.rightX}
+              y={paddingTop + 4}
+              width="45"
+              height="45"
+              href={mantraSignUrl}
+              transform="scale(-1, 1)"
+            />
+          </>
+        )}
         
         {/* Title Rendering */}
         {(() => {
