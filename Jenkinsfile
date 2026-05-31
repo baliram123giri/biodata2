@@ -3,9 +3,9 @@ agent any
 
 ```
 environment {
-    PROD_BASE     = "/var/www/biodata99"
+    PROD_BASE = "/var/www/biodata99"
     KEEP_RELEASES = "3"
-    APP_NAME      = "biodata99"
+    APP_NAME = "biodata99"
 }
 
 stages {
@@ -21,17 +21,17 @@ stages {
             sh '''
                 set -e
 
-                echo "🚀 Starting Deployment"
+                echo "Starting Deployment"
 
                 TS=$(date +%Y%m%d_%H%M%S)
                 RELEASE="$PROD_BASE/releases/$TS"
 
-                echo "📂 Creating release directory"
+                echo "Creating release directory"
                 mkdir -p "$RELEASE"
 
-                echo "📋 Copying source code"
+                echo "Copying source code"
 
-                rsync -av \
+                rsync -a \
                     --exclude=node_modules \
                     --exclude=.next \
                     --exclude=.git \
@@ -45,58 +45,44 @@ stages {
 
                 cd "$RELEASE"
 
-                echo "🔗 Linking shared env"
+                echo "Linking environment file"
                 ln -sfn "$PROD_BASE/.env" .env
 
-                echo "🧹 Cleaning build cache"
-                rm -rf .next || true
-                rm -rf node_modules || true
+                echo "Cleaning previous build"
+                rm -rf .next
+                rm -rf node_modules
 
-                echo "📦 Installing dependencies"
+                echo "Installing dependencies"
                 npm install
 
-                echo "🗄️ Generating Prisma Client"
+                echo "Generating Prisma Client"
                 npx prisma generate
 
-                echo "🏗️ Building application"
+                echo "Building Next.js application"
                 NODE_ENV=production npm run build
 
-                echo "🔐 Fixing permissions"
-                chown -R jenkins:jenkins "$RELEASE" || true
-                chmod -R 755 "$RELEASE" || true
-
-                echo "🔄 Switching current release"
+                echo "Updating current symlink"
                 ln -sfn "$RELEASE" "$PROD_BASE/current"
-
-                echo "♻️ Restarting PM2"
 
                 cd "$PROD_BASE/current"
 
-                pm2 describe "$APP_NAME" > /dev/null 2>&1
+                echo "Restarting PM2"
 
-                if [ $? -eq 0 ]; then
-                    pm2 reload ecosystem.config.js \
-                        --only "$APP_NAME" \
-                        --update-env
+                if pm2 describe "$APP_NAME" > /dev/null 2>&1; then
+                    pm2 reload ecosystem.config.js --only "$APP_NAME" --update-env
                 else
-                    pm2 start ecosystem.config.js \
-                        --only "$APP_NAME"
+                    pm2 start ecosystem.config.js --only "$APP_NAME"
                 fi
 
                 pm2 save --force
 
-                echo "🧹 Removing old releases"
+                echo "Cleaning old releases"
 
                 cd "$PROD_BASE/releases"
 
-                ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | while read OLD
-                do
-                    echo "Removing $OLD"
-                    chmod -R u+w "$OLD" || true
-                    rm -rf "$OLD" || true
-                done
+                ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | xargs -r rm -rf
 
-                echo "✅ Deployment Successful"
+                echo "Deployment completed successfully"
             '''
         }
     }
@@ -104,11 +90,11 @@ stages {
 
 post {
     success {
-        echo '✅ Deployment completed successfully.'
+        echo 'Deployment completed successfully.'
     }
 
     failure {
-        echo '❌ Deployment failed.'
+        echo 'Deployment failed. Review the logs above.'
     }
 }
 ```
