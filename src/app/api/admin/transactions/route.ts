@@ -20,14 +20,15 @@ export async function GET(req: Request) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const format = searchParams.get("format") || "";
+    const downloadStatus = searchParams.get("downloadStatus") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const bypassCache = searchParams.get("bypass") === "true";
     const skip = (page - 1) * limit;
 
     // Unique cache key per filter combination
-    const cacheKey = `transactions:${search}:${status}:${format}:${page}:${limit}`;
-    if (bypassCache) apiCache.invalidate(cacheKey);
+    const cacheKey = `transactions:${search}:${status}:${format}:${downloadStatus}:${page}:${limit}`;
+    if (bypassCache) apiCache.invalidatePrefix("transactions");
 
     // Build query filters
     const where: any = {};
@@ -38,6 +39,14 @@ export async function GET(req: Request) {
 
     if (format) {
       where.format = format;
+    }
+
+    if (downloadStatus) {
+      if (downloadStatus.toLowerCase() === "pending") {
+        where.downloadStatus = null;
+      } else {
+        where.downloadStatus = downloadStatus.toLowerCase();
+      }
     }
 
     if (search) {
@@ -52,54 +61,55 @@ export async function GET(req: Request) {
     }
 
     const result = await apiCache.remember(cacheKey, TTL.SHORT, async () => {
-    // Get orders
-    const [ordersRaw, total] = await Promise.all([
-      withRetry(() =>
-        prisma.order.findMany({
-          where,
-          orderBy: { createdAt: "desc" },
-          skip,
-          take: limit,
-        })
-      ),
-      withRetry(() => prisma.order.count({ where })),
-    ]);
+      // Execute all 6 database queries concurrently to prevent PG connection pool starvation and eliminate hangs
+      const [
+        ordersRaw,
+        total,
+        templates,
+        allPaidOrders,
+        allPendingOrders,
+        totalTransactions
+      ] = await Promise.all([
+        withRetry(() =>
+          prisma.order.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            skip,
+            take: limit,
+          })
+        ),
+        withRetry(() => prisma.order.count({ where })),
+        withRetry(() =>
+          prisma.template.findMany({
+            select: {
+              id: true,
+              name: true,
+            },
+          })
+        ),
+        withRetry(() =>
+          prisma.order.aggregate({
+            where: { status: "paid" },
+            _sum: { amount: true },
+            _count: { id: true },
+          })
+        ),
+        withRetry(() => prisma.order.count({ where: { status: "pending" } })),
+        withRetry(() => prisma.order.count()),
+      ]);
 
-    // Map template names
-    const templates = await withRetry(() =>
-      prisma.template.findMany({
-        select: {
-          id: true,
-          name: true,
-        },
-      })
-    );
+      const orders = ordersRaw.map((order) => {
+        const template = templates.find((t) => t.id === order.templateId);
+        return {
+          ...order,
+          templateName: template ? template.name : "Premium Theme",
+          downloadStatus: (order as any).downloadStatus || null,
+        };
+      });
 
-    const orders = ordersRaw.map((order) => {
-      const template = templates.find((t) => t.id === order.templateId);
-      return {
-        ...order,
-        templateName: template ? template.name : "Premium Theme",
-      };
-    });
-
-    // Calculate quick stats across ALL filtered results for context
-    const allPaidOrders = await withRetry(() =>
-      prisma.order.aggregate({
-        where: { status: "paid" },
-        _sum: { amount: true },
-        _count: { id: true },
-      })
-    );
-
-    const allPendingOrders = await withRetry(() =>
-      prisma.order.count({ where: { status: "pending" } })
-    );
-
-    const totalRevenue = allPaidOrders._sum.amount || 0;
-    const totalTransactions = await withRetry(() => prisma.order.count());
-    const paidCount = allPaidOrders._count.id;
-    const successRate = totalTransactions > 0 ? Math.round((paidCount / totalTransactions) * 100) : 100;
+      const totalRevenue = allPaidOrders._sum.amount || 0;
+      const paidCount = allPaidOrders._count.id;
+      const successRate = totalTransactions > 0 ? Math.round((paidCount / totalTransactions) * 100) : 100;
 
     return {
         success: true,

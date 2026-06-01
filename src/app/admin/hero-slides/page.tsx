@@ -10,7 +10,8 @@ import {
   ArrowUpDown, 
   Upload, 
   Loader2, 
-  ArrowLeft 
+  ArrowLeft,
+  Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +22,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger, 
   DialogFooter,
   DialogDescription 
 } from "@/components/ui/dialog";
@@ -53,12 +53,25 @@ export default function AdminHeroSlides() {
   const slides = data || [];
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [editingSlide, setEditingSlide] = React.useState<HeroSlide | null>(null);
   
-  // New slide form state
+  // Slide form state
   const [title, setTitle] = React.useState("");
   const [order, setOrder] = React.useState("0");
   const [imageFile, setImageFile] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState("");
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Clear form and reset edit state
+      setEditingSlide(null);
+      setTitle("");
+      setOrder("0");
+      setImageFile(null);
+      setFileName("");
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,36 +90,57 @@ export default function AdminHeroSlides() {
     reader.readAsDataURL(file);
   };
 
-  const handleCreateSlide = async (e: React.FormEvent) => {
+  const handleSubmitSlide = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageFile) {
-      toast.error("Please upload a high-quality template preview image");
+    
+    // Image is required in create mode, but optional in edit mode (if they don't want to replace the image)
+    if (!editingSlide && !imageFile) {
+      toast.error("Please upload a template preview image");
       return;
     }
 
     setIsSubmitLoading(true);
     try {
-      const res = await fetch("/api/admin/hero-slides", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          imageFile,
-          order: parseInt(order) || 0,
-        }),
-      });
+      if (editingSlide) {
+        // Edit mode (PATCH to [id])
+        const res = await fetch(`/api/admin/hero-slides/${editingSlide.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            order: parseInt(order) || 0,
+            imageFile: imageFile || undefined, // only pass image if replaced
+          }),
+        });
 
-      if (res.ok) {
-        toast.success("High-fidelity hero slide created and uploaded successfully!");
-        setTitle("");
-        setOrder("0");
-        setImageFile(null);
-        setFileName("");
-        setIsDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
+        if (res.ok) {
+          toast.success("Hero template updated successfully!");
+          handleDialogOpenChange(false);
+          queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Failed to update slide");
+        }
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to create slide");
+        // Create mode (POST)
+        const res = await fetch("/api/admin/hero-slides", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            imageFile,
+            order: parseInt(order) || 0,
+          }),
+        });
+
+        if (res.ok) {
+          toast.success("High-fidelity hero slide created and uploaded successfully!");
+          handleDialogOpenChange(false);
+          queryClient.invalidateQueries({ queryKey: ["admin", "hero-slides"] });
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Failed to create slide");
+        }
       }
     } catch (err) {
       console.error(err);
@@ -190,25 +224,36 @@ export default function AdminHeroSlides() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-lg bg-gradient-primary border-0 font-bold tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer">
-              <Plus className="w-4 h-4 mr-2" />
-              Upload Hero Template
-            </Button>
-          </DialogTrigger>
+        <Button 
+          onClick={() => {
+            setEditingSlide(null);
+            setTitle("");
+            setOrder("0");
+            setImageFile(null);
+            setFileName("");
+            setIsDialogOpen(true);
+          }}
+          className="rounded-lg bg-gradient-primary border-0 font-bold tracking-wide shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Upload Hero Template
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogContent className="sm:max-w-[480px] bg-card border border-border rounded-xl shadow-xl">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                Upload New Hero Template
+                {editingSlide ? "Edit Hero Template" : "Upload New Hero Template"}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Select a high-resolution exported PNG or JPEG file of the template. This file will be uploaded to Cloudinary in original quality.
+                {editingSlide 
+                  ? "Update template metadata. If you upload a new image, it will replace the existing image in Cloudinary directly without creating duplicate assets."
+                  : "Select a high-resolution exported PNG or JPEG file of the template. This file will be uploaded to Cloudinary."}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleCreateSlide} className="space-y-4 pt-2">
+            <form onSubmit={handleSubmitSlide} className="space-y-4 pt-2">
               <div className="space-y-1.5">
                 <Label htmlFor="slide-title" className="text-xs font-bold text-muted-foreground">Template Name / Title</Label>
                 <Input
@@ -234,13 +279,15 @@ export default function AdminHeroSlides() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-muted-foreground">Upload High-Res Template Image *</Label>
+                <Label className="text-xs font-bold text-muted-foreground">
+                  {editingSlide ? "Replace Image (Optional)" : "Upload High-Res Template Image *"}
+                </Label>
                 <div className="border-2 border-dashed border-border/80 hover:border-primary/50 transition-colors rounded-xl p-6 text-center cursor-pointer relative group bg-secondary/10">
                   <input
                     type="file"
                     accept="image/png, image/jpeg, image/jpg"
                     onChange={handleFileChange}
-                    required
+                    required={!editingSlide}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div className="flex flex-col items-center justify-center space-y-2">
@@ -248,10 +295,10 @@ export default function AdminHeroSlides() {
                       <Upload className="w-5 h-5 text-primary" />
                     </div>
                     <p className="text-xs font-bold text-foreground">
-                      {fileName ? `✓ ${fileName}` : "Click or Drag to Upload Template Image"}
+                      {fileName ? `✓ ${fileName}` : editingSlide ? "Click or Drag to Replace Image" : "Click or Drag to Upload Template Image"}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      Supports PNG, JPG, or JPEG up to 10MB.
+                      {editingSlide ? "Leave blank to keep existing slide image." : "Supports PNG, JPG, or JPEG up to 10MB."}
                     </p>
                   </div>
                 </div>
@@ -266,10 +313,10 @@ export default function AdminHeroSlides() {
                   {isSubmitLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading to Cloudinary...
+                      {editingSlide ? "Updating Cloudinary Slide..." : "Uploading to Cloudinary..."}
                     </>
                   ) : (
-                    "Save & Publish Slide"
+                    editingSlide ? "Save Template Changes" : "Save & Publish Slide"
                   )}
                 </Button>
               </DialogFooter>
@@ -349,34 +396,51 @@ export default function AdminHeroSlides() {
                   </div>
 
                   {/* Actions Grid */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleActive(slide.id, slide.active)}
-                      className="rounded-lg text-xs h-9 font-bold cursor-pointer"
+                      className="rounded-lg text-[10px] h-8 font-extrabold cursor-pointer px-1 flex items-center justify-center gap-1"
                     >
                       {slide.active ? (
                         <>
-                          <EyeOff className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                          Deactivate
+                          <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span>Hide</span>
                         </>
                       ) : (
                         <>
-                          <Eye className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                          Activate
+                          <Eye className="w-3.5 h-3.5 text-primary" />
+                          <span>Show</span>
                         </>
                       )}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingSlide(slide);
+                        setTitle(slide.title);
+                        setOrder(String(slide.order));
+                        setImageFile(null);
+                        setFileName("");
+                        setIsDialogOpen(true);
+                      }}
+                      className="rounded-lg text-[10px] h-8 font-extrabold cursor-pointer px-1 flex items-center justify-center gap-1 text-primary border-primary/20 hover:bg-primary/5"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
                     </Button>
 
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteSlide(slide.id)}
-                      className="rounded-lg text-xs h-9 font-bold cursor-pointer"
+                      className="rounded-lg text-[10px] h-8 font-extrabold cursor-pointer px-1 flex items-center justify-center gap-1"
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                      Delete
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
                     </Button>
                   </div>
                 </div>

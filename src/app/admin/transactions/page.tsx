@@ -46,6 +46,7 @@ export default function AdminTransactions() {
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [status, setStatus] = React.useState("ALL");
   const [format, setFormat] = React.useState("ALL");
+  const [downloadStatus, setDownloadStatus] = React.useState("ALL");
   const [page, setPage] = React.useState(1);
   const [selectedTransaction, setSelectedTransaction] = React.useState<any>(null);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -62,10 +63,14 @@ export default function AdminTransactions() {
     onConfirm: () => {},
   });
 
-  // Reset rowSelection when filters or page change
-  React.useEffect(() => {
-    setRowSelection({});
-  }, [debouncedSearch, status, format, page]);
+  const clearRowSelection = React.useCallback(() => {
+    setRowSelection((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      return {};
+    });
+  }, []);
+
+
 
   const selectedIds = React.useMemo(() => {
     return Object.keys(rowSelection);
@@ -76,11 +81,12 @@ export default function AdminTransactions() {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
+      clearRowSelection();
     }, 450);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const queryKey = ["admin", "transactions", { debouncedSearch, status, format, page }];
+  const queryKey = ["admin", "transactions", { debouncedSearch, status, format, downloadStatus, page }];
   const { data, isLoading, refetch } = useQuery({
     queryKey,
     queryFn: async () => {
@@ -88,6 +94,7 @@ export default function AdminTransactions() {
       if (debouncedSearch) url.searchParams.set("search", debouncedSearch);
       if (status && status !== "ALL") url.searchParams.set("status", status.toLowerCase());
       if (format && format !== "ALL") url.searchParams.set("format", format.toLowerCase());
+      if (downloadStatus && downloadStatus !== "ALL") url.searchParams.set("downloadStatus", downloadStatus.toLowerCase());
       url.searchParams.set("page", String(page));
       url.searchParams.set("limit", "15");
       const res = await fetch(url.toString());
@@ -97,9 +104,10 @@ export default function AdminTransactions() {
     staleTime: 0, // Instant refetch on state/filter change and invalidation
   });
 
-  const orders: any[] = data?.orders || [];
+  const orders = React.useMemo(() => data?.orders || [], [data?.orders]);
   const stats = data?.stats || null;
   const pagination = data?.pagination || null;
+  const isInitialLoading = isLoading && orders.length === 0;
 
   const fetchTransactions = async (bypassCache = false) => {
     if (bypassCache) {
@@ -111,6 +119,7 @@ export default function AdminTransactions() {
             if (debouncedSearch) url.searchParams.set("search", debouncedSearch);
             if (status && status !== "ALL") url.searchParams.set("status", status.toLowerCase());
             if (format && format !== "ALL") url.searchParams.set("format", format.toLowerCase());
+            if (downloadStatus && downloadStatus !== "ALL") url.searchParams.set("downloadStatus", downloadStatus.toLowerCase());
             url.searchParams.set("page", String(page));
             url.searchParams.set("limit", "15");
             url.searchParams.set("bypass", "true");
@@ -133,7 +142,9 @@ export default function AdminTransactions() {
     setSearch("");
     setStatus("ALL");
     setFormat("ALL");
+    setDownloadStatus("ALL");
     setPage(1);
+    clearRowSelection();
   };
 
   const getFormatBadgeStyle = (fmt: string) => {
@@ -466,7 +477,7 @@ export default function AdminTransactions() {
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             {/* Status Select */}
             <div className="w-[140px] shrink-0">
-              <Select value={status} onValueChange={(val) => { setStatus(val); setPage(1); }}>
+              <Select value={status} onValueChange={(val) => { setStatus(val); setPage(1); clearRowSelection(); }}>
                 <SelectTrigger className="h-9 text-xs bg-muted/20 border-border">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -481,7 +492,7 @@ export default function AdminTransactions() {
 
             {/* Format Select */}
             <div className="w-[140px] shrink-0">
-              <Select value={format} onValueChange={(val) => { setFormat(val); setPage(1); }}>
+              <Select value={format} onValueChange={(val) => { setFormat(val); setPage(1); clearRowSelection(); }}>
                 <SelectTrigger className="h-9 text-xs bg-muted/20 border-border">
                   <SelectValue placeholder="All Formats" />
                 </SelectTrigger>
@@ -495,8 +506,23 @@ export default function AdminTransactions() {
               </Select>
             </div>
 
+            {/* Download Status Select */}
+            <div className="w-[140px] shrink-0">
+              <Select value={downloadStatus} onValueChange={(val) => { setDownloadStatus(val); setPage(1); clearRowSelection(); }}>
+                <SelectTrigger className="h-9 text-xs bg-muted/20 border-border">
+                  <SelectValue placeholder="All Downloads" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Downloads</SelectItem>
+                  <SelectItem value="PENDING">Pending DL</SelectItem>
+                  <SelectItem value="SUCCESS">Success DL</SelectItem>
+                  <SelectItem value="FAILED">Failed DL</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Reset Button */}
-            {(search || status !== "ALL" || format !== "ALL") && (
+            {(search || status !== "ALL" || format !== "ALL" || downloadStatus !== "ALL") && (
               <Button
                 onClick={resetFilters}
                 variant="ghost"
@@ -544,7 +570,7 @@ export default function AdminTransactions() {
                       });
                       if (res.ok) {
                         toast.success(`Successfully updated ${selectedIds.length} transactions to ${newStatus}`, { id: loadingToast });
-                        setRowSelection({});
+                        clearRowSelection();
                         queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
                         refetch();
                       } else {
@@ -584,7 +610,7 @@ export default function AdminTransactions() {
                           });
                           if (res.ok) {
                             toast.success(`Successfully purged ${selectedIds.length} transaction records`, { id: loadingToast });
-                            setRowSelection({});
+                            clearRowSelection();
                             queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
                             refetch();
                           } else {
@@ -605,7 +631,7 @@ export default function AdminTransactions() {
                 </Button>
 
                 <Button
-                  onClick={() => setRowSelection({})}
+                  onClick={clearRowSelection}
                   variant="ghost"
                   className="h-8 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer px-3"
                 >
@@ -618,7 +644,7 @@ export default function AdminTransactions() {
 
         {/* Mobile Responsive Cards View */}
         <div className="block sm:hidden divide-y divide-border/40">
-          {isLoading ? (
+          {isInitialLoading ? (
             <div className="p-8 text-center text-muted-foreground font-semibold flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span>Querying transactions database...</span>
@@ -728,7 +754,7 @@ export default function AdminTransactions() {
               ))}
             </thead>
             <tbody className="divide-y divide-border/40 text-foreground/90">
-              {isLoading ? (
+              {isInitialLoading ? (
                 <tr>
                   <td colSpan={columns.length} className="p-12 text-center text-muted-foreground font-semibold">
                     <Loader2 className="w-6 h-6 animate-spin text-primary inline mr-2" />
@@ -772,7 +798,7 @@ export default function AdminTransactions() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => { setPage((prev) => Math.max(1, prev - 1)); clearRowSelection(); }}
               disabled={page === 1 || isLoading}
               className="h-8 text-xs font-semibold cursor-pointer"
             >
@@ -781,7 +807,7 @@ export default function AdminTransactions() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((prev) => Math.min(pagination?.pages || 1, prev + 1))}
+              onClick={() => { setPage((prev) => Math.min(pagination?.pages || 1, prev + 1)); clearRowSelection(); }}
               disabled={page === (pagination?.pages || 1) || isLoading}
               className="h-8 text-xs font-semibold cursor-pointer"
             >
@@ -962,6 +988,57 @@ export default function AdminTransactions() {
                           <SelectItem value="FAILED">Failed</SelectItem>
                           <SelectItem value="REFUNDED">Refunded</SelectItem>
                           <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 border-t border-border/20 pt-3">
+                    <div className="flex flex-col text-left">
+                      <span className="text-[10px] font-semibold text-muted-foreground">Change Download Status</span>
+                      <span className="text-[9px] text-muted-foreground/80 mt-0.5">Manually toggle download fulfillment status</span>
+                    </div>
+                    
+                    <div className="w-[130px] shrink-0">
+                      <Select 
+                        value={(selectedTransaction.downloadStatus || "PENDING").toUpperCase()} 
+                        onValueChange={async (newVal) => {
+                          try {
+                            const res = await fetch("/api/admin/transactions/update-status", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                orderId: selectedTransaction.id,
+                                downloadStatus: newVal.toLowerCase() === "pending" ? null : newVal.toLowerCase(),
+                              }),
+                            });
+                            
+                            if (res.ok) {
+                              toast.success(`Download status successfully set to ${newVal}`);
+                              // Invalidate query cache to pull updated transactions
+                              queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                              refetch();
+                              setSelectedTransaction((prev: any) => ({ 
+                                ...prev, 
+                                downloadStatus: newVal.toLowerCase() === "pending" ? null : newVal.toLowerCase() 
+                              }));
+                            } else {
+                              const errData = await res.json();
+                              toast.error(errData.error || "Failed to update download status");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            toast.error("Network communication error");
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-[11px] bg-card border-border">
+                          <SelectValue placeholder="Select DL Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="SUCCESS">Success</SelectItem>
+                          <SelectItem value="FAILED">Failed</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

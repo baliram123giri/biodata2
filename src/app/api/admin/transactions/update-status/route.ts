@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
+import { apiCache } from "@/lib/api-cache";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -16,21 +17,47 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { orderId, orderIds, status } = body;
+    const { orderId, orderIds, status, downloadStatus } = body;
 
-    if ((!orderId && (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0)) || !status) {
+    if (!orderId && (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0)) {
       return NextResponse.json(
-        { error: "orderId/orderIds and status are required fields" },
+        { error: "orderId or orderIds is required" },
         { status: 400 }
       );
     }
 
-    const validStatuses = ["paid", "pending", "failed", "refunded", "cancelled"];
-    const targetStatus = status.toLowerCase();
+    const dataToUpdate: any = {};
 
-    if (!validStatuses.includes(targetStatus)) {
+    if (status) {
+      const validStatuses = ["paid", "pending", "failed", "refunded", "cancelled"];
+      const targetStatus = status.toLowerCase();
+
+      if (!validStatuses.includes(targetStatus)) {
+        return NextResponse.json(
+          { error: "Invalid checkout status type" },
+          { status: 400 }
+        );
+      }
+      dataToUpdate.status = targetStatus;
+    }
+
+    if (downloadStatus !== undefined) {
+      const validDLStatuses = ["success", "failed", "pending"];
+      const targetDLStatus = downloadStatus === null ? "pending" : String(downloadStatus).toLowerCase();
+
+      if (!validDLStatuses.includes(targetDLStatus)) {
+        return NextResponse.json(
+          { error: "Invalid download status type" },
+          { status: 400 }
+        );
+      }
+      // If "pending", save as null in the DB
+      dataToUpdate.downloadStatus = targetDLStatus === "pending" ? null : targetDLStatus;
+    }
+
+    if (Object.keys(dataToUpdate).length === 0) {
       return NextResponse.json(
-        { error: "Invalid checkout status type" },
+        { error: "No fields to update provided (status or downloadStatus)" },
         { status: 400 }
       );
     }
@@ -38,23 +65,28 @@ export async function POST(req: Request) {
     if (orderIds && Array.isArray(orderIds)) {
       const updated = await prisma.order.updateMany({
         where: { id: { in: orderIds } },
-        data: { status: targetStatus },
+        data: dataToUpdate,
       });
+
+      apiCache.invalidatePrefix("transactions");
+
       return NextResponse.json({
         success: true,
-        message: `Transaction status updated for ${updated.count} orders to ${targetStatus}`,
+        message: `Transaction values updated for ${updated.count} orders`,
       });
     }
 
-    // Update order status in the database
+    // Update order in the database
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: targetStatus },
+      data: dataToUpdate,
     });
+
+    apiCache.invalidatePrefix("transactions");
 
     return NextResponse.json({
       success: true,
-      message: `Transaction status updated to ${targetStatus}`,
+      message: `Transaction successfully updated`,
       order: updatedOrder,
     });
   } catch (error: any) {

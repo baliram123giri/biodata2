@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
+import { apiCache } from "@/lib/api-cache";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
@@ -29,6 +30,9 @@ export async function POST(req: Request) {
       const deleted = await prisma.order.deleteMany({
         where: { id: { in: orderIds } },
       });
+      
+      apiCache.invalidatePrefix("transactions");
+      
       return NextResponse.json({
         success: true,
         message: `Successfully deleted ${deleted.count} transaction records`,
@@ -38,6 +42,8 @@ export async function POST(req: Request) {
     const deletedOrder = await prisma.order.delete({
       where: { id: orderId },
     });
+
+    apiCache.invalidatePrefix("transactions");
 
     return NextResponse.json({
       success: true,

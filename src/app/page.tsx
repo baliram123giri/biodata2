@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 
 export default function Home() {
   const finalSlides = [
-    { id: "1", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779698835/biodata/hero_slides/vwqpwpwy72u2xnnwlc0x.jpg", title: "Royal Gold Premium" },
-    { id: "2", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779697868/biodata/hero_slides/rslwwcxq7e8hdcsz0vbk.jpg", title: "Ornate Grandeur Emerald" },
-    { id: "3", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1779697769/biodata/hero_slides/umpd0mqssairpwfzpytk.jpg", title: "Elegant Peacock Royal" }
+    { id: "1", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333327/biodata/hero_slides/umpd0mqssairpwfzpytk.png", title: "Royal Gold Premium" },
+    { id: "2", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333386/biodata/hero_slides/rslwwcxq7e8hdcsz0vbk.png", title: "Neelambari Dream" },
+    { id: "3", imageUrl: "https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333404/biodata/hero_slides/vwqpwpwy72u2xnnwlc0x.png", title: "Peacock Royal" }
   ];
 
   return (
