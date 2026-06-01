@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, location, format, templateId } = body;
+    const { name, location, format, templateId, orderId } = body;
 
     if (!name || !format) {
       return NextResponse.json(
@@ -30,6 +30,18 @@ export async function POST(req: Request) {
         userAgent,
       },
     });
+
+    // If orderId is provided, update downloadStatus on the Order table
+    if (orderId && orderId !== "sandbox" && orderId !== "dev_bypass") {
+      try {
+        await prisma.order.update({
+          where: { razorpayOrderId: orderId },
+          data: { downloadStatus: "success" },
+        });
+      } catch (dbErr) {
+        console.warn("Failed to update downloadStatus of order in download-log API:", dbErr);
+      }
+    }
 
     return NextResponse.json({ success: true, log });
   } catch (error: any) {

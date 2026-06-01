@@ -263,7 +263,8 @@ export function useDownloadBiodata() {
     formData: any,
     templateId: string,
     format: DownloadFormat = "pdf",
-    customFilename?: string
+    customFilename?: string,
+    orderId?: string
   ): Promise<{ success: boolean; error?: any }> => {
     setIsGenerating(true);
 
@@ -293,6 +294,7 @@ export function useDownloadBiodata() {
         location: locField,
         format,
         templateId,
+        orderId,
       }),
     }).catch((err) => console.error("Failed to log download:", err));
 

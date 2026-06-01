@@ -214,8 +214,8 @@ export default function EditPage() {
         customerPhone: properPhone,
         currency: activeTemplate?.currency || "INR",
         couponCode: couponCode,
-        onDownload: async () => {
-          const result = await triggerDownload(currentData, selectedTemplate, format, modalFilename);
+        onDownload: async (orderId: string) => {
+          const result = await triggerDownload(currentData, selectedTemplate, format, modalFilename, orderId);
           if (result && !result.success) {
             throw result.error || new Error("Download failed");
           }

@@ -54,6 +54,9 @@ stages {
                 echo "Installing dependencies"
                 npm install
 
+                echo "Pushing database schema to production database"
+                npx prisma db push --accept-data-loss
+
                 echo "Generating Prisma Client"
                 npx prisma generate
 
@@ -65,21 +68,21 @@ stages {
 
                 cd "$PROD_BASE/current"
 
-                echo "Restarting PM2"
+                echo "Restarting PM2 process system-wide"
 
-                if pm2 describe "$APP_NAME" > /dev/null 2>&1; then
-                    pm2 reload ecosystem.config.js --only "$APP_NAME" --update-env
+                if sudo pm2 describe "$APP_NAME" > /dev/null 2>&1; then
+                    sudo pm2 reload ecosystem.config.js --only "$APP_NAME" --update-env
                 else
-                    pm2 start ecosystem.config.js --only "$APP_NAME"
+                    sudo pm2 start ecosystem.config.js --only "$APP_NAME"
                 fi
 
-                pm2 save --force
+                sudo pm2 save --force
 
-                echo "Cleaning old releases"
+                echo "Cleaning old releases safely with superuser privileges"
 
                 cd "$PROD_BASE/releases"
 
-                ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | xargs -r rm -rf
+                ls -dt */ | tail -n +$(($KEEP_RELEASES + 1)) | xargs -r sudo rm -rf
 
                 echo "Deployment completed successfully"
             '''

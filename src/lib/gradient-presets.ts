@@ -11,6 +11,17 @@ export interface GradientPreset {
 }
 
 export const GRADIENT_PRESETS: GradientPreset[] = [
+  // Light / Pastel
+  { name: "Soft Rose", colors: "#ffffff,#fff0f5" },
+  { name: "Pearl White", colors: "#ffffff,#f8f9fa" },
+  { name: "Lavender Dream", colors: "#e0c3fc,#8ec5fc" },
+  { name: "Sky Tint", colors: "#e0eafc,#cfdef3" },
+  { name: "Rose Water", colors: "#e55d87,#5fc3e4" },
+  { name: "Cotton Candy", colors: "#ffecd2,#fcb69f" },
+  { name: "Peppermint", colors: "#a1ffce,#faffd1" },
+  { name: "Vanilla", colors: "#f3e7e9,#e3eeff" },
+  { name: "Lemon", colors: "#f9d423,#ff4e50" },
+
   // Dark / Rich Presets (Matches Gold frames well)
   { name: "Midnight Navy", colors: "#0f172a,#1e293b" },
   { name: "Deep Aubergine", colors: "#2a1b38,#3a254f" },
@@ -53,17 +64,6 @@ export const GRADIENT_PRESETS: GradientPreset[] = [
   { name: "Mango", colors: "#ffe259,#ffa751" },
   { name: "Berry Smooth", colors: "#8a2387,#e94057,#f27121" },
   { name: "Cosmic", colors: "#ff0099,#493240" },
-  
-  // Light / Pastel
-  { name: "Soft Rose", colors: "#ffffff,#fff0f5" },
-  { name: "Pearl White", colors: "#ffffff,#f8f9fa" },
-  { name: "Lavender Dream", colors: "#e0c3fc,#8ec5fc" },
-  { name: "Sky Tint", colors: "#e0eafc,#cfdef3" },
-  { name: "Rose Water", colors: "#e55d87,#5fc3e4" },
-  { name: "Cotton Candy", colors: "#ffecd2,#fcb69f" },
-  { name: "Peppermint", colors: "#a1ffce,#faffd1" },
-  { name: "Vanilla", colors: "#f3e7e9,#e3eeff" },
-  { name: "Lemon", colors: "#f9d423,#ff4e50" },
   
   // Elegant & Neutral
   { name: "Silver Grey", colors: "#bdc3c7,#2c3e50" },

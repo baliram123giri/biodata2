@@ -42,7 +42,7 @@ interface PaymentParams {
   customerPhone?: string;
   currency?: string;
   couponCode?: string;
-  onDownload?: () => void | Promise<void>;
+  onDownload?: (orderId: string) => void | Promise<void>;
 }
 
 export function useRazorpayPayment() {
@@ -55,7 +55,7 @@ export function useRazorpayPayment() {
   const paymentPromiseRef = useRef<{
     resolve: (data: any) => void;
     reject: (err: Error) => void;
-    onDownload?: () => void | Promise<void>;
+    onDownload?: (orderId: string) => void | Promise<void>;
   } | null>(null);
 
   const paymentSuccessOrVerifyingRef = useRef(false);
@@ -116,7 +116,7 @@ export function useRazorpayPayment() {
         resolve({ success: true, isDevBypass: true });
         if (params.onDownload) {
           try {
-            await params.onDownload();
+            await params.onDownload("dev_bypass");
             setIsProcessing(false);
             setPaymentStep("idle");
             toast.success("Download started successfully!");
@@ -146,7 +146,7 @@ export function useRazorpayPayment() {
           resolve(data);
           if (params.onDownload) {
             try {
-              await params.onDownload();
+              await params.onDownload(data.order?.id || "free_order");
               setIsProcessing(false);
               setPaymentStep("idle");
             } catch (dlErr) {
@@ -229,7 +229,7 @@ export function useRazorpayPayment() {
 
             if (params.onDownload) {
               try {
-                await params.onDownload();
+                await params.onDownload(response.razorpay_order_id);
                 setIsProcessing(false);
                 setPaymentStep("idle");
                 toast.success("Download started successfully!");
@@ -324,7 +324,7 @@ export function useRazorpayPayment() {
 
     if (paymentPromiseRef.current.onDownload) {
       try {
-        await paymentPromiseRef.current.onDownload();
+        await paymentPromiseRef.current.onDownload("sandbox");
         setIsProcessing(false);
         setPaymentStep("idle");
         toast.success("Download started successfully!");
