@@ -19,16 +19,26 @@ import {
   Loader2,
   FileText,
   RotateCcw,
-  Ban
+  Ban,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  ColumnDef
+} from "@tanstack/react-table";
 
 export default function AdminTransactions() {
   const queryClient = useQueryClient();
@@ -38,6 +48,28 @@ export default function AdminTransactions() {
   const [format, setFormat] = React.useState("ALL");
   const [page, setPage] = React.useState(1);
   const [selectedTransaction, setSelectedTransaction] = React.useState<any>(null);
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [confirmDeleteState, setConfirmDeleteState] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  // Reset rowSelection when filters or page change
+  React.useEffect(() => {
+    setRowSelection({});
+  }, [debouncedSearch, status, format, page]);
+
+  const selectedIds = React.useMemo(() => {
+    return Object.keys(rowSelection);
+  }, [rowSelection]);
 
   // Debounce search input
   React.useEffect(() => {
@@ -151,6 +183,180 @@ export default function AdminTransactions() {
         return null;
     }
   };
+
+  // TanStack Table Column Definitions
+  const columns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "customerName",
+      header: "Customer Details",
+      cell: ({ row }) => {
+        const order = row.original;
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-foreground truncate max-w-[150px]">
+              {order.customerName || "Anonymous Guest"}
+            </span>
+            <span className="text-[10px] text-muted-foreground/80 truncate max-w-[150px]">
+              {order.customerEmail || "No email"}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              {order.customerPhone || "No contact"}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "razorpayOrderId",
+      header: "Order ID",
+      cell: ({ row }) => (
+        <span className="font-semibold text-muted-foreground/80 font-mono">
+          {row.getValue("razorpayOrderId")}
+        </span>
+      )
+    },
+    {
+      accessorKey: "templateName",
+      header: "Selected Theme",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground font-medium truncate max-w-[140px]">
+          {row.getValue("templateName")}
+        </span>
+      )
+    },
+    {
+      accessorKey: "format",
+      header: () => <div className="text-center">Format</div>,
+      cell: ({ row }) => {
+        const format = row.getValue("format") as string;
+        return (
+          <div className="text-center">
+            <span className={cn(
+              "text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
+              getFormatBadgeStyle(format)
+            )}>
+              {format}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "amount",
+      header: () => <div className="text-right">Pricing Summary</div>,
+      cell: ({ row }) => {
+        const order = row.original;
+        return (
+          <div className="flex flex-col items-end">
+            <span className="font-bold text-foreground text-sm">
+              ₹{Number(order.amount).toFixed(2)}
+            </span>
+            {order.discountApplied > 0 && (
+              <span className="text-[9px] text-emerald-600 dark:text-emerald-500 font-extrabold flex items-center gap-0.5">
+                <Tag className="w-2.5 h-2.5" /> Coupon Applied
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "status",
+      header: () => <div className="text-center">Checkout Status</div>,
+      cell: ({ row }) => {
+        const order = row.original;
+        return (
+          <div className="flex flex-col items-center gap-1.5">
+            <span className={cn(
+              "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center select-none",
+              getStatusBadgeStyle(order.status)
+            )}>
+              {getStatusIcon(order.status)}
+              {order.status}
+            </span>
+            {(order.status === "paid" || order.downloadStatus === "failed") && (
+              <span className={cn(
+                "text-[8px] font-bold px-1.5 py-[1px] rounded-[3px] border uppercase tracking-widest inline-flex items-center",
+                order.downloadStatus === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20" :
+                order.downloadStatus === "failed" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" :
+                "bg-amber-500/10 text-amber-600 dark:text-amber-450 border-amber-500/20"
+              )}>
+                DL: {order.downloadStatus || "PENDING"}
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "createdAt",
+      header: () => <div className="text-right">Date</div>,
+      cell: ({ row }) => (
+        <div className="text-right text-muted-foreground/75 font-medium whitespace-nowrap">
+          {new Date(row.getValue("createdAt")).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          })}
+        </div>
+      )
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-center">Actions</div>,
+      cell: ({ row }) => {
+        const order = row.original;
+        return (
+          <div className="text-center">
+            <Button
+              onClick={() => setSelectedTransaction(order)}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-0.5 cursor-pointer"
+            >
+              Inspect <ArrowUpRight className="w-3 h-3" />
+            </Button>
+          </div>
+        );
+      }
+    }
+  ], []);
+
+  const table = useReactTable({
+    data: orders,
+    columns,
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
 
   return (
     <div className="space-y-6 text-foreground">
@@ -326,129 +532,153 @@ export default function AdminTransactions() {
 
       {/* Main Datatable Card */}
       <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="bg-primary/5 border-b border-primary/20 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 overflow-hidden text-xs"
+            >
+              <div className="flex items-center gap-2 font-bold text-foreground">
+                <span className="bg-primary text-white px-2 py-0.5 rounded-full text-[10px] font-black">
+                  {selectedIds.length}
+                </span>
+                <span>Selected transactions</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground font-semibold">Bulk Actions:</span>
+                
+                <Select
+                  onValueChange={async (newStatus) => {
+                    if (!newStatus) return;
+                    const loadingToast = toast.loading(`Updating ${selectedIds.length} transactions to ${newStatus}...`);
+                    try {
+                      const res = await fetch("/api/admin/transactions/update-status", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          orderIds: selectedIds,
+                          status: newStatus.toLowerCase(),
+                        }),
+                      });
+                      if (res.ok) {
+                        toast.success(`Successfully updated ${selectedIds.length} transactions to ${newStatus}`, { id: loadingToast });
+                        setRowSelection({});
+                        queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                      } else {
+                        const err = await res.json();
+                        toast.error(err.error || "Failed to bulk update status", { id: loadingToast });
+                      }
+                    } catch (error) {
+                      toast.error("Network communication error", { id: loadingToast });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-[11px] bg-card border-primary/20 text-foreground w-[150px]">
+                    <SelectValue placeholder="Update Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PAID">Paid</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="FAILED">Failed</SelectItem>
+                    <SelectItem value="REFUNDED">Refunded</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  onClick={() => {
+                    setConfirmDeleteState({
+                      isOpen: true,
+                      title: `Purge ${selectedIds.length} Transaction Records`,
+                      description: `Are you sure you want to permanently delete these ${selectedIds.length} transaction records? This action is irreversible and will immediately purge these entries from the registry database.`,
+                      onConfirm: async () => {
+                        const loadingToast = toast.loading(`Purging ${selectedIds.length} transaction records...`);
+                        try {
+                          const res = await fetch("/api/admin/transactions/delete", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ orderIds: selectedIds }),
+                          });
+                          if (res.ok) {
+                            toast.success(`Successfully purged ${selectedIds.length} transaction records`, { id: loadingToast });
+                            setRowSelection({});
+                            queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                          } else {
+                            const err = await res.json();
+                            toast.error(err.error || "Failed to bulk delete records", { id: loadingToast });
+                          }
+                        } catch (error) {
+                          toast.error("Network communication error", { id: loadingToast });
+                        }
+                      }
+                    });
+                  }}
+                  variant="outline"
+                  className="h-8 text-[11px] font-bold border-rose-500/20 hover:bg-rose-500 hover:text-white hover:border-rose-500 text-rose-500 cursor-pointer gap-1 px-3 transition-colors duration-205"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Purge Selected</span>
+                </Button>
+
+                <Button
+                  onClick={() => setRowSelection({})}
+                  variant="ghost"
+                  className="h-8 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer px-3"
+                >
+                  Deselect All
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Customer Details</th>
-                <th className="p-4">Order ID</th>
-                <th className="p-4">Selected Theme</th>
-                <th className="p-4 text-center">Format</th>
-                <th className="p-4 text-right">Pricing Summary</th>
-                <th className="p-4 text-center">Checkout Status</th>
-                <th className="p-4 text-right">Date</th>
-                <th className="p-4 text-center">Actions</th>
-              </tr>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="p-4 align-middle font-bold text-muted-foreground">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
             </thead>
             <tbody className="divide-y divide-border/40 text-foreground/90">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-muted-foreground font-semibold">
+                  <td colSpan={columns.length} className="p-12 text-center text-muted-foreground font-semibold">
                     <Loader2 className="w-6 h-6 animate-spin text-primary inline mr-2" />
                     Querying transactions database...
                   </td>
                 </tr>
-              ) : orders.length > 0 ? (
-                orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-muted/15 transition-colors">
-                    {/* Customer Info */}
-                    <td className="p-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-foreground truncate max-w-[150px]">
-                          {order.customerName || "Anonymous Guest"}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/80 truncate max-w-[150px]">
-                          {order.customerEmail || "No email"}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium">
-                          {order.customerPhone || "No contact"}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Order ID */}
-                    <td className="p-4 font-semibold text-muted-foreground/80 font-mono">
-                      {order.razorpayOrderId}
-                    </td>
-
-                    {/* Theme */}
-                    <td className="p-4 text-muted-foreground font-medium truncate max-w-[140px]">
-                      {order.templateName}
-                    </td>
-
-                    {/* Format Pill */}
-                    <td className="p-4 text-center">
-                      <span className={cn(
-                        "text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
-                        getFormatBadgeStyle(order.format)
-                      )}>
-                        {order.format}
-                      </span>
-                    </td>
-
-                    {/* Pricing details */}
-                    <td className="p-4 text-right">
-                      <div className="flex flex-col items-end">
-                        <span className="font-bold text-foreground text-sm">
-                          ₹{Number(order.amount).toFixed(2)}
-                        </span>
-                        {order.discountApplied > 0 && (
-                          <span className="text-[9px] text-emerald-600 dark:text-emerald-500 font-extrabold flex items-center gap-0.5">
-                            <Tag className="w-2.5 h-2.5" /> Coupon Applied
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Status badge */}
-                    <td className="p-4 text-center">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <span className={cn(
-                          "text-[9px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center select-none",
-                          getStatusBadgeStyle(order.status)
-                        )}>
-                          {getStatusIcon(order.status)}
-                          {order.status}
-                        </span>
-                        {(order.status === "paid" || order.downloadStatus === "failed") && (
-                          <span className={cn(
-                            "text-[8px] font-bold px-1.5 py-[1px] rounded-[3px] border uppercase tracking-widest inline-flex items-center",
-                            order.downloadStatus === "success" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20" :
-                            order.downloadStatus === "failed" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" :
-                            "bg-amber-500/10 text-amber-600 dark:text-amber-450 border-amber-500/20"
-                          )}>
-                            DL: {order.downloadStatus || "PENDING"}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Date */}
-                    <td className="p-4 text-right text-muted-foreground/75 font-medium whitespace-nowrap">
-                      {new Date(order.createdAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
-                    </td>
-
-                    {/* Actions button */}
-                    <td className="p-4 text-center">
-                      <Button
-                        onClick={() => setSelectedTransaction(order)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-0.5 cursor-pointer"
-                      >
-                        Inspect <ArrowUpRight className="w-3 h-3" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))
+              ) : table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => {
+                  const isSelected = row.getIsSelected();
+                  return (
+                    <tr key={row.id} className={cn(
+                      "hover:bg-muted/15 transition-colors",
+                      isSelected && "bg-primary/5 hover:bg-primary/10"
+                    )}>
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="p-4 align-middle">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-muted-foreground italic">
+                  <td colSpan={columns.length} className="p-12 text-center text-muted-foreground italic">
                     No transactions match the selected filters.
                   </td>
                 </tr>
@@ -663,6 +893,48 @@ export default function AdminTransactions() {
                 </div>
               </div>
 
+              {/* Danger Zone */}
+              <div className="border border-rose-500/20 rounded-xl p-4 bg-rose-500/5 space-y-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-bold text-rose-500">Danger Zone</p>
+                  <p className="text-[10px] text-muted-foreground">Permanently delete this transaction record from the database.</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmDeleteState({
+                      isOpen: true,
+                      title: "Purge Transaction Record",
+                      description: `Are you sure you want to permanently delete the transaction record for ${selectedTransaction.customerName || "Anonymous Guest"} (${selectedTransaction.razorpayOrderId})? This action is irreversible and will delete all payment data.`,
+                      onConfirm: async () => {
+                        const loadingToast = toast.loading("Purging transaction record...");
+                        try {
+                          const res = await fetch("/api/admin/transactions/delete", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ orderId: selectedTransaction.id }),
+                          });
+                          if (res.ok) {
+                            toast.success("Transaction record successfully purged", { id: loadingToast });
+                            setSelectedTransaction(null);
+                            queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                          } else {
+                            const err = await res.json();
+                            toast.error(err.error || "Failed to delete transaction record", { id: loadingToast });
+                          }
+                        } catch (error) {
+                          toast.error("Network communication error", { id: loadingToast });
+                        }
+                      }
+                    });
+                  }}
+                  className="w-full h-8 border-rose-500/20 hover:bg-rose-500 hover:text-white hover:border-rose-500 text-rose-500 text-[10px] font-bold uppercase tracking-wider gap-1.5 cursor-pointer transition-all duration-200"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Purge Record</span>
+                </Button>
+              </div>
+
               {/* Bottom Date Log */}
               <div className="text-[10px] text-muted-foreground font-semibold text-center mt-2 flex justify-center gap-1">
                 <span>Created at: {new Date(selectedTransaction.createdAt).toLocaleString()}</span>
@@ -683,6 +955,18 @@ export default function AdminTransactions() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Premium Reusable Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDeleteState.isOpen}
+        onOpenChange={(isOpen) => setConfirmDeleteState((prev) => ({ ...prev, isOpen }))}
+        title={confirmDeleteState.title}
+        description={confirmDeleteState.description}
+        confirmText={confirmDeleteState.confirmText || "Confirm Purge"}
+        cancelText="Keep Record"
+        onConfirm={confirmDeleteState.onConfirm}
+        variant="danger"
+      />
     </div>
   );
 }

@@ -16,49 +16,36 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { orderId, orderIds, status } = body;
+    const { orderId, orderIds } = body;
 
-    if ((!orderId && (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0)) || !status) {
+    if (!orderId && (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0)) {
       return NextResponse.json(
-        { error: "orderId/orderIds and status are required fields" },
-        { status: 400 }
-      );
-    }
-
-    const validStatuses = ["paid", "pending", "failed", "refunded", "cancelled"];
-    const targetStatus = status.toLowerCase();
-
-    if (!validStatuses.includes(targetStatus)) {
-      return NextResponse.json(
-        { error: "Invalid checkout status type" },
+        { error: "orderId or orderIds are required fields for deletion" },
         { status: 400 }
       );
     }
 
     if (orderIds && Array.isArray(orderIds)) {
-      const updated = await prisma.order.updateMany({
+      const deleted = await prisma.order.deleteMany({
         where: { id: { in: orderIds } },
-        data: { status: targetStatus },
       });
       return NextResponse.json({
         success: true,
-        message: `Transaction status updated for ${updated.count} orders to ${targetStatus}`,
+        message: `Successfully deleted ${deleted.count} transaction records`,
       });
     }
 
-    // Update order status in the database
-    const updatedOrder = await prisma.order.update({
+    const deletedOrder = await prisma.order.delete({
       where: { id: orderId },
-      data: { status: targetStatus },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Transaction status updated to ${targetStatus}`,
-      order: updatedOrder,
+      message: `Successfully deleted transaction record`,
+      order: deletedOrder,
     });
   } catch (error: any) {
-    console.error("Update status error:", error);
+    console.error("Delete transactions error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -532,7 +532,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
         {/* Dynamic Content Panel */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+          <div className="w-full space-y-6 animate-in fade-in duration-500">
             {children}
           </div>
         </main>

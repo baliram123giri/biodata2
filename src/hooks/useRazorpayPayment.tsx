@@ -107,6 +107,30 @@ export function useRazorpayPayment() {
   const startPayment = useCallback((params: PaymentParams): Promise<any> => {
     return new Promise(async (resolve, reject) => {
       paymentSuccessOrVerifyingRef.current = false;
+
+      if (process.env.NEXT_PUBLIC_IS_DEV === "true") {
+        toast.info("Dev Mode Active - Bypassing payment gateway");
+        setPaymentStep("downloading");
+        setIsProcessing(true);
+        setPaymentIdInfo("dev_bypass");
+        resolve({ success: true, isDevBypass: true });
+        if (params.onDownload) {
+          try {
+            await params.onDownload();
+            setIsProcessing(false);
+            setPaymentStep("idle");
+            toast.success("Download started successfully!");
+          } catch (dlErr) {
+            console.error("Auto-download failed:", dlErr);
+            setPaymentStep("download_failed");
+          }
+        } else {
+          setIsProcessing(false);
+          setPaymentStep("idle");
+        }
+        return;
+      }
+
       setPaymentStep("securing");
       setIsProcessing(true);
       try {
