@@ -22,35 +22,28 @@ interface CacheEntry<T> {
 class ApiCache {
   private store = new Map<string, CacheEntry<any>>();
 
-  /** Returns cached value if still fresh, otherwise calls loader and caches result. */
+  /** 
+   * REFACTOR: Disabled backend API caching system-wide as requested.
+   * All API queries now fetch fresh data directly from the database on every request.
+   * Caching is managed strictly on the frontend using TanStack Query (React Query).
+   */
   async remember<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {
-    const now = Date.now();
-    const entry = this.store.get(key);
-    if (entry && now < entry.expiresAt) {
-      return entry.data as T;
-    }
-    const data = await loader();
-    this.store.set(key, { data, expiresAt: now + ttlMs });
-    return data;
+    return await loader();
   }
 
-  /** Invalidate a single cache key (call after mutations). */
+  /** Invalidate a single cache key (no-op since backend caching is disabled). */
   invalidate(key: string) {
-    this.store.delete(key);
+    // No-op as backend caching is bypassed
   }
 
-  /** Invalidate all keys that start with a given prefix. */
+  /** Invalidate all keys that start with a given prefix (no-op since backend caching is disabled). */
   invalidatePrefix(prefix: string) {
-    for (const key of this.store.keys()) {
-      if (key.startsWith(prefix)) {
-        this.store.delete(key);
-      }
-    }
+    // No-op as backend caching is bypassed
   }
 
-  /** Clear the entire cache. */
+  /** Clear the entire cache (no-op since backend caching is disabled). */
   clear() {
-    this.store.clear();
+    // No-op as backend caching is bypassed
   }
 }
 
