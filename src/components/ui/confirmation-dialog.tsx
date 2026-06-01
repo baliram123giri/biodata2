@@ -67,7 +67,7 @@ export function ConfirmationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border border-border rounded-xl shadow-2xl p-6 relative overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-card border border-border rounded-xl shadow-2xl p-6 overflow-hidden">
         {/* Subtle top indicator bar */}
         <div className={`absolute top-0 left-0 right-0 h-1.5 ${styles.bar}`} />
         

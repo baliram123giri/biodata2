@@ -86,3 +86,47 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Only superadmin can delete/purge user records!
+    if (sessionUser.role !== "superadmin") {
+      return NextResponse.json({ error: "Forbidden: Only Super Admins can delete users" }, { status: 403 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { id, ids } = body;
+
+    const targetIds = ids || (id ? [id] : null);
+
+    if (!targetIds || !Array.isArray(targetIds) || targetIds.length === 0) {
+      return NextResponse.json({ error: "ID or IDs are required" }, { status: 400 });
+    }
+
+    // Filter out the session user to prevent self-deletion
+    const idsToDelete = targetIds.filter(tId => tId !== sessionUser.id);
+
+    if (idsToDelete.length === 0) {
+      return NextResponse.json({ error: "Forbidden: You cannot delete your own account" }, { status: 400 });
+    }
+
+    await prisma.user.deleteMany({
+      where: {
+        id: { in: idsToDelete }
+      }
+    });
+
+    // Invalidate Cache
+    apiCache.invalidate("admin:users");
+
+    return NextResponse.json({ success: true, count: idsToDelete.length });
+  } catch (error: any) {
+    console.error("Delete user error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+  }
+}

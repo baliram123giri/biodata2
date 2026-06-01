@@ -105,6 +105,57 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
     }
   }, [theme, mounted]);
 
+  // Lock viewports on html, body, and Next.js main layout elements to exactly 100% height
+  // to prevent mobile address-bar scrolling of the entire page panel.
+  React.useEffect(() => {
+    if (!mounted) return;
+
+    const html = window.document.documentElement;
+    const body = window.document.body;
+
+    const prevHtmlOverflow = html.style.overflow;
+    const prevHtmlHeight = html.style.height;
+    const prevHtmlOverscroll = html.style.overscrollBehavior;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyHeight = body.style.height;
+    const prevBodyOverscroll = body.style.overscrollBehavior;
+
+    html.style.overflow = "hidden";
+    html.style.height = "100%";
+    html.style.overscrollBehavior = "none";
+    body.style.overflow = "hidden";
+    body.style.height = "100%";
+    body.style.overscrollBehavior = "none";
+
+    // Lock Next.js root layout elements if present
+    const mainEl = body.querySelector("main.flex-1");
+    let prevMainOverflow = "";
+    let prevMainHeight = "";
+    let prevMainOverscroll = "";
+    if (mainEl instanceof HTMLElement) {
+      prevMainOverflow = mainEl.style.overflow;
+      prevMainHeight = mainEl.style.height;
+      prevMainOverscroll = mainEl.style.overscrollBehavior;
+      mainEl.style.overflow = "hidden";
+      mainEl.style.height = "100%";
+      mainEl.style.overscrollBehavior = "none";
+    }
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      html.style.height = prevHtmlHeight;
+      html.style.overscrollBehavior = prevHtmlOverscroll;
+      body.style.overflow = prevBodyOverflow;
+      body.style.height = prevBodyHeight;
+      body.style.overscrollBehavior = prevBodyOverscroll;
+      if (mainEl instanceof HTMLElement) {
+        mainEl.style.overflow = prevMainOverflow;
+        mainEl.style.height = prevMainHeight;
+        mainEl.style.overscrollBehavior = prevMainOverscroll;
+      }
+    };
+  }, [mounted]);
+
   React.useEffect(() => {
     if (!mounted || status === "loading") return;
 
@@ -323,7 +374,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
   return (
     <div className={cn(
-      "admin-panel h-screen overflow-hidden bg-background text-foreground flex font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250",
+      "admin-panel h-full overflow-hidden bg-background text-foreground flex font-sans antialiased selection:bg-primary/30 selection:text-foreground transition-colors duration-250",
       wrapperThemeClass
     )}>
       {/* Background ambient theme-based glows */}
@@ -332,7 +383,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
 
       {/* Persistent Sidebar (Desktop) */}
       <aside className={cn(
-        "hidden lg:block h-screen sticky top-0 shrink-0 z-30 transition-all duration-300 ease-in-out",
+        "hidden lg:block h-full sticky top-0 shrink-0 z-30 transition-all duration-300 ease-in-out",
         collapsed ? "w-20" : "w-64"
       )}>
         <SidebarContent />
@@ -531,7 +582,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
         </header>
 
         {/* Dynamic Content Panel */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
           <div className="w-full space-y-6 animate-in fade-in duration-500">
             {children}
           </div>

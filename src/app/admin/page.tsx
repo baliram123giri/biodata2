@@ -338,14 +338,63 @@ export default function AdminDashboard() {
               </div>
 
               <TabsContent value="recent" className="p-0 m-0">
-                <div className="overflow-x-auto">
+                {/* Mobile Responsive Cards View */}
+                <div className="block sm:hidden divide-y divide-border/40">
+                  {isLoading ? (
+                    <div className="p-8 text-center text-muted-foreground font-semibold flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span>Loading dynamic logs...</span>
+                    </div>
+                  ) : recentBiodatas.length > 0 ? (
+                    recentBiodatas.map((bio: any, idx: number) => (
+                      <div key={bio.id || idx} className="p-4 space-y-3 hover:bg-muted/10 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                            <span className="font-bold text-foreground text-sm">{bio.name}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground/75 font-medium">{bio.time}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
+                          <div>
+                            <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Location</span>
+                            <span className="text-foreground/90 font-semibold">{bio.community}</span>
+                          </div>
+                          <div>
+                            <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Template</span>
+                            <span className="text-foreground/90 font-semibold truncate block max-w-[130px]">{bio.template}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="bg-muted border border-border text-muted-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                            {bio.language}
+                          </span>
+                          <Button asChild variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-1 cursor-pointer">
+                            <Link href="/admin/biodatas">
+                              View Audit <ArrowUpRight className="w-3 h-3" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground italic text-xs">
+                      No download logs captured in database yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop High-Fidelity Table View */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
                         <th className="p-4">Name</th>
-                        <th className="p-4">Location</th>
-                        <th className="p-4">Format</th>
-                        <th className="p-4">Template</th>
+                        <th className="p-4 hidden md:table-cell">Location</th>
+                        <th className="p-4 hidden sm:table-cell">Format</th>
+                        <th className="p-4 hidden lg:table-cell">Template</th>
                         <th className="p-4">Time</th>
                         <th className="p-4 text-right">Actions</th>
                       </tr>
@@ -365,13 +414,13 @@ export default function AdminDashboard() {
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               {bio.name}
                             </td>
-                            <td className="p-4">{bio.community}</td>
-                            <td className="p-4">
+                            <td className="p-4 hidden md:table-cell">{bio.community}</td>
+                            <td className="p-4 hidden sm:table-cell">
                               <span className="bg-muted border border-border text-muted-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
                                 {bio.language}
                               </span>
                             </td>
-                            <td className="p-4 text-muted-foreground font-medium">{bio.template}</td>
+                            <td className="p-4 hidden lg:table-cell text-muted-foreground font-medium">{bio.template}</td>
                             <td className="p-4 text-muted-foreground/70 font-medium">{bio.time}</td>
                             <td className="p-4 text-right">
                               <Button asChild variant="ghost" size="sm" className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-1 cursor-pointer">

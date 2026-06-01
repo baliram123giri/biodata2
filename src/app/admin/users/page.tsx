@@ -4,28 +4,25 @@ import * as React from "react";
 import { 
   Users as UsersIcon, 
   Search, 
-  UserCheck, 
-  UserMinus, 
-  ShieldCheck, 
   Trash2,
-  MoreVertical,
-  UserPlus,
   RefreshCw,
-  X,
-  AlertTriangle,
+  UserPlus,
   Settings,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { cn, getInitials } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { CreateUserDialog } from "@/components/admin/users/CreateUserDialog";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
   useReactTable,
   getCoreRowModel,
@@ -33,6 +30,7 @@ import {
   flexRender,
   ColumnDef
 } from "@tanstack/react-table";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FILTER_ROLES = [
   { value: "all", label: "All Roles" },
@@ -61,18 +59,34 @@ export default function AdminUsers() {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<any | null>(null);
 
+  // Table row selection & confirmation box state
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [confirmDeleteState, setConfirmDeleteState] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
   // Queries
-  const { data: usersData, isLoading: loading } = useQuery({
+  const { data: usersData, isLoading: loading, refetch } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: async () => {
       const res = await api.get("/admin/users");
       return res.data.users as any[];
-    }
+    },
+    staleTime: 0, // Instant refetch
   });
 
   const users = usersData || [];
 
-  // Mutations
+  // Mutations for single-item toggles
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ userId, currentStatus }: { userId: string; currentStatus: string }) => {
       const nextStatus = currentStatus === "active" ? "suspended" : "active";
@@ -82,6 +96,7 @@ export default function AdminUsers() {
     onSuccess: () => {
       toast.success("Account status updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      refetch();
     },
     onError: (err: any) => {
       const errMsg = err.response?.data?.error || "Failed to update account status.";
@@ -97,24 +112,10 @@ export default function AdminUsers() {
     onSuccess: () => {
       toast.success("User authorization role updated.");
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      refetch();
     },
     onError: (err: any) => {
       const errMsg = err.response?.data?.error || "Failed to assign new role.";
-      toast.error(errMsg);
-    }
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const res = await api.delete(`/admin/users/${userId}`);
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success("User record purged successfully.");
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-    },
-    onError: (err: any) => {
-      const errMsg = err.response?.data?.error || "Failed to delete user record.";
       toast.error(errMsg);
     }
   });
@@ -126,13 +127,6 @@ export default function AdminUsers() {
   const handleChangeRole = React.useCallback((userId: string, nextRole: string) => {
     changeRoleMutation.mutate({ userId, role: nextRole });
   }, [changeRoleMutation]);
-
-  const handleDeleteUser = React.useCallback((userId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this user record? This action is irreversible.")) {
-      return;
-    }
-    deleteUserMutation.mutate(userId);
-  }, [deleteUserMutation]);
 
   const isSuperAdmin = currentUser?.role === "superadmin";
 
@@ -150,8 +144,48 @@ export default function AdminUsers() {
     });
   }, [users, search, roleFilter]);
 
+  // Reset rowSelection when filters or page change
+  React.useEffect(() => {
+    setRowSelection({});
+  }, [search, roleFilter]);
+
+  const selectedIds = React.useMemo(() => {
+    return Object.keys(rowSelection).map(indexStr => {
+      const idx = parseInt(indexStr, 10);
+      return filtered[idx]?.id;
+    }).filter(Boolean);
+  }, [rowSelection, filtered]);
+
   // TanStack Table Column Definitions
   const columns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center p-1">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const user = row.original;
+        // Don't show checkbox for the current user to prevent self-deletion
+        if (user.id === currentUser?.id) return null;
+        return (
+          <div className="flex items-center justify-center p-1">
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label="Select row"
+            />
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "id",
       header: "User ID",
@@ -214,7 +248,7 @@ export default function AdminUsers() {
           <span className={cn(
             "inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider",
             status === "active" 
-              ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" 
+              ? "text-emerald-500 dark:text-emerald-450 bg-emerald-500/10 border-emerald-500/20" 
               : "text-rose-500 dark:text-rose-400 bg-rose-500/10 border-rose-500/20"
           )}>
             <span className={cn("w-1.5 h-1.5 rounded-full", status === "active" ? "bg-emerald-500" : "bg-rose-500")} />
@@ -234,16 +268,16 @@ export default function AdminUsers() {
     },
     {
       id: "actions",
-      header: () => <div className="text-right">Actions</div>,
+      header: () => <div className="text-right pr-4">Actions</div>,
       cell: (info) => {
         const user = info.row.original;
         return (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end pr-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSelectedUser(user)}
-              className="h-7 px-3 text-[10px] font-bold uppercase tracking-wider gap-1.5 cursor-pointer border-primary/20 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              className="h-7 px-3 text-[10px] font-bold uppercase tracking-wider gap-1.5 cursor-pointer border-primary/20 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
             >
               <Settings className="w-3.5 h-3.5" />
               <span>Manage</span>
@@ -252,13 +286,18 @@ export default function AdminUsers() {
         );
       }
     }
-  ], [isSuperAdmin, handleChangeRole, handleToggleStatus, handleDeleteUser, currentUser]);
+  ], [isSuperAdmin, handleChangeRole, handleToggleStatus, currentUser]);
 
   const table = useReactTable({
     data: filtered,
     columns,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row, index) => String(index),
     initialState: {
       pagination: {
         pageSize: 10
@@ -274,7 +313,7 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="space-y-6 text-foreground relative">
+    <div className="space-y-6 text-foreground relative w-full">
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -298,8 +337,6 @@ export default function AdminUsers() {
         )}
       </div>
 
-
-
       {/* Control bar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-card p-4 border border-border rounded-xl shadow-sm">
         <div className="relative w-full sm:w-80">
@@ -314,7 +351,7 @@ export default function AdminUsers() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <Select defaultValue="all" onValueChange={(val) => setRoleFilter(val || "all")}>
+          <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val || "all")}>
             <SelectTrigger className="w-40 bg-muted/40 border-border text-foreground text-xs h-9 cursor-pointer">
               <SelectValue placeholder="Account Role" />
             </SelectTrigger>
@@ -329,8 +366,63 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      {/* Floating Bulk Action bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 overflow-hidden text-xs"
+          >
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <span className="bg-primary text-white px-2 py-0.5 rounded-full text-[10px] font-black">
+                {selectedIds.length}
+              </span>
+              <span>Selected user records</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setConfirmDeleteState({
+                    isOpen: true,
+                    title: `Purge ${selectedIds.length} User Accounts`,
+                    description: `Are you sure you want to permanently delete these ${selectedIds.length} user records? This action is completely irreversible and will permanently delete all metadata, purchase histories, and biodata profiles associated with these user accounts.`,
+                    onConfirm: async () => {
+                      const loadingToast = toast.loading(`Purging ${selectedIds.length} user accounts...`);
+                      try {
+                        const res = await fetch("/api/admin/users", {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ids: selectedIds }),
+                        });
+                        if (res.ok) {
+                          toast.success(`Successfully purged ${selectedIds.length} user accounts`, { id: loadingToast });
+                          setRowSelection({});
+                          queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+                          refetch();
+                        } else {
+                          const data = await res.json();
+                          toast.error(data.error || "Failed to bulk delete users", { id: loadingToast });
+                        }
+                      } catch (error) {
+                        toast.error("Network communication error", { id: loadingToast });
+                      }
+                    }
+                  });
+                }}
+                className="h-8 px-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg flex items-center gap-1.5 transition-all text-[11px] cursor-pointer uppercase tracking-wider border border-transparent dark:border-white/10"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Purge Selected</span>
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Users table */}
-      <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+      <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm w-full">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="w-6 h-6 animate-spin text-primary" />
@@ -338,21 +430,138 @@ export default function AdminUsers() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            {/* Mobile Responsive Cards View */}
+            <div className="block sm:hidden divide-y divide-border/40">
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => {
+                  const user = row.original;
+                  const initials = getInitials(user.name);
+                  const isSelected = row.getIsSelected();
+                  return (
+                    <div 
+                      key={row.id} 
+                      className={cn(
+                        "p-4 space-y-3 hover:bg-muted/10 transition-colors",
+                        isSelected && "bg-primary/5"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          {user.id !== currentUser?.id && (
+                            <Checkbox
+                              checked={row.getIsSelected()}
+                              onCheckedChange={(value) => row.toggleSelected(!!value)}
+                              aria-label="Select row"
+                            />
+                          )}
+                          <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center font-bold text-muted-foreground text-[10px] shrink-0">
+                            {initials}
+                          </div>
+                          <span className="font-bold text-foreground text-sm">{user.name}</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground/75 font-semibold">
+                          ID: <span className="font-mono text-primary font-bold">{user.id.slice(0, 8)}</span>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
+                        <div>
+                          <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Email Address</span>
+                          <span className="text-foreground/90 font-medium truncate block max-w-[140px]">{user.email}</span>
+                        </div>
+                        <div>
+                          <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Account Role</span>
+                          <span className={cn(
+                            "text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block mt-0.5",
+                            user.role === "superadmin"
+                              ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
+                              : user.role === "admin" 
+                              ? "bg-primary/20 text-primary border-primary/30" 
+                              : user.role === "premium" 
+                              ? "bg-secondary/20 text-secondary-foreground border-secondary/30"
+                              : user.role === "moderator"
+                              ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/20"
+                              : "bg-muted text-muted-foreground border-border"
+                          )}>
+                            {user.role}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Status</span>
+                          <span className={cn(
+                            "inline-flex items-center gap-1 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider mt-0.5",
+                            user.status === "active" 
+                              ? "text-emerald-500 dark:text-emerald-450 bg-emerald-500/10 border-emerald-500/20" 
+                              : "text-rose-500 dark:text-rose-400 bg-rose-500/10 border-rose-500/20"
+                          )}>
+                            <span className={cn("w-1.5 h-1.5 rounded-full", user.status === "active" ? "bg-emerald-500" : "bg-rose-500")} />
+                            {user.status}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Joined Date</span>
+                          <span className="text-foreground/90 font-medium block mt-1">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedUser(user)}
+                          className="h-7 px-3 text-[10px] font-bold uppercase tracking-wider gap-1.5 cursor-pointer border-primary/20 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                          <span>Manage</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                  No matching user records found.
+                </div>
+              )}
+            </div>
+
+            {/* Desktop High-Fidelity Table View */}
+            <div className="hidden sm:block overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
                 <thead>
                   {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
-                      {headerGroup.headers.map(header => (
-                        <th key={header.id} className={cn("sticky top-0 z-10 bg-muted/95 backdrop-blur-xs p-4 align-middle", getColumnResponsiveClass(header.column.id))}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </th>
-                      ))}
+                      {headerGroup.headers.map(header => {
+                        let widthStyle = "";
+                        if (header.id === "select") widthStyle = "w-[60px]";
+                        else if (header.id === "id") widthStyle = "w-[120px]";
+                        else if (header.id === "name") widthStyle = "w-[180px]";
+                        else if (header.id === "email") widthStyle = "w-[200px]";
+                        else if (header.id === "role") widthStyle = "w-[140px]";
+                        else if (header.id === "status") widthStyle = "w-[120px]";
+                        else if (header.id === "createdAt") widthStyle = "w-[140px]";
+                        else if (header.id === "actions") widthStyle = "w-[100px]";
+ 
+                        return (
+                          <th 
+                            key={header.id} 
+                            className={cn(
+                              "sticky top-0 z-10 bg-muted/95 backdrop-blur-xs p-4 align-middle font-bold text-left", 
+                              widthStyle, 
+                              getColumnResponsiveClass(header.column.id)
+                            )}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </th>
+                        );
+                      })}
                     </tr>
                   ))}
                 </thead>
@@ -361,7 +570,13 @@ export default function AdminUsers() {
                     table.getRowModel().rows.map(row => (
                       <tr key={row.id} className="hover:bg-muted/10 transition-colors">
                         {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className={cn("p-4 align-middle", getColumnResponsiveClass(cell.column.id))}>
+                          <td 
+                            key={cell.id} 
+                            className={cn(
+                              "p-4 align-middle truncate", 
+                              getColumnResponsiveClass(cell.column.id)
+                            )}
+                          >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
@@ -390,18 +605,20 @@ export default function AdminUsers() {
                   size="sm"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="h-8 text-xs font-semibold cursor-pointer"
+                  className="h-8 px-2.5 text-xs font-bold cursor-pointer bg-background flex items-center gap-1"
                 >
-                  Previous
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="h-8 text-xs font-semibold cursor-pointer"
+                  className="h-8 px-2.5 text-xs font-bold cursor-pointer bg-background flex items-center gap-1"
                 >
-                  Next
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
@@ -415,6 +632,7 @@ export default function AdminUsers() {
         onOpenChange={setIsCreateOpen}
         onSuccess={(name) => {
           toast.success(`Successfully registered ${name}!`);
+          refetch();
         }}
       />
 
@@ -542,8 +760,32 @@ export default function AdminUsers() {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      handleDeleteUser(selectedUser.id);
-                      setSelectedUser(null);
+                      setConfirmDeleteState({
+                        isOpen: true,
+                        title: "Purge User Account",
+                        description: `Are you sure you want to permanently delete the user account for ${selectedUser.name} (${selectedUser.email})? This action is irreversible and will delete all user biodata, files, and orders.`,
+                        onConfirm: async () => {
+                          const loadingToast = toast.loading("Purging user account...");
+                          try {
+                            const res = await fetch(`/api/admin/users`, {
+                              method: "DELETE",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: selectedUser.id }),
+                            });
+                            if (res.ok) {
+                              toast.success("User account successfully purged", { id: loadingToast });
+                              setSelectedUser(null);
+                              queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+                              refetch();
+                            } else {
+                              const err = await res.json();
+                              toast.error(err.error || "Failed to delete user account", { id: loadingToast });
+                            }
+                          } catch (error) {
+                            toast.error("Network communication error", { id: loadingToast });
+                          }
+                        }
+                      });
                     }}
                     className="w-full h-8 border-rose-500/20 hover:bg-rose-500 hover:text-white hover:border-rose-500 text-rose-500 text-[10px] font-bold uppercase tracking-wider gap-1.5 cursor-pointer transition-all duration-200"
                   >
@@ -566,6 +808,18 @@ export default function AdminUsers() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Premium Reusable Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDeleteState.isOpen}
+        onOpenChange={(isOpen) => setConfirmDeleteState((prev) => ({ ...prev, isOpen }))}
+        title={confirmDeleteState.title}
+        description={confirmDeleteState.description}
+        confirmText={confirmDeleteState.confirmText || "Confirm Purge"}
+        cancelText="Keep Account"
+        onConfirm={confirmDeleteState.onConfirm}
+        variant="danger"
+      />
     </div>
   );
 }

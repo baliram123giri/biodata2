@@ -5,26 +5,32 @@ import {
   FileText, 
   Search, 
   Trash2, 
-  Download, 
-  Eye, 
-  MoreVertical,
-  FileSpreadsheet,
-  Loader2,
   Calendar,
   MapPin,
   Laptop,
   Smartphone,
   Info,
-  ExternalLink
+  FileSpreadsheet,
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  ColumnDef
+} from "@tanstack/react-table";
 
 interface DownloadLog {
   id: string;
@@ -48,12 +54,37 @@ export default function AdminBiodatas() {
   
   // Filters state
   const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [formatFilter, setFormatFilter] = React.useState("all");
   const [templateFilter, setTemplateFilter] = React.useState("all");
 
   // Server-side Pagination states
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
+
+  // Row Selection & Confirmation Box state
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [confirmDeleteState, setConfirmDeleteState] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Load templates once on mount via Query
   const { data: templatesData } = useQuery({
@@ -69,46 +100,33 @@ export default function AdminBiodatas() {
   const templates = templatesData || [];
 
   // Fetch downloads query based on filters
-  const downloadsQueryKey = ["admin", "downloads", { currentPage, pageSize, search, formatFilter, templateFilter }];
-  const { data: downloadsData, isLoading } = useQuery({
+  const downloadsQueryKey = ["admin", "downloads", { currentPage, pageSize, debouncedSearch, formatFilter, templateFilter }];
+  const { data: downloadsData, isLoading, refetch } = useQuery({
     queryKey: downloadsQueryKey,
     queryFn: async () => {
       const res = await fetch(
-        `/api/admin/downloads?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(search)}&format=${formatFilter}&templateId=${templateFilter}`
+        `/api/admin/downloads?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&format=${formatFilter}&templateId=${templateFilter}`
       );
       if (!res.ok) throw new Error("Failed to fetch download records");
       return res.json();
     },
-    staleTime: Infinity, // Cache until page refresh
+    staleTime: 0, // Instant refetch on state/filter change and invalidation
   });
 
   const downloads: DownloadLog[] = downloadsData?.downloads || [];
   const totalRecords = downloadsData?.total || 0;
 
-  // Reset page when filters change
+  // Reset rowSelection when filters or page change
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [search, formatFilter, templateFilter]);
+    setRowSelection({});
+  }, [debouncedSearch, formatFilter, templateFilter, currentPage, pageSize]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this download log record? This action cannot be undone.")) return;
-
-    try {
-      const res = await fetch(`/api/admin/downloads?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("Download log deleted successfully");
-        queryClient.invalidateQueries({ queryKey: ["admin", "downloads"] });
-      } else {
-        toast.error(data.error || "Failed to delete log");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while deleting download record");
-    }
-  };
+  const selectedIds = React.useMemo(() => {
+    return Object.keys(rowSelection).map(indexStr => {
+      const idx = parseInt(indexStr, 10);
+      return downloads[idx]?.id;
+    }).filter(Boolean);
+  }, [rowSelection, downloads]);
 
   const getTemplateName = (templateId: string | null) => {
     if (!templateId) return "Default / Custom";
@@ -118,12 +136,195 @@ export default function AdminBiodatas() {
 
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
+  const getDeviceIcon = (ua: string | null) => {
+    if (!ua) return <span title="Unknown client UA"><Laptop className="w-3.5 h-3.5 text-muted-foreground" /></span>;
+    const lower = ua.toLowerCase();
+    if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) {
+      return <span title={ua}><Smartphone className="w-3.5 h-3.5 text-sky-500" /></span>;
+    }
+    return <span title={ua}><Laptop className="w-3.5 h-3.5 text-indigo-500" /></span>;
+  };
+
+  // TanStack Table Column Definitions
+  const columns = React.useMemo<ColumnDef<DownloadLog>[]>(() => [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center p-1">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center p-1">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: "Log ID",
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-muted-foreground/80 text-[10px]" title={row.original.id}>
+          {row.original.id.slice(0, 8)}...
+        </span>
+      )
+    },
+    {
+      accessorKey: "name",
+      header: "Biodata Name",
+      cell: ({ row }) => <span className="font-bold text-foreground">{row.original.name}</span>
+    },
+    {
+      accessorKey: "format",
+      header: "Format",
+      cell: ({ row }) => {
+        const fmt = row.original.format.toLowerCase();
+        return (
+          <span className={cn(
+            "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border leading-none uppercase",
+            fmt === "pdf"
+              ? "bg-red-500/10 text-red-500 border-red-500/20"
+              : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+          )}>
+            {row.original.format}
+          </span>
+        );
+      }
+    },
+    {
+      accessorKey: "templateId",
+      header: "Template Name",
+      cell: ({ row }) => <span className="font-bold text-muted-foreground">{getTemplateName(row.original.templateId)}</span>
+    },
+    {
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }) => {
+        const loc = row.original.location;
+        return loc ? (
+          <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-300">
+            <MapPin className="w-3.5 h-3.5 text-stone-400" />
+            {loc}
+          </span>
+        ) : (
+          <span className="text-stone-400 italic">Not Shared</span>
+        );
+      }
+    },
+    {
+      id: "deviceIp",
+      header: "Device / IP",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {getDeviceIcon(row.original.userAgent)}
+          <span className="font-mono text-stone-500 text-[10px]" title={row.original.userAgent || ""}>
+            {row.original.ipAddress || "0.0.0.0"}
+          </span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Downloaded At",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5 text-stone-400" />
+          <span>
+            {new Date(row.original.createdAt).toLocaleString(undefined, {
+              dateStyle: "short",
+              timeStyle: "short"
+            })}
+          </span>
+        </div>
+      )
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right pr-4">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end items-center gap-1 pr-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
+                <Info className="w-3.5 h-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3 border border-border bg-popover text-popover-foreground shadow-2xl rounded-lg text-xs space-y-2">
+              <h4 className="font-bold text-foreground uppercase tracking-wide text-[10px]">User Agent Details</h4>
+              <div className="p-2 rounded bg-muted/60 font-mono text-[10px] break-all max-h-24 overflow-y-auto leading-relaxed text-muted-foreground border border-border/40">
+                {row.original.userAgent || "No client headers detected"}
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          <Button 
+            onClick={() => {
+              setConfirmDeleteState({
+                isOpen: true,
+                title: "Purge Download Record",
+                description: `Are you sure you want to permanently delete the download log for "${row.original.name}"? This action is irreversible and cannot be undone.`,
+                onConfirm: async () => {
+                  const loadingToast = toast.loading("Purging download record...");
+                  try {
+                    const res = await fetch(`/api/admin/downloads`, {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: row.original.id }),
+                    });
+                    if (res.ok) {
+                      toast.success("Download log successfully purged", { id: loadingToast });
+                      queryClient.invalidateQueries({ queryKey: ["admin", "downloads"] });
+                      refetch();
+                    } else {
+                      const data = await res.json();
+                      toast.error(data.error || "Failed to delete log", { id: loadingToast });
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("An error occurred while deleting download record", { id: loadingToast });
+                  }
+                }
+              });
+            }}
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer rounded-lg"
+            title="Delete Record"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )
+    }
+  ], [templates]);
+
+  const table = useReactTable({
+    data: downloads,
+    columns,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row, index) => String(index),
+  });
+
   // Server-side CSV Exporter: Fetches all matched records ignoring page limits
   const exportCSV = async () => {
     setIsCsvExporting(true);
     try {
       const res = await fetch(
-        `/api/admin/downloads?page=1&limit=100000&search=${encodeURIComponent(search)}&format=${formatFilter}&templateId=${templateFilter}`
+        `/api/admin/downloads?page=1&limit=100000&search=${encodeURIComponent(debouncedSearch)}&format=${formatFilter}&templateId=${templateFilter}`
       );
       if (!res.ok) throw new Error("Failed to compile CSV records");
       const data = await res.json();
@@ -164,17 +365,8 @@ export default function AdminBiodatas() {
     }
   };
 
-  const getDeviceIcon = (ua: string | null) => {
-    if (!ua) return <span title="Unknown client UA"><Laptop className="w-3.5 h-3.5 text-muted-foreground" /></span>;
-    const lower = ua.toLowerCase();
-    if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) {
-      return <span title={ua}><Smartphone className="w-3.5 h-3.5 text-sky-500" /></span>;
-    }
-    return <span title={ua}><Laptop className="w-3.5 h-3.5 text-indigo-500" /></span>;
-  };
-
   return (
-    <div className="space-y-6 text-foreground">
+    <div className="space-y-6 text-foreground w-full">
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -238,8 +430,63 @@ export default function AdminBiodatas() {
         </div>
       </div>
 
+      {/* Floating Bulk Action bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 overflow-hidden text-xs"
+          >
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <span className="bg-primary text-white px-2 py-0.5 rounded-full text-[10px] font-black">
+                {selectedIds.length}
+              </span>
+              <span>Selected download records</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setConfirmDeleteState({
+                    isOpen: true,
+                    title: `Purge ${selectedIds.length} Download Records`,
+                    description: `Are you sure you want to permanently delete these ${selectedIds.length} download records? This action is irreversible and cannot be undone.`,
+                    onConfirm: async () => {
+                      const loadingToast = toast.loading(`Purging ${selectedIds.length} download records...`);
+                      try {
+                        const res = await fetch("/api/admin/downloads", {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ids: selectedIds }),
+                        });
+                        if (res.ok) {
+                          toast.success(`Successfully purged ${selectedIds.length} download records`, { id: loadingToast });
+                          setRowSelection({});
+                          queryClient.invalidateQueries({ queryKey: ["admin", "downloads"] });
+                          refetch();
+                        } else {
+                          const data = await res.json();
+                          toast.error(data.error || "Failed to bulk delete records", { id: loadingToast });
+                        }
+                      } catch (error) {
+                        toast.error("Network communication error", { id: loadingToast });
+                      }
+                    }
+                  });
+                }}
+                className="h-8 px-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg flex items-center gap-1.5 transition-all text-[11px] cursor-pointer uppercase tracking-wider border border-transparent dark:border-white/10"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Purge Selected</span>
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Biodata list grid */}
-      <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+      <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm w-full">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -247,113 +494,55 @@ export default function AdminBiodatas() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
                 <thead>
-                  <tr className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
-                    <th className="p-4 align-middle hidden sm:table-cell sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Log ID</th>
-                    <th className="p-4 align-middle sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Biodata Name</th>
-                    <th className="p-4 align-middle sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Format</th>
-                    <th className="p-4 align-middle sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Template Name</th>
-                    <th className="p-4 align-middle hidden md:table-cell sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Location</th>
-                    <th className="p-4 align-middle hidden lg:table-cell sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Device / IP</th>
-                    <th className="p-4 align-middle hidden sm:table-cell sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Downloaded At</th>
-                    <th className="p-4 align-middle text-right sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">Actions</th>
-                  </tr>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
+                      {headerGroup.headers.map(header => {
+                        let widthStyle = "";
+                        if (header.id === "select") widthStyle = "w-[60px]";
+                        else if (header.id === "id") widthStyle = "w-[120px]";
+                        else if (header.id === "name") widthStyle = "w-[180px]";
+                        else if (header.id === "format") widthStyle = "w-[100px]";
+                        else if (header.id === "templateId") widthStyle = "w-[150px]";
+                        else if (header.id === "location") widthStyle = "w-[160px]";
+                        else if (header.id === "deviceIp") widthStyle = "w-[180px]";
+                        else if (header.id === "createdAt") widthStyle = "w-[170px]";
+                        else if (header.id === "actions") widthStyle = "w-[100px]";
+
+                        return (
+                          <th 
+                            key={header.id} 
+                            className={cn("p-4 align-middle sticky top-0 z-10 bg-muted/95 backdrop-blur-xs font-bold text-left", widthStyle)}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  ))}
                 </thead>
                 <tbody className="divide-y divide-border/30 text-foreground/90">
-                  <AnimatePresence mode="popLayout">
-                    {downloads.length > 0 ? (
-                      downloads.map((log) => (
-                        <motion.tr 
-                          key={log.id} 
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
-                          className="hover:bg-muted/10 transition-colors"
-                        >
-                          <td className="p-4 align-middle font-mono font-bold text-muted-foreground/80 text-[10px] hidden sm:table-cell" title={log.id}>
-                            {log.id.slice(0, 8)}...
+                  {table.getRowModel().rows.length > 0 ? (
+                    table.getRowModel().rows.map(row => (
+                      <tr key={row.id} className="hover:bg-muted/10 transition-colors">
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className="p-4 align-middle truncate">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
-                          <td className="p-4 align-middle font-bold text-foreground">{log.name}</td>
-                          <td className="p-4 align-middle">
-                            <span className={cn(
-                              "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border leading-none uppercase",
-                              log.format.toLowerCase() === "pdf"
-                                ? "bg-red-500/10 text-red-500 border-red-500/20"
-                                : "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                            )}>
-                              {log.format}
-                            </span>
-                          </td>
-                          <td className="p-4 align-middle text-muted-foreground font-bold">{getTemplateName(log.templateId)}</td>
-                          <td className="p-4 align-middle font-medium text-stone-600 dark:text-stone-300 hidden md:table-cell">
-                            {log.location ? (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5 text-stone-400" />
-                                {log.location}
-                              </span>
-                            ) : (
-                              <span className="text-stone-400 italic">Not Shared</span>
-                            )}
-                          </td>
-                          <td className="p-4 align-middle hidden lg:table-cell">
-                            <div className="flex items-center gap-2">
-                              {getDeviceIcon(log.userAgent)}
-                              <span className="font-mono text-stone-500 text-[10px]" title={log.userAgent || ""}>
-                                {log.ipAddress || "0.0.0.0"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4 align-middle text-muted-foreground font-medium hidden sm:table-cell">
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-stone-400" />
-                              <span>
-                                {new Date(log.createdAt).toLocaleString(undefined, {
-                                  dateStyle: "short",
-                                  timeStyle: "short"
-                                })}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4 align-middle text-right">
-                            <div className="flex justify-end items-center gap-1">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
-                                    <Info className="w-3.5 h-3.5" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-72 p-3 border border-border bg-popover text-popover-foreground shadow-2xl rounded-lg text-xs space-y-2">
-                                  <h4 className="font-bold text-foreground uppercase tracking-wide text-[10px]">User Agent Details</h4>
-                                  <div className="p-2 rounded bg-muted/60 font-mono text-[10px] break-all max-h-24 overflow-y-auto leading-relaxed text-muted-foreground border border-border/40">
-                                    {log.userAgent || "No client headers detected"}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                              
-                              <Button 
-                                onClick={() => handleDelete(log.id)}
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer rounded-lg"
-                                title="Delete Record"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={8} className="p-12 text-center text-muted-foreground font-bold uppercase tracking-wider">
-                          No downloaded biodata logs found in database.
-                        </td>
+                        ))}
                       </tr>
-                    )}
-                  </AnimatePresence>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={columns.length} className="p-12 text-center text-muted-foreground font-bold uppercase tracking-wider">
+                        No downloaded biodata logs found in database.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -396,9 +585,10 @@ export default function AdminBiodatas() {
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className="h-8 text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50 bg-background"
+                      className="h-8 px-2.5 text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50 bg-background flex items-center gap-1"
                     >
-                      Previous
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Previous</span>
                     </Button>
 
                     {/* Dynamic Page Buttons array */}
@@ -435,9 +625,10 @@ export default function AdminBiodatas() {
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="h-8 text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50 bg-background"
+                      className="h-8 px-2.5 text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-50 bg-background flex items-center gap-1"
                     >
-                      Next
+                      <span>Next</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -446,6 +637,18 @@ export default function AdminBiodatas() {
           </>
         )}
       </Card>
+
+      {/* Premium Reusable Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDeleteState.isOpen}
+        onOpenChange={(isOpen) => setConfirmDeleteState((prev) => ({ ...prev, isOpen }))}
+        title={confirmDeleteState.title}
+        description={confirmDeleteState.description}
+        confirmText={confirmDeleteState.confirmText || "Confirm Purge"}
+        cancelText="Keep Record"
+        onConfirm={confirmDeleteState.onConfirm}
+        variant="danger"
+      />
     </div>
   );
 }

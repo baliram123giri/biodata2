@@ -158,6 +158,7 @@ export async function POST(req: Request) {
       comboDiscountPrice,
       previewPhotoFile,
       rawInput,
+      isDefault,
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -202,6 +203,12 @@ export async function POST(req: Request) {
       }
     }
 
+    if (isDefault === true) {
+      await prisma.template.updateMany({
+        data: { isDefault: false }
+      });
+    }
+
     const template = await prisma.template.create({
       data: {
         name,
@@ -243,6 +250,7 @@ export async function POST(req: Request) {
         titleShape: titleShape || "simple",
         photoShowBorder: photoShowBorder !== false, // default true
         active: true,
+        isDefault: isDefault === true,
         // Pricing
         isPremium: isPremium === true,
         price: safeParseFloat(price),

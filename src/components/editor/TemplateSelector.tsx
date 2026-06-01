@@ -25,8 +25,18 @@ const TEMPLATE_LABELS: Record<string, string> = {
 };
 
 export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
-  const { selectedTemplate, setSelectedTemplate, customTemplates, formData } = useBiodataStore();
+  const { selectedTemplate, setSelectedTemplate, customTemplates, formData, fetchCustomTemplates } = useBiodataStore();
   const theme = useThemeStore();
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (customTemplates.length <= 1) {
+      setIsLoading(true);
+      fetchCustomTemplates().finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [fetchCustomTemplates, customTemplates.length]);
 
   // Initial language filter set to "all" to show all languages by default
   const [langFilter, setLangFilter] = React.useState<string>("all");
@@ -57,17 +67,17 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
     <div className="space-y-3">
       {/* Language filter dropdown using Radix UI Select */}
       {languagesList.length > 1 && (
-        <div className="sticky top-0 z-30 -mx-1 px-1 pb-2 pt-1 bg-white/80 dark:bg-stone-950/80 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+        <div className="sticky top-0 z-30 pb-3 pt-1 bg-transparent">
+          <div className="flex items-center gap-2 bg-white/60 dark:bg-stone-950/60 backdrop-blur-xl border border-stone-200/40 dark:border-stone-800/40 p-1.5 px-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.03)]">
+            <Globe className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
             <Select value={langFilter} onValueChange={setLangFilter}>
               <SelectTrigger
                 id="template-language-filter"
-                className="h-8 text-xs font-bold rounded-lg border border-stone-200/70 bg-stone-50/80 dark:bg-stone-900/60 dark:border-stone-800/60 focus:ring-1 focus:ring-rose-400/50 w-full"
+                className="h-6 text-[11px] font-black rounded-full border-0 bg-transparent focus:ring-0 focus-visible:ring-0 w-full p-0 shadow-none capitalize text-stone-700 dark:text-stone-300"
               >
                 <SelectValue placeholder="Filter by language" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border border-stone-200/70 dark:border-stone-800/60 shadow-xl">
+              <SelectContent className="rounded-2xl border border-stone-200/50 dark:border-stone-800/50 shadow-2xl backdrop-blur-xl bg-white/95 dark:bg-stone-950/95">
                 {languagesList.map((lang) => (
                   <SelectItem
                     key={lang}
@@ -246,6 +256,34 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
           </button>
         );
       })}
+
+      {/* Render individual skeleton slots next to already loaded templates while fetching */}
+      {isLoading && Array.from({ length: 4 }).map((_, idx) => (
+        <div key={`skeleton-${idx}`} className="flex flex-col gap-2 animate-pulse select-none">
+          <div className="w-full aspect-[595/842] rounded-xl bg-stone-100 dark:bg-stone-900 border border-stone-200/50 dark:border-stone-800/50 relative overflow-hidden">
+            {/* Mock Badge */}
+            <div className="absolute top-2 left-2 w-10 h-3.5 bg-stone-200 dark:bg-stone-800 rounded-md" />
+            
+            {/* Inner simulated lines */}
+            <div className="absolute inset-[8px] border border-dashed border-stone-200/30 dark:border-stone-800/30" />
+            <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5">
+              <div className="h-1 bg-stone-200 dark:bg-stone-800 w-3/4 rounded" />
+              <div className="h-1 bg-stone-200 dark:bg-stone-800 w-1/2 rounded" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 px-1">
+            <div className="h-3 bg-stone-200 dark:bg-stone-800 w-2/3 rounded-md" />
+            <div className="flex justify-between items-center mt-0.5">
+              <div className="flex gap-1">
+                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+              </div>
+              <div className="w-8 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+            </div>
+          </div>
+        </div>
+      ))}
       </div>
     </div>
   );

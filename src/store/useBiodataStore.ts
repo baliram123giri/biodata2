@@ -47,6 +47,7 @@ interface BiodataState {
   setSelectedTemplate: (templateId: string) => void;
   setCustomTemplates: (templates: TemplateConfig[]) => void;
   fetchCustomTemplates: () => Promise<void>;
+  fetchInitialTemplate: (templateId?: string | null) => Promise<void>;
   fetchCustomStickers: () => Promise<void>;
   resetStore: () => void;
   resetFormDataOnly: () => void;
@@ -136,14 +137,70 @@ export const useBiodataStore = create<BiodataState>()(
               set((state) => {
                 const currentSelected = state.selectedTemplate;
                 const hasSelected = data.templates.some((t: any) => t.id === currentSelected);
+                const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
+                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 return {
                   customTemplates: data.templates,
-                  selectedTemplate: hasSelected ? currentSelected : data.templates[0].id,
+                  selectedTemplate: hasSelected ? currentSelected : fallbackTemplateId,
                 };
               });
             }
           } catch (err) {
             console.error("Store failed to fetch templates:", err);
+          }
+        },
+        fetchInitialTemplate: async (templateId) => {
+          try {
+            const currentSelected = useBiodataStore.getState().selectedTemplate;
+            const targetId = templateId || currentSelected;
+
+            // Check if we already have this template loaded or if it's static built-in
+            const { getTemplateConfig } = await import("@/lib/frame-config");
+            const isBuiltIn = targetId ? !!getTemplateConfig(targetId) : false;
+
+            if (targetId) {
+              const alreadyLoaded = useBiodataStore.getState().customTemplates.some(t => t.id === targetId);
+              const hasLoadedDatabaseTemplates = useBiodataStore.getState().customTemplates.length > 0;
+              if (alreadyLoaded || (isBuiltIn && hasLoadedDatabaseTemplates)) {
+                // Skip if already loaded, or if it is built-in AND we already have database templates loaded
+                return;
+              }
+            } else {
+              // If no specific template target, check if a default template is already loaded
+              const hasDefault = useBiodataStore.getState().customTemplates.some(t => t.isDefault === true);
+              if (hasDefault) {
+                return;
+              }
+            }
+
+            const url = (targetId && !isBuiltIn)
+              ? `/api/templates?id=${encodeURIComponent(targetId)}`
+              : `/api/templates?default=true`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.templates && data.templates.length > 0) {
+              const { registerDynamicTemplates } = await import("@/lib/frame-config");
+              registerDynamicTemplates(data.templates);
+              
+              set((state) => {
+                const fetchedTpl = data.templates[0];
+                const exists = state.customTemplates.some(t => t.id === fetchedTpl.id);
+                const updatedTemplates = exists
+                  ? state.customTemplates
+                  : [...state.customTemplates, fetchedTpl];
+                
+                // Only overwrite the selectedTemplate if we had no prior selection or a URL parameter override is present
+                const shouldSetSelected = !currentSelected || !!templateId;
+
+                return {
+                  customTemplates: updatedTemplates,
+                  selectedTemplate: shouldSetSelected ? fetchedTpl.id : currentSelected,
+                };
+              });
+            }
+          } catch (err) {
+            console.error("Store failed to fetch initial template:", err);
           }
         },
         fetchCustomStickers: async () => {
@@ -159,18 +216,21 @@ export const useBiodataStore = create<BiodataState>()(
             console.error("Store failed to fetch stickers:", err);
           }
         },
-        resetStore: () => set({ 
-          formData: {
-            ...defaultBiodataValues,
-            layout: {
-              header: { x: 0, y: 80 },
-              personalDetails: { x: 60, y: 280 },
-              education: { x: 320, y: 280 },
-              footer: { x: 0, y: 1023 },
+        resetStore: () => set((state) => {
+          const defaultTemplate = state.customTemplates.find((t) => t.isDefault === true);
+          return {
+            formData: {
+              ...defaultBiodataValues,
+              layout: {
+                header: { x: 0, y: 80 },
+                personalDetails: { x: 60, y: 280 },
+                education: { x: 320, y: 280 },
+                footer: { x: 0, y: 1023 },
+              },
+              stickers: []
             },
-            stickers: []
-          }, 
-          selectedTemplate: "royal" 
+            selectedTemplate: defaultTemplate ? defaultTemplate.id : "royal"
+          };
         }),
         resetFormDataOnly: () => set((state) => ({
           formData: {
@@ -184,19 +244,23 @@ export const useBiodataStore = create<BiodataState>()(
             stickers: []
           }
         })),
-        resetDesignOnly: () => set((state) => ({
-          formData: {
-            ...state.formData,
-            layout: {
-              header: { x: 0, y: 80 },
-              personalDetails: { x: 60, y: 280 },
-              education: { x: 320, y: 280 },
-              footer: { x: 0, y: 1023 },
+        resetDesignOnly: () => set((state) => {
+          const currentSelected = state.selectedTemplate;
+          const defaultTemplate = state.customTemplates.find((t) => t.isDefault === true);
+          return {
+            formData: {
+              ...state.formData,
+              layout: {
+                header: { x: 0, y: 80 },
+                personalDetails: { x: 60, y: 280 },
+                education: { x: 320, y: 280 },
+                footer: { x: 0, y: 1023 },
+              },
+              stickers: []
             },
-            stickers: []
-          },
-          selectedTemplate: "royal"
-        })),
+            selectedTemplate: currentSelected || (defaultTemplate ? defaultTemplate.id : "royal")
+          };
+        }),
       })
     ),
     {
@@ -204,7 +268,6 @@ export const useBiodataStore = create<BiodataState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         formData: state.formData,
-        selectedTemplate: state.selectedTemplate,
       }),
     }
   )

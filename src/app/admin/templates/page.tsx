@@ -16,7 +16,8 @@ import {
   Smile,
   Copy,
   Wand2,
-  BookA
+  BookA,
+  Star
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ interface Template {
   createdAt: string;
   language?: string | null;
   isPremium?: boolean | null;
+  isDefault?: boolean | null;
   price?: number | null;
   discountPrice?: number | null;
   currency?: string | null;
@@ -78,6 +80,7 @@ interface Sticker {
 export default function AdminTemplates() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = React.useState<"templates" | "backgrounds" | "stickers" | "mantras">("templates");
+  const [updatingDefaultId, setUpdatingDefaultId] = React.useState<string | null>(null);
   const [newBgName, setNewBgName] = React.useState("");
   const [newBgFile, setNewBgFile] = React.useState<string | null>(null);
   const [isUploadingBg, setIsUploadingBg] = React.useState(false);
@@ -219,6 +222,29 @@ export default function AdminTemplates() {
     observer.observe(observerTargetStickers.current);
     return () => observer.disconnect();
   }, [hasNextStickersPage, isFetchingNextStickersPage, fetchNextStickersPage]);
+
+  const toggleDefault = async (id: string, currentIsDefault: boolean) => {
+    setUpdatingDefaultId(id);
+    try {
+      const res = await fetch(`/api/admin/templates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDefault: !currentIsDefault }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Template default status updated successfully`);
+        queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
+      } else {
+        toast.error(data.error || "Failed to update default status");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while updating default status");
+    } finally {
+      setUpdatingDefaultId(null);
+    }
+  };
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     try {
@@ -429,11 +455,11 @@ export default function AdminTemplates() {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex gap-2 border-b border-border pb-px">
+      <div className="flex gap-2 border-b border-border pb-px overflow-x-auto scrollbar-none whitespace-nowrap -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
         <button
           onClick={() => setActiveTab("templates")}
           className={cn(
-            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none",
+            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none shrink-0",
             activeTab === "templates" 
               ? "border-primary text-primary" 
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -444,7 +470,7 @@ export default function AdminTemplates() {
         <button
           onClick={() => setActiveTab("backgrounds")}
           className={cn(
-            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none",
+            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none shrink-0",
             activeTab === "backgrounds" 
               ? "border-primary text-primary" 
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -455,7 +481,7 @@ export default function AdminTemplates() {
         <button
           onClick={() => setActiveTab("stickers")}
           className={cn(
-            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none",
+            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none shrink-0",
             activeTab === "stickers" 
               ? "border-primary text-primary" 
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -466,7 +492,7 @@ export default function AdminTemplates() {
         <button
           onClick={() => setActiveTab("mantras")}
           className={cn(
-            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none",
+            "px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer outline-none shrink-0",
             activeTab === "mantras" 
               ? "border-primary text-primary" 
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -511,6 +537,11 @@ export default function AdminTemplates() {
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30">
                         {temp.language || "English"}
                       </span>
+                      {temp.isDefault && (
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-full border bg-primary/15 text-primary border-primary/30 flex items-center gap-1 animate-pulse">
+                          ★ DEFAULT
+                        </span>
+                      )}
                       {/* Pricing Badge */}
                       {temp.isPremium ? (
                         <span className="text-[9px] font-black px-2 py-0.5 rounded-full border bg-gradient-to-r from-amber-400/20 to-yellow-400/20 text-amber-700 border-amber-300/50 dark:text-amber-300 dark:border-amber-700/50 flex items-center gap-1">
@@ -620,6 +651,26 @@ export default function AdminTemplates() {
                         <EyeOff className="w-4 h-4" />
                         <span>Disabled</span>
                       </>
+                    )}
+                  </Button>
+
+                  <Button
+                    onClick={() => toggleDefault(temp.id, temp.isDefault === true)}
+                    variant="ghost"
+                    size="icon"
+                    disabled={updatingDefaultId === temp.id}
+                    className={cn(
+                      "h-9 w-9 cursor-pointer rounded-lg shrink-0",
+                      temp.isDefault
+                        ? "text-amber-500 hover:text-amber-500 bg-amber-500/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                    title={temp.isDefault ? "Remove as Default Template" : "Set as Default Template"}
+                  >
+                    {updatingDefaultId === temp.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    ) : (
+                      <Star className={cn("w-4 h-4", temp.isDefault && "fill-amber-500 text-amber-500")} />
                     )}
                   </Button>
 

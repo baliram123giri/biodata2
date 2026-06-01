@@ -85,6 +85,7 @@ model Template {
   active                 Boolean  @default(true)
   // Pricing
   isPremium              Boolean  @default(false)
+  isDefault              Boolean  @default(false)
   price                  Float?
   discountPrice          Float?
   currency               String   @default("INR")

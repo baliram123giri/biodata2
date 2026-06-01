@@ -133,7 +133,7 @@ export function HomeBiodataBuilder() {
     setIsHydrated(true);
 
     // Load dynamic templates from database on initial page load
-    useBiodataStore.getState().fetchCustomTemplates?.();
+    useBiodataStore.getState().fetchInitialTemplate?.();
     useBiodataStore.getState().fetchCustomStickers?.();
 
     const performHomeReset = () => {
@@ -437,14 +437,16 @@ export function HomeBiodataBuilder() {
               </span>
             </button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-80 sm:max-w-sm overflow-y-auto px-6">
-            <SheetHeader className="mb-6">
+          <SheetContent side="right" className="w-80 sm:max-w-sm flex flex-col h-full p-0 gap-0">
+            <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
               <SheetTitle className="flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5 text-primary" />
                 Pick a Template
               </SheetTitle>
             </SheetHeader>
-            <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
+            <div className="flex-1 overflow-y-auto p-6 pt-4">
+              <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
+            </div>
           </SheetContent>
         </Sheet>
       </div>
@@ -572,14 +574,16 @@ export function HomeBiodataBuilder() {
                     <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[80vh] overflow-y-auto rounded-t-3xl">
-                  <SheetHeader className="mb-6">
+                <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0 gap-0 rounded-t-3xl">
+                  <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
                     <SheetTitle className="flex items-center gap-2">
                       <LayoutDashboard className="w-5 h-5 text-primary" />
                       {translateUI("pickTemplate", currentLang)}
                     </SheetTitle>
                   </SheetHeader>
-                  <TemplateSelector />
+                  <div className="flex-1 overflow-y-auto p-6 pt-4">
+                    <TemplateSelector />
+                  </div>
                 </SheetContent>
               </Sheet>
 

@@ -238,7 +238,7 @@ export default function EditPage() {
     return () => window.removeEventListener("biodata:selection-changed", handleSelection);
   }, []);
   const [fitResetKey, setFitResetKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("fields");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
@@ -319,14 +319,7 @@ export default function EditPage() {
     const searchParams = new URLSearchParams(window.location.search);
     const templateParam = searchParams.get('template');
 
-    useBiodataStore.getState().fetchCustomTemplates().then(() => {
-      const currentTemplates = useBiodataStore.getState().customTemplates;
-      if (templateParam) {
-        if (currentTemplates.some(t => t.id === templateParam) || getTemplateConfig(templateParam)) {
-          useBiodataStore.getState().setSelectedTemplate(templateParam);
-        }
-      }
-    });
+    useBiodataStore.getState().fetchInitialTemplate(templateParam);
 
     useBiodataStore.getState().fetchCustomStickers();
 

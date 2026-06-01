@@ -119,6 +119,7 @@ interface Template {
   detailsLayout?: string | null;
   titleShape?: string | null;
   isPremium?: boolean | null;
+  isDefault?: boolean | null;
   price?: number | null;
   discountPrice?: number | null;
   currency?: string | null;
@@ -231,6 +232,7 @@ const initialFormState = {
   sectionStyles: "{}",
   // Pricing
   isPremium: false,
+  isDefault: false,
   price: "",
   discountPrice: "",
   currency: "INR",
@@ -416,13 +418,14 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const designerRef = React.useRef<any>(null);
   const [previewMode, setPreviewMode] = React.useState<"designer" | "svg">("designer");
   const [isDrawerCollapsed, setIsDrawerCollapsed] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("info");
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
     }, 320);
     return () => clearTimeout(timer);
-  }, [isDrawerCollapsed]);
+  }, [isDrawerCollapsed, activeTab]);
 
   const handleDesignerChange = (updatedFields: Partial<typeof formState>) => {
     setFormState(prev => ({
@@ -813,6 +816,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         sectionStyles: bgConf?.sectionStyles || "{}",
         // Pricing
         isPremium: template.isPremium === true,
+        isDefault: (template as any).isDefault === true,
         price: template.price !== null && template.price !== undefined ? String(template.price) : "",
         discountPrice: template.discountPrice !== null && template.discountPrice !== undefined ? String(template.discountPrice) : "",
         currency: template.currency || "INR",
@@ -879,6 +883,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         titleShape: formState.titleShape,
         // Pricing
         isPremium: (formState as any).isPremium === true,
+        isDefault: (formState as any).isDefault === true,
         currency: (formState as any).currency || "INR",
         pdfPrice: (formState as any).pdfPrice !== "" && (formState as any).pdfPrice !== undefined ? parseFloat((formState as any).pdfPrice) : null,
         pdfDiscountPrice: (formState as any).pdfDiscountPrice !== "" && (formState as any).pdfDiscountPrice !== undefined ? parseFloat((formState as any).pdfDiscountPrice) : null,
@@ -1093,41 +1098,39 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   return (
     <form onSubmit={handleSubmit} className="fixed inset-0 z-50 flex flex-col bg-background text-foreground font-sans overflow-hidden">
       {/* Sleek Canva-style Header Control Bar */}
-      <header className="w-full shrink-0 bg-card border-b border-border shadow-md flex justify-between items-center px-6 h-16 select-none z-30">
-        <div className="flex items-center gap-4">
+      <header className="w-full shrink-0 bg-card border-b border-border shadow-md flex flex-col md:flex-row justify-between items-center px-4 md:px-6 py-2 md:py-0 md:h-16 select-none z-30 gap-2">
+        <div className="flex items-center justify-between w-full md:w-auto gap-2 md:gap-4">
           <Button
             type="button"
             variant="ghost"
-            className="group gap-2 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full font-medium transition-all flex items-center border border-border shadow-sm"
+            className="group gap-2 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-full font-medium transition-all flex items-center border border-border shadow-sm shrink-0"
             onClick={() => router.push("/admin/templates")}
           >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-bold tracking-wide">Exit Studio</span>
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
+            <span className="font-bold tracking-wide">Exit Studio</span>
           </Button>
 
-          <div className="h-6 w-[1px] bg-border" />
+          <div className="h-6 w-[1px] bg-border hidden md:block" />
 
           {/* Interactive Document Title */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start min-w-0 flex-1 md:flex-none">
             <input
               type="text"
               value={formState.name}
               onChange={e => setFormState({ ...formState, name: e.target.value })}
-              className="bg-transparent border-0 text-sm font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 hover:bg-muted transition-colors w-48"
+              className="bg-transparent border-0 text-xs md:text-sm font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 hover:bg-muted transition-colors w-full md:w-48 truncate"
               placeholder="Template Title"
               title="Click to rename"
             />
-            <span className="text-[10px] text-primary font-black uppercase tracking-widest px-1.5">
+            <span className="text-[8px] md:text-[10px] text-primary font-black uppercase tracking-widest px-1.5 truncate">
               Matrimonial Template Builder
             </span>
           </div>
         </div>
 
-        {/* Center Indicators Removed */}
-
         {/* Action Buttons */}
-        <div className="flex items-center gap-3.5">
-          <div className="flex items-center gap-1.5 bg-muted/50 p-1 border border-border rounded-full">
+        <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2 md:gap-3.5">
+          <div className="flex items-center gap-1 bg-muted/50 p-0.5 md:p-1 border border-border rounded-full shrink-0">
             <Button
               type="button"
               variant={previewMode === "designer" ? "default" : "ghost"}
@@ -1137,7 +1140,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                 setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
               }}
               className={cn(
-                "text-[10.5px] h-7 px-4 font-black cursor-pointer rounded-full border-0 transition-all",
+                "text-[9px] md:text-[10.5px] h-6 md:h-7 px-2.5 md:px-4 font-black cursor-pointer rounded-full border-0 transition-all",
                 previewMode === "designer"
                   ? "bg-primary text-white shadow-lg"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -1151,7 +1154,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               size="sm"
               onClick={() => setPreviewMode("svg")}
               className={cn(
-                "text-[10.5px] h-7 px-4 font-black cursor-pointer rounded-full border-0 transition-all",
+                "text-[9px] md:text-[10.5px] h-6 md:h-7 px-2.5 md:px-4 font-black cursor-pointer rounded-full border-0 transition-all",
                 previewMode === "svg"
                   ? "bg-primary text-white shadow-lg"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -1161,19 +1164,19 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             </Button>
           </div>
 
-          <div className="h-5 w-[1px] bg-border" />
+          <div className="h-5 w-[1px] bg-border hidden md:block" />
           
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-full border border-border/50">
+          <div className="flex items-center gap-0.5 md:gap-1 bg-muted/50 p-0.5 md:p-1 rounded-full border border-border/50 shrink-0">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               disabled={historyIndex <= 0}
               onClick={handleUndo}
-              className="h-8 w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
+              className="h-7 w-7 md:h-8 md:w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
               title="Undo (Ctrl+Z)"
             >
-              <Undo2 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+              <Undo2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
             </Button>
             <Button
               type="button"
@@ -1181,29 +1184,30 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               size="icon"
               disabled={historyIndex >= history.length - 1}
               onClick={handleRedo}
-              className="h-8 w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
+              className="h-7 w-7 md:h-8 md:w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
               title="Redo (Ctrl+Y)"
             >
-              <Redo2 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+              <Redo2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
             </Button>
           </div>
 
-          <div className="h-5 w-[1px] bg-border" />
+          <div className="h-5 w-[1px] bg-border hidden md:block" />
 
           <Button
             type="submit"
             disabled={isSubmitLoading}
-            className="font-black bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 rounded-full text-xs px-6 py-2.5 flex items-center gap-2 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95"
+            className="font-black bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 rounded-full text-[10px] md:text-xs px-3.5 md:px-6 py-2 md:py-2.5 flex items-center gap-1.5 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
           >
             {isSubmitLoading ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Saving Design...</span>
+                <Loader2 className="w-3 h-3 md:w-3.5 md:h-3.5 animate-spin" />
+                <span className="hidden sm:inline">Saving...</span>
+                <span className="sm:hidden">Save</span>
               </>
             ) : (
               <>
-                <Save className="w-3.5 h-3.5" />
-                <span>Save Template</span>
+                <Save className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <span>Save</span>
               </>
             )}
           </Button>
@@ -1211,79 +1215,86 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       </header>
 
       {/* Full-height workspace content */}
-      <div className="flex-1 flex overflow-hidden relative bg-background">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative bg-background">
 
-        {/* FAR LEFT: Standalone full-height vertical icon toolbar — not constrained by Tabs */}
-        <div className="flex flex-col items-center justify-start gap-1.5 p-2 w-[84px] shrink-0 h-full bg-card border-r border-border shadow-xl select-none z-20">
+        {/* FAR LEFT: Standalone icon toolbar */}
+        <div className="flex flex-row lg:flex-col items-center justify-start gap-1.5 p-2 w-full lg:w-[84px] shrink-0 h-auto lg:h-full bg-card border-b lg:border-b-0 lg:border-r border-border shadow-xl select-none z-20 overflow-x-auto overflow-y-hidden lg:overflow-x-hidden lg:overflow-y-auto scrollbar-none">
           {[
             { value: "info",    Icon: FileText,      label: "Info" },
             { value: "fields",  Icon: ClipboardList, label: "Fields" },
             { value: "style",   Icon: Palette,       label: "Style" },
             { value: "frame",   Icon: Layers,        label: "Frame" },
-                        { value: "photo",   Icon: User,          label: "Photo" },
+            { value: "photo",   Icon: User,          label: "Photo" },
             { value: "pricing", Icon: DollarSign,    label: "Price" },
           ].map(({ value, Icon, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => {
+                setActiveTab(value);
                 const el = document.getElementById(`tab-trigger-${value}`);
                 if (el) el.click();
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl transition-all duration-300 cursor-pointer border-0 bg-transparent",
+                "flex flex-row lg:flex-col items-center justify-center gap-1.5 py-2 lg:py-4 px-3 lg:px-2 w-auto lg:w-full rounded-xl transition-all duration-300 cursor-pointer border-0 bg-transparent text-xs md:text-sm shrink-0",
                 "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                "[&.active]:bg-primary/10 [&.active]:text-primary"
+                activeTab === value && "bg-primary/10 text-primary font-bold"
               )}
               id={`dock-btn-${value}`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-black tracking-wide">{label}</span>
+              <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-[9px] lg:text-[10px] font-black tracking-wide">{label}</span>
             </button>
           ))}
 
-          {/* Save tab at bottom */}
+          {/* Save tab at bottom/right */}
           <button
             type="button"
             onClick={() => {
+              setActiveTab("save");
               const el = document.getElementById("tab-trigger-save");
               if (el) el.click();
             }}
-            className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-300 cursor-pointer border-0 bg-transparent mt-auto"
+            className={cn(
+              "flex flex-row lg:flex-col items-center justify-center gap-1.5 py-2 lg:py-4 px-3 lg:px-2 w-auto lg:w-full rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-300 cursor-pointer border-0 bg-transparent mt-0 lg:mt-auto text-xs md:text-sm shrink-0",
+              activeTab === "save" && "bg-primary/10 text-primary font-bold"
+            )}
           >
-            <Save className="w-5 h-5" />
-            <span className="text-[10px] font-black tracking-wide">Save</span>
+            <Save className="w-4 h-4 lg:w-5 lg:h-5" />
+            <span className="text-[9px] lg:text-[10px] font-black tracking-wide">Save</span>
           </button>
         </div>
 
         {/* Sleek Canva-style vertical layout dock */}
-        <Tabs defaultValue="info" orientation="vertical" className="flex flex-row gap-0 flex-1 h-full items-stretch min-w-0">
+        <Tabs defaultValue="info" orientation="vertical" className="flex flex-col lg:flex-row gap-0 flex-1 h-full items-stretch min-w-0">
           
           {/* Hidden TabsList — Radix needs these triggers for state, real UI is the standalone dock above */}
           <TabsList className="hidden">
-            <TabsTrigger id="tab-trigger-info"    value="info"    className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><FileText className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Info</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-fields"  value="fields"  className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><ClipboardList className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Fields</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-style"   value="style"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><Palette className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Style</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-frame"   value="frame"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><Layers className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Frame</span></TabsTrigger>
-                        <TabsTrigger id="tab-trigger-photo"   value="photo"   className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><User className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Photo</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-pricing" value="pricing" className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer"><DollarSign className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Price</span></TabsTrigger>
-            <TabsTrigger id="tab-trigger-save"    value="save"    className="flex flex-col items-center justify-center gap-1.5 py-4 w-full rounded-xl text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary hover:text-foreground transition-all duration-300 cursor-pointer mt-auto"><Save className="w-5 h-5" /><span className="text-[10px] font-black tracking-wide">Save</span></TabsTrigger>
+            <TabsTrigger id="tab-trigger-info"    value="info">Info</TabsTrigger>
+            <TabsTrigger id="tab-trigger-fields"  value="fields">Fields</TabsTrigger>
+            <TabsTrigger id="tab-trigger-style"   value="style">Style</TabsTrigger>
+            <TabsTrigger id="tab-trigger-frame"   value="frame">Frame</TabsTrigger>
+            <TabsTrigger id="tab-trigger-photo"   value="photo">Photo</TabsTrigger>
+            <TabsTrigger id="tab-trigger-pricing" value="pricing">Price</TabsTrigger>
+            <TabsTrigger id="tab-trigger-save"    value="save">Save</TabsTrigger>
           </TabsList>
 
-          {/* MIDDLE COLUMN: Slidable Parameters Panel Drawer (Width 400px, full height) */}
+          {/* MIDDLE COLUMN: Slidable Parameters Panel Drawer */}
           <div className={cn(
-            "shrink-0 h-full bg-card border-r border-border flex flex-col z-10 transition-all duration-300 relative",
-            isDrawerCollapsed ? "w-0 overflow-hidden border-r-0" : "w-[400px]"
+            "shrink-0 w-full lg:w-[400px] bg-card border-b lg:border-b-0 lg:border-r border-border flex flex-col z-10 transition-all duration-300 relative",
+            isDrawerCollapsed 
+              ? "h-0 lg:h-full lg:w-0 overflow-hidden border-b-0 lg:border-r-0" 
+              : "h-[45vh] lg:h-full lg:w-[400px]"
           )}>
-            {/* Collapse Toggle handle button (floating on right edge) */}
+            {/* Collapse Toggle handle button (floating on edge) */}
             {!isDrawerCollapsed && (
               <button
                 type="button"
                 onClick={() => setIsDrawerCollapsed(true)}
-                className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 w-6 h-12 bg-card border border-border hover:bg-muted hover:text-foreground rounded-r-md flex items-center justify-center text-muted-foreground cursor-pointer shadow-lg transition-all duration-200"
+                className="absolute right-4 lg:-right-3 bottom-2 lg:top-1/2 lg:-translate-y-1/2 z-30 w-12 lg:w-6 h-6 lg:h-12 bg-card border border-border hover:bg-muted hover:text-foreground rounded-t-md lg:rounded-r-md flex items-center justify-center text-muted-foreground cursor-pointer shadow-lg transition-all duration-200"
                 title="Collapse Parameters"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 rotate-90 lg:rotate-0" />
               </button>
             )}
 
@@ -2645,6 +2656,19 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold text-primary uppercase tracking-wider">6. Save Matrimonial Template</h3>
 
+                      {/* Default Template Switch */}
+                      <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs font-bold text-foreground">Default Template</Label>
+                          <p className="text-[10.5px] text-muted-foreground">Make this the default template loaded when users open the editor.</p>
+                        </div>
+                        <Switch
+                          id="isDefault-switch"
+                          checked={(formState as any).isDefault === true}
+                          onCheckedChange={(checked) => setFormState({ ...formState, isDefault: checked } as any)}
+                        />
+                      </div>
+
                       {/* Smart Auto-Thumbnail */}
                       <div className="flex gap-3 items-center border border-primary/20 rounded-xl p-4 bg-primary/5">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-base font-bold shrink-0">✨</div>
@@ -2761,10 +2785,10 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                     setIsDrawerCollapsed(false);
                     setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-8 h-16 bg-card border border-border hover:bg-muted hover:text-foreground rounded-r-2xl flex items-center justify-center text-muted-foreground cursor-pointer shadow-2xl transition-all duration-200"
+                  className="absolute left-1/2 lg:left-4 -translate-x-1/2 lg:translate-x-0 top-4 lg:top-1/2 lg:-translate-y-1/2 z-30 w-16 lg:w-8 h-8 lg:h-16 bg-card border border-border hover:bg-muted hover:text-foreground rounded-2xl flex items-center justify-center text-muted-foreground cursor-pointer shadow-2xl transition-all duration-200"
                   title="Expand Parameters"
                 >
-                  <ChevronRight className="w-5 h-5 text-primary animate-pulse" />
+                  <ChevronRight className="w-5 h-5 text-primary animate-pulse -rotate-90 lg:rotate-0" />
                 </button>
               )}
               

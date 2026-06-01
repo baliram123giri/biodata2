@@ -232,6 +232,9 @@ export async function PATCH(
     if (body.isPremium !== undefined) {
       updateData.isPremium = body.isPremium === true;
     }
+    if (body.isDefault !== undefined) {
+      updateData.isDefault = body.isDefault === true;
+    }
     if (body.price !== undefined) {
       updateData.price = safeParseFloat(body.price);
     }
@@ -333,6 +336,12 @@ export async function PATCH(
         }
         updateData.bgConfig = bgConfigData;
       }
+    }
+
+    if (updateData.isDefault === true) {
+      await prisma.template.updateMany({
+        data: { isDefault: false }
+      });
     }
 
     const updated = await prisma.template.update({

@@ -68,20 +68,28 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+    const body = await req.json().catch(() => ({}));
+    const { id, ids } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const queryId = searchParams.get("id");
+
+    const targetId = id || queryId;
+    const targetIds = ids || (targetId ? [targetId] : null);
+
+    if (!targetIds || !Array.isArray(targetIds) || targetIds.length === 0) {
+      return NextResponse.json({ error: "ID or IDs are required" }, { status: 400 });
     }
 
-    await prisma.downloadLog.delete({
-      where: { id }
+    await prisma.downloadLog.deleteMany({
+      where: {
+        id: { in: targetIds }
+      }
     });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Delete download log error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }

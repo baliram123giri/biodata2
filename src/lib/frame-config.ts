@@ -99,6 +99,7 @@ export interface TemplateConfig {
   alignment?: string;
   // Pricing
   isPremium?: boolean;
+  isDefault?: boolean;
   price?: number | null;
   discountPrice?: number | null;
   currency?: string;
@@ -290,6 +291,7 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     titleShape: dbTpl.titleShape || "simple",
     // Pricing
     isPremium: dbTpl.isPremium === true,
+    isDefault: dbTpl.isDefault === true,
     price: dbTpl.price ?? null,
     discountPrice: dbTpl.discountPrice ?? null,
     currency: dbTpl.currency || "INR",

@@ -94,7 +94,7 @@ export default function AdminTransactions() {
       if (!res.ok) throw new Error("Failed to load transactions history");
       return res.json();
     },
-    staleTime: Infinity, // Cache until page refresh
+    staleTime: 0, // Instant refetch on state/filter change and invalidation
   });
 
   const orders: any[] = data?.orders || [];
@@ -386,7 +386,7 @@ export default function AdminTransactions() {
       </div>
 
       {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Card 1: Total Revenue */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <Card className="p-5 bg-gradient-to-br from-secondary/15 to-transparent border border-secondary/30 rounded-xl relative overflow-hidden group shadow-sm">
@@ -442,26 +442,6 @@ export default function AdminTransactions() {
               </span>
               <span className="text-[11px] text-muted-foreground font-semibold mt-1 block">
                 Paid checkouts vs total attempts
-              </span>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Card 4: Currency & Support */}
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
-          <Card className="p-5 bg-card border border-border rounded-xl relative overflow-hidden group shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted-foreground tracking-wide uppercase">Razorpay Key Mode</span>
-              <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-500">
-                <Calendar className="w-4.5 h-4.5" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-2xl sm:text-3xl font-black text-foreground tracking-tight block uppercase text-emerald-500 dark:text-emerald-450">
-                TEST MODE
-              </span>
-              <span className="text-[11px] text-muted-foreground font-semibold mt-1 block">
-                UPI and test cards fully integrated
               </span>
             </div>
           </Card>
@@ -566,6 +546,7 @@ export default function AdminTransactions() {
                         toast.success(`Successfully updated ${selectedIds.length} transactions to ${newStatus}`, { id: loadingToast });
                         setRowSelection({});
                         queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                        refetch();
                       } else {
                         const err = await res.json();
                         toast.error(err.error || "Failed to bulk update status", { id: loadingToast });
@@ -605,6 +586,7 @@ export default function AdminTransactions() {
                             toast.success(`Successfully purged ${selectedIds.length} transaction records`, { id: loadingToast });
                             setRowSelection({});
                             queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                            refetch();
                           } else {
                             const err = await res.json();
                             toast.error(err.error || "Failed to bulk delete records", { id: loadingToast });
@@ -634,7 +616,100 @@ export default function AdminTransactions() {
           )}
         </AnimatePresence>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Responsive Cards View */}
+        <div className="block sm:hidden divide-y divide-border/40">
+          {isLoading ? (
+            <div className="p-8 text-center text-muted-foreground font-semibold flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span>Querying transactions database...</span>
+            </div>
+          ) : table.getRowModel().rows.length > 0 ? (
+            table.getRowModel().rows.map(row => {
+              const order = row.original;
+              const isSelected = row.getIsSelected();
+              return (
+                <div 
+                  key={row.id} 
+                  className={cn(
+                    "p-4 space-y-3 hover:bg-muted/10 transition-colors",
+                    isSelected && "bg-primary/5"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                      />
+                      <span className="font-bold text-foreground text-sm">
+                        {order.customerName || "Anonymous Guest"}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/75 font-semibold">
+                      {new Date(order.createdAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
+                    <div>
+                      <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Order ID</span>
+                      <span className="font-mono text-foreground font-semibold truncate block max-w-[130px]">{order.razorpayOrderId}</span>
+                    </div>
+                    <div>
+                      <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Theme / Format</span>
+                      <span className="text-foreground font-semibold truncate block max-w-[130px]">
+                        {order.templateName} ({order.format})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Checkout Status</span>
+                      <span className={cn(
+                        "text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider inline-flex items-center mt-0.5",
+                        getStatusBadgeStyle(order.status)
+                      )}>
+                        {getStatusIcon(order.status)}
+                        {order.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Pricing Summary</span>
+                      <span className="text-foreground font-black text-sm block mt-0.5">
+                        ₹{Number(order.amount).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-muted-foreground/80 truncate max-w-[170px]">
+                      {order.customerEmail || "No email"}
+                    </span>
+                    <Button
+                      onClick={() => setSelectedTransaction(order)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[10px] font-extrabold text-primary hover:text-primary hover:bg-primary/10 gap-0.5 cursor-pointer"
+                    >
+                      Inspect <ArrowUpRight className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-muted-foreground italic text-xs">
+              No transactions match the selected filters.
+            </div>
+          )}
+        </div>
+
+        {/* Desktop High-Fidelity Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
@@ -866,6 +941,7 @@ export default function AdminTransactions() {
                               toast.success(`Transaction status successfully set to ${newVal}`);
                               // Invalidate query cache to pull updated transactions
                               queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                              refetch();
                               setSelectedTransaction((prev: any) => ({ ...prev, status: newVal.toLowerCase() }));
                             } else {
                               const errData = await res.json();
@@ -918,6 +994,7 @@ export default function AdminTransactions() {
                             toast.success("Transaction record successfully purged", { id: loadingToast });
                             setSelectedTransaction(null);
                             queryClient.invalidateQueries({ queryKey: ["admin", "transactions"] });
+                            refetch();
                           } else {
                             const err = await res.json();
                             toast.error(err.error || "Failed to delete transaction record", { id: loadingToast });
