@@ -4,7 +4,7 @@ import { temporal } from "zundo";
 import { type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
-import { type TemplateConfig } from "@/lib/frame-config";
+import { type TemplateConfig, getTemplateConfig, registerDynamicTemplates } from "@/lib/frame-config";
 
 interface LayoutPosition {
   x: number;
@@ -131,7 +131,6 @@ export const useBiodataStore = create<BiodataState>()(
             const res = await fetch("/api/templates");
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
-              const { registerDynamicTemplates } = await import("@/lib/frame-config");
               registerDynamicTemplates(data.templates);
               
               set((state) => {
@@ -155,7 +154,6 @@ export const useBiodataStore = create<BiodataState>()(
             const targetId = templateId || currentSelected;
 
             // Check if we already have this template loaded or if it's static built-in
-            const { getTemplateConfig } = await import("@/lib/frame-config");
             const isBuiltIn = targetId ? !!getTemplateConfig(targetId) : false;
 
             if (targetId) {
@@ -180,7 +178,6 @@ export const useBiodataStore = create<BiodataState>()(
             const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
-              const { registerDynamicTemplates } = await import("@/lib/frame-config");
               registerDynamicTemplates(data.templates);
               
               set((state) => {

@@ -16,7 +16,7 @@ import { MantraAutocomplete } from "./MantraAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2 } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
-import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES } from "@/lib/translations";
+import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES, translateUI } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -121,7 +121,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
       </div>
 
       <p className="privacy-note">
-        🔒 Your details stay on your device. We never store your biodata on our servers.
+        🔒 {translateUI("privacyNote", currentLang)}
       </p>
 
       <Accordion type="multiple" defaultValue={["customization", "personal"]} className="w-full">
@@ -378,6 +378,26 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                 />
               );
             }
+            const isAnnualIncome = field.id === "annualIncome" || 
+                                  field.label?.trim().toLowerCase() === "annual income" ||
+                                  field.label?.trim() === "वार्षिक आय" ||
+                                  field.label?.trim() === "वार्षिक उत्पन्न" ||
+                                  field.label?.trim() === "વાર્ષિક આવક" ||
+                                  field.label?.trim() === "বার্ষিক আয়" ||
+                                  field.label?.trim() === "ஆண்டு வருமானம்" ||
+                                  field.label?.trim() === "వార్షిక ఆదాయం" ||
+                                  field.label?.trim() === "ವಾರ್ಷಿಕ ಆದಾಯ" ||
+                                  field.label?.trim() === "ਸਾਲਾਨਾ ਆਮਦਨ" ||
+                                  field.label?.trim() === "سالانہ آمدنی";
+            const isParentOccupation = field.id === "fatherOccupation" || field.id === "motherOccupation" ||
+                                      field.label?.trim().toLowerCase() === "father's occupation" ||
+                                      field.label?.trim().toLowerCase() === "mother's occupation";
+
+            let fieldType = isAnnualIncome ? "text" : field.type;
+            if (isParentOccupation) {
+              fieldType = "select";
+            }
+
             const liveLabel = watchedLabels[index] || field.label;
             return (
               <motion.div key={field.id} className="flex flex-col gap-1 relative group px-1 py-0.5 bg-card z-10">
@@ -397,12 +417,17 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                   </div>
                 </div>
 
-                {field.type === "select" ? (
+                {fieldType === "select" ? (
                   <Controller
                     name={`${name}.${index}.value` as const}
                     control={control}
                     render={({ field: selectField }) => {
-                      const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options;
+                      const parentOccupationOptions = [
+                        "Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", 
+                        "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", 
+                        "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
+                      ];
+                      const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options || parentOccupationOptions;
                       return (
                         <Select onValueChange={(val) => {
                           if (val === "Other") {
@@ -427,7 +452,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       )
                     }}
                   />
-                ) : field.type === "company" ? (
+                ) : fieldType === "company" ? (
                   <>
                     <input type="hidden" {...register(`${name}.${index}.logo` as any)} />
                     <Controller
@@ -462,7 +487,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       }}
                     />
                   </>
-                ) : field.type === "time12" ? (
+                ) : fieldType === "time12" ? (
                   <Controller
                     name={`${name}.${index}.value` as const}
                     control={control}
@@ -518,10 +543,10 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                       );
                     }}
                   />
-                ) : field.type === "textarea" ? (
+                ) : fieldType === "textarea" ? (
                   <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
                 ) : (
-                  <Input type={field.type} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
+                  <Input type={fieldType} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
                 )}
               </motion.div>
             );

@@ -95,17 +95,6 @@ export default function AdminDashboard() {
       color: "from-secondary/15 to-transparent",
       borderColor: "border-secondary/30",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(201,168,76,0.15)]"
-    },
-    {
-      title: "System Health",
-      value: "99.98%",
-      change: "Stable",
-      trend: "stable",
-      icon: Activity,
-      description: "All services operational",
-      color: "from-emerald-500/10 to-transparent",
-      borderColor: "border-border",
-      glowColor: "group-hover:shadow-[0_0_20px_rgba(16,185,129,0.08)]"
     }
   ];
 
@@ -136,11 +125,68 @@ export default function AdminDashboard() {
     });
   }, [data]);
 
-  const systemServices = [
-    { name: "PDF Rendering Engine", status: "Healthy", type: "success", uptime: "99.99%", load: "12%" },
-    { name: "Image Processing", status: "Healthy", type: "success", uptime: "100%", load: "8%" },
-    { name: "Database PostgreSQL Node", status: "Healthy", type: "success", uptime: "100%", load: "8%" },
-  ];
+  const systemServices = React.useMemo(() => {
+    return [
+      { 
+        name: "PDF Rendering Engine", 
+        status: "Healthy", 
+        uptime: "99.99%", 
+        load: isLoading ? "..." : `${data?.liveMetrics?.memUsedPct || 12}% RAM` 
+      },
+      { 
+        name: "Image Processing", 
+        status: "Healthy", 
+        uptime: "100%", 
+        load: isLoading ? "..." : `${data?.liveMetrics?.serverLoadAvg || 8}% CPU` 
+      },
+      { 
+        name: "Database PostgreSQL Node", 
+        status: "Healthy", 
+        uptime: isLoading ? "..." : (data?.liveMetrics?.dbSize || "4.2 MB"), 
+        load: isLoading ? "..." : `${data?.liveMetrics?.dbLatency || 4}ms ping` 
+      },
+    ];
+  }, [data, isLoading]);
+
+  const pendingTasks = React.useMemo(() => {
+    const tasks = [
+      {
+        text: "Verify WhatsApp API business account billing status.",
+        checked: true
+      }
+    ];
+
+    const draftTemplates = data?.liveMetrics?.inactiveTemplatesCount || 0;
+    if (draftTemplates > 0) {
+      tasks.push({
+        text: `${draftTemplates} inactive template layout${draftTemplates > 1 ? "s require" : " requires"} designer audit.`,
+        checked: false
+      });
+    } else {
+      tasks.push({
+        text: "All template layouts are active and operational.",
+        checked: true
+      });
+    }
+
+    const pendingCheckouts = data?.liveMetrics?.pendingPaymentsCount || 0;
+    if (pendingCheckouts > 0) {
+      tasks.push({
+        text: `${pendingCheckouts} incomplete user checkout${pendingCheckouts > 1 ? "s require" : " requires"} payment audit.`,
+        checked: false
+      });
+    }
+
+    const criticalReviews = data?.liveMetrics?.criticalReviewsCount || 0;
+    if (criticalReviews > 0) {
+      tasks.push({
+        text: `${criticalReviews} low-satisfaction customer review${criticalReviews > 1 ? "s require" : " requires"} administrator response.`,
+        checked: false
+      });
+    }
+
+    return tasks;
+  }, [data]);
 
   // Template Popularity Mappings with visual HSL colors
   const templatePopularity = React.useMemo(() => {
@@ -217,7 +263,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
           return (
@@ -519,10 +565,77 @@ export default function AdminDashboard() {
               </div>
               <div className="p-2.5 bg-muted/20 border border-border/40 rounded-lg">
                 <p className="text-[10px] text-muted-foreground/75 uppercase font-bold">API Latency</p>
-                <p className="text-base font-extrabold text-primary mt-1">42ms</p>
+                <p className="text-base font-extrabold text-primary mt-1">
+                  {isLoading ? "..." : `${data?.liveMetrics?.apiLatency || 5}ms`}
+                </p>
               </div>
             </div>
+
+            <Separator className="my-5 bg-border/80" />
+
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
+              Server Host Hardware & Storage
+            </h4>
+
+            {isLoading ? (
+              <div className="text-[11px] text-muted-foreground italic py-2">Loading hardware specs...</div>
+            ) : (
+              <div className="space-y-4 text-[11px] text-muted-foreground">
+                {/* Disk Space Progress Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-medium">
+                    <span className="flex items-center gap-1 font-bold text-foreground/85">
+                      💾 Storage Volume
+                    </span>
+                    <span>
+                      {data?.systemMetrics?.usedGB} GB / {data?.systemMetrics?.totalGB} GB ({100 - (data?.systemMetrics?.pctFree || 0)}% Used)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden border border-border/20">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        data?.systemMetrics?.spaceWarning ? "bg-red-500" : (data?.systemMetrics?.pctFree < 30 ? "bg-amber-500" : "bg-[#9B1B30]")
+                      )} 
+                      style={{ width: `${100 - (data?.systemMetrics?.pctFree || 0)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[9px] font-bold">
+                    <span>{data?.systemMetrics?.freeGB} GB Free remaining</span>
+                    {data?.systemMetrics?.spaceWarning ? (
+                      <span className="text-red-500 animate-pulse font-extrabold">⚠️ Low Space Warning!</span>
+                    ) : (
+                      <span className="text-emerald-500 font-extrabold">Storage Space Healthy</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* RAM / System Specs */}
+                <div className="p-3 bg-muted/20 border border-border/30 rounded-lg space-y-2 text-[10px]">
+                  <div className="flex justify-between">
+                    <span>Operating System:</span>
+                    <strong className="text-foreground/90 uppercase">{data?.systemMetrics?.platform || "Windows"}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CPU Threads:</span>
+                    <strong className="text-foreground/90">{data?.systemMetrics?.cpuCores || 4} Threads ({data?.liveMetrics?.serverLoadAvg || 8}% Load)</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>RAM Utilized:</span>
+                    <strong className="text-foreground/90">
+                      {data?.systemMetrics?.usedRAM} GB / {data?.systemMetrics?.totalRAM} GB ({data?.liveMetrics?.memUsedPct || 0}%)
+                    </strong>
+                  </div>
+                  <div className="flex justify-between truncate">
+                    <span className="shrink-0 mr-2">Processor:</span>
+                    <strong className="text-foreground/90 truncate max-w-[150px]">{data?.systemMetrics?.cpuModel}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
+
+
 
           {/* Quick System Action Alerts */}
           <Card className="p-5 sm:p-6 bg-card border border-primary/20 rounded-xl relative overflow-hidden shadow-sm">
@@ -538,18 +651,24 @@ export default function AdminDashboard() {
             </p>
 
             <ul className="space-y-3 text-xs text-foreground/95 mb-4">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Verify WhatsApp API business account billing status.</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>2 custom template layouts require designer review.</span>
-              </li>
+              {pendingTasks.map((task, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  {task.checked ? (
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  )}
+                  <span className={cn(task.checked ? "text-muted-foreground/75 font-normal" : "text-foreground font-semibold")}>
+                    {task.text}
+                  </span>
+                </li>
+              ))}
             </ul>
 
-            <Button className="w-full bg-primary text-primary-foreground hover:opacity-90 border-none font-bold text-xs shadow-md cursor-pointer">
-              Go to System Console
+            <Button asChild className="w-full bg-primary text-primary-foreground hover:opacity-90 border-none font-bold text-xs shadow-md cursor-pointer">
+              <Link href="/admin/feedback">
+                Review Console Feedback
+              </Link>
             </Button>
           </Card>
         </div>

@@ -31,17 +31,23 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "education", label: "Highest Education", value: "", type: "select", options: ["10th", "12th", "Diploma", "B.A.", "B.Sc.", "B.Com", "B.E. / B.Tech", "BCA", "BBA", "M.A.", "M.Sc.", "M.Com", "M.E. / M.Tech", "MCA", "MBA", "MBBS", "Ph.D.", "CA", "Other"], isDefault: true },
     { id: "college", label: "College/University", value: "", type: "text", isDefault: true },
     { id: "occupation", label: "Occupation/Job", value: "", type: "select", options: ["Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", "Defense / Police", "Private Job", "Not Working", "Other"], isDefault: true },
-    { id: "annualIncome", label: "Annual Income", value: "", type: "select", options: [
-      "1 Lakh", "2 Lakhs", "3 Lakhs", "4 Lakhs", "5 Lakhs", "6 Lakhs", "7 Lakhs", "8 Lakhs", "9 Lakhs", "10 Lakhs", "11 Lakhs", "12 Lakhs", "13 Lakhs", "14 Lakhs", "15 Lakhs", "Other"
-    ], isDefault: true },
+    { id: "annualIncome", label: "Annual Income", value: "", type: "text", isDefault: true },
     { id: "companyName", label: "Company Name", value: "", type: "company", isDefault: true },
     { id: "companyLogo", label: "Company Logo", value: "", type: "hidden", isDefault: false },
   ],
   familyDetails: [
     { id: "fatherName", label: "Father's Name", value: "", type: "text", isDefault: true },
-    { id: "fatherOccupation", label: "Father's Occupation", value: "", type: "text", isDefault: true },
+    { id: "fatherOccupation", label: "Father's Occupation", value: "", type: "select", options: [
+      "Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", 
+      "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", 
+      "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
+    ], isDefault: true },
     { id: "motherName", label: "Mother's Name", value: "", type: "text", isDefault: true },
-    { id: "motherOccupation", label: "Mother's Occupation", value: "", type: "text", isDefault: true },
+    { id: "motherOccupation", label: "Mother's Occupation", value: "", type: "select", options: [
+      "Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", 
+      "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", 
+      "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
+    ], isDefault: true },
     { id: "totalBrothers", label: "Total Brothers", value: "", type: "number", isDefault: true },
     { id: "totalSisters", label: "Total Sisters", value: "", type: "number", isDefault: true },
     { id: "nativePlace", label: "Native Place", value: "", type: "text", isDefault: true },

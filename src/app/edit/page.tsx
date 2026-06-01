@@ -219,6 +219,7 @@ export default function EditPage() {
           if (result && !result.success) {
             throw result.error || new Error("Download failed");
           }
+          setIsFeedbackOpen(true);
         }
       });
     } catch (paymentErr) {
@@ -439,15 +440,10 @@ export default function EditPage() {
     const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
-    if (activeTemplate?.isPremium) {
-      setIsPriceModalOpen(true);
-    } else {
-      setPendingDownloadFormat("pdf"); // default format
-      setIsFeedbackOpen(true);
-    }
+    setIsPriceModalOpen(true);
   };
 
-  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
     setHasRated(true);
     setIsFeedbackOpen(false);
 
@@ -464,21 +460,10 @@ export default function EditPage() {
     } catch (err) {
       console.error("Failed to save feedback:", err);
     }
-
-    if (activeTemplate?.isPremium) {
-      await processPremiumPaymentAndDownload(formData, format, modalFilename);
-    } else {
-      await triggerDownload(formData, selectedTemplate, format, modalFilename);
-    }
   };
 
-  const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
+  const handleSkipDownload = async () => {
     setIsFeedbackOpen(false);
-    if (activeTemplate?.isPremium) {
-      await processPremiumPaymentAndDownload(formData, format, modalFilename);
-    } else {
-      await triggerDownload(formData, selectedTemplate, format, modalFilename);
-    }
   };
 
   /** Generate a JPG data URL for WhatsApp sharing */
@@ -1216,12 +1201,21 @@ export default function EditPage() {
       <PriceModal
         isOpen={isPriceModalOpen}
         onOpenChange={setIsPriceModalOpen}
+        isPremium={activeTemplate?.isPremium}
+        isGenerating={isGenerating}
         onSelectFormat={async (format, couponCode) => {
-          setIsPriceModalOpen(false);
           if (activeTemplate?.isPremium) {
+            setIsPriceModalOpen(false);
             await processPremiumPaymentAndDownload(formData, format, filename, couponCode);
           } else {
-            await triggerDownload(formData, selectedTemplate, format, filename);
+            try {
+              await triggerDownload(formData, selectedTemplate, format, filename);
+            } catch (err) {
+              console.error("Free download failed:", err);
+            } finally {
+              setIsPriceModalOpen(false);
+              setIsFeedbackOpen(true);
+            }
           }
         }}
         currency={activeTemplate?.currency}

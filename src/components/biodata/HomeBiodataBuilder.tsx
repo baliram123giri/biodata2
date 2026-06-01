@@ -236,12 +236,7 @@ export function HomeBiodataBuilder() {
     const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
-    if (activeTemplate?.isPremium) {
-      setIsPriceModalOpen(true);
-    } else {
-      setPendingDownloadFormat("pdf"); // default format
-      setIsFeedbackOpen(true);
-    }
+    setIsPriceModalOpen(true);
   };
 
   const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
@@ -291,6 +286,7 @@ export function HomeBiodataBuilder() {
           if (result && !result.success) {
             throw result.error || new Error("Download failed");
           }
+          setIsFeedbackOpen(true);
         }
       });
     } catch (paymentErr) {
@@ -298,7 +294,7 @@ export function HomeBiodataBuilder() {
     }
   };
 
-  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string, format: DownloadFormat) => {
+  const handleFeedbackSubmit = async (modalRating: number, modalFilename: string, modalComment: string) => {
     setIsFeedbackOpen(false);
 
     try {
@@ -314,34 +310,10 @@ export function HomeBiodataBuilder() {
     } catch (err) {
       console.error("Failed to save feedback:", err);
     }
-
-    const currentData = methods.getValues();
-    if (activeTemplate?.isPremium) {
-      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
-    } else {
-      try {
-        await triggerDownload(currentData, storedTemplate, format, modalFilename);
-      } catch (err: any) {
-        toast.error("Failed to generate download. Please try again later.");
-      }
-    }
   };
 
-  const handleSkipDownload = async (modalFilename: string, format: DownloadFormat) => {
+  const handleSkipDownload = async () => {
     setIsFeedbackOpen(false);
-    const currentData = methods.getValues();
-    if (activeTemplate?.isPremium) {
-      await processPremiumPaymentAndDownload(currentData, format, modalFilename);
-    } else {
-      try {
-        const result = await triggerDownload(currentData, storedTemplate, format, modalFilename);
-        if (result && !result.success) {
-          throw result.error || new Error("Download failed");
-        }
-      } catch (err: any) {
-        toast.error("Failed to generate download. Please try again later.");
-      }
-    }
   };
 
 
@@ -437,7 +409,7 @@ export function HomeBiodataBuilder() {
               </span>
             </button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-80 sm:max-w-sm flex flex-col h-full p-0 gap-0">
+          <SheetContent side="right" aria-describedby={undefined} className="w-80 sm:max-w-sm flex flex-col h-full p-0 gap-0">
             <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
               <SheetTitle className="flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5 text-primary" />
@@ -574,7 +546,7 @@ export function HomeBiodataBuilder() {
                     <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0 gap-0 rounded-t-3xl">
+                <SheetContent side="bottom" aria-describedby={undefined} className="h-[80vh] flex flex-col p-0 gap-0 rounded-t-3xl">
                   <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
                     <SheetTitle className="flex items-center gap-2">
                       <LayoutDashboard className="w-5 h-5 text-primary" />
@@ -685,13 +657,22 @@ export function HomeBiodataBuilder() {
         <PriceModal
           isOpen={isPriceModalOpen}
           onOpenChange={setIsPriceModalOpen}
+          isPremium={activeTemplate?.isPremium}
+          isGenerating={isGenerating}
           onSelectFormat={async (format, couponCode) => {
-            setIsPriceModalOpen(false);
             const currentData = methods.getValues();
             if (activeTemplate?.isPremium) {
+              setIsPriceModalOpen(false);
               await processPremiumPaymentAndDownload(currentData, format, filename, couponCode);
             } else {
-              await triggerDownload(currentData, storedTemplate, format, filename);
+              try {
+                await triggerDownload(currentData, storedTemplate, format, filename);
+              } catch (err) {
+                console.error("Free download failed:", err);
+              } finally {
+                setIsPriceModalOpen(false);
+                setIsFeedbackOpen(true);
+              }
             }
           }}
           currency={activeTemplate?.currency}

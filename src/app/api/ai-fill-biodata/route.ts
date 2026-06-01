@@ -30,7 +30,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanation) matching th
     "education": "string (Highest Education from allowed options)",
     "college": "Full college or university name in India",
     "occupation": "string (Occupation from allowed options)",
-    "annualIncome": "string (Annual income from allowed options)",
+    "annualIncome": "string (e.g. ₹ 8 LPA, 12 Lakhs PA, etc.)",
     "companyName": "Well-known Indian or multinational company name"
   },
   "familyDetails": {
@@ -67,7 +67,8 @@ const selectFieldConfig = [
   { section: "personalDetails", id: "manglik" },
   { section: "educationDetails", id: "education" },
   { section: "educationDetails", id: "occupation" },
-  { section: "educationDetails", id: "annualIncome" }
+  { section: "familyDetails", id: "fatherOccupation" },
+  { section: "familyDetails", id: "motherOccupation" }
 ];
 
 function getOptionsForField(sectionName: string, fieldId: string): string[] {

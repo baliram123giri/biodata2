@@ -62,6 +62,26 @@ export const processPDFField = (
     if (y && m && d) displayValue = `${d}/${m}/${y}`;
   }
 
+  // 5.5 Format numbers in Annual Income field
+  const isAnnualIncomeField = field.id === "annualIncome" || 
+                              field.label?.trim().toLowerCase() === "annual income" ||
+                              field.label?.trim() === "वार्षिक आय" ||
+                              field.label?.trim() === "वार्षिक उत्पन्न" ||
+                              field.label?.trim() === "વાર્ષિક આવક" ||
+                              field.label?.trim() === "বার্ষিক আয়" ||
+                              field.label?.trim() === "ஆண்டு வருமானம்" ||
+                              field.label?.trim() === "వార్షిక ఆదాయం" ||
+                              field.label?.trim() === "ವಾರ್ಷಿಕ ಆದಾಯ" ||
+                              field.label?.trim() === "ਸਾਲਾਨਾ ਆਮਦਨ" ||
+                              field.label?.trim() === "سالانہ آمدنی";
+
+  if (isAnnualIncomeField && displayValue) {
+    displayValue = displayValue.replace(/\b\d{4,}\b/g, (match: string) => {
+      const num = parseInt(match, 10);
+      return new Intl.NumberFormat("en-IN").format(num);
+    });
+  }
+
   // 6. Translate options (Final Value Translation)
   displayValue = translateDynamicOption(displayValue, t);
 

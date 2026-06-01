@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { FileText, FileType, ImageIcon, Sparkles, Crown, Check, Tag, X } from "lucide-react";
+import { FileText, FileType, ImageIcon, Sparkles, Crown, Check, Tag, X, Lock, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { translateUI } from "@/lib/translations";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 function getCurrencySymbol(currency?: string | null) {
   if (currency === "USD") return "$";
@@ -18,7 +19,8 @@ interface PriceModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectFormat: (format: "pdf" | "jpg" | "png" | "combo", couponCode?: string) => void;
-
+  isPremium?: boolean;
+  isGenerating?: boolean;
   currency?: string | null;
   price?: number | null;
   discountPrice?: number | null;
@@ -36,6 +38,8 @@ export function PriceModal({
   isOpen,
   onOpenChange,
   onSelectFormat,
+  isPremium = true,
+  isGenerating = false,
   currency = "INR",
   price = null,
   discountPrice = null,
@@ -58,6 +62,14 @@ export function PriceModal({
 
   const [availableCoupons, setAvailableCoupons] = useState<{ id: string; code: string; discountType: string; discountValue: number }[]>([]);
   const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<"combo" | "pdf" | "jpg" | "png">("combo");
+
+  const getSelectedPrice = () => {
+    if (selectedFormat === "combo") return formatComboPrice;
+    if (selectedFormat === "pdf") return formatPdfPrice;
+    if (selectedFormat === "jpg") return formatJpgPrice;
+    return formatPngPrice;
+  };
 
   React.useEffect(() => {
     if (isOpen) {
@@ -171,7 +183,12 @@ export function PriceModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl [&>button]:text-white [&>button]:focus:ring-primary [&>button]:opacity-90 ring-1 ring-border/50">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl [&>button]:text-white [&>button]:focus:ring-primary [&>button]:opacity-90 ring-1 ring-border/50"
+      >
         {/* Compact Header Banner with Shine */}
         <div className="bg-gradient-primary py-5 px-6 text-white relative select-none flex items-center gap-4 border-b border-primary/20 shrink-0 overflow-hidden shadow-sm">
           {/* Shine Sweep animation across header */}
@@ -192,220 +209,386 @@ export function PriceModal({
 
         {/* Scrollable Container */}
         <div className="p-5 sm:p-6 pb-8 sm:pb-12 flex-1 overflow-y-auto flex flex-col gap-4">
-              {/* Coupon Input Area */}
-          {(isLoadingCoupons || availableCoupons.length > 0 || appliedCoupon) && (
-            <div className="border border-emerald-500/25 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] rounded-2xl p-4 flex flex-col gap-3 shadow-sm shrink-0">
-              <div className="flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-wide">{translateUI("havePromoCoupon", currentLang)}</span>
-              </div>
-              
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
-                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 stroke-[3px]" />
-                    <div className="flex flex-col text-left">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-450">{appliedCoupon.code} {translateUI("appliedSuccess", currentLang)}</span>
-                      <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-500/80">
-                        {appliedCoupon.discountType === "percentage" 
-                          ? `${appliedCoupon.discountValue}% ${translateUI("discountApplied", currentLang)}`
-                          : `${translateUI("flatDiscountApplied", currentLang)}`}
-                      </span>
-                    </div>
+          {isPremium && (isLoadingCoupons || availableCoupons.length > 0 || appliedCoupon) && (
+            <Accordion type="single" collapsible className="w-full shrink-0 border-0">
+              <AccordionItem value="coupons-offers" className="border-0 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] border border-emerald-500/25 rounded-3xl overflow-hidden shadow-xs">
+                <AccordionTrigger className="hover:no-underline px-4 py-3.5 flex items-center justify-between transition-all border-0 [&[data-state=open]>svg]:rotate-180">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-450 animate-pulse" />
+                    <span className="text-[11px] font-black uppercase text-emerald-850 dark:text-emerald-450 tracking-wider">Offers & Coupons</span>
                   </div>
-                  <button
-                    onClick={handleRemoveCoupon}
-                    className="p-1 rounded-full hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 transition-colors border-0 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {couponError && (
-                    <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 text-left pl-1">
+                  {appliedCoupon && (
+                    <span className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[8.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full animate-bounce mr-2">
+                      Applied!
+                    </span>
+                  )}
+                </AccordionTrigger>
+                
+                <AccordionContent className="px-4 pb-4 pt-1.5 flex flex-col gap-3.5 border-t border-emerald-500/10">
+                  {/* Blinkit-Style Coupon Input Field (only shown if no coupon is applied) */}
+                  {!appliedCoupon && (
+                    <div className="flex items-center gap-2 bg-background border border-emerald-500/20 rounded-xl p-1 shadow-inner relative">
+                      <div className="pl-2 shrink-0">
+                        <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code"
+                        className="flex-1 bg-transparent text-xs font-bold focus:outline-none placeholder:text-muted-foreground/60 border-0 p-1 uppercase"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode || isValidating}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-0 cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+
+                  {couponError && !appliedCoupon && (
+                    <span className="text-[9px] font-bold text-rose-600 dark:text-rose-450 text-left pl-1">
                       ⚠️ {couponError}
                     </span>
                   )}
-                  
-                  {/* Available Coupons list */}
-                  {isLoadingCoupons ? (
-                    <span className="text-[10px] text-muted-foreground animate-pulse text-left">{translateUI("loadingActiveOffers", currentLang)}</span>
-                  ) : availableCoupons.length > 0 ? (
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[9px] font-black uppercase text-emerald-800/80 dark:text-emerald-400/80 tracking-wider text-left">{translateUI("availableOffers", currentLang)}</span>
-                      <div className="flex flex-wrap gap-1.5 max-h-[85px] overflow-y-auto pr-1">
-                        {availableCoupons.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            disabled={isValidating}
-                            onClick={() => handleQuickApply(c.code)}
-                            className="text-[9px] font-black text-emerald-700 dark:text-emerald-350 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-[1.02] px-2.5 py-1 rounded-lg cursor-pointer transition-all flex items-center gap-1 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Tag className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                            <span>{c.code}</span>
-                            <span className="text-[8px] opacity-75 font-semibold">
-                              ({c.discountType === "percentage" ? `${c.discountValue}% ${translateUI("off", currentLang)}` : `${translateUI("flat", currentLang)} ${currencySymbol}${c.discountValue} ${translateUI("off", currentLang)}`})
-                            </span>
-                          </button>
-                        ))}
+
+                  {/* Applied Coupon Card */}
+                  {appliedCoupon && (
+                    <div className="relative flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-dashed border-emerald-500 overflow-hidden shadow-sm">
+                      {/* Punch cuts on left and right sides */}
+                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-background border-r border-dashed border-emerald-500" />
+                      <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-background border-l border-dashed border-emerald-500" />
+
+                      <div className="flex items-center gap-3 pl-2">
+                        <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/35">
+                          <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-450 stroke-[3px]" />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[11px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">{appliedCoupon.code}</span>
+                          <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-500/80 mt-0.5">
+                            {appliedCoupon.discountType === "percentage" 
+                              ? `${appliedCoupon.discountValue}% OFF Applied successfully`
+                              : `FLAT ${currencySymbol}${appliedCoupon.discountValue} OFF Applied successfully`}
+                          </span>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        className="text-[10px] font-black uppercase text-rose-600 hover:text-rose-700 pr-2 transition-all active:scale-95 border-0 cursor-pointer"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
+                  )}
+
+                  {/* Available Coupons list */}
+                  {!appliedCoupon && (
+                    <div className="flex flex-col gap-2">
+                      {isLoadingCoupons ? (
+                        <span className="text-[10px] text-muted-foreground animate-pulse text-left pl-1">{translateUI("loadingActiveOffers", currentLang)}</span>
+                      ) : availableCoupons.length > 0 ? (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[9.5px] font-black uppercase text-emerald-855 dark:text-emerald-400 tracking-wider text-left pl-1">Available Vouchers</span>
+                          
+                          <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
+                            {availableCoupons.map((c) => (
+                              <div
+                                key={c.id}
+                                className="relative flex items-center justify-between p-3 rounded-xl bg-emerald-500/[0.04] dark:bg-emerald-950/15 border border-dashed border-emerald-500/30 overflow-hidden shadow-xs hover:border-emerald-500/60 transition-all duration-300"
+                              >
+                                {/* Punch cuts on left and right sides */}
+                                <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 w-3 h-3 rounded-full bg-background border-r border-dashed border-emerald-500/30" />
+                                <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 w-3 h-3 rounded-full bg-background border-l border-dashed border-emerald-500/30" />
+
+                                <div className="flex items-center gap-2.5 pl-1.5">
+                                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                                    <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                  </div>
+                                  <div className="flex flex-col text-left">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-450">{c.code}</span>
+                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-500 leading-tight mt-0.5">
+                                      {c.discountType === "percentage" 
+                                        ? `Save ${c.discountValue}% on your order` 
+                                        : `FLAT ${currencySymbol}${c.discountValue} OFF`}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={isValidating}
+                                  onClick={() => handleQuickApply(c.code)}
+                                  className="text-[10px] font-black uppercase text-emerald-600 hover:text-emerald-700 pr-1.5 transition-all active:scale-95 disabled:opacity-50 border-0 cursor-pointer"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
+              {/* STACKED LIST: Format Selections */}
+          <div className="flex flex-col gap-3 shrink-0">
+            {/* Combo Pack Selection */}
+            <button
+              type="button"
+              onClick={() => setSelectedFormat("combo")}
+              className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
+                selectedFormat === "combo"
+                  ? "bg-gradient-saffron/10 border-secondary shadow-[0_4px_20px_rgba(201,168,76,0.15)] ring-1 ring-secondary/30"
+                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
+              )}
+            >
+              {/* Dynamic Shine Beam */}
+              {selectedFormat === "combo" && (
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
+              )}
 
-          {/* HERO CARD: All-in-One Combo Pack (Premium Golden Gradient Background with Shine) */}
-          <button
-            onClick={() => onSelectFormat("combo", appliedCoupon?.code || undefined)}
-            className="flex flex-col w-full p-5 sm:p-6 rounded-2xl text-left bg-gradient-saffron border-2 border-secondary/40 hover:border-secondary hover:shadow-[0_8px_30px_rgba(201,168,76,0.35)] hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer shadow-md relative overflow-hidden active:scale-[0.98] shrink-0"
-          >
-            {/* Dynamic Shine Beam */}
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
-
-            {/* Recommended Sparkles Badge */}
-            <div className="absolute right-0 top-0 bg-primary text-[9px] font-black uppercase text-white px-2.5 py-0.5 rounded-bl-lg tracking-wider flex items-center gap-0.5 shadow-xs z-10">
-              <Sparkles className="w-2.5 h-2.5 fill-white animate-pulse" /> {translateUI("popularChoice", currentLang)}
-            </div>
-
-            <div className="flex items-center gap-3 w-full relative z-10">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0 border border-[#9B1B30]/15 shadow-inner">
-                <Crown className="w-5 h-5 text-[#9B1B30] fill-[#9B1B30]/20 animate-wiggle" />
+              {/* Radio Indicator */}
+              <div className="shrink-0 relative z-10">
+                {selectedFormat === "combo" ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center bg-primary">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs sm:text-sm font-black text-[#2C1117] leading-tight block">{translateUI("comboPackTitle", currentLang)}</span>
-                <span className="text-[10px] sm:text-xs font-extrabold text-[#9B1B30] mt-0.5 block">{translateUI("pdfJpgPngCombo", currentLang)}</span>
+
+              <div className="flex-1 min-w-0 relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-black text-foreground">{translateUI("comboPackTitle", currentLang)}</span>
+                  <span className="bg-primary text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
+                    <Sparkles className="w-2 h-2 fill-white" /> Popular
+                  </span>
+                </div>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("pdfJpgPngCombo", currentLang)}</span>
               </div>
-              <div className="text-right leading-none shrink-0 flex flex-col items-end">
-                {formatComboOriginalPrice && (
-                  <span className="text-[10px] sm:text-[11px] font-bold text-[#2C1117]/60 line-through block">
-                    {currencySymbol}{formatComboOriginalPrice.toFixed(2)}
+
+              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
+                {isPremium ? (
+                  <>
+                    {formatComboOriginalPrice && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
+                        {currencySymbol}{formatComboOriginalPrice.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base font-black text-primary mt-1">
+                      {currencySymbol}{formatComboPrice.toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    FREE
                   </span>
                 )}
-                <span className="text-base sm:text-lg font-black text-[#9B1B30] mt-1 block">
-                  {currencySymbol}{formatComboPrice.toFixed(2)}
-                </span>
               </div>
-            </div>
+            </button>
 
-            {/* Grid list of format benefits inside the Combo Hero Card */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mt-4 border-t border-[#9B1B30]/15 pt-3.5 w-full relative z-10">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("pdfHdVectorPrint", currentLang)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("jpegQuickWhatsApp", currentLang)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#9B1B30] shrink-0 shadow-[0_0_4px_rgba(155,27,48,0.25)]" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#2C1117]">{translateUI("pngLosslessHighDetails", currentLang)}</span>
-              </div>
-            </div>
-          </button>
-
-          {/* Section Divider */}
-          <div className="flex items-center my-1 select-none shrink-0">
-            <div className="flex-1 h-[1px] bg-border" />
-            <span className="px-3 text-[9px] sm:text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">{translateUI("orSingleFormat", currentLang)}</span>
-            <div className="flex-1 h-[1px] bg-border" />
-          </div>
-
-          {/* BENTO GRID: Individual Formats */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
-            {/* PDF Card */}
+            {/* PDF Selection */}
             <button
-              onClick={() => onSelectFormat("pdf", appliedCoupon?.code || undefined)}
-              className="flex flex-col items-center p-4 rounded-2xl bg-card border border-border/80 hover:border-red-500/50 hover:bg-red-500/[0.04] transition-all duration-300 group cursor-pointer text-center shadow-sm hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
+              type="button"
+              onClick={() => setSelectedFormat("pdf")}
+              className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
+                selectedFormat === "pdf"
+                  ? "bg-red-500/[0.04] border-red-500 shadow-[0_4px_20px_rgba(220,38,38,0.08)] ring-1 ring-red-500/20"
+                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
+              )}
             >
-              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 group-hover:scale-110 transition-all shadow-inner border border-red-500/10 mb-3 relative">
-                <FileText className="w-6 h-6 text-red-600 dark:text-red-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-red-600 dark:text-red-500 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("print", currentLang)}</span>
+              {/* Radio Indicator */}
+              <div className="shrink-0 relative z-10">
+                {selectedFormat === "pdf" ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-red-600 flex items-center justify-center bg-red-600">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
+                )}
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-red-700 dark:text-red-400 leading-tight">{translateUI("pdfDocument", currentLang)}</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("highResVectorPrintReady", currentLang)}</span>
-              
-              <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
-                {formatPdfOriginal && formatPdfOriginal > formatPdfPrice ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold text-muted-foreground/60 line-through">
-                      {currencySymbol}{formatPdfOriginal.toFixed(2)}
-                    </span>
-                    <span className="text-sm font-black text-red-600 dark:text-red-500">
+
+              <div className="flex-1 min-w-0 relative z-10">
+                <span className="text-xs sm:text-sm font-black text-foreground block">{translateUI("pdfDocument", currentLang)}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("highResVectorPrintReady", currentLang)}</span>
+              </div>
+
+              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
+                {isPremium ? (
+                  <>
+                    {formatPdfOriginal && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
+                        {currencySymbol}{formatPdfOriginal.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base font-black text-red-600 dark:text-red-500 mt-1">
                       {currencySymbol}{formatPdfPrice.toFixed(2)}
                     </span>
-                  </div>
+                  </>
                 ) : (
-                  <span className="text-sm font-black text-red-600 dark:text-red-500">
-                    {currencySymbol}{formatPdfPrice.toFixed(2)}
+                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    FREE
                   </span>
                 )}
               </div>
             </button>
- 
-            {/* JPEG Card */}
+
+            {/* JPEG Selection */}
             <button
-              onClick={() => onSelectFormat("jpg", appliedCoupon?.code || undefined)}
-              className="flex flex-col items-center p-4 rounded-2xl bg-card border border-border/80 hover:border-green-500/50 hover:bg-green-500/[0.04] transition-all duration-300 group cursor-pointer text-center shadow-sm hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
+              type="button"
+              onClick={() => setSelectedFormat("jpg")}
+              className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
+                selectedFormat === "jpg"
+                  ? "bg-green-500/[0.04] border-green-500 shadow-[0_4px_20px_rgba(22,163,74,0.08)] ring-1 ring-green-500/20"
+                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
+              )}
             >
-              <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 group-hover:scale-110 transition-all shadow-inner border border-green-500/10 mb-3 relative">
-                <ImageIcon className="w-6 h-6 text-green-600 dark:text-green-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-green-600 dark:text-green-500 bg-green-500/15 border border-green-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("share", currentLang)}</span>
+              {/* Radio Indicator */}
+              <div className="shrink-0 relative z-10">
+                {selectedFormat === "jpg" ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-green-600 flex items-center justify-center bg-green-600">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
+                )}
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-green-700 dark:text-green-400 leading-tight">{translateUI("jpegImage", currentLang)}</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("standardQualityWhatsApp", currentLang)}</span>
-              
-              <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
-                {formatJpgOriginal && formatJpgOriginal > formatJpgPrice ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold text-muted-foreground/60 line-through">
-                      {currencySymbol}{formatJpgOriginal.toFixed(2)}
-                    </span>
-                    <span className="text-sm font-black text-green-600 dark:text-green-500">
+
+              <div className="flex-1 min-w-0 relative z-10">
+                <span className="text-xs sm:text-sm font-black text-foreground block">{translateUI("jpegImage", currentLang)}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("standardQualityWhatsApp", currentLang)}</span>
+              </div>
+
+              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
+                {isPremium ? (
+                  <>
+                    {formatJpgOriginal && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
+                        {currencySymbol}{formatJpgOriginal.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base font-black text-green-600 dark:text-green-500 mt-1">
                       {currencySymbol}{formatJpgPrice.toFixed(2)}
                     </span>
-                  </div>
+                  </>
                 ) : (
-                  <span className="text-sm font-black text-green-600 dark:text-green-500">
-                    {currencySymbol}{formatJpgPrice.toFixed(2)}
+                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    FREE
                   </span>
                 )}
               </div>
             </button>
- 
-            {/* PNG Card */}
+
+            {/* PNG Selection */}
             <button
-              onClick={() => onSelectFormat("png", appliedCoupon?.code || undefined)}
-              className="flex flex-col items-center p-4 rounded-2xl bg-card border border-border/80 hover:border-purple-500/50 hover:bg-purple-500/[0.04] transition-all duration-300 group cursor-pointer text-center shadow-sm hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
+              type="button"
+              onClick={() => setSelectedFormat("png")}
+              className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
+                selectedFormat === "png"
+                  ? "bg-purple-500/[0.04] border-purple-500 shadow-[0_4px_20px_rgba(147,51,234,0.08)] ring-1 ring-purple-500/20"
+                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
+              )}
             >
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 group-hover:scale-110 transition-all shadow-inner border border-purple-500/10 mb-3 relative">
-                <ImageIcon className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-                <span className="absolute -top-2 -right-2 text-[7px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-500 bg-purple-500/15 border border-purple-500/20 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-md">{translateUI("clear", currentLang)}</span>
+              {/* Radio Indicator */}
+              <div className="shrink-0 relative z-10">
+                {selectedFormat === "png" ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-purple-600 flex items-center justify-center bg-purple-600">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
+                )}
               </div>
-              <span className="text-[11px] sm:text-xs font-black text-purple-700 dark:text-purple-400 leading-tight">{translateUI("pngImage", currentLang)}</span>
-              <span className="text-[9px] text-muted-foreground font-semibold leading-tight mt-1 mb-2 px-1">{translateUI("losslessRenderingHighDetails", currentLang)}</span>
-              
-              <div className="flex flex-col items-center w-full pt-3 mt-auto border-t border-border/50">
-                {formatPngOriginal && formatPngOriginal > formatPngPrice ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold text-muted-foreground/60 line-through">
-                      {currencySymbol}{formatPngOriginal.toFixed(2)}
-                    </span>
-                    <span className="text-sm font-black text-purple-600 dark:text-purple-500">
+
+              <div className="flex-1 min-w-0 relative z-10">
+                <span className="text-xs sm:text-sm font-black text-foreground block">{translateUI("pngImage", currentLang)}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("losslessRenderingHighDetails", currentLang)}</span>
+              </div>
+
+              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
+                {isPremium ? (
+                  <>
+                    {formatPngOriginal && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
+                        {currencySymbol}{formatPngOriginal.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base font-black text-purple-600 dark:text-purple-500 mt-1">
                       {currencySymbol}{formatPngPrice.toFixed(2)}
                     </span>
-                  </div>
+                  </>
                 ) : (
-                  <span className="text-sm font-black text-purple-600 dark:text-purple-500">
-                    {currencySymbol}{formatPngPrice.toFixed(2)}
+                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    FREE
                   </span>
                 )}
               </div>
             </button>
+          </div>
+
+          {/* Secure Payment Confirmation Area */}
+          <div className="mt-5 flex flex-col gap-3 shrink-0">
+            <button
+              type="button"
+              disabled={isGenerating}
+              onClick={() => onSelectFormat(selectedFormat, appliedCoupon?.code || undefined)}
+              className={cn(
+                "w-full relative overflow-hidden text-white text-xs sm:text-sm font-black uppercase tracking-wider py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 border-0 cursor-pointer active:scale-[0.99] select-none shadow-lg disabled:opacity-50 disabled:cursor-not-allowed",
+                isPremium
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-[0_8px_30px_rgba(16,185,129,0.25)]"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-[0_8px_30px_rgba(37,99,235,0.25)]"
+              )}
+            >
+              {/* Shine highlight animation on payment button */}
+              {!isGenerating && (
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+              )}
+              
+              {isGenerating ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin text-white shrink-0" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Generating {selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()}...</span>
+                </>
+              ) : isPremium ? (
+                <>
+                  <Lock className="w-4 h-4 fill-white/10 shrink-0" />
+                  <span>Pay {currencySymbol}{getSelectedPrice().toFixed(2)} securely</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-white shrink-0 animate-bounce" />
+                  <span>Download {selectedFormat === "jpg" ? "JPEG" : selectedFormat.toUpperCase()} Free</span>
+                </>
+              )}
+            </button>
+            
+            {/* Razorpay Trust Tagline */}
+            {isPremium ? (
+              <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground/80 font-bold select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Razorpay secured — UPI · Cards · Netbanking · Wallets</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground/80 font-bold select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span>Format generated instantly — Ready for print & WhatsApp sharing</span>
+              </div>
+            )}
           </div>
 
           {/* Bottom spacing buffer to ensure full visibility and easy scrolling */}

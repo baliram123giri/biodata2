@@ -55,6 +55,8 @@ const sidebarItems: SidebarItem[] = [
   { name: "Coupons", href: "/admin/coupons", icon: Tag },
   { name: "Hero Section", href: "/admin/hero-slides", icon: Sparkles },
   { name: "Blog Posts", href: "/admin/blog", icon: BookOpen },
+  { name: "Reviews & Feedback", href: "/admin/feedback", icon: Smile },
+  { name: "System Health", href: "/admin/system", icon: Activity },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
