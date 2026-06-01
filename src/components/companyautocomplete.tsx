@@ -113,6 +113,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={value || placeholder || "Select Company..."}
           className="w-full justify-between font-normal text-left px-3 shadow-none border-input hover:bg-transparent"
         >
         <span className="flex items-center truncate">

@@ -59,6 +59,7 @@ export function MantraAutocomplete({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={value || placeholder || "Select or type Mantra..."}
           className="w-full justify-between font-normal text-left px-3 h-14 border-border/80 focus-visible:ring-primary/20 bg-card shadow-sm hover:bg-card/90"
         >
         <span className="flex items-center truncate">
