@@ -152,6 +152,9 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
               }
               theme.setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
 
+              // Reset any manual padding or photo transformation overrides so template defaults apply
+              theme.resetOverrides();
+
               onSelect?.();
             }}
             className={cn(

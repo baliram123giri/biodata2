@@ -98,6 +98,7 @@ export interface ThemeState {
   setPhotoXOffset: (x: number) => void;
   setPhotoYOffset: (y: number) => void;
   resetTheme: () => void;
+  resetOverrides: () => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -179,6 +180,10 @@ export const useThemeStore = create<ThemeState>()(
           bgColors: [],
           padding: 45,
           paddingY: undefined,
+          paddingLeft: undefined,
+          paddingRight: undefined,
+          paddingTop: undefined,
+          paddingBottom: undefined,
           borderRadius: 12,
           selectedElement: "Section Group",
           selectedPaletteName: "Royal Maroon",
@@ -187,6 +192,18 @@ export const useThemeStore = create<ThemeState>()(
           bgImageScale: 1.0,
           bgImageXOffset: 0,
           bgImageYOffset: 0,
+          photoCornerRadius: undefined,
+          photoBorderSize: undefined,
+          photoScale: undefined,
+          photoRotation: 0,
+          photoXOffset: 0,
+          photoYOffset: 0,
+        }),
+        resetOverrides: () => set({
+          paddingLeft: undefined,
+          paddingRight: undefined,
+          paddingTop: undefined,
+          paddingBottom: undefined,
           photoCornerRadius: undefined,
           photoBorderSize: undefined,
           photoScale: undefined,

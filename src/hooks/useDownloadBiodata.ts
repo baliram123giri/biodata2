@@ -106,7 +106,7 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
   
   const clonedData = JSON.parse(JSON.stringify(formData));
 
-  // 1. Resolve field logos
+  // 1. Resolve field logos (keep client-side resolution since server cannot fetch arbitrary remote field logos directly)
   const sections = ['personalDetails', 'educationDetails', 'familyDetails', 'contactDetails'];
   for (const sec of sections) {
     if (clonedData[sec] && Array.isArray(clonedData[sec])) {
@@ -125,28 +125,7 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
     }
   }
 
-  // 2. Resolve stickers
-  if (clonedData.stickers && clonedData.stickers.length > 0) {
-    try {
-      const { STICKER_ASSETS } = await import("@/lib/sticker-assets");
-      for (const sticker of clonedData.stickers) {
-        const asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
-        if (asset && asset.url) {
-          try {
-            const base64 = await imageUrlToBase64(asset.url);
-            if (base64 && base64.startsWith("data:")) {
-              sticker.resolvedUrl = base64;
-            }
-          } catch (e) {
-            console.error(`Failed to pre-fetch sticker base64 for ${sticker.type}:`, e);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load STICKER_ASSETS in prepareFormDataWithBase64Logos:", err);
-    }
-  }
-
+  // 2. Resolve stickers (Removed client-side pre-fetching as the server pdfkit-generator resolves and converts them perfectly)
   return clonedData;
 }
 
@@ -167,14 +146,12 @@ export async function prepareDataForGeneration(
 
   const preparedFormData = await prepareFormDataWithBase64Logos(mergedFormData);
 
+  // Background images can be extremely large (several MBs). Sending them client-side in the POST request body 
+  // causes "413 Request Entity Too Large" errors on Nginx. Instead, we let the server fetch and convert them directly.
   let bgImageUrlBase64 = undefined;
   const bgUrl = theme.bgImageUrl || getTemplateConfig(templateId)?.bgConfig?.url;
-  if (bgUrl) {
-    try {
-      bgImageUrlBase64 = await imageUrlToBase64(bgUrl);
-    } catch (e) {
-      console.error("Failed to pre-fetch background base64 client-side:", e);
-    }
+  if (bgUrl && bgUrl.startsWith("data:")) {
+    bgImageUrlBase64 = bgUrl;
   }
 
   const preparedTheme = {

@@ -202,6 +202,9 @@ export function HomeBiodataBuilder() {
       
       // Apply template's default font size
       theme.setFontSize(config.fontSize || 9);
+
+      // Reset any manual padding or photo transformation overrides so template defaults apply
+      theme.resetOverrides();
     }
   }, [storedTemplate, customTemplates, isHydrated, theme]);
 
