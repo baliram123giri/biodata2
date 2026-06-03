@@ -32,6 +32,14 @@ import {
 } from "@/components/ui/select";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { MantrasManager } from "@/components/admin/MantrasManager";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Template {
   id: string;
@@ -81,6 +89,115 @@ export default function AdminTemplates() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = React.useState<"templates" | "backgrounds" | "stickers" | "mantras">("templates");
   const [updatingDefaultId, setUpdatingDefaultId] = React.useState<string | null>(null);
+
+  // Edit Dialog States
+  const [editingBg, setEditingBg] = React.useState<Background | null>(null);
+  const [editBgName, setEditBgName] = React.useState("");
+  const [editBgFile, setEditBgFile] = React.useState<string | null>(null);
+  const [isSavingBgEdit, setIsSavingBgEdit] = React.useState(false);
+
+  const [editingSticker, setEditingSticker] = React.useState<Sticker | null>(null);
+  const [editStickerName, setEditStickerName] = React.useState("");
+  const [editStickerType, setEditStickerType] = React.useState("Normal");
+  const [editStickerReligion, setEditStickerReligion] = React.useState("Hindu");
+  const [editStickerFile, setEditStickerFile] = React.useState<string | null>(null);
+  const [isSavingStickerEdit, setIsSavingStickerEdit] = React.useState(false);
+
+  const handleEditBgFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditBgFile(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditStickerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditStickerFile(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveBgEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBg) return;
+    if (!editBgName.trim()) {
+      toast.error("Background name is required");
+      return;
+    }
+    setIsSavingBgEdit(true);
+    try {
+      const res = await fetch(`/api/admin/backgrounds/${editingBg.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editBgName, file: editBgFile }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Background watermark updated successfully!");
+        setEditingBg(null);
+        setEditBgFile(null);
+        queryClient.invalidateQueries({ queryKey: ["admin", "backgrounds"] });
+      } else {
+        toast.error(data.error || "Failed to update background");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred updating background watermark");
+    } finally {
+      setIsSavingBgEdit(false);
+    }
+  };
+
+  const handleSaveStickerEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSticker) return;
+    if (!editStickerName.trim()) {
+      toast.error("Sticker name is required");
+      return;
+    }
+    setIsSavingStickerEdit(true);
+    try {
+      const res = await fetch(`/api/admin/stickers/${editingSticker.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editStickerName,
+          type: editStickerType,
+          religion: editStickerType === "Mantra" ? editStickerReligion : null,
+          file: editStickerFile,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Sticker updated successfully!");
+        setEditingSticker(null);
+        setEditStickerFile(null);
+        queryClient.invalidateQueries({ queryKey: ["admin", "stickers"] });
+        queryClient.invalidateQueries({ queryKey: ["stickers"] });
+      } else {
+        toast.error(data.error || "Failed to update sticker");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred updating sticker");
+    } finally {
+      setIsSavingStickerEdit(false);
+    }
+  };
   const [newBgName, setNewBgName] = React.useState("");
   const [newBgFile, setNewBgFile] = React.useState<string | null>(null);
   const [isUploadingBg, setIsUploadingBg] = React.useState(false);
@@ -826,13 +943,27 @@ export default function AdminTemplates() {
                     <div className="p-2 border-t border-border bg-muted/20 flex gap-2">
                       <Button
                         onClick={() => {
+                          setEditingBg(bg);
+                          setEditBgName(bg.name);
+                          setEditBgFile(null);
+                        }}
+                        variant="ghost"
+                        className="flex-1 text-[10px] font-bold h-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => {
                           navigator.clipboard.writeText(bg.url);
                           toast.success("Background SVG URL copied to clipboard!");
                         }}
                         variant="ghost"
-                        className="flex-1 text-[10px] font-bold h-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+                        title="Copy URL"
                       >
-                        Copy URL
+                        <Copy className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         onClick={() => handleDeleteBg(bg.id)}
@@ -1017,14 +1148,29 @@ export default function AdminTemplates() {
                       <div className="p-2 border-t border-border bg-muted/20 flex gap-2">
                         <Button
                           onClick={() => {
-                            navigator.clipboard.writeText(sticker.url);
-                            toast.success("Sticker URL copied to clipboard!");
+                            setEditingSticker(sticker);
+                            setEditStickerName(sticker.name);
+                            setEditStickerType(sticker.type || "Normal");
+                            setEditStickerReligion(sticker.religion || "Hindu");
+                            setEditStickerFile(null);
                           }}
                           variant="ghost"
                           className="flex-1 text-[10px] font-bold h-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center gap-1"
                         >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(sticker.url);
+                            toast.success("Sticker URL copied to clipboard!");
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+                          title="Copy URL"
+                        >
                           <Copy className="w-3.5 h-3.5" />
-                          Copy URL
                         </Button>
                         <Button
                           onClick={() => handleDeleteSticker(sticker.id)}
@@ -1052,6 +1198,181 @@ export default function AdminTemplates() {
         /* Mantras Manager */
         <MantrasManager />
       )}
+
+      {/* Edit Background Dialog */}
+      <Dialog open={!!editingBg} onOpenChange={(open) => !open && setEditingBg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-foreground">Edit Background Watermark</DialogTitle>
+            <DialogDescription className="text-xs">
+              Change the display name or replace the vector file for this background.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveBgEdit} className="space-y-4">
+            {editingBg && (
+              <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
+                <img
+                  src={editBgFile || editingBg.url}
+                  alt="Background Preview"
+                  className="max-h-full max-w-full object-contain"
+                  style={{ opacity: 0.8 }}
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bg-name-input" className="text-xs font-bold text-muted-foreground">Background Name</label>
+              <input
+                id="edit-bg-name-input"
+                type="text"
+                required
+                value={editBgName}
+                onChange={(e) => setEditBgName(e.target.value)}
+                placeholder="e.g. Floral Mandala"
+                className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center">Replace File (Optional SVG)</label>
+              <input
+                type="file"
+                accept="image/svg+xml"
+                onChange={handleEditBgFileChange}
+                className="w-full text-xs text-muted-foreground cursor-pointer file:cursor-pointer file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 border border-border rounded-lg p-2 bg-background"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setEditingBg(null)}
+                className="text-xs font-bold h-9 rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingBgEdit}
+                className="text-xs font-bold h-9 rounded-lg bg-primary hover:opacity-90 text-primary-foreground flex items-center justify-center gap-1.5 animate-fade-in"
+              >
+                {isSavingBgEdit ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Changes</span>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Sticker Dialog */}
+      <Dialog open={!!editingSticker} onOpenChange={(open) => !open && setEditingSticker(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-foreground">Edit Sticker Details</DialogTitle>
+            <DialogDescription className="text-xs">
+              Update the name, replace the image asset, or change classifications/religions.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveStickerEdit} className="space-y-4">
+            {editingSticker && (
+              <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
+                <img
+                  src={editStickerFile || editingSticker.url}
+                  alt="Sticker Preview"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="edit-sticker-name-input" className="text-xs font-bold text-muted-foreground">Sticker Name</label>
+              <input
+                id="edit-sticker-name-input"
+                type="text"
+                required
+                value={editStickerName}
+                onChange={(e) => setEditStickerName(e.target.value)}
+                placeholder="e.g. Ganesh Icon"
+                className="w-full text-xs bg-background border border-border rounded-lg h-9 px-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center">Replace File (Optional Image)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleEditStickerFileChange}
+                className="w-full text-xs text-muted-foreground cursor-pointer file:cursor-pointer file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 border border-border rounded-lg p-2 bg-background"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">Sticker Type</label>
+              <Select value={editStickerType} onValueChange={(val) => setEditStickerType(val)}>
+                <SelectTrigger className="w-full h-9 text-xs">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Normal" className="text-xs">Normal Sticker</SelectItem>
+                  <SelectItem value="Mantra" className="text-xs">Mantra / Header Sign</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {editStickerType === "Mantra" && (
+              <div className="space-y-1.5 animate-fade-in">
+                <label className="text-xs font-bold text-muted-foreground">Associated Religion</label>
+                <Select value={editStickerReligion} onValueChange={(val) => setEditStickerReligion(val)}>
+                  <SelectTrigger className="w-full h-9 text-xs">
+                    <SelectValue placeholder="Select religion" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Hindu" className="text-xs">Hindu</SelectItem>
+                    <SelectItem value="Muslim" className="text-xs">Muslim</SelectItem>
+                    <SelectItem value="Sikh" className="text-xs">Sikh</SelectItem>
+                    <SelectItem value="Jain" className="text-xs">Jain</SelectItem>
+                    <SelectItem value="Christian" className="text-xs">Christian</SelectItem>
+                    <SelectItem value="Buddhist" className="text-xs">Buddhist</SelectItem>
+                    <SelectItem value="All" className="text-xs">All Religions</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setEditingSticker(null)}
+                className="text-xs font-bold h-9 rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingStickerEdit}
+                className="text-xs font-bold h-9 rounded-lg bg-primary hover:opacity-90 text-primary-foreground flex items-center justify-center gap-1.5"
+              >
+                {isSavingStickerEdit ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Changes</span>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
