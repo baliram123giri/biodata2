@@ -20,19 +20,36 @@ export async function POST(req: Request) {
       null;
     const userAgent = req.headers.get("user-agent");
 
-    const log = await prisma.downloadLog.create({
-      data: {
+    const isDev = process.env.NEXT_PUBLIC_IS_DEV === "true";
+    let log = null;
+
+    if (isDev) {
+      console.log("Dev mode active: skipping download logs insertion to DB.");
+      log = {
+        id: "dev-mock-log-id",
         name,
         location: location || null,
         format,
         templateId: templateId || null,
         ipAddress,
         userAgent,
-      },
-    });
+        createdAt: new Date(),
+      };
+    } else {
+      log = await prisma.downloadLog.create({
+        data: {
+          name,
+          location: location || null,
+          format,
+          templateId: templateId || null,
+          ipAddress,
+          userAgent,
+        },
+      });
+    }
 
     // If orderId is provided, update downloadStatus on the Order table
-    if (orderId && orderId !== "sandbox" && orderId !== "dev_bypass") {
+    if (orderId && orderId !== "sandbox" && orderId !== "dev_bypass" && !isDev) {
       try {
         await prisma.order.update({
           where: { razorpayOrderId: orderId },

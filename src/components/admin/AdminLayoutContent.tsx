@@ -562,7 +562,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
                   <p className="text-[10px] text-muted-foreground truncate">{session?.user?.email || "admin@biodata99.com"}</p>
                 </div>
                 <div className="p-1 space-y-0.5">
-                  <Link href="/admin/settings" className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="/admin/profile" className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-muted/50 text-xs text-muted-foreground hover:text-foreground transition-colors">
                     <UserCircle2 className="w-3.5 h-3.5" />
                     <span>My Profile</span>
                   </Link>
