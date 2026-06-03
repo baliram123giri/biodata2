@@ -85,7 +85,7 @@ export default function RefundPolicyPage() {
               Some templates in our collection are premium designs. These are clearly marked in the template panel with a paid label before you select them.
             </p>
             <p>
-              To download a biodata using a premium template, a one-time payment is required. This is a single charge for that download — there is no subscription, no recurring fee, and no hidden cost.
+              To download a biodata using a premium template, a one-time payment is required. This is a single charge for that download - there is no subscription, no recurring fee, and no hidden cost.
             </p>
             <p>
               Free templates remain completely free to download at any time.

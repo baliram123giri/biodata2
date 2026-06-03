@@ -65,7 +65,7 @@ export default function TermsConditionsPage() {
               Biodata99 is available to anyone who wants to create a marriage biodata for personal or family use. By using our website you agree to these terms.
             </p>
             <p>
-              You agree to use Biodata99 only for its intended purpose — creating a marriage biodata for yourself or a family member. You agree not to:
+              You agree to use Biodata99 only for its intended purpose - creating a marriage biodata for yourself or a family member. You agree not to:
             </p>
             <div className="bg-[#FFFBF8] dark:bg-[#1A0A0E]/30 rounded-xl p-4 border border-border/40 my-3">
               <ul className="space-y-2 text-sm">
@@ -110,7 +110,7 @@ export default function TermsConditionsPage() {
           <section className="space-y-3 border-l-2 border-[#9B1B30] dark:border-[#C9A84C] pl-4">
             <h2 className="text-xl font-bold text-foreground">4. Your Content</h2>
             <p>
-              When you use the Biodata99 editor, the information you enter — your name, family details, photo, and other personal information — belongs entirely to you.
+              When you use the Biodata99 editor, the information you enter - your name, family details, photo, and other personal information - belongs entirely to you.
             </p>
             <p>
               We do not claim any ownership over your biodata content. Because your data is processed locally in your browser and never stored on our servers, we do not have access to it in the first place.
@@ -143,7 +143,7 @@ export default function TermsConditionsPage() {
           <section className="space-y-3 border-l-2 border-[#9B1B30] dark:border-[#C9A84C] pl-4">
             <h2 className="text-xl font-bold text-foreground">7. Third-Party Services</h2>
             <p>
-              Biodata99 uses a small number of third-party services to operate — including a payment gateway for premium downloads and Google Analytics for anonymous traffic data.
+              Biodata99 uses a small number of third-party services to operate - including a payment gateway for premium downloads and Google Analytics for anonymous traffic data.
             </p>
             <p>
               These services have their own terms and privacy policies. We choose them carefully and do not share your personal information with them beyond what is necessary to provide the service.

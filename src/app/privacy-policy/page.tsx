@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3 border-l-2 border-[#9B1B30] dark:border-[#C9A84C] pl-4">
             <h2 className="text-xl font-bold text-foreground">1. How the Biodata Editor Works</h2>
             <p>
-              When you use the Biodata99 editor, everything you type — your name, date of birth, family details, photo, and any other information — is processed entirely within your own browser. None of this is sent to our servers at any point.
+              When you use the Biodata99 editor, everything you type - your name, date of birth, family details, photo, and any other information - is processed entirely within your own browser. None of this is sent to our servers at any point.
             </p>
             <div className="bg-[#FFFBF8] dark:bg-[#1A0A0E]/30 rounded-xl p-4 border border-border/40 my-3">
               <div className="text-xs font-black uppercase text-[#9B1B30] dark:text-[#E6C97A] tracking-wider mb-2">This means:</div>
@@ -70,7 +70,7 @@ export default function PrivacyPolicyPage() {
               </ul>
             </div>
             <p className="font-semibold text-foreground/80">
-              This is not just a policy — it is how the technology is built. There is no server-side storage for biodata content because we never designed one.
+              This is not just a policy - it is how the technology is built. There is no server-side storage for biodata content because we never designed one.
             </p>
           </section>
 
@@ -100,7 +100,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3 border-l-2 border-[#9B1B30] dark:border-[#C9A84C] pl-4">
             <h2 className="text-xl font-bold text-foreground">4. Analytics</h2>
             <p>
-              We use Google Analytics to understand how people use our website — which pages are visited, how long people stay, and where they come from. This helps us improve the product.
+              We use Google Analytics to understand how people use our website - which pages are visited, how long people stay, and where they come from. This helps us improve the product.
             </p>
             <p>
               Google Analytics collects anonymous, aggregated data only. It does not track anything you type into the biodata editor. No personal biodata details are visible to us through analytics.
@@ -114,7 +114,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3 border-l-2 border-[#9B1B30] dark:border-[#C9A84C] pl-4">
             <h2 className="text-xl font-bold text-foreground">5. Cookies</h2>
             <p>
-              We use a small number of cookies to keep the site functioning properly — for example, to remember your preferences and save your editor progress locally. We do not use advertising cookies or sell your data to third parties.
+              We use a small number of cookies to keep the site functioning properly - for example, to remember your preferences and save your editor progress locally. We do not use advertising cookies or sell your data to third parties.
             </p>
             <p>
               You can manage or disable cookies through your browser settings at any time. Disabling cookies may affect how the editor saves your progress.
@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
               Biodata99 uses the following third-party services:
             </p>
             <ul className="list-disc list-inside pl-2 space-y-1 my-2">
-              <li>WhatsApp — optional support channel, used only if you choose to contact us through it</li>
+              <li>WhatsApp - optional support channel, used only if you choose to contact us through it</li>
             </ul>
             <p>
               We do not use advertising networks, data brokers, or any service that profiles individual users.

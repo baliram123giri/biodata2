@@ -581,12 +581,12 @@ export function PriceModal({
             {isPremium ? (
               <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground/80 font-bold select-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Razorpay secured — UPI · Cards · Netbanking · Wallets</span>
+                <span>Razorpay secured - UPI · Cards · Netbanking · Wallets</span>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground/80 font-bold select-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                <span>Format generated instantly — Ready for print & WhatsApp sharing</span>
+                <span>Format generated instantly - Ready for print & WhatsApp sharing</span>
               </div>
             )}
           </div>

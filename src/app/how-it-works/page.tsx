@@ -8,13 +8,13 @@ import { howToSchema } from "@/lib/seo-schemas";
 
 export const metadata: Metadata = {
   title: "Marriage Biodata Maker – How It Works",
-  description: "See how Biodata99 works — fill in your details, pick a template, add a photo, and download your marriage biodata as a PDF. Free and ready in minutes.",
+  description: "See how Biodata99 works - fill in your details, pick a template, add a photo, and download your marriage biodata as a PDF. Free and ready in minutes.",
   alternates: {
     canonical: "https://biodata99.com/how-it-works",
   },
   openGraph: {
     title: "Marriage Biodata Maker – How It Works",
-    description: "See how Biodata99 works — fill in your details, pick a template, add a photo, and download your marriage biodata as a PDF. Free and ready in minutes.",
+    description: "See how Biodata99 works - fill in your details, pick a template, add a photo, and download your marriage biodata as a PDF. Free and ready in minutes.",
     url: "https://biodata99.com/how-it-works",
   },
 };
@@ -62,7 +62,7 @@ export default function HowItWorksPage() {
             
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-foreground">Step 1 — Fill in Your Details</h2>
+                <h2 className="text-2xl font-black text-foreground">Step 1 - Fill in Your Details</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Start by entering your information into the editor. The form is organised into clear sections so nothing feels overwhelming.
                 </p>
@@ -73,7 +73,7 @@ export default function HowItWorksPage() {
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
-                    <span>Personal details — name, DOB, height, complexion, religion, mother tongue</span>
+                    <span>Personal details - name, DOB, height, complexion, religion, mother tongue</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
-                    <span>Family details — parents, siblings, family type</span>
+                    <span>Family details - parents, siblings, family type</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
@@ -111,7 +111,7 @@ export default function HowItWorksPage() {
             
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-foreground">Step 2 — Choose a Template</h2>
+                <h2 className="text-2xl font-black text-foreground">Step 2 - Choose a Template</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Pick a design that matches your family's taste. Each template is built around the sections families actually look for in a marriage biodata.
                 </p>
@@ -122,7 +122,7 @@ export default function HowItWorksPage() {
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
-                    <span>Color scheme — choose from curated palettes</span>
+                    <span>Color scheme - choose from curated palettes</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
@@ -152,7 +152,7 @@ export default function HowItWorksPage() {
             
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-foreground">Step 3 — Add a Photo (Optional)</h2>
+                <h2 className="text-2xl font-black text-foreground">Step 3 - Add a Photo (Optional)</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   Upload a photo directly from your phone or computer. You can crop and position it to fit cleanly within the template layout.
                 </p>
@@ -189,7 +189,7 @@ export default function HowItWorksPage() {
             
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-foreground">Step 4 — Download and Share</h2>
+                <h2 className="text-2xl font-black text-foreground">Step 4 - Download and Share</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   When you are happy with how it looks, click Download. Your biodata is generated instantly.
                 </p>
@@ -200,7 +200,7 @@ export default function HowItWorksPage() {
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    <span>High-Resolution PDF — perfect for printing</span>
+                    <span>High-Resolution PDF - perfect for printing</span>
                   </li>
                   <li className="flex items-center gap-2 sm:col-span-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#9B1B30]" />
@@ -238,7 +238,7 @@ export default function HowItWorksPage() {
               </div>
               <h3 className="text-lg font-bold text-foreground">Live preview</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Every change you make — text, color, photo, layout — appears instantly in the preview panel. You are always looking at the real biodata, not a rough approximation of it.
+                Every change you make - text, color, photo, layout - appears instantly in the preview panel. You are always looking at the real biodata, not a rough approximation of it.
               </p>
             </div>
 
@@ -271,7 +271,7 @@ export default function HowItWorksPage() {
               </div>
               <h3 className="text-lg font-bold text-foreground">Works on any device</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                The editor runs entirely in your browser — no app to install, no software to download. It works on mobile, tablet, and desktop.
+                The editor runs entirely in your browser - no app to install, no software to download. It works on mobile, tablet, and desktop.
               </p>
             </div>
 

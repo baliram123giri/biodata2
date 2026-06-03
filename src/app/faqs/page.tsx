@@ -8,13 +8,13 @@ import { generateFaqSchema } from "@/lib/seo-schemas";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
-  description: "Answers to common questions about Biodata99 — how the editor works, privacy, PDF downloads, photo uploads, and regional language support.",
+  description: "Answers to common questions about Biodata99 - how the editor works, privacy, PDF downloads, photo uploads, and regional language support.",
   alternates: {
     canonical: "https://biodata99.com/faqs",
   },
   openGraph: {
     title: "Frequently Asked Questions",
-    description: "Answers to common questions about Biodata99 — how the editor works, privacy, PDF downloads, photo uploads, and regional language support.",
+    description: "Answers to common questions about Biodata99 - how the editor works, privacy, PDF downloads, photo uploads, and regional language support.",
     url: "https://biodata99.com/faqs",
   },
 };
@@ -22,43 +22,27 @@ export const metadata: Metadata = {
 const faqsList = [
   {
     question: "Is Biodata99 completely free?",
-    answer: "Yes, completely. You can open the editor, choose a template, fill in all your details, and download your biodata as a PDF without paying anything. There is no trial period, no premium tier, and no account required. We built it this way because we believe every family should be able to create a good-looking biodata without worrying about cost.",
+    answer: "Creating and downloading your biodata is free. Some premium templates have a one-time fee - you'll see those clearly marked before you pick one. No surprises after you've filled everything in.",
   },
   {
     question: "Do I need to create an account or sign in?",
-    answer: "No. You open the editor, fill in your details, and download — that is the entire process. We do not ask for your email address, phone number, or any login credentials. This also means your information never passes through our servers at any point.",
+    answer: "No account, no sign-in, no email address needed. Just open the form, fill your details, and download. We deliberately built it this way - creating an account felt unnecessary for something this personal.",
   },
   {
     question: "Is my personal information safe?",
-    answer: "Yes. Everything you type into the editor — your name, family details, photo, and contact information — stays entirely on your device. Biodata99 does not upload or store any of this on our servers. When you close the browser tab, nothing is saved on our end. Your biodata belongs only to you.",
+    answer: "Your details - name, photo, family information - never leave your device. Everything happens in your browser. We don't store, transmit, or have access to what you fill in. Once you close the tab, it's gone from our end completely.",
   },
   {
-    question: "How do I download my biodata as a PDF?",
-    answer: "Once you have filled in your details and are happy with how it looks, click the Download button at the top of the editor. Your biodata will be generated instantly and saved as a PDF file on your device. The whole process — from opening the editor to having a PDF ready — typically takes under five minutes.",
+    question: "Can I make a biodata in Hindi or Marathi?",
+    answer: "Yes. You can switch the biodata language to Hindi, Marathi, Tamil, Telugu, Gujarati, Kannada, Bengali, Punjabi, or Urdu - right from the form. The template labels and layout adjust automatically.",
+  },
+  {
+    question: "Can I download as PDF and share on WhatsApp?",
+    answer: "Yes. PDF, JPEG, and PNG are all available. For WhatsApp sharing, JPEG works best - the file size stays small and the image quality holds up well on mobile. PDF is better if someone wants to print it or share over email.",
   },
   {
     question: "Can I edit my biodata after downloading?",
-    answer: "You can make changes anytime by returning to Biodata99 on the same device and browser where you originally created it. Since we do not store your data on our servers, your progress is saved locally in your browser. If you switch to a different device or clear your browser data, you would need to fill in your details again — which takes just a few minutes.",
-  },
-  {
-    question: "Can I add a photo to my biodata?",
-    answer: "Yes. The editor allows you to upload a photo directly from your device. Your photo, like all your other details, is processed locally and is never uploaded to our servers.",
-  },
-  {
-    question: "How do I print my biodata?",
-    answer: "Open the downloaded PDF on any device and print it as you would any other document. We recommend printing on A4 paper for the best result. All our templates are designed to look clean and proportionate when printed, not just on screen.",
-  },
-  {
-    question: "Which biodata format is best for Indian weddings?",
-    answer: "Most families share biodata as a PDF because it looks the same on every device and prints cleanly. Biodata99 generates a standard A4 PDF that works well whether you are sharing it digitally on WhatsApp, email, or a matrimonial platform, or printing it to hand to another family directly.",
-  },
-  {
-    question: "What details should I include in a marriage biodata?",
-    answer: "A complete marriage biodata typically covers your personal details (name, date of birth, height, complexion), educational background, professional information, family details (parents' names and occupation, siblings), religious or community information, horoscope details if applicable, and your family's contact information. Biodata99 templates are structured around these sections so you do not miss anything important.",
-  },
-  {
-    question: "Will Biodata99 support regional Indian languages?",
-    answer: "We are actively working on it. Hindi, Marathi, Tamil, and Telugu are our priority languages. Once available, you will be able to create your entire biodata in your preferred language. You can follow us on Instagram or check back on the Templates page for updates.",
+    answer: "Not after downloading, no. Since we don't store your data, the form clears once you close or refresh the tab. The practical workaround: keep the tab open while you share and wait for feedback, make any changes, then download the final version. Most people are done in one sitting anyway.",
   },
 ];
 

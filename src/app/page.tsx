@@ -1,10 +1,12 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2 } from "lucide-react";
+import { CheckCircle2, FileText, Smartphone, Monitor, Download, Lock, ArrowDown, Wand2, Users, Globe, RefreshCw, Clock, Languages, Shield, HelpCircle } from "lucide-react";
+import * as SeparatorPrimitive from "@radix-ui/react-separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
-import { howToSchema } from "@/lib/seo-schemas";
+import { howToSchema, generateFaqSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
@@ -17,6 +19,33 @@ export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
   description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
 };
+
+const homepageFaqs = [
+  {
+    question: "Is Biodata99 completely free?",
+    answer: "Creating and downloading your biodata is free. Some premium templates have a one-time fee - you'll see those clearly marked before you pick one. No surprises after you've filled everything in."
+  },
+  {
+    question: "Do I need to create an account or sign in?",
+    answer: "No account, no sign-in, no email address needed. Just open the form, fill your details, and download. We deliberately built it this way - creating an account felt unnecessary for something this personal."
+  },
+  {
+    question: "Is my personal information safe?",
+    answer: "Your details - name, photo, family information - never leave your device. Everything happens in your browser. We don't store, transmit, or have access to what you fill in. Once you close the tab, it's gone from our end completely."
+  },
+  {
+    question: "Can I make a biodata in Hindi or Marathi?",
+    answer: "Yes. You can switch the biodata language to Hindi, Marathi, Tamil, Telugu, Gujarati, Kannada, Bengali, Punjabi, or Urdu - right from the form. The template labels and layout adjust automatically."
+  },
+  {
+    question: "Can I download as PDF and share on WhatsApp?",
+    answer: "Yes. PDF, JPEG, and PNG are all available. For WhatsApp sharing, JPEG works best - the file size stays small and the image quality holds up well on mobile. PDF is better if someone wants to print it or share over email."
+  },
+  {
+    question: "Can I edit my biodata after downloading?",
+    answer: "Not after downloading, no. Since we don't store your data, the form clears once you close or refresh the tab. The practical workaround: keep the tab open while you share and wait for feedback, make any changes, then download the final version. Most people are done in one sitting anyway."
+  }
+];
 
 export default function Home() {
   const finalSlides = [
@@ -177,6 +206,116 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Who Is This For Section */}
+      <section className="py-12 md:py-16 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
+        <div className="container mx-auto max-w-6xl">
+          {/* Section Header */}
+          <div className="space-y-2 mb-8 md:mb-10 text-left">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-[#8A7233] dark:text-[#E6C97A] block font-sans">
+              WHO IS THIS FOR
+            </span>
+            <h2 className="text-[22px] md:text-[26px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug font-sans">
+              Made for real situations, not just profiles
+            </h2>
+            <p className="text-[15px] md:text-[16px] text-stone-550 dark:text-stone-400 leading-relaxed max-w-2xl font-normal">
+              Whether you're just starting or helping someone you love, biodata99.com fits where you are right now.
+            </p>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Card 1 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <FileText className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                Ready to start looking
+              </h3>
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+                You need a clean, presentable biodata to share with families or on matrimonial sites - without hiring anyone.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <Users className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                Parents doing the search
+              </h3>
+              <p className="text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2">
+                Creating a biodata for your son or daughter. You want it done quickly, correctly, and in a format families respect.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <Globe className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                NRI or settled abroad
+              </h3>
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+                You need a biodata that works in both English and your home language - presentable to families in India and overseas.
+              </p>
+            </div>
+
+            {/* Card 4 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <RefreshCw className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                Second marriage or divorce
+              </h3>
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+                Looking for a fresh start. You want a dignified, straightforward biodata - no fuss, no judgment, no saved data.
+              </p>
+            </div>
+
+            {/* Card 5 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <Clock className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                Last-minute need
+              </h3>
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+                A relative asked for your biodata today. You need something ready in minutes - not days.
+              </p>
+            </div>
+
+            {/* Card 6 */}
+            <div className="border border-stone-200/60 dark:border-stone-850 bg-white dark:bg-stone-900/40 rounded-xl p-6 flex flex-col gap-3 shadow-xs hover:border-[#C9A84C]/50 hover:shadow-sm transition-all duration-300">
+              <div className="w-8 h-8 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200/50 dark:border-stone-750 flex items-center justify-center text-[#8A7233] dark:text-[#E6C97A] shrink-0">
+                <Languages className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
+                Regional language preference
+              </h3>
+              <p className="text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2">
+                Your family communicates in Hindi, Marathi, Tamil, or Telugu. You want your biodata to feel native, not translated.
+              </p>
+            </div>
+          </div>
+
+          {/* Radix Separator */}
+          <SeparatorPrimitive.Root className="h-px w-full bg-stone-200/60 dark:bg-stone-800/80 my-8" />
+
+          {/* Bottom Note */}
+          <div className="bg-[#FFFBF8] dark:bg-[#1C1214] border border-[#C9A84C]/20 dark:border-[#C9A84C]/10 rounded-lg py-3 px-4 flex items-start sm:items-center gap-3">
+            <Shield className="w-4.5 h-4.5 text-[#8A7233] dark:text-[#E6C97A] shrink-0 mt-0.5 sm:mt-0" />
+            <p className="text-[13px] text-stone-650 dark:text-stone-300 leading-normal font-normal">
+              No account needed, nothing is saved on our servers. You fill your details, download your biodata, and that's it. Works on mobile too.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Steps Section */}
       <section className="py-12 md:py-24 bg-muted relative px-4 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
@@ -212,8 +351,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Structured Data (HowTo Schema) for Search Crawlers */}
+      {/* Homepage FAQ Section */}
+      <section className="py-12 md:py-20 px-4 border-t border-border/30 bg-background relative overflow-hidden">
+        <div className="container mx-auto max-w-4xl space-y-10 relative z-10">
+          
+          {/* Header Title */}
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 rounded-full border border-[#C9A84C]/45 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
+              <HelpCircle className="w-3.5 h-3.5" />
+              FAQ
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
+              Frequently Asked <span className="text-gradient-primary">Questions</span>
+            </h2>
+            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto leading-relaxed font-semibold">
+              Find answers to the most common questions before creating your marriage biodata.
+            </p>
+          </div>
+
+          {/* Radix Accordion FAQ list */}
+          <div className="bg-card border border-[#C9A84C]/20 dark:border-stone-850 rounded-2xl p-6 md:p-8 shadow-md">
+            <Accordion type="single" collapsible className="w-full space-y-2">
+              {homepageFaqs.map((faq, idx) => (
+                <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">
+                  <AccordionTrigger className="text-base font-black text-left text-stone-900 dark:text-white hover:text-primary hover:no-underline py-4">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm md:text-base text-stone-500 dark:text-stone-400 leading-relaxed pt-2 pb-4">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+
+          {/* See All FAQs Link */}
+          <div className="text-center pt-2">
+            <Link href="/faqs" className="inline-flex items-center gap-1 text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-sm transition-colors">
+              More questions? See all FAQs →
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Structured Data (HowTo & FAQ Schema) for Search Crawlers */}
       <JsonLd schema={howToSchema} />
+      <JsonLd schema={generateFaqSchema(homepageFaqs)} />
     </div>
   );
 }

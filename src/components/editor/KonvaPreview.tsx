@@ -29,6 +29,73 @@ if (typeof window !== "undefined") {
 import { getLightBgColor } from "@/lib/color-utils";
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
 
+const colorDarkCache: Record<string, boolean> = {};
+
+function isColorDark(color: string): boolean {
+  if (!color) return false;
+  const normalizedColor = color.trim().toLowerCase();
+  if (colorDarkCache[normalizedColor] !== undefined) {
+    return colorDarkCache[normalizedColor];
+  }
+
+  const hex = normalizedColor.replace("#", "");
+  let isDark = false;
+
+  if (hex.length === 3) {
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    isDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
+  } else if (hex.length === 6) {
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    isDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
+  } else if (normalizedColor.startsWith("rgb")) {
+    const match = normalizedColor.match(/\d+/g);
+    if (match && match.length >= 3) {
+      const r = parseInt(match[0]);
+      const g = parseInt(match[1]);
+      const b = parseInt(match[2]);
+      isDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
+    }
+  }
+
+  colorDarkCache[normalizedColor] = isDark;
+  return isDark;
+}
+
+function isBackgroundDark(
+  templateConfig: any,
+  themeBgColors: string[],
+  themeSelectedPalette: string | null,
+  primaryColor: string
+): boolean {
+
+  if (themeSelectedPalette !== null && themeBgColors && themeBgColors.length > 0) {
+    const darkCount = themeBgColors.filter(isColorDark).length;
+    return darkCount >= themeBgColors.length / 2;
+  }
+
+  const bgType = templateConfig?.bgType || "solid";
+  const bgGradientColors = templateConfig?.bgGradientColors || [];
+  if ((bgType === "linear" || bgType === "radial") && bgGradientColors.length > 0) {
+    const darkCount = bgGradientColors.filter(isColorDark).length;
+    return darkCount >= bgGradientColors.length / 2;
+  }
+
+  if (templateConfig?.frame?.type === "gradient") {
+    const gradColors = templateConfig.frame.gradientColors || [];
+    if (gradColors.length > 0) {
+      const darkCount = gradColors.filter(isColorDark).length;
+      return darkCount >= gradColors.length / 2;
+    }
+  }
+
+  const solidColor = templateConfig?.frame?.bgColor || "#ffffff";
+  return isColorDark(solidColor);
+}
+
 // ── Props ──────────────────────────────────────────────────────────
 interface KonvaPreviewProps {
   liveFormData?: BiodataFormValues & { stickers?: Sticker[]; layout?: any };
@@ -542,7 +609,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const transformerRef = useRef<Konva.Transformer>(null);
   const photoTransformerRef = useRef<Konva.Transformer>(null);
   const photoGroupRef = useRef<Konva.Group>(null);
-  const previewWatermarkRef = useRef<Konva.Text>(null);
+  const previewWatermarkRef = useRef<any>(null);
   const lastDistRef = useRef<number | null>(null);
   const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -876,6 +943,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
   const padding = paddingLeft;
   const paddingY = paddingTop;
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
+  const isDarkBg = useMemo(() => {
+    return isBackgroundDark(templateConfig, theme.bgColors, theme.selectedPaletteName, primaryColor);
+  }, [templateConfig, theme.bgColors, theme.selectedPaletteName, primaryColor]);
 
   const sectionOffsets = useMemo(() => {
     try { return JSON.parse(templateConfig.bgConfig?.sectionOffsets || "{}"); } catch { return {}; }
@@ -1195,27 +1265,59 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
 
-          {/* Diagonal Preview Watermark overlay */}
-          <Text
-            ref={previewWatermarkRef}
-            id="preview-watermark"
-            text="Preview"
-            fontSize={120}
-            fontFamily="Inter"
-            fontStyle="bold"
-            fill="#000000"
-            opacity={0.06}
-            x={A4_W / 2}
-            y={A4_H / 2}
-            offsetX={300}
-            offsetY={60}
-            width={600}
-            align="center"
-            rotation={-35}
-            listening={false}
-          />
+          {/* Diagonal Preview Watermark overlay group */}
+          <Group ref={previewWatermarkRef} id="preview-watermark-group" listening={false}>
+            {/* Top diagonal watermark */}
+            <Text
+              text="PREVIEW • NOT FOR DOWNLOAD"
+              fontSize={28}
+              fontFamily="Inter"
+              fontStyle="bold"
+              fill={isDarkBg ? "#ffffff" : "#000000"}
+              opacity={0.08}
+              x={A4_W / 2}
+              y={A4_H * 0.28}
+              offsetX={300}
+              offsetY={15}
+              width={600}
+              align="center"
+              rotation={-30}
+            />
+            {/* Middle diagonal watermark */}
+            <Text
+              text="PREVIEW • NOT FOR DOWNLOAD"
+              fontSize={38}
+              fontFamily="Inter"
+              fontStyle="bold"
+              fill={isDarkBg ? "#ffffff" : "#000000"}
+              opacity={0.08}
+              x={A4_W / 2}
+              y={A4_H / 2}
+              offsetX={300}
+              offsetY={20}
+              width={600}
+              align="center"
+              rotation={-30}
+            />
+            {/* Bottom diagonal watermark */}
+            <Text
+              text="PREVIEW • NOT FOR DOWNLOAD"
+              fontSize={28}
+              fontFamily="Inter"
+              fontStyle="bold"
+              fill={isDarkBg ? "#ffffff" : "#000000"}
+              opacity={0.08}
+              x={A4_W / 2}
+              y={A4_H * 0.72}
+              offsetX={300}
+              offsetY={15}
+              width={600}
+              align="center"
+              rotation={-30}
+            />
+          </Group>
 
-          <Text x={0} y={A4_H - paddingBottom + 10} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill="#cccccc" align="center" />
+          <Text x={0} y={A4_H - paddingBottom + 10} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill={isDarkBg ? "#ffffff" : "#cccccc"} opacity={isDarkBg ? 0.35 : 1} align="center" />
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
