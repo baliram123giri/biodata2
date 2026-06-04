@@ -94,7 +94,7 @@ export default function Home() {
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-stone-400 dark:text-stone-500 mr-2 shrink-0 select-none">
                 Available in:
               </span>
-              <div 
+              <div
                 className="flex items-center overflow-x-auto scroll-smooth pb-1 min-w-0 flex-1"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
@@ -387,7 +387,7 @@ export default function Home() {
       {/* Homepage FAQ Section */}
       <section id="faq" aria-label="Frequently Asked Questions" className="py-12 md:py-20 px-4 border-t border-border/30 bg-background relative overflow-hidden">
         <div className="container mx-auto max-w-4xl space-y-10 relative z-10">
-          
+
           {/* Header Title */}
           <div className="text-center space-y-4 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 rounded-full border border-[#C9A84C]/45 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">
@@ -427,10 +427,9 @@ export default function Home() {
 
         </div>
       </section>
-
       {/* Educational Info Section */}
-      <section 
-        aria-label="What is a marriage biodata" 
+      <section
+        aria-label="What is a marriage biodata"
         id="what-is-biodata"
         className="pt-8 pb-16 md:pt-12 md:pb-20 px-4 border-t border-border/30 bg-[#FFFBF8] dark:bg-[#150709] relative overflow-hidden"
       >
@@ -448,19 +447,19 @@ export default function Home() {
           <div className="space-y-4 text-base leading-relaxed font-semibold max-w-3xl mx-auto">
             {/* Paragraph 1 — definition */}
             <p>
-              A marriage biodata is a one-page personal document used in 
-              Indian arranged marriage and matchmaking. It introduces you and 
-              your family to a potential match before anyone has spoken - a 
-              single profile covering who you are, where you come from, and 
+              A marriage biodata is a one-page personal document used in
+              Indian arranged marriage and matchmaking. It introduces you and
+              your family to a potential match before anyone has spoken - a
+              single profile covering who you are, where you come from, and
               what you are looking for in a life partner.
             </p>
 
             {/* Paragraph 2 — why it matters */}
             <p>
-              In India, families exchange biodatas as the very first step 
-              before any phone call, meeting, or horoscope matching happens. 
-              A well-prepared biodata opens conversations. A poorly presented 
-              one, even if the person behind it is wonderful, can quietly 
+              In India, families exchange biodatas as the very first step
+              before any phone call, meeting, or horoscope matching happens.
+              A well-prepared biodata opens conversations. A poorly presented
+              one, even if the person behind it is wonderful, can quietly
               close them.
             </p>
 
@@ -471,12 +470,12 @@ export default function Home() {
 
             {/* Paragraph 3 — what it includes */}
             <p>
-              A standard marriage biodata covers personal details like name, 
-              date of birth, height, and complexion - along with education, 
-              occupation, family background, and partner preferences. Hindu 
-              families usually include rashi, nakshatra, gotra, and manglik 
-              status. Muslim biodatas often include sect and family values. 
-              NRI profiles typically add residency status and country of 
+              A standard marriage biodata covers personal details like name,
+              date of birth, height, and complexion - along with education,
+              occupation, family background, and partner preferences. Hindu
+              families usually include rashi, nakshatra, gotra, and manglik
+              status. Muslim biodatas often include sect and family values.
+              NRI profiles typically add residency status and country of
               settlement.
             </p>
 
@@ -487,19 +486,19 @@ export default function Home() {
 
             {/* Paragraph 4 — biodata vs resume */}
             <p>
-              It is different from a job resume. A resume is written to 
-              impress an employer with skills and achievements. A biodata for 
-              marriage is written to help two families understand personal, 
-              cultural, and lifestyle compatibility - values, family structure, 
+              It is different from a job resume. A resume is written to
+              impress an employer with skills and achievements. A biodata for
+              marriage is written to help two families understand personal,
+              cultural, and lifestyle compatibility - values, family structure,
               and the kind of life you are building together.
             </p>
 
             {/* Paragraph 5 — how it is shared */}
             <p>
-              Biodatas are shared over WhatsApp, sent to relatives, uploaded 
-              to matrimonial sites, or handed over in person at family gatherings. 
-              The format is understood across Hindu, Muslim, Christian, Sikh, and 
-              Jain communities - and across regional languages from Hindi and 
+              Biodatas are shared over WhatsApp, sent to relatives, uploaded
+              to matrimonial sites, or handed over in person at family gatherings.
+              The format is understood across Hindu, Muslim, Christian, Sikh, and
+              Jain communities - and across regional languages from Hindi and
               Marathi to Tamil, Telugu, and Gujarati.
             </p>
 
@@ -508,15 +507,15 @@ export default function Home() {
 
             {/* Soft CTA — plain <p> with separate anchor link below */}
             <p className="text-stone-850 dark:text-stone-200 font-bold">
-              On biodata99.com you start with any template and personalise 
-              it fully - change the layout, switch languages, add your photo, 
-              update colours, and adjust every field to match your family&apos;s 
-              preferences. The template is just a starting point. No account 
+              On biodata99.com you start with any template and personalise
+              it fully - change the layout, switch languages, add your photo,
+              update colours, and adjust every field to match your family&apos;s
+              preferences. The template is just a starting point. No account
               needed, and it takes a few minutes.
             </p>
             <div className="pt-2">
-              <a 
-                href="#builder" 
+              <a
+                href="#builder"
                 className="inline-flex items-center text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-[15px] transition-colors"
               >
                 Create your biodata free &rarr;
