@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
   images: {
+    formats: ["image/avif", "image/webp"], // <-- Add this line
     remotePatterns: [
       {
         protocol: "https",
@@ -31,4 +32,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-// Trigger Next.js server reload for Peacock Theme
