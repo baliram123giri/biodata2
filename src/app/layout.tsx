@@ -28,6 +28,7 @@ const notoDevanagari = Noto_Sans_Devanagari({
 
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { FooterReviews } from "@/components/layout/FooterReviews";
 import { ClientLayoutProviders } from "@/components/layout/ClientLayoutProviders";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { webApplicationSchema } from "@/lib/seo-schemas";
@@ -115,7 +116,21 @@ export default function RootLayout({
           <main className="flex-1">
             {children}
           </main>
-          <Footer />
+          <Footer>
+            <Suspense fallback={
+              <div className="flex flex-col gap-2 mt-2.5 w-fit">
+                <span className="text-[11px] font-semibold text-slate-400 tracking-wide">
+                  Trusted by Indian families
+                </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-0.5 min-h-[52px]">
+                  <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
+                  <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
+                </div>
+              </div>
+            }>
+              <FooterReviews />
+            </Suspense>
+          </Footer>
         </QueryProvider>
       </body>
     </html>

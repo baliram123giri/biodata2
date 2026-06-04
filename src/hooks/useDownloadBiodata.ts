@@ -256,6 +256,8 @@ export function useDownloadBiodata() {
       getFieldVal(preparedData.personalDetails, "fullName") ||
       "biodata";
 
+    const timestamp = Date.now();
+
     const locField =
       getFieldVal(preparedData.contactDetails, "residentialAddress") ||
       getFieldVal(preparedData.familyDetails, "nativePlace") ||
@@ -313,21 +315,21 @@ export function useDownloadBiodata() {
 
         // 1. PDF
         const pdfBlob = await generateServerBlob();
-        zip.file(`${nameField}_biodata.pdf`, pdfBlob);
+        zip.file(`${nameField}_${timestamp}_biodata.pdf`, pdfBlob);
 
         // 3. JPG
         const jpgDataUrl = await generateJpgDataUrl();
         const jpgBase64 = jpgDataUrl.split(",")[1];
-        zip.file(`${nameField}_biodata.jpeg`, jpgBase64, { base64: true });
+        zip.file(`${nameField}_${timestamp}_biodata.jpeg`, jpgBase64, { base64: true });
 
         // 4. PNG
         const pngDataUrl = await generatePngDataUrl();
         const pngBase64 = pngDataUrl.split(",")[1];
-        zip.file(`${nameField}_biodata.png`, pngBase64, { base64: true });
+        zip.file(`${nameField}_${timestamp}_biodata.png`, pngBase64, { base64: true });
 
         // Generate and download ZIP
         const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, `${nameField}_Combo_Pack.zip`);
+        saveAs(zipBlob, `${nameField}_${timestamp}_Combo_Pack.zip`);
         return { success: true };
       } catch (err) {
         console.error("Combo Pack Download Error:", err instanceof Error ? err.message : String(err));
@@ -343,7 +345,7 @@ export function useDownloadBiodata() {
         const dataUrl = await generateJpgDataUrl();
         const blob = dataURItoBlob(dataUrl);
         const { saveAs } = await import("file-saver");
-        saveAs(blob, `${nameField}.jpeg`);
+        saveAs(blob, `${nameField}_${timestamp}.jpeg`);
         return { success: true };
       } catch (err) {
         console.error("JPG Export Error:", err instanceof Error ? err.message : String(err));
@@ -359,7 +361,7 @@ export function useDownloadBiodata() {
         const dataUrl = await generatePngDataUrl();
         const blob = dataURItoBlob(dataUrl);
         const { saveAs } = await import("file-saver");
-        saveAs(blob, `${nameField}.png`);
+        saveAs(blob, `${nameField}_${timestamp}.png`);
       } catch (err) {
         console.error("PNG Export Error:", err instanceof Error ? err.message : String(err));
         return { success: false, error: err };
@@ -373,7 +375,7 @@ export function useDownloadBiodata() {
     try {
       const blob = await generateServerBlob();
       const { saveAs } = await import("file-saver");
-      saveAs(blob, `${nameField}.pdf`);
+      saveAs(blob, `${nameField}_${timestamp}.pdf`);
     } catch (err) {
       console.error("Export Error:", err instanceof Error ? err.message : String(err));
       return { success: false, error: err };

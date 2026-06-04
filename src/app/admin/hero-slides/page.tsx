@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatISTDate } from "@/lib/utils";
 
 interface HeroSlide {
   id: string;
@@ -385,7 +386,7 @@ export default function AdminHeroSlides() {
               <CardContent className="p-4.5 space-y-4 flex-1 flex flex-col justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-foreground truncate">{slide.title || "Untitled Hero Slide"}</h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Uploaded {new Date(slide.createdAt).toLocaleDateString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Uploaded {formatISTDate(slide.createdAt)}</p>
                 </div>
 
                 <div className="space-y-3 pt-2 border-t border-border/40">

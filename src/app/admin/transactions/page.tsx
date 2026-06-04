@@ -30,7 +30,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatISTDateTime } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
@@ -327,7 +327,7 @@ export default function AdminTransactions() {
       header: () => <div className="text-right">Date</div>,
       cell: ({ row }) => (
         <div className="text-right text-muted-foreground/75 font-medium whitespace-nowrap">
-          {new Date(row.getValue("createdAt")).toLocaleDateString(undefined, {
+          {formatISTDateTime(row.getValue("createdAt"), {
             month: "short",
             day: "numeric",
             hour: "2-digit",
@@ -673,7 +673,7 @@ export default function AdminTransactions() {
                       </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground/75 font-semibold">
-                      {new Date(order.createdAt).toLocaleDateString(undefined, {
+                      {formatISTDateTime(order.createdAt, {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
@@ -1091,9 +1091,9 @@ export default function AdminTransactions() {
 
               {/* Bottom Date Log */}
               <div className="text-[10px] text-muted-foreground font-semibold text-center mt-2 flex justify-center gap-1">
-                <span>Created at: {new Date(selectedTransaction.createdAt).toLocaleString()}</span>
+                <span>Created at: {formatISTDateTime(selectedTransaction.createdAt)}</span>
                 <span>•</span>
-                <span>Last updated: {new Date(selectedTransaction.updatedAt).toLocaleString()}</span>
+                <span>Last updated: {formatISTDateTime(selectedTransaction.updatedAt)}</span>
               </div>
             </div>
           )}

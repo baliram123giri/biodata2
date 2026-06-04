@@ -22,7 +22,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatISTDate } from "@/lib/utils";
 import { 
   Select, 
   SelectContent, 
@@ -949,7 +949,7 @@ export default function AdminTemplates() {
                       <div>
                         <h4 className="font-bold text-xs text-foreground truncate">{bg.name}</h4>
                         <span className="text-[8px] text-muted-foreground font-mono truncate block mt-0.5">
-                          Added: {new Date(bg.createdAt).toLocaleDateString()}
+                          Added: {formatISTDate(bg.createdAt)}
                         </span>
                       </div>
 
@@ -1155,7 +1155,7 @@ export default function AdminTemplates() {
                             )}
                           </div>
                           <span className="text-[8px] text-muted-foreground font-mono truncate block mt-0.5">
-                            Added: {new Date(sticker.createdAt).toLocaleDateString()}
+                            Added: {formatISTDate(sticker.createdAt)}
                           </span>
                         </div>
 

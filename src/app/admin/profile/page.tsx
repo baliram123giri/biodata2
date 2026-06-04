@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getInitials } from "@/lib/utils";
+import { getInitials, formatISTDate } from "@/lib/utils";
 
 function parseUserAgent(uaString: string) {
   if (!uaString) return { browser: "Unknown Browser", os: "Unknown OS" };
@@ -254,7 +254,7 @@ export default function AdminProfile() {
   }
 
   const joinDate = rawUser?.createdAt 
-    ? new Date(rawUser.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    ? formatISTDate(rawUser.createdAt, { year: "numeric", month: "long", day: "numeric" })
     : "N/A";
 
   return (

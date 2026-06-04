@@ -21,7 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatISTDateTime } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -240,7 +240,7 @@ export default function AdminBiodatas() {
         <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
           <Calendar className="w-3.5 h-3.5 text-stone-400" />
           <span>
-            {new Date(row.original.createdAt).toLocaleString(undefined, {
+            {formatISTDateTime(row.original.createdAt, {
               dateStyle: "short",
               timeStyle: "short"
             })}
@@ -344,7 +344,7 @@ export default function AdminBiodatas() {
         log.location || "N/A",
         log.ipAddress || "N/A",
         log.userAgent || "N/A",
-        new Date(log.createdAt).toLocaleString()
+        formatISTDateTime(log.createdAt)
       ]);
 
       const csvContent = [headers.join(","), ...rows.map((e: any[]) => e.map((val: any) => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");

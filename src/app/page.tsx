@@ -433,7 +433,7 @@ export default function Home() {
         id="what-is-biodata"
         className="pt-8 pb-16 md:pt-12 md:pb-20 px-4 border-t border-border/30 bg-[#FFFBF8] dark:bg-[#150709] relative overflow-hidden"
       >
-        <div className="container mx-auto max-w-4xl space-y-6 relative z-10 text-stone-700 dark:text-stone-300">
+        <div className="container mx-auto max-w-6xl space-y-6 relative z-10 text-stone-700 dark:text-stone-300">
           {/* Label */}
           <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[#8A7233] dark:text-[#E6C97A] mb-2 font-sans">
             know before you start
@@ -444,7 +444,7 @@ export default function Home() {
             New to marriage biodata? Here&apos;s what you need to know
           </h2>
 
-          <div className="space-y-4 text-base leading-relaxed font-semibold max-w-3xl mx-auto">
+          <div className="space-y-4 text-base leading-relaxed font-semibold max-w-5xl mx-auto">
             {/* Paragraph 1 — definition */}
             <p>
               A marriage biodata is a one-page personal document used in

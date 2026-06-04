@@ -25,7 +25,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatISTDate } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
@@ -305,7 +305,7 @@ export default function CouponsAdminPage() {
         return coupon.expiresAt ? (
           <span className="flex items-center gap-1.5 text-muted-foreground/80 font-semibold">
             <Calendar className="w-3.5 h-3.5" />
-            {new Date(coupon.expiresAt).toLocaleDateString(undefined, { 
+            {formatISTDate(coupon.expiresAt, { 
               month: "short", 
               day: "numeric", 
               year: "numeric" 

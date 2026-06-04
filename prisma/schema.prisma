@@ -189,3 +189,16 @@ model Mantra {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model ReviewSettings {
+  id               String   @id @default("global")
+  googleEnabled    Boolean  @default(true)
+  googleRating     Float    @default(4.9)
+  googleCount      Int      @default(524)
+  googleUrl        String   @default("https://share.google/T4eEjxMJkqDKaFWGN")
+  trustpilotEnabled Boolean  @default(true)
+  trustpilotRating Float    @default(4.8)
+  trustpilotCount  Int      @default(320)
+  trustpilotUrl    String   @default("https://www.trustpilot.com/review/biodata99.com")
+  updatedAt        DateTime @updatedAt
+}

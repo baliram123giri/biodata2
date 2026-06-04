@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getInitials, formatISTDate } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { CreateUserDialog } from "@/components/admin/users/CreateUserDialog";
 import { toast } from "sonner";
@@ -262,7 +262,7 @@ export default function AdminUsers() {
       header: "Joined Date",
       cell: (info) => (
         <span className="text-muted-foreground font-medium">
-          {new Date(info.getValue() as string).toLocaleDateString()}
+          {formatISTDate(info.getValue() as string)}
         </span>
       )
     },
@@ -501,7 +501,7 @@ export default function AdminUsers() {
                         <div>
                           <span className="block font-bold text-muted-foreground/60 uppercase text-[9px] tracking-wider mb-0.5">Joined Date</span>
                           <span className="text-foreground/90 font-medium block mt-1">
-                            {new Date(user.createdAt).toLocaleDateString()}
+                            {formatISTDate(user.createdAt)}
                           </span>
                         </div>
                       </div>

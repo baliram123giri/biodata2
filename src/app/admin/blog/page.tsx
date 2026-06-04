@@ -59,6 +59,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import ImageExtension from "@tiptap/extension-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatISTDate } from "@/lib/utils";
 
 interface BlogPost {
   id: string;
@@ -747,7 +748,7 @@ export default function AdminBlogPosts() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-[#C9A84C]" />
-                          {publishDate || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                           {publishDate || formatISTDate(new Date(), { year: "numeric", month: "short", day: "numeric" })}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-[#C9A84C]" />

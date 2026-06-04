@@ -37,7 +37,8 @@ import {
   Crown,
   Undo2,
   Redo2,
-  Move
+  Move,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -453,6 +454,44 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleDownloadPreview = async () => {
+    try {
+      let dataUrl: string | null = null;
+      const originalMode = previewMode;
+
+      // If we are not in designer mode, temporarily swap so designer is mounted & stage is loaded
+      if (originalMode !== "designer") {
+        setPreviewMode("designer");
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+
+      if (designerRef.current?.captureThumbnail) {
+        dataUrl = await designerRef.current.captureThumbnail();
+      }
+
+      // Restore original preview mode
+      if (originalMode !== "designer") {
+        setPreviewMode(originalMode);
+      }
+
+      if (!dataUrl) {
+        toast.error("Failed to capture template preview from designer stage.");
+        return;
+      }
+
+      // Download the image using file-saver
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const { saveAs } = await import("file-saver");
+      const fileName = `${formState.name || "template"}_preview_hq_${Date.now()}.png`;
+      saveAs(blob, fileName);
+      toast.success("✓ High-Quality template preview downloaded!");
+    } catch (err) {
+      console.error("Failed to download template preview:", err);
+      toast.error("Error generating high quality template preview");
+    }
   };
 
   React.useEffect(() => {
@@ -1170,6 +1209,20 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
               📄 High-Fidelity SVG
             </Button>
           </div>
+
+          <div className="h-5 w-[1px] bg-border hidden md:block" />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPreview}
+            className="text-[9px] md:text-[10.5px] h-6 md:h-7 px-2.5 md:px-4 font-black cursor-pointer rounded-full border border-primary/30 text-primary hover:bg-primary/5 transition-all flex items-center gap-1 shrink-0"
+            title="Download high quality PNG preview of current design template state"
+          >
+            <Download className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary" />
+            <span>Download HQ</span>
+          </Button>
 
           <div className="h-5 w-[1px] bg-border hidden md:block" />
           

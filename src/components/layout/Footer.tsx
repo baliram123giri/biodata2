@@ -49,7 +49,7 @@ const socialLinks = [
   },
 ];
 
-export function Footer() {
+export function Footer({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
   const isEditorPage = pathname === "/edit";
   const isAdminPage = pathname?.startsWith("/admin");
@@ -77,6 +77,8 @@ export function Footer() {
               <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
               </p>
+
+              {children}
 
               {/* Social Icons */}
               <div className="flex items-center gap-2 mt-1">

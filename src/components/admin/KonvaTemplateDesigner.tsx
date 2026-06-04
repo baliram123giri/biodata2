@@ -7,7 +7,7 @@ import Konva from "konva";
 import { translations } from "@/lib/translations";
 import { getLightBgColor } from "@/lib/color-utils";
 import { loadKonvaFonts, getKonvaFontFamily } from "@/lib/konva-fonts";
-import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize, Download } from "lucide-react";
 
 if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
@@ -517,6 +517,75 @@ export function KonvaTemplateDesigner({
       x: (width - A4_W * initialScale) / 2,
       y: (height - A4_H * initialScale) / 2,
     });
+  };
+
+  const handleDownloadPreview = async () => {
+    try {
+      const prevSelected = [...selectedIds];
+      setSelectedIds([]); // Clear selection to hide bounding boxes
+      
+      // Wait a tick for React to re-render without selection highlights
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      
+      const stage = stageRef.current;
+      if (!stage) return;
+      
+      // Hide transformer node if any is active
+      const transformer = transformerRef.current;
+      let oldNodes: Konva.Node[] = [];
+      if (transformer) {
+        oldNodes = transformer.nodes();
+        transformer.nodes([]);
+        transformer.getLayer()?.batchDraw();
+      }
+      
+      // Save original state
+      const oldScaleX = stage.scaleX();
+      const oldScaleY = stage.scaleY();
+      const oldX = stage.x();
+      const oldY = stage.y();
+      const oldWidth = stage.width();
+      const oldHeight = stage.height();
+
+      // Temporarily set to A4 absolute dimensions for precise thumbnail capture
+      stage.scaleX(1);
+      stage.scaleY(1);
+      stage.x(0);
+      stage.y(0);
+      stage.width(A4_W);
+      stage.height(A4_H);
+      stage.draw();
+
+      const dataUrl = stage.toDataURL({
+        pixelRatio: 2.5, // high quality
+        mimeType: "image/png"
+      });
+
+      // Restore original state
+      stage.scaleX(oldScaleX);
+      stage.scaleY(oldScaleY);
+      stage.x(oldX);
+      stage.y(oldY);
+      stage.width(oldWidth);
+      stage.height(oldHeight);
+      stage.draw();
+      
+      // Restore selections
+      setSelectedIds(prevSelected);
+      if (transformer && oldNodes.length > 0) {
+        transformer.nodes(oldNodes);
+        transformer.getLayer()?.batchDraw();
+      }
+
+      // Download the image using file-saver
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const { saveAs } = await import("file-saver");
+      const fileName = `${formState.name || "template"}_preview_hq_${Date.now()}.png`;
+      saveAs(blob, fileName);
+    } catch (err) {
+      console.error("Failed to download preview:", err);
+    }
   };
 
   // Update Transformer nodes on selection change
@@ -2233,6 +2302,15 @@ listening={false}
           title="Zoom In"
         >
           <ZoomIn className="w-4 h-4" />
+        </button>
+        <div className="h-4 w-px bg-slate-700/80 mx-1" />
+        <button
+          type="button"
+          onClick={handleDownloadPreview}
+          className="p-1.5 hover:bg-slate-800 rounded-full text-emerald-400 hover:text-emerald-300 active:scale-95 transition-all cursor-pointer border-0 bg-transparent flex items-center justify-center"
+          title="Download HQ Preview PNG"
+        >
+          <Download className="w-4 h-4" />
         </button>
       </div>
     </div>
