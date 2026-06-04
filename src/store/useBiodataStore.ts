@@ -153,54 +153,39 @@ export const useBiodataStore = create<BiodataState>()(
             const currentSelected = useBiodataStore.getState().selectedTemplate;
             const targetId = templateId || currentSelected;
 
-            // Check if we already have this template loaded or if it's static built-in
-            const isBuiltIn = targetId ? !!getTemplateConfig(targetId) : false;
-
-            if (targetId) {
-              const alreadyLoaded = useBiodataStore.getState().customTemplates.some(t => t.id === targetId);
-              const hasLoadedDatabaseTemplates = useBiodataStore.getState().customTemplates.length > 0;
-              if (alreadyLoaded || (isBuiltIn && hasLoadedDatabaseTemplates)) {
-                // Skip if already loaded, or if it is built-in AND we already have database templates loaded
-                if (templateId) {
-                  set({ selectedTemplate: templateId });
-                }
-                return;
-              }
-            } else {
-              // If no specific template target, check if a default template is already loaded
-              const hasDefault = useBiodataStore.getState().customTemplates.some(t => t.isDefault === true);
-              if (hasDefault) {
-                return;
-              }
+            // Always make sure stored templates are registered in-memory on page load
+            const loaded = useBiodataStore.getState().customTemplates;
+            if (loaded.length > 0) {
+              registerDynamicTemplates(loaded);
             }
 
-            const url = (targetId && !isBuiltIn)
-              ? `/api/templates?id=${encodeURIComponent(targetId)}`
-              : `/api/templates?default=true`;
+            // If we already have database templates loaded in the store
+            if (loaded.length > 0) {
+              if (templateId) {
+                set({ selectedTemplate: templateId });
+              }
+              return;
+            }
 
-            const res = await fetch(url);
+            // Otherwise, fetch all active templates from API
+            const res = await fetch("/api/templates");
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
               
-              set((state) => {
-                const fetchedTpl = data.templates[0];
-                const exists = state.customTemplates.some(t => t.id === fetchedTpl.id);
-                const updatedTemplates = exists
-                  ? state.customTemplates
-                  : [...state.customTemplates, fetchedTpl];
+              set(() => {
+                const hasSelected = data.templates.some((t: any) => t.id === targetId) || !!getTemplateConfig(targetId || "");
+                const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
+                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 
-                // Only overwrite the selectedTemplate if we had no prior selection or a URL parameter override is present
-                const shouldSetSelected = !currentSelected || !!templateId;
-
                 return {
-                  customTemplates: updatedTemplates,
-                  selectedTemplate: shouldSetSelected ? targetId : currentSelected,
+                  customTemplates: data.templates,
+                  selectedTemplate: hasSelected ? (targetId || fallbackTemplateId) : fallbackTemplateId,
                 };
               });
             }
           } catch (err) {
-            console.error("Store failed to fetch initial template:", err);
+            console.error("Store failed to fetch initial templates:", err);
           }
         },
         fetchCustomStickers: async () => {

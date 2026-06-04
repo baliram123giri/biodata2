@@ -313,14 +313,17 @@ export default function EditPage() {
     setFitResetKey(k => k + 1);
   };
 
+  // Fetch initial template only after store hydration is complete to prevent race conditions
+  useEffect(() => {
+    if (!isStoreHydrated) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const templateParam = searchParams.get('template');
+    useBiodataStore.getState().fetchInitialTemplate(templateParam);
+  }, [isStoreHydrated]);
+
   // Fix hydration issues and layout listening
   useEffect(() => {
     setIsMounted(true);
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const templateParam = searchParams.get('template');
-
-    useBiodataStore.getState().fetchInitialTemplate(templateParam);
 
     useBiodataStore.getState().fetchCustomStickers();
 
