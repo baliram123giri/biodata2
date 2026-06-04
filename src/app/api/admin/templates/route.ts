@@ -4,7 +4,7 @@ import { apiCache, TTL } from "@/lib/api-cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
-import cloudinary from "@/lib/cloudinary";
+import { uploadToVPS } from "@/lib/vps-upload";
 
 export const TEMPLATES_CACHE_KEY = "admin:templates";
 
@@ -47,35 +47,9 @@ function makeColorizableCloudinaryUrl(url: string): string {
   return url;
 }
 
-// Helper to upload base64 to Cloudinary
+// Helper to upload base64 to VPS
 async function uploadToCloudinary(fileStr: string, folder: string) {
-  try {
-    const options: any = {
-      folder: `biodata/${folder}`,
-      resource_type: "auto",
-    };
-
-    // Extract original extension from base64 header
-    const mimeMatch = fileStr.match(/^data:([^;]+);base64,/);
-    if (mimeMatch) {
-      const mime = mimeMatch[1];
-      if (mime === "image/svg+xml") {
-        options.format = "svg";
-      } else if (mime === "image/png") {
-        options.format = "png";
-      } else if (mime === "image/jpeg" || mime === "image/jpg") {
-        options.format = "jpg";
-      } else if (mime === "image/webp") {
-        options.format = "webp";
-      }
-    }
-
-    const uploadRes = await cloudinary.uploader.upload(fileStr, options);
-    return uploadRes.secure_url;
-  } catch (error) {
-    console.error(`Cloudinary upload error [${folder}]:`, error);
-    throw new Error("Failed to upload asset to Cloudinary");
-  }
+  return uploadToVPS(fileStr, `biodata/${folder}`);
 }
 
 export async function GET() {

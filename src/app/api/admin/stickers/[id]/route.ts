@@ -2,46 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import cloudinary from "@/lib/cloudinary";
+import { uploadToVPS, deleteFromVPS } from "@/lib/vps-upload";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
   return (session?.user as any) || null;
-}
-
-function extractCloudinaryPublicId(url: string): string | null {
-  if (!url || !url.includes("res.cloudinary.com")) return null;
-  try {
-    const parts = url.split("/image/upload/");
-    if (parts.length < 2) return null;
-    
-    let path = parts[1];
-    const versionMatch = path.match(/^v\d+\/(.+)$/);
-    if (versionMatch) {
-      path = versionMatch[1];
-    }
-    
-    const dotIndex = path.lastIndexOf(".");
-    if (dotIndex !== -1) {
-      path = path.substring(0, dotIndex);
-    }
-    
-    return path;
-  } catch (err) {
-    console.error("Error extracting Cloudinary public_id:", err);
-    return null;
-  }
-}
-
-async function deleteFromCloudinary(url: string) {
-  const publicId = extractCloudinaryPublicId(url);
-  if (!publicId) return;
-  try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    console.log(`Cloudinary sticker deleted [${publicId}]:`, result);
-  } catch (error) {
-    console.error(`Failed to delete Cloudinary sticker [${publicId}]:`, error);
-  }
 }
 
 export async function DELETE(
@@ -64,8 +29,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Sticker not found" }, { status: 404 });
     }
 
-    // Delete image from Cloudinary
-    await deleteFromCloudinary(existing.url);
+    // Delete image from VPS
+    await deleteFromVPS(existing.url);
 
     // Delete from database
     await prisma.sticker.delete({
@@ -76,20 +41,6 @@ export async function DELETE(
   } catch (error: any) {
     console.error("Delete sticker error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-async function uploadToCloudinary(fileStr: string, folder: string): Promise<string> {
-  try {
-    const options = {
-      folder: `matrimonial/${folder}`,
-      resource_type: "auto" as const,
-    };
-    const uploadRes = await cloudinary.uploader.upload(fileStr, options);
-    return uploadRes.secure_url;
-  } catch (error) {
-    console.error(`Cloudinary upload error [${folder}]:`, error);
-    throw new Error("Failed to upload asset to Cloudinary");
   }
 }
 
@@ -126,13 +77,13 @@ export async function PATCH(
     };
 
     if (file) {
-      // 1. Upload new sticker file to Cloudinary
-      const secureUrl = await uploadToCloudinary(file, "stickers");
+      // 1. Upload new sticker file to VPS
+      const secureUrl = await uploadToVPS(file, "matrimonial/stickers");
       updateData.url = secureUrl;
 
-      // 2. Delete the old sticker file from Cloudinary
+      // 2. Delete the old sticker file from VPS
       if (existing.url) {
-        await deleteFromCloudinary(existing.url);
+        await deleteFromVPS(existing.url);
       }
     }
 

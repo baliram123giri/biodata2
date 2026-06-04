@@ -5,7 +5,7 @@ import { TEMPLATES_CACHE_KEY } from "../route";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
-import cloudinary from "@/lib/cloudinary";
+import { uploadToVPS, deleteFromVPS } from "@/lib/vps-upload";
 
 export const BgConfigSchema = z.object({
   url: z.string().optional().nullable(),
@@ -46,71 +46,14 @@ function makeColorizableCloudinaryUrl(url: string): string {
   return url;
 }
 
+// Helper to upload base64 to VPS
 async function uploadToCloudinary(fileStr: string, folder: string) {
-  try {
-    const options: any = {
-      folder: `biodata/${folder}`,
-      resource_type: "auto",
-    };
-
-    // Extract original extension from base64 header
-    const mimeMatch = fileStr.match(/^data:([^;]+);base64,/);
-    if (mimeMatch) {
-      const mime = mimeMatch[1];
-      if (mime === "image/svg+xml") {
-        options.format = "svg";
-      } else if (mime === "image/png") {
-        options.format = "png";
-      } else if (mime === "image/jpeg" || mime === "image/jpg") {
-        options.format = "jpg";
-      } else if (mime === "image/webp") {
-        options.format = "webp";
-      }
-    }
-
-    const uploadRes = await cloudinary.uploader.upload(fileStr, options);
-    return uploadRes.secure_url;
-  } catch (error) {
-    console.error(`Cloudinary upload error [${folder}]:`, error);
-    throw new Error("Failed to upload asset to Cloudinary");
-  }
+  return uploadToVPS(fileStr, `biodata/${folder}`);
 }
 
-function extractCloudinaryPublicId(url: string): string | null {
-  if (!url || !url.includes("res.cloudinary.com")) return null;
-  try {
-    const parts = url.split("/image/upload/");
-    if (parts.length < 2) return null;
-    
-    // Remove version segment (e.g., v12345678/) if present
-    let path = parts[1];
-    const versionMatch = path.match(/^v\d+\/(.+)$/);
-    if (versionMatch) {
-      path = versionMatch[1];
-    }
-    
-    // Remove file extension
-    const dotIndex = path.lastIndexOf(".");
-    if (dotIndex !== -1) {
-      path = path.substring(0, dotIndex);
-    }
-    
-    return path;
-  } catch (err) {
-    console.error("Error extracting Cloudinary public_id:", err);
-    return null;
-  }
-}
-
+// Helper to delete image from VPS
 async function deleteFromCloudinary(url: string) {
-  const publicId = extractCloudinaryPublicId(url);
-  if (!publicId) return;
-  try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    console.log(`Cloudinary asset deleted [${publicId}]:`, result);
-  } catch (error) {
-    console.error(`Failed to delete Cloudinary asset [${publicId}]:`, error);
-  }
+  return deleteFromVPS(url);
 }
 
 export async function GET(

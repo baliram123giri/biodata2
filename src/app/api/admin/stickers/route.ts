@@ -2,25 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import cloudinary from "@/lib/cloudinary";
+import { uploadToVPS } from "@/lib/vps-upload";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);
   return (session?.user as any) || null;
-}
-
-async function uploadToCloudinary(fileStr: string, folder: string): Promise<string> {
-  try {
-    const options = {
-      folder: `matrimonial/${folder}`,
-      resource_type: "auto" as const,
-    };
-    const uploadRes = await cloudinary.uploader.upload(fileStr, options);
-    return uploadRes.secure_url;
-  } catch (error) {
-    console.error(`Cloudinary upload error [${folder}]:`, error);
-    throw new Error("Failed to upload asset to Cloudinary");
-  }
 }
 
 export async function GET(req: Request) {
@@ -70,7 +56,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing name or file parameter" }, { status: 400 });
     }
 
-    const secureUrl = await uploadToCloudinary(file, "stickers");
+    const secureUrl = await uploadToVPS(file, "matrimonial/stickers");
 
     const sticker = await prisma.sticker.create({
       data: {
