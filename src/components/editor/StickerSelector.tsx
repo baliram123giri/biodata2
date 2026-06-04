@@ -35,7 +35,7 @@ const StickerItem = React.memo(function StickerItem({
             )}
             <Image
               src={sticker.url || ""}
-              alt={sticker.name}
+              alt={`Decorative sticker: ${sticker.name}`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
               onLoad={() => setIsLoaded(true)}

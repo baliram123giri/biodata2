@@ -39,7 +39,7 @@ const BackgroundItem = React.memo(function BackgroundItem({
         )}
         <Image
           src={url || ""}
-          alt={name}
+          alt={`Watermark background: ${name}`}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
           onLoad={() => setIsLoaded(true)}

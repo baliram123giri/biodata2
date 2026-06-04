@@ -178,7 +178,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                     ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,f_auto,q_auto/")
                     : tpl.thumbnailUrl
                   }
-                  alt={tpl.name}
+                  alt={`Matrimonial design template: ${tpl.name}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 30vw"
                   className={cn(

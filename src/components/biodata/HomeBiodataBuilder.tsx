@@ -380,7 +380,7 @@ export function HomeBiodataBuilder() {
                 {activeTemplate.thumbnailUrl ? (
                   <Image
                     src={activeTemplate.thumbnailUrl}
-                    alt={activeTemplate.name}
+                    alt={`Matrimonial template ${activeTemplate.name} thumbnail selection`}
                     fill
                     sizes="48px"
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"

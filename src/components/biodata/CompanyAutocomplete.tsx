@@ -120,7 +120,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
           {value ? (
             logoMap[value] ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoMap[value]} alt="Logo" className="h-5 w-5 mr-2 rounded object-contain bg-white shrink-0" />
+              <img src={logoMap[value]} alt={`${value} logo`} className="h-5 w-5 mr-2 rounded object-contain bg-white shrink-0" />
             ) : (
               <Building2 className="h-5 w-5 mr-2 text-muted-foreground shrink-0" />
             )

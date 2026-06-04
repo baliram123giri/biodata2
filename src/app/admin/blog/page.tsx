@@ -495,7 +495,7 @@ export default function AdminBlogPosts() {
                         <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-card shadow-xs group">
                           <NextImage
                             src={thumbnailUrl}
-                            alt="Post thumbnail"
+                            alt="Blog post thumbnail preview"
                             fill
                             sizes="64px"
                             className="object-cover"
@@ -520,8 +520,14 @@ export default function AdminBlogPosts() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            if (file.size > 2 * 1024 * 1024) {
-                              toast.error("File size exceeds 2MB limit");
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error("File size must be under 5MB");
+                              return;
+                            }
+                            const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+                            const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+                            if (!allowedExtensions.includes(fileExtension)) {
+                              toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
                               return;
                             }
                             setIsThumbnailUploading(true);
@@ -658,6 +664,16 @@ export default function AdminBlogPosts() {
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error("File size must be under 5MB");
+                                return;
+                              }
+                              const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+                              const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+                              if (!allowedExtensions.includes(fileExtension)) {
+                                toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
+                                return;
+                              }
                               toast.info("Uploading image to content editor...");
                               try {
                                 const reader = new FileReader();
@@ -857,7 +873,7 @@ export default function AdminBlogPosts() {
                     <div className="relative aspect-video w-full overflow-hidden border-b border-border bg-muted">
                       <NextImage
                         src={post.thumbnailUrl}
-                        alt={post.title}
+                        alt={`Preview for blog article: ${post.title}`}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"

@@ -346,7 +346,7 @@ function DesktopShareDialog({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={previewUrl}
-                  alt="Biodata Preview"
+                  alt="Generated matrimonial biodata preview image"
                   className="w-full h-full object-cover"
                 />
               </div>

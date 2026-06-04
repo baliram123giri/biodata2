@@ -88,7 +88,7 @@ export function ImageUpload({ value, onChange, aspect = 3 / 4 }: ImageUploadProp
         <div className="relative w-28 h-36">
           <img
             src={value}
-            alt="Profile"
+            alt="Uploaded biodata profile photo"
             className="w-full h-full object-cover rounded-lg border shadow-sm bg-gray-50"
           />
           <button

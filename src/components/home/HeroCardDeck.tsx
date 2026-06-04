@@ -24,7 +24,7 @@ export function HeroCardDeck({ slides }: { slides: Slide[] }) {
         >
           <Image
             src={slide.imageUrl}
-            alt={slide.title || "Premium template layout"}
+            alt={slide.title ? `Matrimonial biodata design template: ${slide.title}` : "Premium matrimonial biodata template design layout"}
             fill
             sizes="(max-width: 768px) 30vw, 180px"
             quality={75}

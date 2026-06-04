@@ -161,6 +161,9 @@ export const useBiodataStore = create<BiodataState>()(
               const hasLoadedDatabaseTemplates = useBiodataStore.getState().customTemplates.length > 0;
               if (alreadyLoaded || (isBuiltIn && hasLoadedDatabaseTemplates)) {
                 // Skip if already loaded, or if it is built-in AND we already have database templates loaded
+                if (templateId) {
+                  set({ selectedTemplate: templateId });
+                }
                 return;
               }
             } else {
@@ -192,7 +195,7 @@ export const useBiodataStore = create<BiodataState>()(
 
                 return {
                   customTemplates: updatedTemplates,
-                  selectedTemplate: shouldSetSelected ? fetchedTpl.id : currentSelected,
+                  selectedTemplate: shouldSetSelected ? targetId : currentSelected,
                 };
               });
             }

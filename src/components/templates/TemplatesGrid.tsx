@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Sparkles, Eye, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 
@@ -226,7 +226,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                         ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,f_auto,q_auto/")
                         : tpl.thumbnailUrl
                       }
-                      alt={tpl.name}
+                      alt={`Matrimonial biodata template ${tpl.name} thumbnail preview`}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
                       className="object-cover object-center transition-transform duration-500"
@@ -352,7 +352,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                         ? selectedTpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_450,h_637,c_fit,f_auto,q_auto/")
                         : selectedTpl.thumbnailUrl
                       }
-                      alt={selectedTpl.name}
+                      alt={`Matrimonial biodata template ${selectedTpl.name} detailed preview`}
                       fill
                       sizes="(max-width: 768px) 110px, 200px"
                       className="object-contain"
@@ -390,6 +390,9 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                   <DialogTitle className="text-xl md:text-3xl font-black leading-tight text-foreground">
                     {selectedTpl.name}
                   </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    View template details, description, and select it to customize.
+                  </DialogDescription>
                 </DialogHeader>
 
                 {/* Color accent dot */}
@@ -413,8 +416,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
 
                 {/* Spacer to push CTA to the bottom */}
                 <div className="flex-1 min-h-[10px] md:min-h-0" />
-
-                {/* CTA Buttons */}
+                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     className="flex-1 rounded-full bg-gradient-primary border-0 font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 h-9.5 md:h-11 text-xs md:text-sm"
@@ -423,15 +425,6 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                     <Link href={`/edit?template=${selectedTpl.id}`}>
                       <Sparkles className="w-4 h-4 mr-2" />
                       Use This Template
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-full border-[#C9A84C]/50 hover:bg-[#FBF5E6]/50 font-bold h-9.5 md:h-11 px-5 transition-all duration-200 text-xs md:text-sm"
-                    asChild
-                  >
-                    <Link href={`/edit?template=${selectedTpl.id}`}>
-                      Preview <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Link>
                   </Button>
                 </div>

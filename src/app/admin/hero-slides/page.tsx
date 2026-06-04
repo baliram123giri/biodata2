@@ -77,8 +77,15 @@ export default function AdminHeroSlides() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be under 10MB for high-fidelity images");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, and WEBP are allowed.");
       return;
     }
 
@@ -360,7 +367,7 @@ export default function AdminHeroSlides() {
               <div className="relative aspect-[3/4] overflow-hidden bg-muted border-b border-border/60">
                 <img
                   src={slide.imageUrl}
-                  alt={slide.title || "Hero Template Slide"}
+                  alt={slide.title ? `Hero slide: ${slide.title}` : "Hero template presentation slide"}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
                 />
                 

@@ -214,15 +214,15 @@ export async function PATCH(
 
     // File re-uploads
     if (body.frameFile) {
-      if (body.frameFile.startsWith("data:image/svg+xml")) {
-        updateData.frameUrlTemplate = body.frameFile;
-      } else {
+      if (body.frameFile.startsWith("data:") || body.frameFile.trim().startsWith("<svg") || body.frameFile.includes("http://www.w3.org/2000/svg")) {
         // Clean up previous frame from Cloudinary if it existed
-        if (existing.frameUrlTemplate) {
+        if (existing.frameUrlTemplate && !existing.frameUrlTemplate.startsWith("data:")) {
           await deleteFromCloudinary(existing.frameUrlTemplate);
         }
         const secureUrl = await uploadToCloudinary(body.frameFile, "frames");
         updateData.frameUrlTemplate = makeColorizableCloudinaryUrl(secureUrl);
+      } else {
+        updateData.frameUrlTemplate = body.frameFile;
       }
     } else if (body.frameUrlTemplate !== undefined) {
       updateData.frameUrlTemplate = body.frameUrlTemplate;

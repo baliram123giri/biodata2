@@ -218,7 +218,7 @@ export function BlogListWrapper({ posts }: BlogListWrapperProps) {
                       <div className="h-44 relative overflow-hidden bg-muted border-b border-[#C9A84C]/15">
                         <NextImage
                           src={post.thumbnailUrl}
-                          alt={post.title}
+                          alt={`Blog post banner: ${post.title}`}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"

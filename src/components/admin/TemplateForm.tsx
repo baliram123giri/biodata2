@@ -841,6 +841,13 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
       return;
     }
 
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormState(prev => ({
@@ -2187,7 +2194,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           {previewPhotoFile ? (
                             <>
                               <div className="relative w-10 h-12 rounded overflow-hidden border border-primary/30 shrink-0 shadow-sm">
-                                <img src={previewPhotoFile} alt="Preview photo" className="w-full h-full object-cover" />
+                                <img src={previewPhotoFile} alt="Matrimonial template editor preview test portrait" className="w-full h-full object-cover" />
                               </div>
                               <div className="flex-grow flex flex-col">
                                 <p className="text-[10px] font-bold text-green-600 dark:text-green-400">✓ Test Photo Loaded</p>
@@ -2328,7 +2335,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           {adminAiResultUrl && (
                             <div className="flex flex-col gap-2.5 mt-2.5 bg-white dark:bg-slate-950 p-2.5 border border-slate-200 dark:border-slate-800 rounded-lg animate-in zoom-in duration-200">
                               <div className="relative aspect-[3/4] w-20 mx-auto rounded overflow-hidden border border-slate-200 dark:border-slate-800">
-                                <img src={adminAiResultUrl} alt="AI Portrait" className="w-full h-full object-cover" />
+                                <img src={adminAiResultUrl} alt="Generated AI demo portrait photo" className="w-full h-full object-cover" />
                               </div>
                               <Button
                                 type="button"
@@ -2730,7 +2737,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                               <div className="relative w-24 mx-auto aspect-[3/4] border border-border rounded-lg overflow-hidden bg-muted shadow-sm">
                                 <img
                                   src={template.thumbnailUrl}
-                                  alt="Current template thumbnail"
+                                  alt="Current active template thumbnail image"
                                   className="w-full h-full object-cover"
                                 />
                               </div>

@@ -118,6 +118,17 @@ export async function uploadToVPS(fileStr: string, subFolder: string): Promise<s
     mimeType = "image/png"; // default fallback
   }
 
+  // Server-side Size Validation: Max 5MB
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error("File size exceeds 5MB limit");
+  }
+
+  // Server-side Format Validation: JPG, JPEG, PNG, WEBP, SVG
+  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
+  if (!allowedMimeTypes.includes(mimeType)) {
+    throw new Error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
+  }
+
   const filename = crypto.randomUUID();
   let finalBuffer: Buffer = buffer;
   let extension = "";

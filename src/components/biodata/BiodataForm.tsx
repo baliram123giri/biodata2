@@ -184,7 +184,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
                       <>
                         <img
                           src={currentMantraSticker.type}
-                          alt="Selected Sign"
+                          alt="Selected religious mantra sign"
                           className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">

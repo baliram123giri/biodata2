@@ -110,6 +110,12 @@ export default function AdminTemplates() {
       toast.error("File size must be under 5MB");
       return;
     }
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
       setEditBgFile(reader.result as string);
@@ -122,6 +128,12 @@ export default function AdminTemplates() {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be under 5MB");
+      return;
+    }
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
       return;
     }
     const reader = new FileReader();
@@ -410,6 +422,12 @@ export default function AdminTemplates() {
       toast.error("File size must be under 5MB");
       return;
     }
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
@@ -475,6 +493,12 @@ export default function AdminTemplates() {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be under 5MB");
+      return;
+    }
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "svg"];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file format. Only JPG, JPEG, PNG, WEBP, and SVG are allowed.");
       return;
     }
     const reader = new FileReader();
@@ -685,7 +709,7 @@ export default function AdminTemplates() {
                           ? temp.thumbnailUrl.replace("/image/upload/", "/image/upload/w_300,h_424,c_fit,f_auto,q_auto/")
                           : temp.thumbnailUrl
                         } 
-                        alt={temp.name} 
+                        alt={`Matrimonial template ${temp.name} preview thumbnail`} 
                         className="h-full w-auto object-contain rounded-md shadow-md border border-border bg-white transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
@@ -847,7 +871,7 @@ export default function AdminTemplates() {
                     <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
                       <img
                         src={newBgFile}
-                        alt="Preview"
+                        alt="Uploaded matrimonial template background watermark preview"
                         className="max-h-full max-w-full object-contain"
                         style={{ opacity: 0.8 }}
                       />
@@ -933,7 +957,7 @@ export default function AdminTemplates() {
                       <div className="w-full h-32 rounded-lg bg-muted/40 border border-border/50 flex items-center justify-center relative overflow-hidden p-2 group bg-white">
                         <img
                           src={bg.url}
-                          alt={bg.name}
+                          alt={`Matrimonial template background ${bg.name}`}
                           className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                           style={{ opacity: 0.8 }}
                         />
@@ -1013,7 +1037,7 @@ export default function AdminTemplates() {
                     <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden">
                       <img
                         src={newStickerFile}
-                        alt="Preview"
+                        alt="Uploaded decorative sticker preview"
                         className="max-h-full max-w-full object-contain"
                       />
                     </div>
@@ -1139,7 +1163,7 @@ export default function AdminTemplates() {
                         <div className="w-full h-32 rounded-lg bg-muted/40 border border-border/50 flex items-center justify-center relative overflow-hidden p-2 group bg-white">
                           <img
                             src={sticker.url}
-                            alt={sticker.name}
+                            alt={`Matrimonial sticker item ${sticker.name}`}
                             className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
@@ -1213,7 +1237,7 @@ export default function AdminTemplates() {
               <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
                 <img
                   src={editBgFile || editingBg.url}
-                  alt="Background Preview"
+                  alt="Background watermark template preview"
                   className="max-h-full max-w-full object-contain"
                   style={{ opacity: 0.8 }}
                 />
@@ -1284,7 +1308,7 @@ export default function AdminTemplates() {
               <div className="border border-border/50 rounded-lg p-2 bg-muted/20 flex items-center justify-center h-28 relative overflow-hidden bg-white">
                 <img
                   src={editStickerFile || editingSticker.url}
-                  alt="Sticker Preview"
+                  alt="Decorative sticker preview"
                   className="max-h-full max-w-full object-contain"
                 />
               </div>

@@ -7,7 +7,7 @@ import * as z from "zod";
 import { UserPlus, RefreshCw, AlertTriangle, Lock, Mail, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
@@ -106,6 +106,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
             <DialogTitle className="text-sm font-extrabold text-foreground tracking-tight">Create User Record</DialogTitle>
+            <DialogDescription className="sr-only">Form to create a new user record with designated role privileges.</DialogDescription>
           </div>
         </div>
 

@@ -61,16 +61,16 @@ export default function Home() {
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
-        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-start gap-6 lg:gap-20 relative z-10">
+        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-start gap-6 lg:gap-20 relative z-10 w-full min-w-0">
           {/* Left Text Column */}
-          <div className="flex-1 text-center lg:text-left space-y-3 md:space-y-5">
+          <div className="w-full lg:flex-1 text-center lg:text-left space-y-3 md:space-y-5 min-w-0">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/45 bg-[#FBF5E6]/90 dark:bg-[#8A7233]/25 px-4.5 py-2 text-xs font-extrabold text-[#8A7233] dark:text-[#E6C97A] backdrop-blur-sm shadow-md transition-all duration-300">
               <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] animate-pulse" />
               100% Free Online Biodata Maker
             </div>
 
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-stone-900 dark:text-white leading-[1.12] font-sans">
-              Your <span className="text-gradient-primary">Marriage Biodata</span> with Photo - Ready in Minutes, Free to Download
+              Create Your <span className="text-gradient-primary">Marriage Biodata</span> with Photo in Minutes – Free PDF Download
             </h1>
 
             <p className="text-stone-600 dark:text-stone-300 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
@@ -87,6 +87,39 @@ export default function Home() {
               <Button size="sm" variant="outline" className="rounded-full text-sm px-7 py-5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200 cursor-pointer" asChild>
                 <Link href="/templates">View Templates</Link>
               </Button>
+            </div>
+
+            {/* Language Ribbon Strip */}
+            <div className="pt-3.5 flex items-center justify-start text-stone-600 dark:text-stone-300 w-full max-w-full overflow-hidden">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-stone-400 dark:text-stone-500 mr-2 shrink-0 select-none">
+                Available in:
+              </span>
+              <div 
+                className="flex items-center overflow-x-auto scroll-smooth pb-1 min-w-0 flex-1"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                <div className="flex items-center flex-nowrap">
+                  {[
+                    { name: "हिंदी", lang: "Hindi" },
+                    { name: "मराठी", lang: "Marathi" },
+                    { name: "ગુજરાતી", lang: "Gujarati" },
+                    { name: "ਪੰਜਾਬੀ", lang: "Punjabi" },
+                    { name: "বাংলা", lang: "Bengali" },
+                    { name: "தமிழ்", lang: "Tamil" },
+                    { name: "తెలుగు", lang: "Telugu" },
+                    { name: "ಕನ್ನಡ", lang: "Kannada" },
+                    { name: "اردو", lang: "Urdu" },
+                    { name: "English", lang: "English" }
+                  ].map((langObj, index) => (
+                    <span key={langObj.lang} className="inline-flex items-center text-xs font-bold text-stone-750 dark:text-stone-300 whitespace-nowrap">
+                      {index > 0 && <span className="text-[#C9A84C]/50 font-normal select-none mx-2">·</span>}
+                      <span className="hover:text-primary dark:hover:text-[#E6C97A] transition-colors cursor-default">
+                        {langObj.name}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Features & Formats Metadata Stack */}
@@ -207,7 +240,7 @@ export default function Home() {
       </section>
 
       {/* Who Is This For Section */}
-      <section className="py-12 md:py-16 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
+      <section id="who-is-this-for" aria-label="Who is this for" className="py-12 md:py-16 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
         <div className="container mx-auto max-w-6xl">
           {/* Section Header */}
           <div className="space-y-2 mb-8 md:mb-10 text-left">
@@ -232,7 +265,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 Ready to start looking
               </h3>
-              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 You need a clean, presentable biodata to share with families or on matrimonial sites - without hiring anyone.
               </p>
             </div>
@@ -245,7 +278,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 Parents doing the search
               </h3>
-              <p className="text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 Creating a biodata for your son or daughter. You want it done quickly, correctly, and in a format families respect.
               </p>
             </div>
@@ -258,7 +291,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 NRI or settled abroad
               </h3>
-              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 You need a biodata that works in both English and your home language - presentable to families in India and overseas.
               </p>
             </div>
@@ -271,7 +304,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 Second marriage or divorce
               </h3>
-              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 Looking for a fresh start. You want a dignified, straightforward biodata - no fuss, no judgment, no saved data.
               </p>
             </div>
@@ -284,7 +317,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 Last-minute need
               </h3>
-              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 A relative asked for your biodata today. You need something ready in minutes - not days.
               </p>
             </div>
@@ -297,7 +330,7 @@ export default function Home() {
               <h3 className="text-[14px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug">
                 Regional language preference
               </h3>
-              <p className="text-[13px] text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2">
+              <p className="text-[13px] text-stone-550 dark:text-stone-400 leading-relaxed">
                 Your family communicates in Hindi, Marathi, Tamil, or Telugu. You want your biodata to feel native, not translated.
               </p>
             </div>
@@ -352,7 +385,7 @@ export default function Home() {
       </section>
 
       {/* Homepage FAQ Section */}
-      <section className="py-12 md:py-20 px-4 border-t border-border/30 bg-background relative overflow-hidden">
+      <section id="faq" aria-label="Frequently Asked Questions" className="py-12 md:py-20 px-4 border-t border-border/30 bg-background relative overflow-hidden">
         <div className="container mx-auto max-w-4xl space-y-10 relative z-10">
           
           {/* Header Title */}
@@ -371,7 +404,7 @@ export default function Home() {
 
           {/* Radix Accordion FAQ list */}
           <div className="bg-card border border-[#C9A84C]/20 dark:border-stone-850 rounded-2xl p-6 md:p-8 shadow-md">
-            <Accordion type="single" collapsible className="w-full space-y-2">
+            <Accordion type="single" collapsible defaultValue="faq-0" className="w-full space-y-2">
               {homepageFaqs.map((faq, idx) => (
                 <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">
                   <AccordionTrigger className="text-base font-black text-left text-stone-900 dark:text-white hover:text-primary hover:no-underline py-4">
@@ -392,6 +425,104 @@ export default function Home() {
             </Link>
           </div>
 
+        </div>
+      </section>
+
+      {/* Educational Info Section */}
+      <section 
+        aria-label="What is a marriage biodata" 
+        id="what-is-biodata"
+        className="pt-8 pb-16 md:pt-12 md:pb-20 px-4 border-t border-border/30 bg-[#FFFBF8] dark:bg-[#150709] relative overflow-hidden"
+      >
+        <div className="container mx-auto max-w-4xl space-y-6 relative z-10 text-stone-700 dark:text-stone-300">
+          {/* Label */}
+          <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[#8A7233] dark:text-[#E6C97A] mb-2 font-sans">
+            know before you start
+          </p>
+
+          {/* H2 — written as natural question for AI Overview targeting */}
+          <h2 className="text-center text-2xl md:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-white font-sans mb-8">
+            New to marriage biodata? Here&apos;s what you need to know
+          </h2>
+
+          <div className="space-y-4 text-base leading-relaxed font-semibold max-w-3xl mx-auto">
+            {/* Paragraph 1 — definition */}
+            <p>
+              A marriage biodata is a one-page personal document used in 
+              Indian arranged marriage and matchmaking. It introduces you and 
+              your family to a potential match before anyone has spoken - a 
+              single profile covering who you are, where you come from, and 
+              what you are looking for in a life partner.
+            </p>
+
+            {/* Paragraph 2 — why it matters */}
+            <p>
+              In India, families exchange biodatas as the very first step 
+              before any phone call, meeting, or horoscope matching happens. 
+              A well-prepared biodata opens conversations. A poorly presented 
+              one, even if the person behind it is wonderful, can quietly 
+              close them.
+            </p>
+
+            {/* H3 Heading 1 */}
+            <h3 className="text-lg md:text-xl font-bold text-stone-900 dark:text-white pt-4 font-sans">
+              What does a marriage biodata include?
+            </h3>
+
+            {/* Paragraph 3 — what it includes */}
+            <p>
+              A standard marriage biodata covers personal details like name, 
+              date of birth, height, and complexion - along with education, 
+              occupation, family background, and partner preferences. Hindu 
+              families usually include rashi, nakshatra, gotra, and manglik 
+              status. Muslim biodatas often include sect and family values. 
+              NRI profiles typically add residency status and country of 
+              settlement.
+            </p>
+
+            {/* H3 Heading 2 */}
+            <h3 className="text-lg md:text-xl font-bold text-stone-900 dark:text-white pt-4 font-sans">
+              How is it different from a job resume?
+            </h3>
+
+            {/* Paragraph 4 — biodata vs resume */}
+            <p>
+              It is different from a job resume. A resume is written to 
+              impress an employer with skills and achievements. A biodata for 
+              marriage is written to help two families understand personal, 
+              cultural, and lifestyle compatibility - values, family structure, 
+              and the kind of life you are building together.
+            </p>
+
+            {/* Paragraph 5 — how it is shared */}
+            <p>
+              Biodatas are shared over WhatsApp, sent to relatives, uploaded 
+              to matrimonial sites, or handed over in person at family gatherings. 
+              The format is understood across Hindu, Muslim, Christian, Sikh, and 
+              Jain communities - and across regional languages from Hindi and 
+              Marathi to Tamil, Telugu, and Gujarati.
+            </p>
+
+            {/* Radix UI Divider Line */}
+            <SeparatorPrimitive.Root className="h-px w-full bg-stone-200/60 dark:bg-stone-800/80 my-6" />
+
+            {/* Soft CTA — plain <p> with separate anchor link below */}
+            <p className="text-stone-850 dark:text-stone-200 font-bold">
+              On biodata99.com you start with any template and personalise 
+              it fully - change the layout, switch languages, add your photo, 
+              update colours, and adjust every field to match your family&apos;s 
+              preferences. The template is just a starting point. No account 
+              needed, and it takes a few minutes.
+            </p>
+            <div className="pt-2">
+              <a 
+                href="#builder" 
+                className="inline-flex items-center text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-[15px] transition-colors"
+              >
+                Create your biodata free &rarr;
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 

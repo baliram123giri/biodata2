@@ -142,13 +142,13 @@ export async function POST(req: Request) {
     let frameUrlTemplate = body.frameUrlTemplate || "";
     let thumbnailUrl = body.thumbnailUrl || "";
 
-    // Upload frame image file if provided as Base64
+    // Upload frame image file if provided as Base64 or inline SVG string
     if (frameType === "image" && frameFile) {
-      if (frameFile.startsWith("data:image/svg+xml")) {
-        frameUrlTemplate = frameFile;
-      } else {
+      if (frameFile.startsWith("data:") || frameFile.trim().startsWith("<svg") || frameFile.includes("http://www.w3.org/2000/svg")) {
         const secureUrl = await uploadToCloudinary(frameFile, "frames");
         frameUrlTemplate = makeColorizableCloudinaryUrl(secureUrl);
+      } else {
+        frameUrlTemplate = frameFile;
       }
     }
 

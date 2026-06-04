@@ -330,7 +330,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
           <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-[#C9A84C]/15 bg-muted shadow-md">
             <NextImage
               src={post.thumbnailUrl}
-              alt={post.title}
+              alt={`Thumbnail banner image for the article: ${post.title}`}
               fill
               sizes="(max-width: 768px) 100vw, 800px"
               priority={true} // Priority loading on the main detail cover page for LCP optimization
@@ -377,7 +377,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
                       <div className="relative aspect-video w-full overflow-hidden bg-muted">
                         <NextImage
                           src={relatedPost.thumbnailUrl}
-                          alt={relatedPost.title}
+                          alt={`Related article thumbnail: ${relatedPost.title}`}
                           fill
                           sizes="(max-width: 768px) 100vw, 300px"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
