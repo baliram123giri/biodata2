@@ -111,26 +111,27 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <JsonLd schema={webApplicationSchema} />
         <QueryProvider>
-          <ClientLayoutProviders />
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer>
-            <Suspense fallback={
-              <div className="flex flex-col gap-2 mt-2.5 w-fit">
-                <span className="text-[11px] font-semibold text-slate-400 tracking-wide">
-                  Trusted by Indian families
-                </span>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-0.5 min-h-[52px]">
-                  <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
-                  <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
+          <ClientLayoutProviders>
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer>
+              <Suspense fallback={
+                <div className="flex flex-col gap-2 mt-2.5 w-fit">
+                  <span className="text-[11px] font-semibold text-slate-400 tracking-wide">
+                    Trusted by Indian families
+                  </span>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-0.5 min-h-[52px]">
+                    <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
+                    <div className="h-[38px] w-[148px] bg-white/3 border border-white/5 rounded-xl animate-pulse" />
+                  </div>
                 </div>
-              </div>
-            }>
-              <FooterReviews />
-            </Suspense>
-          </Footer>
+              }>
+                <FooterReviews />
+              </Suspense>
+            </Footer>
+          </ClientLayoutProviders>
         </QueryProvider>
       </body>
     </html>

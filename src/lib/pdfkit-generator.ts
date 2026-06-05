@@ -1073,13 +1073,7 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
     
     // Fetch and register custom stickers from database
     try {
-      const cached = require("./prisma");
-      let prisma = cached?.prisma || cached;
-      if (!prisma || !prisma.sticker) {
-        console.warn("[pdfkit-generator] prisma.sticker is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
-        const { PrismaClient } = require("../generated/prisma");
-        prisma = new PrismaClient();
-      }
+      const { prisma } = await import("./prisma");
       const dbStickers = await prisma.sticker.findMany();
       if (dbStickers && dbStickers.length > 0) {
         const { registerDynamicStickers } = require("./sticker-assets");
@@ -1091,13 +1085,7 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
 
     if (tId && !TEMPLATE_CONFIGS[tId]) {
       try {
-        const cached = require("./prisma");
-        let prisma = cached?.prisma || cached;
-        if (!prisma || !prisma.template) {
-          console.warn("[pdfkit-generator] prisma.template is not initialized in cached global prisma instance. Creating a fresh PrismaClient...");
-          const { PrismaClient } = require("../generated/prisma");
-          prisma = new PrismaClient();
-        }
+        const { prisma } = await import("./prisma");
         const dbTpl = await prisma.template.findUnique({
           where: { id: tId }
         });

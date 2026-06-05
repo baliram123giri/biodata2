@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { TruncatedValue } from "@/components/ui/truncated-value";
 import {
   useReactTable,
   getCoreRowModel,
@@ -190,9 +191,11 @@ export default function AdminUsers() {
       accessorKey: "id",
       header: "User ID",
       cell: (info) => (
-        <span className="font-mono font-bold text-primary">
-          {(info.getValue() as string).slice(0, 8)}
-        </span>
+        <TruncatedValue 
+          value={info.getValue() as string} 
+          className="font-mono font-bold text-primary text-[11px]" 
+          maxLength={8} 
+        />
       )
     },
     {
@@ -214,7 +217,12 @@ export default function AdminUsers() {
     {
       accessorKey: "email",
       header: "Email Address",
-      cell: (info) => <span className="font-medium">{info.getValue() as string}</span>
+      cell: (info) => (
+        <TruncatedValue 
+          value={info.getValue() as string} 
+          className="font-medium" 
+        />
+      )
     },
     {
       accessorKey: "role",

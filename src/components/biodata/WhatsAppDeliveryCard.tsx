@@ -8,6 +8,7 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 import { generatePdfBlob, prepareDataForGeneration } from "@/hooks/useDownloadBiodata";
 import { translateUI } from "@/lib/translations";
+import { PopupBlockedDialog } from "@/components/ui/popup-blocked-dialog";
 
 // Inline WhatsApp SVG with custom sizing
 function WhatsAppLogo({ className }: { className?: string }) {
@@ -40,6 +41,8 @@ export function WhatsAppDeliveryCard({
   const [optIn, setOptIn] = useState(true);
   const [status, setStatus] = useState<"idle" | "generating" | "uploading" | "redirecting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [blockedPopupUrl, setBlockedPopupUrl] = useState("");
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,10 +170,14 @@ export function WhatsAppDeliveryCard({
 
         // Open WhatsApp Web/App
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          window.open(`whatsapp://send?phone=${formattedNum}&text=${shareTextEncoded}`, "_blank");
-        } else {
-          window.open(`https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`, "_blank");
+        const whatsappUrl = isMobile
+          ? `whatsapp://send?phone=${formattedNum}&text=${shareTextEncoded}`
+          : `https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`;
+
+        const opened = window.open(whatsappUrl, "_blank");
+        if (!opened || opened.closed || typeof opened.closed === "undefined") {
+          setBlockedPopupUrl(whatsappUrl);
+          setShowBlockedDialog(true);
         }
       }
 
@@ -188,12 +195,13 @@ export function WhatsAppDeliveryCard({
 
 
   return (
-    <div
-      className={cn(
-        "bg-white border border-stone-200/80 rounded-[24px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)]",
-        className
-      )}
-    >
+    <>
+      <div
+        className={cn(
+          "bg-white border border-stone-200/80 rounded-[24px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)]",
+          className
+        )}
+      >
       {/* Header section */}
       <div className="flex items-start gap-4 mb-5">
         <div className="w-12 h-12 rounded-[16px] bg-[#E8F8EF] flex items-center justify-center shrink-0">
@@ -334,5 +342,12 @@ export function WhatsAppDeliveryCard({
         </div>
       </form>
     </div>
+
+    <PopupBlockedDialog
+      open={showBlockedDialog}
+      onOpenChange={setShowBlockedDialog}
+      url={blockedPopupUrl}
+    />
+    </>
   );
 }

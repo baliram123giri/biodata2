@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Share2, Download, ExternalLink } from "lucide-react";
+import { PopupBlockedDialog } from "@/components/ui/popup-blocked-dialog";
 
 /**
  * WhatsApp SVG icon with the brand color.
@@ -291,6 +292,8 @@ function DesktopShareDialog({
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [imageDownloaded, setImageDownloaded] = useState(false);
+  const [blockedPopupUrl, setBlockedPopupUrl] = useState("");
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleReset = () => {
     setStep(1);
@@ -309,7 +312,12 @@ function DesktopShareDialog({
     const text = encodeURIComponent(
       "Here is my matrimonial biodata 🙏\n\nCreated with Biodata99"
     );
-    window.open(`https://web.whatsapp.com/send?text=${text}`, "_blank");
+    const whatsappUrl = `https://web.whatsapp.com/send?text=${text}`;
+    const opened = window.open(whatsappUrl, "_blank");
+    if (!opened || opened.closed || typeof opened.closed === "undefined") {
+      setBlockedPopupUrl(whatsappUrl);
+      setShowBlockedDialog(true);
+    }
     handleReset();
   };
 
@@ -317,11 +325,17 @@ function DesktopShareDialog({
     const text = encodeURIComponent(
       "Here is my matrimonial biodata 🙏\n\nCreated with Biodata99"
     );
-    window.open(`whatsapp://send?text=${text}`, "_blank");
+    const whatsappUrl = `whatsapp://send?text=${text}`;
+    const opened = window.open(whatsappUrl, "_blank");
+    if (!opened || opened.closed || typeof opened.closed === "undefined") {
+      setBlockedPopupUrl(whatsappUrl);
+      setShowBlockedDialog(true);
+    }
     handleReset();
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleReset(); else onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -447,5 +461,12 @@ function DesktopShareDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <PopupBlockedDialog
+      open={showBlockedDialog}
+      onOpenChange={setShowBlockedDialog}
+      url={blockedPopupUrl}
+    />
+    </>
   );
 }

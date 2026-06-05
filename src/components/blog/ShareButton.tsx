@@ -5,6 +5,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Share2, Link, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PopupBlockedDialog } from "@/components/ui/popup-blocked-dialog";
 
 interface ShareButtonProps {
   url: string;
@@ -14,6 +15,8 @@ interface ShareButtonProps {
 
 export function ShareButton({ url, title, className }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [blockedPopupUrl, setBlockedPopupUrl] = useState("");
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -27,19 +30,35 @@ export function ShareButton({ url, title, className }: ShareButtonProps) {
 
   const shareOnTwitter = () => {
     const text = encodeURIComponent(`Check out this article: "${title}"\n`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, "_blank");
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`;
+    const opened = window.open(tweetUrl, "_blank");
+    if (!opened || opened.closed || typeof opened.closed === "undefined") {
+      setBlockedPopupUrl(tweetUrl);
+      setShowBlockedDialog(true);
+    }
   };
 
   const shareOnWhatsApp = () => {
     const text = encodeURIComponent(`Check out this article: "${title}" - ${url}`);
-    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${text}`;
+    const opened = window.open(whatsappUrl, "_blank");
+    if (!opened || opened.closed || typeof opened.closed === "undefined") {
+      setBlockedPopupUrl(whatsappUrl);
+      setShowBlockedDialog(true);
+    }
   };
 
   const shareOnFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const opened = window.open(fbUrl, "_blank");
+    if (!opened || opened.closed || typeof opened.closed === "undefined") {
+      setBlockedPopupUrl(fbUrl);
+      setShowBlockedDialog(true);
+    }
   };
 
   return (
+    <>
     <Popover>
       <PopoverTrigger asChild>
         <Button
@@ -109,5 +128,12 @@ export function ShareButton({ url, title, className }: ShareButtonProps) {
         </div>
       </PopoverContent>
     </Popover>
+
+    <PopupBlockedDialog
+      open={showBlockedDialog}
+      onOpenChange={setShowBlockedDialog}
+      url={blockedPopupUrl}
+    />
+    </>
   );
 }

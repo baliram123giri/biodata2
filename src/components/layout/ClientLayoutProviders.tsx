@@ -1,7 +1,8 @@
 "use client";
 
 import dynamicImport from "next/dynamic";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const PageProgressBar = dynamicImport(
   () => import("@/components/layout/PageProgressBar").then((mod) => mod.PageProgressBar),
@@ -13,13 +14,33 @@ const Toaster = dynamicImport(
   { ssr: false }
 );
 
-export function ClientLayoutProviders() {
+export function ClientLayoutProviders({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        activeEl instanceof HTMLInputElement &&
+        activeEl.type === "number" &&
+        activeEl.contains(event.target as Node)
+      ) {
+        activeEl.blur();
+      }
+    };
+
+    document.addEventListener("wheel", handleWheel);
+    return () => {
+      document.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
   return (
-    <>
+    <TooltipProvider>
       <Suspense fallback={null}>
         <PageProgressBar />
       </Suspense>
       <Toaster richColors position="top-right" closeButton />
-    </>
+      {children}
+    </TooltipProvider>
   );
 }

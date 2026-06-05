@@ -23,8 +23,9 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { toast } from "sonner";
 import { cn, formatISTDateTime } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { TruncatedValue } from "@/components/ui/truncated-value";
 import {
   useReactTable,
   getCoreRowModel,
@@ -46,6 +47,15 @@ interface DownloadLog {
 interface Template {
   id: string;
   name: string;
+  price?: number | null;
+  discountPrice?: number | null;
+  pdfPrice?: number | null;
+  pdfDiscountPrice?: number | null;
+  jpgPrice?: number | null;
+  jpgDiscountPrice?: number | null;
+  pngPrice?: number | null;
+  pngDiscountPrice?: number | null;
+  currency?: string | null;
 }
 
 export default function AdminBiodatas() {
@@ -101,7 +111,7 @@ export default function AdminBiodatas() {
 
   // Fetch downloads query based on filters
   const downloadsQueryKey = ["admin", "downloads", { currentPage, pageSize, debouncedSearch, formatFilter, templateFilter }];
-  const { data: downloadsData, isLoading, refetch } = useQuery({
+  const { data: downloadsData, isLoading, refetch, isFetching } = useQuery({
     queryKey: downloadsQueryKey,
     queryFn: async () => {
       const res = await fetch(
@@ -110,6 +120,7 @@ export default function AdminBiodatas() {
       if (!res.ok) throw new Error("Failed to fetch download records");
       return res.json();
     },
+    placeholderData: keepPreviousData,
     staleTime: 0, // Instant refetch on state/filter change and invalidation
   });
 
@@ -132,6 +143,29 @@ export default function AdminBiodatas() {
     if (!templateId) return "Default / Custom";
     const found = templates.find(t => t.id === templateId);
     return found ? found.name : templateId.slice(0, 14);
+  };
+
+  const getTemplatePrice = (templateId: string | null, format: string) => {
+    if (!templateId) return "Free";
+    const found = templates.find(t => t.id === templateId);
+    if (!found) return "Free";
+
+    const fmt = format.toLowerCase();
+    let price: number | null = null;
+
+    if (fmt === "pdf") {
+      price = found.pdfDiscountPrice ?? found.pdfPrice ?? found.discountPrice ?? found.price ?? null;
+    } else if (fmt === "jpg" || fmt === "jpeg") {
+      price = found.jpgDiscountPrice ?? found.jpgPrice ?? found.discountPrice ?? found.price ?? null;
+    } else if (fmt === "png") {
+      price = found.pngDiscountPrice ?? found.pngPrice ?? found.discountPrice ?? found.price ?? null;
+    } else {
+      price = found.discountPrice ?? found.price ?? null;
+    }
+
+    if (price === null || price === 0) return "Free";
+    const currencySym = found.currency === "USD" ? "$" : found.currency === "EUR" ? "€" : found.currency === "GBP" ? "£" : "₹";
+    return `${currencySym}${price}`;
   };
 
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
@@ -174,15 +208,22 @@ export default function AdminBiodatas() {
       accessorKey: "id",
       header: "Log ID",
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-muted-foreground/80 text-[10px]" title={row.original.id}>
-          {row.original.id.slice(0, 8)}...
-        </span>
+        <TruncatedValue 
+          value={row.original.id} 
+          className="font-mono font-bold text-muted-foreground/80 text-[10px]" 
+          maxLength={8} 
+        />
       )
     },
     {
       accessorKey: "name",
       header: "Biodata Name",
-      cell: ({ row }) => <span className="font-bold text-foreground">{row.original.name}</span>
+      cell: ({ row }) => (
+        <TruncatedValue 
+          value={row.original.name} 
+          className="font-bold text-foreground" 
+        />
+      )
     },
     {
       accessorKey: "format",
@@ -204,7 +245,29 @@ export default function AdminBiodatas() {
     {
       accessorKey: "templateId",
       header: "Template Name",
-      cell: ({ row }) => <span className="font-bold text-muted-foreground">{getTemplateName(row.original.templateId)}</span>
+      cell: ({ row }) => (
+        <TruncatedValue 
+          value={getTemplateName(row.original.templateId)} 
+          className="font-bold text-muted-foreground" 
+        />
+      )
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => {
+        const priceStr = getTemplatePrice(row.original.templateId, row.original.format);
+        return (
+          <span className={cn(
+            "font-extrabold text-[10px] px-2 py-0.5 rounded border leading-none tracking-wide uppercase select-none",
+            priceStr === "Free"
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-950/20 dark:text-emerald-400"
+              : "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-400"
+          )}>
+            {priceStr}
+          </span>
+        );
+      }
     },
     {
       accessorKey: "location",
@@ -212,10 +275,10 @@ export default function AdminBiodatas() {
       cell: ({ row }) => {
         const loc = row.original.location;
         return loc ? (
-          <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-300">
-            <MapPin className="w-3.5 h-3.5 text-stone-400" />
-            {loc}
-          </span>
+          <div className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-300 max-w-full">
+            <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <TruncatedValue value={loc} className="flex-1" />
+          </div>
         ) : (
           <span className="text-stone-400 italic">Not Shared</span>
         );
@@ -231,7 +294,8 @@ export default function AdminBiodatas() {
             {row.original.ipAddress || "0.0.0.0"}
           </span>
         </div>
-      )
+      ),
+      enableSorting: false,
     },
     {
       accessorKey: "createdAt",
@@ -304,7 +368,8 @@ export default function AdminBiodatas() {
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
-      )
+      ),
+      enableSorting: false,
     }
   ], [templates]);
 
@@ -335,12 +400,13 @@ export default function AdminBiodatas() {
         return;
       }
 
-      const headers = ["Log ID", "Biodata Name", "Format", "Template Name", "Location", "IP Address", "User Agent", "Downloaded At"];
+      const headers = ["Log ID", "Biodata Name", "Format", "Template Name", "Price", "Location", "IP Address", "User Agent", "Downloaded At"];
       const rows = allMatched.map((log: DownloadLog) => [
         log.id,
         log.name,
         log.format.toUpperCase(),
         getTemplateName(log.templateId),
+        getTemplatePrice(log.templateId, log.format),
         log.location || "N/A",
         log.ipAddress || "N/A",
         log.userAgent || "N/A",
@@ -487,15 +553,15 @@ export default function AdminBiodatas() {
 
       {/* Biodata list grid */}
       <Card className="bg-card border border-border rounded-xl overflow-hidden shadow-sm w-full">
-        {isLoading ? (
+        {isLoading && !downloadsData ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground font-semibold">Loading download records...</p>
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
+            <div className={cn("overflow-x-auto w-full transition-opacity duration-200", isFetching && "opacity-50")}>
+              <table className="w-full text-left border-collapse text-xs table-fixed min-w-[900px]">
                 <thead>
                   {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
@@ -506,6 +572,7 @@ export default function AdminBiodatas() {
                         else if (header.id === "name") widthStyle = "w-[180px]";
                         else if (header.id === "format") widthStyle = "w-[100px]";
                         else if (header.id === "templateId") widthStyle = "w-[150px]";
+                        else if (header.id === "price") widthStyle = "w-[100px]";
                         else if (header.id === "location") widthStyle = "w-[160px]";
                         else if (header.id === "deviceIp") widthStyle = "w-[180px]";
                         else if (header.id === "createdAt") widthStyle = "w-[170px]";
