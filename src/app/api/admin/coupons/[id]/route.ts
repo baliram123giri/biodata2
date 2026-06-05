@@ -9,10 +9,11 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { active, code, discountType, discountValue, maxUses, expiresAt } = body;
+    const { active, isPublic, code, discountType, discountValue, maxUses, expiresAt } = body;
 
     const dataToUpdate: any = {};
     if (active !== undefined) dataToUpdate.active = active;
+    if (isPublic !== undefined) dataToUpdate.isPublic = isPublic;
     if (code !== undefined) dataToUpdate.code = code.trim().toUpperCase();
     if (discountType !== undefined) dataToUpdate.discountType = discountType;
     if (discountValue !== undefined) dataToUpdate.discountValue = parseFloat(discountValue);

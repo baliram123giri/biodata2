@@ -47,6 +47,9 @@ export async function GET(req: Request) {
     const [downloads, total] = await Promise.all([
       prisma.downloadLog.findMany({
         where,
+        include: {
+          order: true,
+        },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,

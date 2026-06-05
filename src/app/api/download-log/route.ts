@@ -44,6 +44,7 @@ export async function POST(req: Request) {
           templateId: templateId || null,
           ipAddress,
           userAgent,
+          orderId: orderId || null,
         },
       });
     }

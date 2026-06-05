@@ -6,6 +6,7 @@ export async function GET() {
     const coupons = await prisma.coupon.findMany({
       where: {
         active: true,
+        isPublic: true,
         OR: [
           { expiresAt: null },
           { expiresAt: { gt: new Date() } },

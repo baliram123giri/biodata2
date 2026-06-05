@@ -42,6 +42,12 @@ interface DownloadLog {
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: string;
+  order?: {
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+  } | null;
 }
 
 interface Template {
@@ -168,6 +174,17 @@ export default function AdminBiodatas() {
     return `${currencySym}${price}`;
   };
 
+  const getPricePaid = (log: DownloadLog) => {
+    if (log.order) {
+      const amount = log.order.amount;
+      if (amount === 0) return "Free";
+      const currency = log.order.currency || "INR";
+      const currencySym = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "₹";
+      return `${currencySym}${amount}`;
+    }
+    return getTemplatePrice(log.templateId, log.format);
+  };
+
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
   const getDeviceIcon = (ua: string | null) => {
@@ -256,7 +273,7 @@ export default function AdminBiodatas() {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }) => {
-        const priceStr = getTemplatePrice(row.original.templateId, row.original.format);
+        const priceStr = getPricePaid(row.original);
         return (
           <span className={cn(
             "font-extrabold text-[10px] px-2 py-0.5 rounded border leading-none tracking-wide uppercase select-none",
@@ -406,7 +423,7 @@ export default function AdminBiodatas() {
         log.name,
         log.format.toUpperCase(),
         getTemplateName(log.templateId),
-        getTemplatePrice(log.templateId, log.format),
+        getPricePaid(log),
         log.location || "N/A",
         log.ipAddress || "N/A",
         log.userAgent || "N/A",

@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Dialog, 
   DialogContent, 
@@ -42,6 +44,7 @@ interface Coupon {
   discountType: string;
   discountValue: number;
   active: boolean;
+  isPublic?: boolean;
   maxUses: number | null;
   usedCount: number;
   expiresAt: string | null;
@@ -70,6 +73,7 @@ export default function CouponsAdminPage() {
   const [discountType, setDiscountType] = useState("percentage");
   const [discountValue, setDiscountValue] = useState("");
   const [active, setActive] = useState(true);
+  const [isPublic, setIsPublic] = useState(true);
   const [maxUses, setMaxUses] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
 
@@ -147,6 +151,7 @@ export default function CouponsAdminPage() {
           discountType,
           discountValue: parseFloat(discountValue),
           active,
+          isPublic,
           maxUses: maxUses ? parseInt(maxUses) : null,
           expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         }),
@@ -191,11 +196,33 @@ export default function CouponsAdminPage() {
     }
   };
 
+  const handleTogglePublic = async (id: string, currentPublicStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/coupons/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublic: !currentPublicStatus }),
+      });
+
+      if (res.ok) {
+        toast.success(`Coupon visibility changed to ${!currentPublicStatus ? "Public" : "Secret"}!`);
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+        refetch();
+      } else {
+        toast.error("Failed to update coupon visibility");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error updating coupon");
+    }
+  };
+
   const resetForm = () => {
     setCode("");
     setDiscountType("percentage");
     setDiscountValue("");
     setActive(true);
+    setIsPublic(true);
     setMaxUses("");
     setExpiresAt("");
   };
@@ -276,6 +303,24 @@ export default function CouponsAdminPage() {
       }
     },
     {
+      id: "isPublic",
+      header: "Visibility",
+      cell: ({ row }) => {
+        const coupon = row.original;
+        return (
+          <span className={cn(
+            "inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full border",
+            coupon.isPublic !== false
+              ? "bg-sky-500/10 text-sky-650 border-sky-500/20 dark:text-sky-400"
+              : "bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400"
+          )}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+            {coupon.isPublic !== false ? "Public" : "Secret"}
+          </span>
+        );
+      }
+    },
+    {
       accessorKey: "usedCount",
       header: "Limit / Usage",
       cell: ({ row }) => {
@@ -334,6 +379,19 @@ export default function CouponsAdminPage() {
               )}
             >
               {coupon.active ? "Disable" : "Enable"}
+            </button>
+
+            <button
+              onClick={() => handleTogglePublic(coupon.id, coupon.isPublic !== false)}
+              title={coupon.isPublic !== false ? "Make Promo Code Secret" : "Make Promo Code Public"}
+              className={cn(
+                "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded border transition-colors cursor-pointer",
+                coupon.isPublic !== false 
+                  ? "bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20" 
+                  : "bg-sky-500/10 border-sky-500/20 text-sky-650 hover:bg-sky-500/20"
+              )}
+            >
+              {coupon.isPublic !== false ? "Hide/Secret" : "Show/Public"}
             </button>
 
             <button
@@ -474,7 +532,7 @@ export default function CouponsAdminPage() {
         </div>
 
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse text-xs table-fixed min-w-[700px]">
+          <table className="w-full text-left border-collapse text-xs table-fixed min-w-[950px]">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="border-b border-border bg-muted/25 text-muted-foreground font-bold uppercase tracking-wider">
@@ -484,9 +542,10 @@ export default function CouponsAdminPage() {
                     else if (header.id === "code") widthStyle = "w-[180px]";
                     else if (header.id === "discountValue") widthStyle = "w-[150px]";
                     else if (header.id === "status") widthStyle = "w-[120px]";
+                    else if (header.id === "isPublic") widthStyle = "w-[110px]";
                     else if (header.id === "usedCount") widthStyle = "w-[150px]";
                     else if (header.id === "expiresAt") widthStyle = "w-[140px]";
-                    else if (header.id === "actions") widthStyle = "w-[180px]";
+                    else if (header.id === "actions") widthStyle = "w-[245px]";
 
                     return (
                       <th 
@@ -645,17 +704,38 @@ export default function CouponsAdminPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
-              <input
-                type="checkbox"
-                id="active"
-                checked={active}
-                onChange={(e) => setActive(e.target.checked)}
-                className="w-4 h-4 accent-primary rounded border-border"
-              />
-              <label htmlFor="active" className="text-xs font-bold text-foreground select-none cursor-pointer">
-                Enable coupon immediately on production website
-              </label>
+            <div className="space-y-3 mt-2">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border/60 hover:bg-muted/10 transition-colors">
+                <div className="flex flex-col gap-0.5 text-left">
+                  <Label htmlFor="active" className="text-xs font-extrabold text-foreground select-none cursor-pointer">
+                    Enable Coupon
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground font-semibold leading-tight">
+                    Activate this promo code immediately for usage.
+                  </span>
+                </div>
+                <Switch
+                  id="active"
+                  checked={active}
+                  onCheckedChange={setActive}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border/60 hover:bg-muted/10 transition-colors">
+                <div className="flex flex-col gap-0.5 text-left">
+                  <Label htmlFor="isPublic" className="text-xs font-extrabold text-foreground select-none cursor-pointer">
+                    Public Visibility
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground font-semibold leading-tight">
+                    List this coupon publicly on the checkout payment modal.
+                  </span>
+                </div>
+                <Switch
+                  id="isPublic"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-4">

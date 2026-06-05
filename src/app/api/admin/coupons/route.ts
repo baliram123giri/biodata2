@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { code, discountType, discountValue, active, maxUses, expiresAt } = body;
+    const { code, discountType, discountValue, active, isPublic, maxUses, expiresAt } = body;
 
     if (!code || !discountType || discountValue === undefined) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
           discountType,
           discountValue: parseFloat(discountValue),
           active: active !== undefined ? active : true,
+          isPublic: isPublic !== undefined ? isPublic : true,
           maxUses: maxUses ? parseInt(maxUses) : null,
           expiresAt: expiresAt ? new Date(expiresAt) : null,
         },

@@ -28,7 +28,10 @@ model DownloadLog {
   templateId String?
   ipAddress  String?
   userAgent  String?
+  orderId    String?
   createdAt  DateTime @default(now())
+
+  order      Order?   @relation(fields: [orderId], references: [razorpayOrderId])
 }
 
 model User {
@@ -155,6 +158,8 @@ model Order {
   downloadStatus    String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  downloadLogs      DownloadLog[]
 }
 
 model Coupon {
@@ -163,6 +168,7 @@ model Coupon {
   discountType  String    // "percentage" or "fixed"
   discountValue Float
   active        Boolean   @default(true)
+  isPublic      Boolean   @default(true)
   maxUses       Int?
   usedCount     Int       @default(0)
   expiresAt     DateTime?
