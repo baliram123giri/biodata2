@@ -111,6 +111,11 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
   for (const sec of sections) {
     if (clonedData[sec] && Array.isArray(clonedData[sec])) {
       for (const field of clonedData[sec]) {
+        // Strip options to significantly reduce request payload size
+        if (field.options) {
+          delete field.options;
+        }
+        
         if (field.logoUrl && field.logoUrl.startsWith("http")) {
           try {
             const base64 = await imageUrlToBase64(field.logoUrl);

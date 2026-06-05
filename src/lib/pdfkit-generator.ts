@@ -414,8 +414,13 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             const left = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
             const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
             
+            let bgSrc = theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '';
+            if (bgSrc && bgSrc.startsWith("/")) {
+              bgSrc = path.join(process.cwd(), 'public', bgSrc);
+            }
+            
             return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
-              src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
+              src: bgSrc,
               style: {
                 position: 'absolute',
                 left,
@@ -452,6 +457,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   url = url.substring(0, url.length - 4) + '.png';
                 } else if (url.toLowerCase().includes('.svg?')) {
                   url = url.replace(/\.svg\?/i, '.png?');
+                }
+                if (url.startsWith("/")) {
+                  url = path.join(process.cwd(), 'public', url);
                 }
                 return url;
               })(), 
@@ -703,7 +711,13 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       } as any
                     }, item.text ? String(item.text) : ""),
                     React.createElement(Image, {
-                      src: mantraSticker.type,
+                      src: (() => {
+                        let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
+                        if (srcUrl && srcUrl.startsWith("/")) {
+                          srcUrl = path.join(process.cwd(), 'public', srcUrl);
+                        }
+                        return srcUrl;
+                      })(),
                       style: {
                         position: 'absolute',
                         top: -6,
@@ -713,7 +727,13 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       } as any
                     }),
                     React.createElement(Image, {
-                      src: mantraSticker.type,
+                      src: (() => {
+                        let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
+                        if (srcUrl && srcUrl.startsWith("/")) {
+                          srcUrl = path.join(process.cwd(), 'public', srcUrl);
+                        }
+                        return srcUrl;
+                      })(),
                       style: {
                         position: 'absolute',
                         top: -6,
@@ -1180,8 +1200,16 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
             } else {
               svgXml = decodeURIComponent(base64Content);
             }
+          } else if (finalUrl.startsWith("/")) {
+            const fs = require("fs");
+            const localPath = path.join(process.cwd(), 'public', finalUrl);
+            if (fs.existsSync(localPath)) {
+              svgXml = fs.readFileSync(localPath, "utf-8");
+            } else {
+              console.warn(`[generatePDFBuffer] Local SVG frame file not found at: ${localPath}`);
+            }
           } else {
-            // Fetch the SVG file from remote or local URL
+            // Fetch the SVG file from remote URL
             const fetchRes = await fetch(finalUrl);
             if (fetchRes.ok) {
               svgXml = await fetchRes.text();
