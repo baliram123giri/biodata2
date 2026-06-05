@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer, Circle } from "react-konva";
 import useImage from "use-image";
 import Konva from "konva";
 import { translations } from "@/lib/translations";
@@ -26,6 +26,7 @@ interface KonvaTemplateDesignerProps {
   mantra?: string;
   title?: string;
   mantraSignUrl?: string | null;
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 // ── Subcomponents for Designer ─────────────────────────────────────
@@ -136,6 +137,7 @@ export function KonvaTemplateDesigner({
   mantra,
   title,
   mantraSignUrl,
+  onSelectionChange,
 }: KonvaTemplateDesignerProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -190,6 +192,9 @@ export function KonvaTemplateDesigner({
       (designerRef as any).current = {
         selectElement: (id: string) => {
           setSelectedIds([id]);
+        },
+        alignSelected: (alignmentType: string) => {
+          handleAlign(alignmentType);
         },
         captureThumbnail: async () => {
           const prevSelected = [...selectedIds];
@@ -259,10 +264,26 @@ export function KonvaTemplateDesigner({
     };
   }, [designerRef, selectedIds]);
 
+  useEffect(() => {
+    onSelectionChange?.(selectedIds);
+  }, [selectedIds, onSelectionChange]);
+
   // Per-section drag offsets: { [sectionKey]: { x, y } }
   const sectionOffsets: Record<string, { x: number; y: number }> = useMemo(() => {
     try { return JSON.parse(formState.sectionOffsets || "{}"); } catch { return {}; }
   }, [formState.sectionOffsets]);
+
+  // Custom Canva-style shapes
+  const shapes: any[] = useMemo(() => {
+    try {
+      if (typeof formState.shapes === "string") {
+        return JSON.parse(formState.shapes || "[]");
+      }
+      return formState.shapes || [];
+    } catch {
+      return [];
+    }
+  }, [formState.shapes]);
 
   // Per-section text style overrides: { [sectionKey]: { color, fontSize, fontStyle, textTransform } }
   const sectionStyles: Record<string, any> = useMemo(() => {
@@ -988,6 +1009,19 @@ export function KonvaTemplateDesigner({
   };
 
   const getElementBounds = (id: string) => {
+    if (id.startsWith("shape-")) {
+      const shape = shapes.find(s => s.id === id);
+      if (shape) {
+        const scaleX = shape.scaleX ?? 1;
+        const scaleY = shape.scaleY ?? 1;
+        return {
+          x: shape.x,
+          y: shape.y,
+          width: shape.width * scaleX,
+          height: shape.height * scaleY
+        };
+      }
+    }
     if (id === "header") {
       const offset = sectionOffsets["header"] || { x: 0, y: 0 };
       return {
@@ -1035,7 +1069,22 @@ export function KonvaTemplateDesigner({
       return sectionOffsets;
     };
 
-    if (id === "photo") {
+    if (id.startsWith("shape-")) {
+      const currentShapesStr = updates.shapes || formState.shapes || "[]";
+      let currentShapesList = [];
+      try {
+        currentShapesList = typeof currentShapesStr === "string" ? JSON.parse(currentShapesStr) : currentShapesStr;
+      } catch (e) {
+        currentShapesList = [];
+      }
+      const nextShapes = currentShapesList.map((shape: any) => {
+        if (shape.id === id) {
+          return { ...shape, x: newX, y: newY };
+        }
+        return shape;
+      });
+      updates.shapes = JSON.stringify(nextShapes);
+    } else if (id === "photo") {
       updates.photoX = String(newX);
       updates.photoY = String(newY);
     } else if (id === "watermark") {
@@ -1061,12 +1110,13 @@ export function KonvaTemplateDesigner({
   };
 
   useEffect(() => {
-    const handleArrowKeys = (e: KeyboardEvent) => {
+    const handleKeys = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
         return;
       }
 
+      // 1. Nudge with Arrow Keys
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code) && selectedIds.length > 0) {
         e.preventDefault();
         
@@ -1092,11 +1142,22 @@ export function KonvaTemplateDesigner({
           onChange(updates);
         }
       }
+
+      // 2. Delete / Backspace hotkey for custom shapes
+      if ((e.code === "Delete" || e.code === "Backspace") && selectedIds.length === 1) {
+        const id = selectedIds[0];
+        if (id.startsWith("shape-")) {
+          e.preventDefault();
+          const nextShapes = shapes.filter(s => s.id !== id);
+          onChange({ shapes: JSON.stringify(nextShapes) });
+          setSelectedIds([]);
+        }
+      }
     };
 
-    window.addEventListener("keydown", handleArrowKeys);
-    return () => window.removeEventListener("keydown", handleArrowKeys);
-  }, [selectedIds, sectionOffsets, paddingTop, paddingLeft, paddingRight, onChange, formState]);
+    window.addEventListener("keydown", handleKeys);
+    return () => window.removeEventListener("keydown", handleKeys);
+  }, [selectedIds, sectionOffsets, paddingTop, paddingLeft, paddingRight, onChange, formState, shapes]);
 
   const handleDragStart = () => {
     const startPos: Record<string, { x: number; y: number }> = {};
@@ -1128,6 +1189,101 @@ export function KonvaTemplateDesigner({
     if (Object.keys(updates).length > 0) {
       onChange(updates);
     }
+  };
+
+  const handleShapeDragEnd = (id: string, e: any) => {
+    const node = e.target;
+    const newX = Math.round(node.x());
+    const newY = Math.round(node.y());
+
+    const nextShapes = shapes.map((shape: any) => {
+      if (shape.id === id) {
+        return { ...shape, x: newX, y: newY };
+      }
+      return shape;
+    });
+
+    onChange({ shapes: JSON.stringify(nextShapes) });
+  };
+
+  const handleCornerHandleDrag = (shapeId: string, corner: 'TL' | 'TR' | 'BR' | 'BL', localX: number, localY: number) => {
+    const shape = shapes.find((s: any) => s.id === shapeId);
+    if (!shape) return;
+    
+    let radius = 0;
+    const maxRadius = Math.min(shape.width, shape.height) / 2;
+    
+    if (corner === 'TL') {
+      radius = Math.max(0, Math.min(maxRadius, Math.max(localX - 8, localY - 8)));
+    } else if (corner === 'TR') {
+      radius = Math.max(0, Math.min(maxRadius, Math.max(shape.width - localX - 8, localY - 8)));
+    } else if (corner === 'BR') {
+      radius = Math.max(0, Math.min(maxRadius, Math.max(shape.width - localX - 8, shape.height - localY - 8)));
+    } else if (corner === 'BL') {
+      radius = Math.max(0, Math.min(maxRadius, Math.max(localX - 8, shape.height - localY - 8)));
+    }
+    
+    radius = Math.round(radius);
+    
+    let updates: any = {};
+    if (shape.isCornersIndependent) {
+      if (corner === 'TL') updates.cornerRadiusTL = radius;
+      if (corner === 'TR') updates.cornerRadiusTR = radius;
+      if (corner === 'BR') updates.cornerRadiusBR = radius;
+      if (corner === 'BL') updates.cornerRadiusBL = radius;
+    } else {
+      updates.cornerRadius = radius;
+    }
+    
+    const nextShapes = shapes.map((s: any) => {
+      if (s.id === shapeId) return { ...s, ...updates };
+      return s;
+    });
+    onChange({ shapes: JSON.stringify(nextShapes) });
+  };
+
+  const handleShapeTransformEnd = (id: string, e: any) => {
+    const node = e.target;
+    const newX = Math.round(node.x());
+    const newY = Math.round(node.y());
+    const newRotation = Math.round(node.rotation());
+    
+    // Get scale values
+    const newScaleX = node.scaleX();
+    const newScaleY = node.scaleY();
+    
+    const nextShapes = shapes.map((shape: any) => {
+      if (shape.id === id) {
+        if (shape.type === "rect" || shape.type === "circle") {
+          // For rect or circle, we scale the dimensions and reset node scale back to 1
+          const newWidth = Math.round(node.width() * newScaleX);
+          const newHeight = Math.round(node.height() * newScaleY);
+          node.scaleX(1);
+          node.scaleY(1);
+          return {
+            ...shape,
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight,
+            rotation: newRotation,
+          };
+        } else {
+          // For path and other vector shapes, we keep scaleX and scaleY
+          return {
+            ...shape,
+            x: newX,
+            y: newY,
+            scaleX: newScaleX,
+            scaleY: newScaleY,
+            rotation: newRotation,
+          };
+        }
+      }
+      return shape;
+    });
+    
+    onChange({ shapes: JSON.stringify(nextShapes) });
   };
 
   const handleAlign = (alignmentType: string) => {
@@ -1583,6 +1739,296 @@ export function KonvaTemplateDesigner({
 
 {/* DYNAMIC CONTENT & INTERACTIVE LAYER */}
 <Layer>
+            {/* Custom Canva-style Shapes */}
+            {shapes.map((shape: any) => {
+              const isSelected = selectedIds.includes(shape.id);
+              const isHovered = hoveredId === shape.id;
+              const fill = shape.fill === "none" ? undefined : shape.fill;
+              const stroke = shape.stroke === "none" ? undefined : shape.stroke;
+              const strokeWidth = shape.strokeWidth || 0;
+              const opacity = shape.opacity ?? 1;
+              const rotation = shape.rotation || 0;
+              const scaleX = shape.scaleX ?? 1;
+              const scaleY = shape.scaleY ?? 1;
+              const dash = shape.isDashed ? [shape.dashLength || 6, shape.dashGap || 4] : undefined;
+
+              if (shape.type === "rect") {
+                const radius = shape.isCornersIndependent ? 0 : (shape.cornerRadius || 0);
+                const tl = shape.isCornersIndependent ? (shape.cornerRadiusTL || 0) : radius;
+                const tr = shape.isCornersIndependent ? (shape.cornerRadiusTR || 0) : radius;
+                const br = shape.isCornersIndependent ? (shape.cornerRadiusBR || 0) : radius;
+                const bl = shape.isCornersIndependent ? (shape.cornerRadiusBL || 0) : radius;
+
+                return (
+                  <Group
+                    key={shape.id}
+                    id={shape.id}
+                    x={shape.x}
+                    y={shape.y}
+                    width={shape.width}
+                    height={shape.height}
+                    rotation={rotation}
+                    scaleX={scaleX}
+                    scaleY={scaleY}
+                    draggable
+                    onDragStart={handleDragStart}
+                    onDragEnd={(e) => handleShapeDragEnd(shape.id, e)}
+                    onTransformEnd={(e) => handleShapeTransformEnd(shape.id, e)}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                      handleElementSelect(shape.id, e.evt.shiftKey);
+                    }}
+                    onMouseEnter={() => {
+                      handleSetCursor('move');
+                      setHoveredId(shape.id);
+                    }}
+                    onMouseLeave={() => {
+                      handleSetCursor('default');
+                      setHoveredId(null);
+                    }}
+                  >
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={shape.width}
+                      height={shape.height}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={strokeWidth}
+                      dash={dash}
+                      opacity={opacity}
+                      cornerRadius={
+                        shape.isCornersIndependent
+                          ? [tl, tr, br, bl]
+                          : radius
+                      }
+                    />
+
+                    {/* Figma-style corner radius handles inside group when selected */}
+                    {isSelected && (
+                      <Group opacity={0.9}>
+                        {/* TL Handle */}
+                        <Circle
+                          x={tl + 8}
+                          y={tl + 8}
+                          radius={4.5}
+                          fill="#ffffff"
+                          stroke={primaryColor}
+                          strokeWidth={1.5}
+                          draggable
+                          onDragStart={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragEnd={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragMove={(e) => {
+                            e.cancelBubble = true;
+                            const node = e.target;
+                            const maxRadius = Math.min(shape.width, shape.height) / 2;
+                            const rad = Math.round(Math.max(0, Math.min(maxRadius, Math.max(node.x() - 8, node.y() - 8))));
+                            node.x(rad + 8);
+                            node.y(rad + 8);
+                            handleCornerHandleDrag(shape.id, 'TL', rad + 8, rad + 8);
+                          }}
+                          onMouseEnter={() => handleSetCursor('nwse-resize')}
+                          onMouseLeave={() => handleSetCursor('move')}
+                        />
+                        {/* TR Handle */}
+                        <Circle
+                          x={shape.width - tr - 8}
+                          y={tr + 8}
+                          radius={4.5}
+                          fill="#ffffff"
+                          stroke={primaryColor}
+                          strokeWidth={1.5}
+                          draggable
+                          onDragStart={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragEnd={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragMove={(e) => {
+                            e.cancelBubble = true;
+                            const node = e.target;
+                            const maxRadius = Math.min(shape.width, shape.height) / 2;
+                            const rad = Math.round(Math.max(0, Math.min(maxRadius, Math.max(shape.width - node.x() - 8, node.y() - 8))));
+                            node.x(shape.width - rad - 8);
+                            node.y(rad + 8);
+                            handleCornerHandleDrag(shape.id, 'TR', shape.width - rad - 8, rad + 8);
+                          }}
+                          onMouseEnter={() => handleSetCursor('nesw-resize')}
+                          onMouseLeave={() => handleSetCursor('move')}
+                        />
+                        {/* BR Handle */}
+                        <Circle
+                          x={shape.width - br - 8}
+                          y={shape.height - br - 8}
+                          radius={4.5}
+                          fill="#ffffff"
+                          stroke={primaryColor}
+                          strokeWidth={1.5}
+                          draggable
+                          onDragStart={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragEnd={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragMove={(e) => {
+                            e.cancelBubble = true;
+                            const node = e.target;
+                            const maxRadius = Math.min(shape.width, shape.height) / 2;
+                            const rad = Math.round(Math.max(0, Math.min(maxRadius, Math.max(shape.width - node.x() - 8, shape.height - node.y() - 8))));
+                            node.x(shape.width - rad - 8);
+                            node.y(shape.height - rad - 8);
+                            handleCornerHandleDrag(shape.id, 'BR', shape.width - rad - 8, shape.height - rad - 8);
+                          }}
+                          onMouseEnter={() => handleSetCursor('nwse-resize')}
+                          onMouseLeave={() => handleSetCursor('move')}
+                        />
+                        {/* BL Handle */}
+                        <Circle
+                          x={bl + 8}
+                          y={shape.height - bl - 8}
+                          radius={4.5}
+                          fill="#ffffff"
+                          stroke={primaryColor}
+                          strokeWidth={1.5}
+                          draggable
+                          onDragStart={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragEnd={(e) => {
+                            e.cancelBubble = true;
+                          }}
+                          onDragMove={(e) => {
+                            e.cancelBubble = true;
+                            const node = e.target;
+                            const maxRadius = Math.min(shape.width, shape.height) / 2;
+                            const rad = Math.round(Math.max(0, Math.min(maxRadius, Math.max(node.x() - 8, shape.height - node.y() - 8))));
+                            node.x(rad + 8);
+                            node.y(shape.height - rad - 8);
+                            handleCornerHandleDrag(shape.id, 'BL', rad + 8, shape.height - rad - 8);
+                          }}
+                          onMouseEnter={() => handleSetCursor('nesw-resize')}
+                          onMouseLeave={() => handleSetCursor('move')}
+                        />
+                      </Group>
+                    )}
+                  </Group>
+                );
+              }
+
+              if (shape.type === "circle") {
+                return (
+                  <Rect
+                    key={shape.id}
+                    id={shape.id}
+                    x={shape.x}
+                    y={shape.y}
+                    width={shape.width}
+                    height={shape.height}
+                    fill={fill}
+                    stroke={stroke}
+                    strokeWidth={strokeWidth}
+                    dash={dash}
+                    opacity={opacity}
+                    rotation={rotation}
+                    scaleX={scaleX}
+                    scaleY={scaleY}
+                    cornerRadius={Math.max(shape.width, shape.height)}
+                    draggable
+                    onDragStart={handleDragStart}
+                    onDragEnd={(e) => handleShapeDragEnd(shape.id, e)}
+                    onTransformEnd={(e) => handleShapeTransformEnd(shape.id, e)}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                      handleElementSelect(shape.id, e.evt.shiftKey);
+                    }}
+                    onMouseEnter={() => {
+                      handleSetCursor('move');
+                      setHoveredId(shape.id);
+                    }}
+                    onMouseLeave={() => {
+                      handleSetCursor('default');
+                      setHoveredId(null);
+                    }}
+                  />
+                );
+              }
+
+              if (shape.type === "line") {
+                return (
+                  <Line
+                    key={shape.id}
+                    id={shape.id}
+                    x={shape.x}
+                    y={shape.y}
+                    points={[0, 0, shape.width, 0]}
+                    stroke={stroke || fill || primaryColor}
+                    strokeWidth={strokeWidth || 2}
+                    dash={dash}
+                    opacity={opacity}
+                    rotation={rotation}
+                    scaleX={scaleX}
+                    scaleY={scaleY}
+                    draggable
+                    onDragStart={handleDragStart}
+                    onDragEnd={(e) => handleShapeDragEnd(shape.id, e)}
+                    onTransformEnd={(e) => handleShapeTransformEnd(shape.id, e)}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                      handleElementSelect(shape.id, e.evt.shiftKey);
+                    }}
+                    onMouseEnter={() => {
+                      handleSetCursor('move');
+                      setHoveredId(shape.id);
+                    }}
+                    onMouseLeave={() => {
+                      handleSetCursor('default');
+                      setHoveredId(null);
+                    }}
+                  />
+                );
+              }
+
+              return (
+                <Path
+                  key={shape.id}
+                  id={shape.id}
+                  x={shape.x}
+                  y={shape.y}
+                  data={shape.pathData || "M 0 0 L 100 0 L 100 100 L 0 100 Z"}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  dash={dash}
+                  opacity={opacity}
+                  rotation={rotation}
+                  scaleX={scaleX}
+                  scaleY={scaleY}
+                  draggable
+                  onDragStart={handleDragStart}
+                  onDragEnd={(e) => handleShapeDragEnd(shape.id, e)}
+                  onTransformEnd={(e) => handleShapeTransformEnd(shape.id, e)}
+                  onClick={(e) => {
+                    e.cancelBubble = true;
+                    handleElementSelect(shape.id, e.evt.shiftKey);
+                  }}
+                  onMouseEnter={() => {
+                    handleSetCursor('move');
+                    setHoveredId(shape.id);
+                  }}
+                  onMouseLeave={() => {
+                    handleSetCursor('default');
+                    setHoveredId(null);
+                  }}
+                />
+              );
+            })}
+
             {/* Draggable Header Section */}
             {(() => {
               const headerKey = "header";
@@ -2007,33 +2453,39 @@ export function KonvaTemplateDesigner({
             </Group>
 
             {/* THE VISUAL TRANSFORMER OVERLAY BOX */}
-            {selectedIds.length > 0 && (
-              <Transformer
-                ref={transformerRef}
-                centeredScaling={selectedId !== "frame" && selectedId !== "watermark"}
-                boundBoxFunc={(oldBox, newBox) => {
-                  if (newBox.width < 30 || newBox.height < 30) {
-                    return oldBox;
+            {selectedIds.length > 0 && (() => {
+              const activeShape = selectedId?.startsWith("shape-")
+                ? shapes.find((s: any) => s.id === selectedId)
+                : null;
+              const isRatioLocked = activeShape?.isRatioLocked || false;
+              return (
+                <Transformer
+                  ref={transformerRef}
+                  centeredScaling={selectedId !== "frame" && selectedId !== "watermark" && !selectedId?.startsWith("shape-")}
+                  boundBoxFunc={(oldBox, newBox) => {
+                    if (newBox.width < 10 || newBox.height < 10) {
+                      return oldBox;
+                    }
+                    return newBox;
+                  }}
+                  rotateEnabled={!!selectedId?.startsWith("shape-")}
+                  enabledAnchors={
+                    selectedIds.length === 1
+                      ? selectedId === "frame" || selectedId?.startsWith("shape-")
+                        ? ["top-left", "top-center", "top-right", "middle-right", "bottom-right", "bottom-center", "bottom-left", "middle-left"]
+                        : ["top-left", "top-right", "bottom-left", "bottom-right"]
+                      : []
                   }
-                  return newBox;
-                }}
-                rotateEnabled={false}
-                enabledAnchors={
-                  selectedIds.length === 1
-                    ? selectedId === "frame"
-                      ? ["top-left", "top-center", "top-right", "middle-right", "bottom-right", "bottom-center", "bottom-left", "middle-left"]
-                      : ["top-left", "top-right", "bottom-left", "bottom-right"]
-                    : []
-                }
-                anchorSize={10}
-                anchorCornerRadius={3}
-                anchorStroke={primaryColor}
-                anchorFill="#ffffff"
-                borderStroke={primaryColor}
-                borderStrokeWidth={1.5}
-                keepRatio={selectedId === "photo" || selectedId === "watermark"}
-              />
-            )}
+                  anchorSize={10}
+                  anchorCornerRadius={3}
+                  anchorStroke={primaryColor}
+                  anchorFill="#ffffff"
+                  borderStroke={primaryColor}
+                  borderStrokeWidth={1.5}
+                  keepRatio={selectedId === "photo" || selectedId === "watermark" || isRatioLocked}
+                />
+              );
+            })()}
 {selectionBox && (
 <Rect
                 x={Math.min(selectionBox.x1, selectionBox.x2)}

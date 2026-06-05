@@ -50,6 +50,7 @@ const KonvaTemplateDesigner = dynamic(
   () => import("./KonvaTemplateDesigner").then(mod => mod.KonvaTemplateDesigner),
   { ssr: false }
 );
+import { TemplateShapesManager } from "./TemplateShapesManager";
 import {
   Select,
   SelectContent,
@@ -231,6 +232,7 @@ const initialFormState = {
   frameImageHeight: "842",
   sectionOffsets: "{}",
   sectionStyles: "{}",
+  shapes: "[]",
   // Pricing
   isPremium: false,
   isDefault: false,
@@ -252,6 +254,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [formState, setFormState] = React.useState(initialFormState);
+  const [selectedElementId, setSelectedElementId] = React.useState<string | null>(null);
   
   // History for Undo/Redo
   const [history, setHistory] = React.useState<typeof initialFormState[]>([]);
@@ -853,6 +856,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         titleShape: template.titleShape || "simple",
         sectionOffsets: bgConf?.sectionOffsets || "{}",
         sectionStyles: bgConf?.sectionStyles || "{}",
+        shapes: bgConf?.shapes ? (typeof bgConf.shapes === "string" ? bgConf.shapes : JSON.stringify(bgConf.shapes)) : "[]",
         // Pricing
         isPremium: template.isPremium === true,
         isDefault: (template as any).isDefault === true,
@@ -967,6 +971,13 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         alignment: formState.defaultAlignment,
         sectionOffsets: formState.sectionOffsets || "{}",
         sectionStyles: formState.sectionStyles || "{}",
+        shapes: (() => {
+          try {
+            return JSON.parse(formState.shapes || "[]");
+          } catch (e) {
+            return [];
+          }
+        })(),
         imageFrameOffset: formState.imageFrameOffset || "0",
         frameImageX: parseInt(formState.frameImageX) || 0,
         frameImageY: parseInt(formState.frameImageY) || 0,
@@ -1284,6 +1295,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             { value: "fields",  Icon: ClipboardList, label: "Fields" },
             { value: "style",   Icon: Palette,       label: "Style" },
             { value: "frame",   Icon: Layers,        label: "Frame" },
+            { value: "shapes",  Icon: Sparkles,      label: "Shapes" },
             { value: "photo",   Icon: User,          label: "Photo" },
             { value: "pricing", Icon: DollarSign,    label: "Price" },
           ].map(({ value, Icon, label }) => (
@@ -1334,6 +1346,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             <TabsTrigger id="tab-trigger-fields"  value="fields">Fields</TabsTrigger>
             <TabsTrigger id="tab-trigger-style"   value="style">Style</TabsTrigger>
             <TabsTrigger id="tab-trigger-frame"   value="frame">Frame</TabsTrigger>
+            <TabsTrigger id="tab-trigger-shapes"  value="shapes">Shapes</TabsTrigger>
             <TabsTrigger id="tab-trigger-photo"   value="photo">Photo</TabsTrigger>
             <TabsTrigger id="tab-trigger-pricing" value="pricing">Price</TabsTrigger>
             <TabsTrigger id="tab-trigger-save"    value="save">Save</TabsTrigger>
@@ -2230,6 +2243,38 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                     </div>
                   </TabsContent>
 
+                  {/* Tab: Canva-style Shapes elements */}
+                  <TabsContent value="shapes" className="space-y-4 animate-in fade-in duration-200">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-primary fill-primary/10 animate-pulse" />
+                        Canvas Elements & Shapes
+                      </h3>
+                      
+                      <TemplateShapesManager
+                        shapesString={formState.shapes}
+                        onChange={(shapesString) => {
+                          setFormState(prev => ({ ...prev, shapes: shapesString }));
+                        }}
+                        selectedId={selectedElementId}
+                        onSelect={(id) => {
+                          if (designerRef.current) {
+                            designerRef.current.selectElement(id || "");
+                          }
+                          setSelectedElementId(id);
+                        }}
+                        primaryColor={formState.defaultPrimary || "#9B1B30"}
+                        secondaryColor={formState.defaultSecondary || "#333333"}
+                        accentColor={formState.defaultAccent || "#C9A84C"}
+                        onAlign={(type) => {
+                          if (designerRef.current && typeof designerRef.current.alignSelected === "function") {
+                            designerRef.current.alignSelected(type);
+                          }
+                        }}
+                      />
+                    </div>
+                  </TabsContent>
+
                   {/* Tab 4: Background & Watermark */}
                   {/* Tab 5: Profile Photo Layout */}
                   <TabsContent value="photo" className="space-y-4 animate-in fade-in duration-200">
@@ -2876,6 +2921,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                   template={template}
                   designerRef={designerRef}
                   previewMode={previewMode}
+                  onSelectionChange={(selectedIds) => setSelectedElementId(selectedIds[0] || null)}
                 />
               </div>
 
@@ -2905,6 +2951,7 @@ interface OptimizedPreviewAreaProps {
   template: any;
   designerRef: any;
   previewMode: "designer" | "svg";
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 function OptimizedPreviewArea({
@@ -2915,6 +2962,7 @@ function OptimizedPreviewArea({
   template,
   designerRef,
   previewMode,
+  onSelectionChange,
 }: OptimizedPreviewAreaProps) {
   // Watch necessary preview fields in an isolated manner
   const watchPersonal = useWatch({ control, name: "personalDetails" });
@@ -3297,6 +3345,7 @@ function OptimizedPreviewArea({
         mantra={currentPreviewMantra}
         title={currentPreviewTitle}
         mantraSignUrl={mantraSignUrl}
+        onSelectionChange={onSelectionChange}
       />
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "595px", height: "842px", opacity: 0, pointerEvents: "none" }}>
         <TemplateSvgPreview
