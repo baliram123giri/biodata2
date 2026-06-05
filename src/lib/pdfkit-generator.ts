@@ -9,7 +9,7 @@ import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Sv
 import { getPDFFontFamily } from './pdf-fonts';
 import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
-import { getTemplateConfig, getFrameImageUrl } from './frame-config';
+import { getTemplateConfig, getFrameImageUrl, tintSvg } from './frame-config';
 import { STICKER_ASSETS } from './sticker-assets';
 import { getLightBgColor } from './color-utils';
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from './watermark-utils';
@@ -200,6 +200,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
     const COLON_WIDTH = 20;
     const LINE_SPACING = fSize * 0.5 + 2;
     const contentWidth = A4_W - padLeft - padRight - 10;
+    const standardHalfW = (contentWidth - 12) / 2;
+    const standardLabelW = Math.round(standardHalfW * 0.45);
     const sectionLayouts: any[] = [];
     const sectionKeys = [
       { key: 'personal', fields: data.personalDetails, label: t.personal || "Personal Details" },
@@ -267,7 +269,11 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           cursorY += secFontSize * 1.35 + secLineSpacing;
           i += 2;
         } else {
-          let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          const halfW = (rowWidth - 12) / 2;
+          const labelW = Math.round(halfW * 0.45);
+          const unpairedLabelW = isTwoCol ? standardLabelW : LABEL_WIDTH;
+          
+          let valueW = rowWidth - unpairedLabelW - COLON_WIDTH;
           if (f1.logoUrl) {
             valueW -= (secFontSize + 4);
           }
@@ -280,7 +286,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             y: cursorY,
             isHalf: false,
             valueW,
-            rowWidth
+            rowWidth,
+            labelW: unpairedLabelW
           });
           
           cursorY += rowHeight + secLineSpacing;
@@ -825,7 +832,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                     ? (padding + 10) 
                     : (padding + 10 + f.halfW + 10))
                 : (padding + 10);
-              const lblW = f.isHalf ? f.labelW : 130;
+              const lblW = f.labelW ?? (f.isHalf ? f.labelW : 130);
               const colonX = colX + lblW + 5;
               const valX = colX + lblW + 15;
               
@@ -1142,26 +1149,49 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
 
     if (config && config.frame && config.frame.type === "image") {
       const primaryColor = theme?.primaryColor || config.defaultPrimary || "#800000";
+      const accentColor = theme?.accentColor || config.defaultAccent || "#C9A84C";
+      const defaultPrimary = "";
+      const defaultAccent = "";
       const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);
       
-      if (finalUrl && finalUrl.startsWith("data:image/svg+xml")) {
+      if (finalUrl && (finalUrl.toLowerCase().includes(".svg") || finalUrl.startsWith("data:image/svg+xml"))) {
         try {
-          const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
           let svgXml = "";
-          if (finalUrl.includes(";base64,")) {
-            svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+          if (finalUrl.startsWith("data:image/svg+xml")) {
+            const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
+            if (finalUrl.includes(";base64,")) {
+              svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+            } else {
+              svgXml = decodeURIComponent(base64Content);
+            }
           } else {
-            svgXml = decodeURIComponent(base64Content);
+            // Fetch the SVG file from remote or local URL
+            const fetchRes = await fetch(finalUrl);
+            if (fetchRes.ok) {
+              svgXml = await fetchRes.text();
+            }
           }
           
-          const sharp = require("sharp");
-          const pngBuffer = await sharp(Buffer.from(svgXml), { density: 300 })
-            .png()
-            .toBuffer();
+          if (svgXml) {
+            const enableSvgTint = config.bgConfig?.enableSvgTint !== false;
+            // Apply the tintSvg function to colorize the SVG elements
+            const colorizedSvg = tintSvg(
+              svgXml,
+              defaultPrimary,
+              enableSvgTint ? primaryColor : "",
+              defaultAccent,
+              enableSvgTint ? accentColor : ""
+            );
             
-          theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+            const sharp = require("sharp");
+            const pngBuffer = await sharp(Buffer.from(colorizedSvg), { density: 300 })
+              .png()
+              .toBuffer();
+              
+            theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+          }
         } catch (rasterError) {
-          console.error("Failed to rasterize base64 SVG frame to PNG:", rasterError);
+          console.error("Failed to rasterize and colorize SVG frame to PNG:", rasterError);
         }
       }
     }

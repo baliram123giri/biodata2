@@ -8,6 +8,7 @@ import { translations } from "@/lib/translations";
 import { getLightBgColor } from "@/lib/color-utils";
 import { loadKonvaFonts, getKonvaFontFamily } from "@/lib/konva-fonts";
 import { ZoomIn, ZoomOut, Maximize, Download } from "lucide-react";
+import { useColorizedFrameImage } from "@/hooks/useColorizedFrameImage";
 
 if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
@@ -327,7 +328,13 @@ export function KonvaTemplateDesigner({
 
   // Custom frame template PNG/SVG
   const frameImageSrc = formState.frameFile || template?.frameUrlTemplate || null;
-  const [frameImage] = useImage(frameImageSrc || "", "anonymous");
+  const frameImage = useColorizedFrameImage(
+    frameImageSrc,
+    "",
+    formState.enableSvgTint ? formState.defaultPrimary : "",
+    "",
+    formState.enableSvgTint ? formState.defaultAccent : ""
+  );
 
   // Noto Sans Devanagari is standard for dynamic language rendering
   const fontFamily = getKonvaFontFamily("noto");
@@ -824,6 +831,8 @@ export function KonvaTemplateDesigner({
     const COLON_WIDTH = 20;
     const LINE_SPACING = baseFontSize * 0.5 + 2;
     const contentWidth = A4_W - paddingLeft - paddingRight - 10;
+    const standardHalfW = (contentWidth - 12) / 2;
+    const standardLabelW = Math.round(standardHalfW * 0.45);
     const sectionLayouts: any[] = [];
 
     sections.forEach((sec, secIdx) => {
@@ -895,7 +904,10 @@ export function KonvaTemplateDesigner({
           cursorY += secFontSize * 1.35 + secLineSpacing;
           i += 2;
         } else {
-          const valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+          const halfW = (rowWidth - 12) / 2;
+          const labelW = Math.round(halfW * 0.45);
+          const unpairedLabelW = isTwoCol ? standardLabelW : LABEL_WIDTH;
+          const valueW = rowWidth - unpairedLabelW - COLON_WIDTH;
           const valW = valText.length * secFontSize * 0.6;
           const lines = Math.ceil(valW / valueW) || 1;
           const rowHeight = Math.max(secFontSize, lines * secFontSize * 1.1);
@@ -907,6 +919,7 @@ export function KonvaTemplateDesigner({
             y: cursorY,
             availableWidth: valueW,
             isHalf: false,
+            labelW: unpairedLabelW,
           });
           cursorY += rowHeight + secLineSpacing;
           i += 1;
@@ -1908,7 +1921,7 @@ export function KonvaTemplateDesigner({
                         ? paddingLeft + 10
                         : paddingLeft + 10 + field.halfW + 10
                       : paddingLeft + 10;
-                    const lblW = field.isHalf ? field.labelW : 130;
+                    const lblW = field.labelW ?? (field.isHalf ? field.labelW : 130);
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
 

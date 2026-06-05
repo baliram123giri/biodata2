@@ -1,0 +1,89 @@
+import { useState, useEffect } from 'react';
+import { tintSvg } from '@/lib/frame-config';
+
+export function useColorizedFrameImage(
+  src: string | null,
+  originalPrimary: string,
+  newPrimary: string,
+  originalAccent: string,
+  newAccent: string
+) {
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (!src) {
+      setImage(null);
+      return;
+    }
+
+    // Check if the source is an SVG
+    const isSvg = src.toLowerCase().includes('.svg') || src.startsWith('data:image/svg+xml');
+
+    if (!isSvg) {
+      // Load standard images normally
+      const img = new window.Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => setImage(img);
+      img.onerror = () => setImage(null);
+      img.src = src;
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadAndColorize = async () => {
+      try {
+        let svgText = "";
+        if (src.startsWith('data:image/svg+xml;base64,')) {
+          const base64Content = src.split(',')[1];
+          svgText = atob(base64Content);
+        } else if (src.startsWith('data:image/svg+xml;utf8,')) {
+          svgText = decodeURIComponent(src.split('utf8,')[1]);
+        } else if (src.startsWith('data:image/svg+xml,')) {
+          svgText = decodeURIComponent(src.split(',')[1]);
+        } else {
+          // Fetch from remote URL via proxy to bypass CORS
+          const proxyUrl = `/api/proxy-svg?url=${encodeURIComponent(src)}`;
+          const res = await fetch(proxyUrl);
+          if (!res.ok) throw new Error("Failed to fetch SVG via proxy");
+          svgText = await res.text();
+        }
+
+        if (!isMounted) return;
+
+        // Apply dynamic color tinting
+        const tintedSvg = tintSvg(svgText, originalPrimary, newPrimary, originalAccent, newAccent);
+
+        // Convert the tinted SVG XML code to a data URL
+        const tintedDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(tintedSvg);
+
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          if (isMounted) setImage(img);
+        };
+        img.onerror = () => {
+          if (isMounted) setImage(null);
+        };
+        img.src = tintedDataUrl;
+      } catch (err) {
+        console.error("Error colorizing frame SVG:", err);
+        // Fallback: load the original SVG
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          if (isMounted) setImage(img);
+        };
+        img.src = src;
+      }
+    };
+
+    loadAndColorize();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [src, originalPrimary, newPrimary, originalAccent, newAccent]);
+
+  return image;
+}

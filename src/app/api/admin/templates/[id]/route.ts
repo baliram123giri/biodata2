@@ -21,6 +21,12 @@ export const BgConfigSchema = z.object({
   alignment: z.string().optional().nullable(),
   sectionOffsets: z.string().optional().nullable(),
   sectionStyles: z.string().optional().nullable(),
+  imageFrameOffset: z.string().optional().nullable(),
+  frameImageX: z.number().optional().nullable(),
+  frameImageY: z.number().optional().nullable(),
+  frameImageWidth: z.number().optional().nullable(),
+  frameImageHeight: z.number().optional().nullable(),
+  enableSvgTint: z.boolean().optional().nullable(),
 });
 
 async function getSessionUser() {

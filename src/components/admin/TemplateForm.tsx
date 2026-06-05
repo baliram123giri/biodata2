@@ -231,6 +231,7 @@ const initialFormState = {
   frameImageHeight: "842",
   sectionOffsets: "{}",
   sectionStyles: "{}",
+  enableSvgTint: true,
   // Pricing
   isPremium: false,
   isDefault: false,
@@ -848,6 +849,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameImageWidth: bgConf?.frameImageWidth ? String(bgConf.frameImageWidth) : "595",
         frameImageHeight: bgConf?.frameImageHeight ? String(bgConf.frameImageHeight) : "842",
         imageFrameOffset: bgConf?.imageFrameOffset || "0",
+        enableSvgTint: bgConf?.enableSvgTint !== false,
         language: template.language || "English",
         detailsLayout: template.detailsLayout || "classic",
         titleShape: template.titleShape || "simple",
@@ -972,6 +974,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         frameImageY: parseInt(formState.frameImageY) || 0,
         frameImageWidth: parseInt(formState.frameImageWidth) || 595,
         frameImageHeight: parseInt(formState.frameImageHeight) || 842,
+        enableSvgTint: formState.enableSvgTint,
       };
 
       if (formState.frameType === "svg") {
@@ -1627,6 +1630,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                         </div>
                       </div>
 
+
+
                       {/* PAGE PADDING & TYPOGRAPHY SECTION */}
                       <div className="space-y-3.5 pt-3 border-t border-border/80">
                         <SliderInput
@@ -1872,28 +1877,70 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
 
                         {(formState.bgImageUrl || formState.bgImageFile) && (
                           <div className="space-y-3.5 pt-3 border-t border-border/50">
-                            <SliderInput
-                              label="Background Size (Square)"
-                              id="bg-size"
-                              min={10}
-                              max={1200}
-                              value={formState.bgImageWidth || "350"}
-                              onChange={(val) => setFormState({ ...formState, bgImageWidth: val, bgImageHeight: val })}
-                            />
-                            <div className="space-y-1.5">
+                            <div className="grid grid-cols-2 gap-3">
+                              <SliderInput
+                                label="Background Width"
+                                id="bg-width"
+                                min={10}
+                                max={1200}
+                                value={formState.bgImageWidth || "350"}
+                                onChange={(val) => setFormState({ ...formState, bgImageWidth: val })}
+                              />
+                              <SliderInput
+                                label="Background Height"
+                                id="bg-height"
+                                min={10}
+                                max={1200}
+                                value={formState.bgImageHeight || "350"}
+                                onChange={(val) => setFormState({ ...formState, bgImageHeight: val })}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <SliderInput
+                                label="Background Position X"
+                                id="bg-x"
+                                min={-500}
+                                max={1000}
+                                value={formState.bgImageX || "0"}
+                                onChange={(val) => setFormState({ ...formState, bgImageX: val })}
+                              />
+                              <SliderInput
+                                label="Background Position Y"
+                                id="bg-y"
+                                min={-500}
+                                max={1200}
+                                value={formState.bgImageY || "0"}
+                                onChange={(val) => setFormState({ ...formState, bgImageY: val })}
+                              />
+                            </div>
+
+                            <div className="space-y-1.5 bg-muted/5 border border-border/20 p-2.5 rounded-lg">
                               <div className="flex justify-between items-center">
                                 <Label className="text-xs font-bold text-muted-foreground">Background Opacity</Label>
-                                <span className="text-xs font-mono text-primary font-bold">{parseFloat(formState.bgImageOpacity).toFixed(2)}</span>
+                                <span className="text-[10px] font-mono font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded">
+                                  {(parseFloat(formState.bgImageOpacity) || 0).toFixed(2)}
+                                </span>
                               </div>
-                              <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.01"
-                                value={formState.bgImageOpacity}
-                                onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
-                                className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                              />
+                              <div className="flex items-center gap-3">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={formState.bgImageOpacity}
+                                  onChange={(e) => setFormState({ ...formState, bgImageOpacity: e.target.value })}
+                                  className="w-20 focus-visible:ring-primary rounded-lg text-xs h-8 px-2"
+                                />
+                                <Slider
+                                  value={[parseFloat(formState.bgImageOpacity) || 0]}
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  onValueChange={([val]) => setFormState({ ...formState, bgImageOpacity: String(val) })}
+                                  className="flex-1 cursor-pointer py-1"
+                                />
+                              </div>
                             </div>
                             
                             <div className="flex gap-2">
@@ -2024,6 +2071,24 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           <p className="text-[10px] text-muted-foreground leading-tight">Increase this to stretch downloaded frames past the edges, hiding any built-in transparent borders or watermarks.</p>
                         </div>
                       )}
+
+                      {formState.frameType === "image" && (
+                        <div className="flex items-center justify-between border border-border rounded-xl p-4 bg-muted/10 mt-4">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="enable-svg-tint-switch" className="text-xs font-bold text-foreground">Allow Frame Theme Customization</Label>
+                            <p className="text-[10px] text-muted-foreground leading-normal max-w-[280px]">
+                              If enabled, the SVG frame's colors will change automatically to match the selected theme colors.
+                            </p>
+                          </div>
+                          <Switch
+                            id="enable-svg-tint-switch"
+                            checked={formState.enableSvgTint}
+                            onCheckedChange={checked => setFormState({ ...formState, enableSvgTint: checked })}
+                          />
+                        </div>
+                      )}
+
+
 
                       {(formState.frameType === "svg" || formState.frameType === "gradient") && (
                         <div className="space-y-4 border border-border rounded-xl p-4 bg-muted/10">

@@ -20,6 +20,7 @@ import {
 import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
 import Konva from "konva";
+import { useColorizedFrameImage } from "@/hooks/useColorizedFrameImage";
 
 if (typeof window !== "undefined") {
   // Force high-DPI crystal clear canvas rendering on all monitors and devices
@@ -435,9 +436,29 @@ const PageBackground = React.memo(function PageBackground({
   return <Rect width={A4_W} height={A4_H} fill={solidColor} />;
 });
 
-const ImageFrame = React.memo(function ImageFrame({ config, primaryColor }: { config: FrameImageConfig; primaryColor: string; }) {
+const ImageFrame = React.memo(function ImageFrame({
+  config,
+  primaryColor,
+  accentColor,
+  defaultPrimary,
+  defaultAccent,
+  enableSvgTint = true
+}: {
+  config: FrameImageConfig;
+  primaryColor: string;
+  accentColor: string;
+  defaultPrimary: string;
+  defaultAccent: string;
+  enableSvgTint?: boolean;
+}) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
-  const [image] = useImage(frameUrl, "anonymous");
+  const image = useColorizedFrameImage(
+    frameUrl,
+    defaultPrimary,
+    enableSvgTint ? primaryColor : "",
+    defaultAccent,
+    enableSvgTint ? accentColor : ""
+  );
   return (
     <Group>
       {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
@@ -1024,6 +1045,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const COLON_WIDTH = 20;
       const LINE_SPACING = fSize * 0.5 + 2;
       const contentWidth = A4_W - paddingLeft - paddingRight - 10;
+      const standardHalfW = (contentWidth - 12) / 2;
+      const standardLabelW = Math.round(standardHalfW * 0.45);
       const sectionLayouts: any[] = [];
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -1051,6 +1074,9 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
           // Decide if we should render this field as two-column side-by-side grid
           const nextField = sec.fields[i + 1];
           const isTwoCol = detailsLayout === "two-column";
+          const halfW = (rowWidth - 12) / 2;
+          const labelW = Math.round(halfW * 0.45);
+          const valueW = halfW - labelW - 10;
 
           // Pair fields if we are in two-column mode, both values are short, and we are not in the photo Y range
           const canPair = isTwoCol && nextField &&
@@ -1059,9 +1085,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             !(hasPhoto && photoConfig && cursorY >= photoConfig.y - 15 && cursorY <= photoConfig.y + photoConfig.height + 15);
 
           if (canPair) {
-            const halfW = (rowWidth - 12) / 2;
-            const labelW = Math.round(halfW * 0.45);
-            const valueW = halfW - labelW - 10;
 
             fieldLayouts.push({
               id: field.id,
@@ -1092,7 +1115,8 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             cursorY += fSize * 1.35 + LINE_SPACING;
             i += 2;
           } else {
-            let valueW = rowWidth - LABEL_WIDTH - COLON_WIDTH;
+            const unpairedLabelW = isTwoCol ? standardLabelW : LABEL_WIDTH;
+            let valueW = rowWidth - unpairedLabelW - COLON_WIDTH;
             if (field.logoUrl) {
               valueW -= (fSize + 4);
             }
@@ -1108,6 +1132,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               y: cursorY,
               availableWidth: valueW,
               isHalf: false,
+              labelW: unpairedLabelW,
             });
             cursorY += rowHeight + LINE_SPACING;
             i += 1;
@@ -1221,7 +1246,14 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             primaryColor={primaryColor}
           />
           {templateConfig.frame.type === "image" ? (
-            <ImageFrame config={templateConfig.frame} primaryColor={primaryColor} />
+            <ImageFrame
+              config={templateConfig.frame}
+              primaryColor={primaryColor}
+              accentColor={accentColor}
+              defaultPrimary=""
+              defaultAccent=""
+              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
+            />
           ) : templateConfig.frame.type === "gradient" ? (
             <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
           ) : templateConfig.frame.type === "custom" ? (
@@ -1574,7 +1606,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
                         ? (padding + 10)
                         : (padding + 10 + field.halfW + 10))
                       : (padding + 10);
-                    const lblW = field.isHalf ? field.labelW : 130;
+                    const lblW = field.labelW ?? (field.isHalf ? field.labelW : 130);
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
 
