@@ -395,6 +395,38 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       React.createElement(View, { style: styles.container as any, wrap: false },
         ...([
           renderPDFBackground(),
+          (() => {
+            const isCustomBg = !!theme?.bgImageUrl;
+            const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
+            const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
+            
+            const scale = theme?.bgImageScale ?? 1.0;
+            const width = baseW * scale;
+            const height = baseH * scale;
+            
+            const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
+            const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
+            
+            const xOffset = theme?.bgImageXOffset ?? 0;
+            const yOffset = theme?.bgImageYOffset ?? 0;
+            
+            // Adjust left/top to scale from center
+            const left = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
+            const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
+            
+            return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
+              src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
+              style: {
+                position: 'absolute',
+                left,
+                top,
+                width,
+                height,
+                opacity: isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0),
+                objectFit: isCustomBg ? 'contain' : 'fill',
+              } as any
+            }) : null;
+          })(),
           config.frame.type === 'image' ? (() => {
             const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
             const fallbackX = -offset;
@@ -511,38 +543,6 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                 })
               ) : null
             ),
-          (() => {
-            const isCustomBg = !!theme?.bgImageUrl;
-            const baseW = isCustomBg ? 300 : (config.bgConfig?.width ?? 595);
-            const baseH = isCustomBg ? 300 : (config.bgConfig?.height ?? 842);
-            
-            const scale = theme?.bgImageScale ?? 1.0;
-            const width = baseW * scale;
-            const height = baseH * scale;
-            
-            const baseLeft = isCustomBg ? 147.5 : (config.bgConfig?.x ?? 0);
-            const baseTop = isCustomBg ? 271 : (config.bgConfig?.y ?? 0);
-            
-            const xOffset = theme?.bgImageXOffset ?? 0;
-            const yOffset = theme?.bgImageYOffset ?? 0;
-            
-            // Adjust left/top to scale from center
-            const left = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
-            const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
-            
-            return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
-              src: theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '',
-              style: {
-                position: 'absolute',
-                left,
-                top,
-                width,
-                height,
-                opacity: isCustomBg ? (theme.bgImageOpacity ?? 0.15) : (config.bgConfig?.opacity ?? 1.0),
-                objectFit: isCustomBg ? 'contain' : 'fill',
-              } as any
-            }) : null;
-          })(),
           
         WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
           style: {
@@ -1058,6 +1058,22 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         return `data:image/png;base64,${pngBuffer.toString("base64")}`;
       } catch (sharpError) {
         console.error(`[resolveAndConvertImage] Failed to rasterize SVG: ${url}`, sharpError);
+      }
+    }
+
+    const isWebp = contentType.includes("webp") || url.toLowerCase().includes(".webp");
+    if (isWebp) {
+      try {
+        console.log(`[resolveAndConvertImage] WebP detected. Converting to PNG via sharp...`);
+        const sharp = require("sharp");
+        const pngBuffer = await sharp(buffer)
+          .png()
+          .toBuffer();
+        console.log(`[resolveAndConvertImage] WebP to PNG conversion successful. Output size: ${pngBuffer.length}`);
+        buffer = pngBuffer;
+        contentType = "image/png";
+      } catch (sharpError) {
+        console.error(`[resolveAndConvertImage] Failed to convert WebP to PNG: ${url}`, sharpError);
       }
     }
     

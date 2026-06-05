@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useShallow } from "zustand/react/shallow";
 import { cn } from "@/lib/utils";
 import { ImageIcon, Check, Trash2, Loader2 } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -68,7 +69,18 @@ const BackgroundItem = React.memo(function BackgroundItem({
 });
 
 export const BackgroundSelector = React.memo(function BackgroundSelector({ onSelect }: { onSelect?: () => void }) {
-  const theme = useThemeStore();
+  const theme = useThemeStore(useShallow(s => ({
+    bgImageUrl: s.bgImageUrl,
+    bgImageOpacity: s.bgImageOpacity,
+    bgImageScale: s.bgImageScale,
+    bgImageXOffset: s.bgImageXOffset,
+    bgImageYOffset: s.bgImageYOffset,
+    setBgImageUrl: s.setBgImageUrl,
+    setBgImageOpacity: s.setBgImageOpacity,
+    setBgImageScale: s.setBgImageScale,
+    setBgImageXOffset: s.setBgImageXOffset,
+    setBgImageYOffset: s.setBgImageYOffset,
+  })));
 
   const {
     data: customBackgroundsInfiniteData,

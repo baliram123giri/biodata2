@@ -20,6 +20,7 @@ import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES
 import { useQuery } from "@tanstack/react-query";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useShallow } from "zustand/react/shallow";
 import { Slider } from "@/components/ui/slider";
 import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,13 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
   const [mantraReligion, setMantraReligion] = useState("Hindu");
-  const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore();
+  const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
+    addSticker: s.addSticker,
+    removeSticker: s.removeSticker,
+    formData: s.formData,
+    selectedTemplate: s.selectedTemplate,
+    customTemplates: s.customTemplates,
+  })));
   const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
 
   const templateConfig = customTemplates.find((t: any) => t.id === selectedTemplate) || TEMPLATE_CONFIGS[selectedTemplate] || TEMPLATE_CONFIGS["royal"];

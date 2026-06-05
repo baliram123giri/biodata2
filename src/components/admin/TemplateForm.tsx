@@ -83,6 +83,7 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 import { processPDFField } from "@/lib/pdf-data-utils";
 import type { BiodataFormValues } from "@/types/biodata";
 import { useQueryClient } from "@tanstack/react-query";
+import { useColorizedFrameImage } from "@/hooks/useColorizedFrameImage";
 
 interface Template {
   id: string;
@@ -838,7 +839,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         bgImageX: bgConf ? String(bgConf.x ?? 0) : "0",
         bgImageY: bgConf ? String(bgConf.y ?? 0) : "0",
         bgImageWidth: bgConf ? String(bgConf.width ?? 350) : "350",
-        bgImageHeight: bgConf ? String(bgConf.width ?? bgConf.height ?? 350) : "350",
+        bgImageHeight: bgConf ? String(bgConf.height ?? 350) : "350",
         bgImageOpacity: bgConf ? String(bgConf.opacity ?? 1.0) : "1.0",
         defaultPaddingTop: (template as any).defaultPaddingTop ? String((template as any).defaultPaddingTop) : "",
         defaultPaddingRight: (template as any).defaultPaddingRight ? String((template as any).defaultPaddingRight) : "",
@@ -3452,6 +3453,15 @@ function TemplateSvgPreview({
   // Use the stored frame URL as-is — no tint injection
   let frameImageSrc = formState.frameFile || template?.frameUrlTemplate || null;
 
+  // Use the colorization hook to get a tinted SVG data URL in SVG preview
+  const tintedFrameImage = useColorizedFrameImage(
+    frameImageSrc,
+    "",
+    formState.enableSvgTint ? primaryColor : "",
+    "",
+    formState.enableSvgTint ? accentColor : ""
+  );
+
   // Mirrored state parsing from designer
   const sectionOffsets = React.useMemo(() => {
     try { return JSON.parse(formState.sectionOffsets || "{}"); } catch { return {}; }
@@ -3862,17 +3872,24 @@ function TemplateSvgPreview({
       />
 
       {/* Background Watermark Image rendering */}
-      {(formState.bgImageFile || formState.bgImageUrl) && (
-        <image
-          href={formState.bgImageFile || formState.bgImageUrl}
-          x={parseFloat(formState.bgImageX) || 0}
-          y={parseFloat(formState.bgImageY) || 0}
-          width={parseFloat(formState.bgImageWidth) || 595}
-          height={parseFloat(formState.bgImageHeight) || 842}
-          opacity={parseFloat(formState.bgImageOpacity) ?? 1.0}
-          preserveAspectRatio="none"
-        />
-      )}
+      {(() => {
+        const rawSrc = formState.bgImageFile || formState.bgImageUrl;
+        if (!rawSrc) return null;
+        const src = rawSrc && !rawSrc.startsWith("data:") && !rawSrc.startsWith("/") && !rawSrc.startsWith("http://localhost") && !rawSrc.startsWith("http://127.0.0.1")
+          ? `/api/proxy-svg?url=${encodeURIComponent(rawSrc)}`
+          : rawSrc;
+        return (
+          <image
+            href={src}
+            x={parseFloat(formState.bgImageX) || 0}
+            y={parseFloat(formState.bgImageY) || 0}
+            width={parseFloat(formState.bgImageWidth) || 595}
+            height={parseFloat(formState.bgImageHeight) || 842}
+            opacity={parseFloat(formState.bgImageOpacity) ?? 1.0}
+            preserveAspectRatio="none"
+          />
+        );
+      })()}
 
       {/* Frame Rendering logic */}
       {formState.frameType === "svg" && (
@@ -3968,11 +3985,13 @@ function TemplateSvgPreview({
         const width = isDefault && offset !== 0 ? fallbackW : (parseInt(formState.frameImageWidth) || fallbackW);
         const height = isDefault && offset !== 0 ? fallbackH : (parseInt(formState.frameImageHeight) || fallbackH);
         
+        const finalFrameSrc = (tintedFrameImage && tintedFrameImage.src) ? tintedFrameImage.src : (frameImageSrc || "");
+
         return (
           <g>
-            {/* Render active PNG image frame overlay scaled and tinted via SVG styling */}
+            {/* Render active PNG/SVG image frame overlay scaled and tinted via SVG styling */}
             <image
-              href={frameImageSrc}
+              href={finalFrameSrc}
               x={x}
               y={y}
               width={width}

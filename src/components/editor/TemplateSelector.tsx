@@ -24,9 +24,24 @@ const TEMPLATE_LABELS: Record<string, string> = {
   "green-shapes": "Green Shapes",
 };
 
+const getRelativeUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http://localhost:") || url.startsWith("http://127.0.0.1:")) {
+    return url.replace(/^https?:\/\/[^\/]+/, "");
+  }
+  return url;
+};
+
 export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
-  const { selectedTemplate, setSelectedTemplate, customTemplates, formData, fetchCustomTemplates } = useBiodataStore();
-  const theme = useThemeStore();
+  const selectedTemplate = useBiodataStore(s => s.selectedTemplate);
+  const setSelectedTemplate = useBiodataStore(s => s.setSelectedTemplate);
+  const customTemplates = useBiodataStore(s => s.customTemplates);
+  const fetchCustomTemplates = useBiodataStore(s => s.fetchCustomTemplates);
+
+  const setPalette = useThemeStore(s => s.setPalette);
+  const setPadding = useThemeStore(s => s.setPadding);
+  const setPaddingY = useThemeStore(s => s.setPaddingY);
+  const resetOverrides = useThemeStore(s => s.resetOverrides);
   const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -101,7 +116,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
         let cardStyle: React.CSSProperties = {};
         if (tpl.thumbnailUrl) {
           cardStyle = {
-            backgroundImage: `url(${tpl.thumbnailUrl})`,
+            backgroundImage: `url(${getRelativeUrl(tpl.thumbnailUrl)})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           };
@@ -138,7 +153,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                 bgColors = [tpl.frame.bgColor];
               }
 
-              theme.setPalette({
+              setPalette({
                 name: "None",
                 primary: tpl.defaultPrimary,
                 secondary: tpl.defaultSecondary,
@@ -148,12 +163,12 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
 
               // Apply the template's dynamic default padding from the database configuration
               if (tpl.defaultPadding !== undefined && tpl.defaultPadding !== null) {
-                theme.setPadding(tpl.defaultPadding);
+                setPadding(tpl.defaultPadding);
               }
-              theme.setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
+              setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
 
               // Reset any manual padding or photo transformation overrides so template defaults apply
-              theme.resetOverrides();
+              resetOverrides();
 
               onSelect?.();
             }}
@@ -176,7 +191,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
                 <Image
                   src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
                     ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,f_auto,q_auto/")
-                    : tpl.thumbnailUrl
+                    : getRelativeUrl(tpl.thumbnailUrl)
                   }
                   alt={`Matrimonial design template: ${tpl.name}`}
                   fill

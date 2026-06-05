@@ -22,7 +22,9 @@ export function useColorizedFrameImage(
     if (!isSvg) {
       // Load standard images normally
       const img = new window.Image();
-      img.crossOrigin = 'anonymous';
+      if (!src.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
       img.onload = () => setImage(img);
       img.onerror = () => setImage(null);
       img.src = src;
@@ -58,11 +60,12 @@ export function useColorizedFrameImage(
         const tintedDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(tintedSvg);
 
         const img = new window.Image();
-        img.crossOrigin = 'anonymous';
+        // Do NOT set crossOrigin on data URLs as it causes load failures in some browsers
         img.onload = () => {
           if (isMounted) setImage(img);
         };
-        img.onerror = () => {
+        img.onerror = (e) => {
+          console.error("Failed to load image from tinted data URL:", e);
           if (isMounted) setImage(null);
         };
         img.src = tintedDataUrl;
@@ -70,9 +73,14 @@ export function useColorizedFrameImage(
         console.error("Error colorizing frame SVG:", err);
         // Fallback: load the original SVG
         const img = new window.Image();
-        img.crossOrigin = 'anonymous';
+        if (!src.startsWith('data:')) {
+          img.crossOrigin = 'anonymous';
+        }
         img.onload = () => {
           if (isMounted) setImage(img);
+        };
+        img.onerror = (e) => {
+          console.error("Failed to load fallback original SVG:", e);
         };
         img.src = src;
       }

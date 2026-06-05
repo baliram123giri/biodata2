@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, Al
 import { Stage, Layer, Rect, Text, Line, Image as KonvaImage, Group, Path, Transformer, Circle } from "react-konva";
 import { useBiodataStore, type Sticker } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useShallow } from "zustand/react/shallow";
 import { STICKER_ASSETS } from "@/lib/sticker-assets";
 import { translations } from "@/lib/translations";
 import { processPDFField } from "@/lib/pdf-data-utils";
@@ -16,6 +17,7 @@ import {
   type FrameImageConfig,
   type FrameGradientConfig,
   type TemplateConfig,
+  type BgConfig,
 } from "@/lib/frame-config";
 import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
@@ -316,7 +318,11 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
   isCustom?: boolean;
 }) {
   const bgUrl = bgConfig?.url || "";
-  const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
+  const finalUrl = bgUrl && !bgUrl.startsWith("data:") && !bgUrl.startsWith("/") && !bgUrl.startsWith("http://localhost") && !bgUrl.startsWith("http://127.0.0.1")
+    ? `/api/proxy-svg?url=${encodeURIComponent(bgUrl)}`
+    : bgUrl;
+
+  const [image] = useImage(finalUrl, finalUrl.startsWith("data:") ? undefined : "anonymous");
   if (!bgConfig || !bgUrl || !image) return null;
 
   let x = bgConfig.x;
@@ -442,7 +448,8 @@ const ImageFrame = React.memo(function ImageFrame({
   accentColor,
   defaultPrimary,
   defaultAccent,
-  enableSvgTint = true
+  enableSvgTint = true,
+  bgConfig
 }: {
   config: FrameImageConfig;
   primaryColor: string;
@@ -450,6 +457,7 @@ const ImageFrame = React.memo(function ImageFrame({
   defaultPrimary: string;
   defaultAccent: string;
   enableSvgTint?: boolean;
+  bgConfig?: BgConfig;
 }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
   const image = useColorizedFrameImage(
@@ -459,9 +467,15 @@ const ImageFrame = React.memo(function ImageFrame({
     defaultAccent,
     enableSvgTint ? accentColor : ""
   );
+
+  const x = bgConfig?.frameImageX !== undefined ? parseFloat(bgConfig.frameImageX) || 0 : 0;
+  const y = bgConfig?.frameImageY !== undefined ? parseFloat(bgConfig.frameImageY) || 0 : 0;
+  const w = bgConfig?.frameImageWidth !== undefined ? parseFloat(bgConfig.frameImageWidth) || A4_W : A4_W;
+  const h = bgConfig?.frameImageHeight !== undefined ? parseFloat(bgConfig.frameImageHeight) || A4_H : A4_H;
+
   return (
     <Group>
-      {image && <KonvaImage image={image} width={A4_W} height={A4_H} />}
+      {image && <KonvaImage image={image} x={x} y={y} width={w} height={h} />}
     </Group>
   );
 });
@@ -609,9 +623,44 @@ const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
-export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
-  const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore();
-  const theme = useThemeStore();
+export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
+  const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore(useShallow(s => ({
+    formData: s.formData,
+    selectedTemplate: s.selectedTemplate,
+    customTemplates: s.customTemplates,
+    removeSticker: s.removeSticker,
+    updateSticker: s.updateSticker,
+  })));
+  const theme = useThemeStore(useShallow(s => ({
+    bgColors: s.bgColors,
+    selectedPaletteName: s.selectedPaletteName,
+    photoScale: s.photoScale,
+    photoXOffset: s.photoXOffset,
+    photoYOffset: s.photoYOffset,
+    photoCornerRadius: s.photoCornerRadius,
+    photoBorderSize: s.photoBorderSize,
+    bgImageUrl: s.bgImageUrl,
+    bgImageScale: s.bgImageScale,
+    bgImageXOffset: s.bgImageXOffset,
+    bgImageYOffset: s.bgImageYOffset,
+    bgImageOpacity: s.bgImageOpacity,
+    primaryColor: s.primaryColor,
+    secondaryColor: s.secondaryColor,
+    accentColor: s.accentColor,
+    fontSize: s.fontSize,
+    padding: s.padding,
+    paddingLeft: s.paddingLeft,
+    paddingRight: s.paddingRight,
+    paddingTop: s.paddingTop,
+    paddingBottom: s.paddingBottom,
+    paddingY: s.paddingY,
+    fontFamily: s.fontFamily,
+    photoRotation: s.photoRotation,
+    setPhotoXOffset: s.setPhotoXOffset,
+    setPhotoYOffset: s.setPhotoYOffset,
+    setPhotoScale: s.setPhotoScale,
+    setPhotoRotation: s.setPhotoRotation,
+  })));
   const formData = liveFormData ? { ...liveFormData, stickers: storeFormData.stickers } : storeFormData;
   const selectedTemplate = templateId || storeTemplate;
   const templateConfig = getTemplateConfig(selectedTemplate);
@@ -1048,8 +1097,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       const standardHalfW = (contentWidth - 12) / 2;
       const standardLabelW = Math.round(standardHalfW * 0.45);
       const sectionLayouts: any[] = [];
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
       const measure = (text: string, size: number) => {
         // Use a deterministic character-based multiplier to guarantee 100% identical line-wrap 
         // calculations and row coordinates between the client-side canvas and server-side PDF generator.
@@ -1245,22 +1292,6 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
-          {templateConfig.frame.type === "image" ? (
-            <ImageFrame
-              config={templateConfig.frame}
-              primaryColor={primaryColor}
-              accentColor={accentColor}
-              defaultPrimary=""
-              defaultAccent=""
-              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
-            />
-          ) : templateConfig.frame.type === "gradient" ? (
-            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
-          ) : templateConfig.frame.type === "custom" ? (
-            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
-          ) : (
-            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
-          )}
           {(() => {
             const isCustomBg = !!theme.bgImageUrl;
             const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
@@ -1293,6 +1324,23 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
               />
             );
           })()}
+          {templateConfig.frame.type === "image" ? (
+            <ImageFrame
+              config={templateConfig.frame}
+              primaryColor={primaryColor}
+              accentColor={accentColor}
+              defaultPrimary=""
+              defaultAccent=""
+              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
+              bgConfig={templateConfig.bgConfig}
+            />
+          ) : templateConfig.frame.type === "gradient" ? (
+            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
+          ) : templateConfig.frame.type === "custom" ? (
+            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
+          ) : (
+            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
+          )}
 
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />
@@ -1821,7 +1869,7 @@ export function KonvaPreview({ liveFormData, templateId, scale: propScale, isDes
       )}
     </div>
   );
-}
+});
 
 function AlignButton({ icon, onClick, label }: { icon: React.ReactNode, onClick: () => void, label: string }) {
   return (

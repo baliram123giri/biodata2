@@ -256,8 +256,18 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
           width: typeof parsed.width === "number" ? parsed.width : 595,
           height: typeof parsed.height === "number" ? parsed.height : 842,
           opacity: typeof parsed.opacity === "number" ? parsed.opacity : 1.0,
+          fontFamily: parsed.fontFamily || undefined,
+          fontWeight: parsed.fontWeight || undefined,
+          fontSize: typeof parsed.fontSize === "number" ? parsed.fontSize : undefined,
+          alignment: parsed.alignment || undefined,
           sectionOffsets: parsed.sectionOffsets || "{}",
           sectionStyles: parsed.sectionStyles || "{}",
+          imageFrameOffset: parsed.imageFrameOffset || "0",
+          frameImageX: parsed.frameImageX,
+          frameImageY: parsed.frameImageY,
+          frameImageWidth: parsed.frameImageWidth,
+          frameImageHeight: parsed.frameImageHeight,
+          enableSvgTint: parsed.enableSvgTint,
         };
       }
     } catch (e) {

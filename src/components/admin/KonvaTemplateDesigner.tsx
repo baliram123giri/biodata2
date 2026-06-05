@@ -322,8 +322,11 @@ export function KonvaTemplateDesigner({
     ? formState.frameGradientColors.split(",").map((c: string) => c.trim())
     : ["#4F46E5", "#06B6D4"];
 
-  // Watermark SVG image
-  const watermarkSrc = formState.bgImageFile || formState.bgImageUrl || "";
+  // Watermark SVG/WebP image
+  const rawWatermarkSrc = formState.bgImageFile || formState.bgImageUrl || "";
+  const watermarkSrc = rawWatermarkSrc && !rawWatermarkSrc.startsWith("data:") && !rawWatermarkSrc.startsWith("/") && !rawWatermarkSrc.startsWith("http://localhost") && !rawWatermarkSrc.startsWith("http://127.0.0.1")
+    ? `/api/proxy-svg?url=${encodeURIComponent(rawWatermarkSrc)}`
+    : rawWatermarkSrc;
   const [watermarkImage] = useImage(watermarkSrc, watermarkSrc.startsWith("data:") ? undefined : "anonymous");
 
   // Custom frame template PNG/SVG

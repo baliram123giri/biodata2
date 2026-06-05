@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
+import { useShallow } from "zustand/react/shallow";
 import { cn } from "@/lib/utils";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -70,8 +71,8 @@ const StickerItem = React.memo(function StickerItem({
 });
 
 export const StickerSelector = React.memo(function StickerSelector({ onSelect }: { onSelect?: () => void }) {
-  const { addSticker } = useBiodataStore();
-  const theme = useThemeStore();
+  const addSticker = useBiodataStore(s => s.addSticker);
+  const primaryColor = useThemeStore(s => s.primaryColor);
 
   // Fetch dynamic custom stickers from database using useInfiniteQuery
   const {
@@ -180,7 +181,7 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
             <StickerItem
               key={sticker.id}
               sticker={sticker}
-              themeColor={theme.primaryColor}
+              themeColor={primaryColor}
               onAdd={handleAddSticker}
             />
           ))}
