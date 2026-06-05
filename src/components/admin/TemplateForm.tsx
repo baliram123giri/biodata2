@@ -3871,13 +3871,9 @@ function TemplateSvgPreview({
         }
       />
 
-      {/* Background Watermark Image rendering */}
       {(() => {
-        const rawSrc = formState.bgImageFile || formState.bgImageUrl;
-        if (!rawSrc) return null;
-        const src = rawSrc && !rawSrc.startsWith("data:") && !rawSrc.startsWith("/") && !rawSrc.startsWith("http://localhost") && !rawSrc.startsWith("http://127.0.0.1")
-          ? `/api/proxy-svg?url=${encodeURIComponent(rawSrc)}`
-          : rawSrc;
+        const src = formState.bgImageFile || formState.bgImageUrl;
+        if (!src) return null;
         return (
           <image
             href={src}

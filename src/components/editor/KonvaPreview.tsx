@@ -318,11 +318,7 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
   isCustom?: boolean;
 }) {
   const bgUrl = bgConfig?.url || "";
-  const finalUrl = bgUrl && !bgUrl.startsWith("data:") && !bgUrl.startsWith("/") && !bgUrl.startsWith("http://localhost") && !bgUrl.startsWith("http://127.0.0.1")
-    ? `/api/proxy-svg?url=${encodeURIComponent(bgUrl)}`
-    : bgUrl;
-
-  const [image] = useImage(finalUrl, finalUrl.startsWith("data:") ? undefined : "anonymous");
+  const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
   if (!bgConfig || !bgUrl || !image) return null;
 
   let x = bgConfig.x;

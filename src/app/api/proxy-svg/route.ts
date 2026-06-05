@@ -45,13 +45,14 @@ export async function GET(request: Request) {
           headers: {
             "Content-Type": contentType,
             "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "public, max-age=31536000, immutable",
           },
         });
       }
     }
 
-    // Fetch remote URL
-    const res = await fetch(url);
+    // Fetch remote URL with server-side caching
+    const res = await fetch(url, { cache: "force-cache" });
     if (!res.ok) {
       return NextResponse.json({ error: "Failed to fetch resource" }, { status: res.status });
     }
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": respContentType,
         "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (err: any) {

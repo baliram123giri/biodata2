@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { tintSvg } from '@/lib/frame-config';
 
+// Client-side in-memory cache for raw SVG text templates
+const svgCache: Record<string, string> = {};
+
 export function useColorizedFrameImage(
   src: string | null,
   originalPrimary: string,
@@ -36,7 +39,10 @@ export function useColorizedFrameImage(
     const loadAndColorize = async () => {
       try {
         let svgText = "";
-        if (src.startsWith('data:image/svg+xml;base64,')) {
+        
+        if (svgCache[src]) {
+          svgText = svgCache[src];
+        } else if (src.startsWith('data:image/svg+xml;base64,')) {
           const base64Content = src.split(',')[1];
           svgText = atob(base64Content);
         } else if (src.startsWith('data:image/svg+xml;utf8,')) {
@@ -44,11 +50,12 @@ export function useColorizedFrameImage(
         } else if (src.startsWith('data:image/svg+xml,')) {
           svgText = decodeURIComponent(src.split(',')[1]);
         } else {
-          // Fetch from remote URL via proxy to bypass CORS
-          const proxyUrl = `/api/proxy-svg?url=${encodeURIComponent(src)}`;
-          const res = await fetch(proxyUrl);
-          if (!res.ok) throw new Error("Failed to fetch SVG via proxy");
+          // Fetch from remote URL directly
+          const res = await fetch(src);
+          if (!res.ok) throw new Error("Failed to fetch SVG");
           svgText = await res.text();
+          // Cache the successfully retrieved SVG content
+          svgCache[src] = svgText;
         }
 
         if (!isMounted) return;

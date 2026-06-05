@@ -4,11 +4,10 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
-import { useShallow } from "zustand/react/shallow";
 import { cn } from "@/lib/utils";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { STICKER_ASSETS, type StickerAsset } from "@/lib/sticker-assets";
+import { type StickerAsset } from "@/lib/sticker-assets";
 
 const StickerItem = React.memo(function StickerItem({
   sticker,
@@ -84,7 +83,7 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
   } = useInfiniteQuery({
     queryKey: ["stickers"],
     queryFn: async ({ pageParam }) => {
-      const url = pageParam 
+      const url = pageParam
         ? `/api/stickers?limit=10&cursor=${pageParam}`
         : `/api/stickers?limit=10`;
       const res = await fetch(url);
@@ -112,11 +111,11 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
   // Combine static predefined STICKER_ASSETS and paginated custom stickers
   const dynamicStickers = customStickersInfiniteData
     ? customStickersInfiniteData.pages.flatMap((page) => page.stickers.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        type: "image" as const,
-        url: s.url,
-      })))
+      id: s.id,
+      name: s.name,
+      type: "image" as const,
+      url: s.url,
+    })))
     : [];
 
   const combinedStickers = dynamicStickers;
