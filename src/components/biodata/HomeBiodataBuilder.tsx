@@ -11,7 +11,7 @@ import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download, RotateCcw, Sparkles, LayoutDashboard, Wand2, ArrowRight, Eye, Check, Loader2, Star, X, Crown, ShieldCheck } from "lucide-react";
+import { Download, RotateCcw, Sparkles, LayoutDashboard, ArrowRight, Loader2, X, Crown, ShieldCheck, Wand2, Eye } from "lucide-react";
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
@@ -19,7 +19,6 @@ const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsApp
 const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
 const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
-import { toast } from "sonner";
 
 
 import {
@@ -28,8 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose
+  DialogFooter
 } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 
@@ -46,8 +44,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
+import { TemplateFilter } from "@/components/editor/TemplateFilter";
 import { getTemplateConfig, getFrameImageUrl } from "@/lib/frame-config";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 
@@ -65,7 +63,17 @@ const KonvaPreview = dynamic(
  * Includes form, live preview, template picker, and download/export actions.
  */
 export function HomeBiodataBuilder() {
-  const { formData: storedData, selectedTemplate: storedTemplate, customTemplates, setFormData, setSelectedTemplate, resetStore, resetFormDataOnly, resetDesignOnly } = useBiodataStore();
+  const {
+    formData: storedData,
+    selectedTemplate: storedTemplate,
+    customTemplates,
+    setFormData,
+    setSelectedTemplate,
+    resetStore,
+    resetFormDataOnly,
+    resetDesignOnly
+  } = useBiodataStore();
+
   const theme = useThemeStore();
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -480,10 +488,15 @@ export function HomeBiodataBuilder() {
           </SheetTrigger>
           <SheetContent side="right" aria-describedby={undefined} className="w-80 sm:max-w-sm flex flex-col h-full p-0 gap-0">
             <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
-              <SheetTitle className="flex items-center gap-2">
-                <LayoutDashboard className="w-5 h-5 text-primary" />
-                Pick a Template
-              </SheetTitle>
+              <div className="flex items-center justify-between w-full pr-6">
+                <SheetTitle className="flex items-center gap-2">
+                  <LayoutDashboard className="w-5 h-5 text-primary" />
+                  {translateUI("pickTemplate", currentLang)}
+                </SheetTitle>
+                <div className="flex items-center gap-2">
+                  <TemplateFilter />
+                </div>
+              </div>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto p-6 pt-4">
               <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
@@ -521,7 +534,7 @@ export function HomeBiodataBuilder() {
 
             {/* Mobile Preview - shown AFTER the form on small screens (mobile only) */}
             <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-2">
-              <EmbeddedPreviewSection storedTemplate={storedTemplate} />
+              <EmbeddedPreviewSection storedTemplate={storedTemplate} control={methods.control} />
               <Button
                 onClick={handleNavigateToEdit}
                 disabled={isNavigating}
@@ -545,7 +558,7 @@ export function HomeBiodataBuilder() {
             {/* Preview Side - Sticky (tablet and desktop) */}
             <div className="hidden md:block md:col-span-5 md:sticky md:top-24 w-full">
               <div className="flex-1 flex flex-col gap-6 items-center w-full">
-                <EmbeddedPreviewSection storedTemplate={storedTemplate} />
+                <EmbeddedPreviewSection storedTemplate={storedTemplate} control={methods.control} />
 
                 <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
                   <Button
@@ -617,13 +630,18 @@ export function HomeBiodataBuilder() {
                 </SheetTrigger>
                 <SheetContent side="bottom" aria-describedby={undefined} className="h-[80vh] flex flex-col p-0 gap-0 rounded-t-3xl">
                   <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
-                    <SheetTitle className="flex items-center gap-2">
-                      <LayoutDashboard className="w-5 h-5 text-primary" />
-                      {translateUI("pickTemplate", currentLang)}
-                    </SheetTitle>
+                    <div className="flex items-center justify-between w-full pr-6">
+                      <SheetTitle className="flex items-center gap-2">
+                        <LayoutDashboard className="w-5 h-5 text-primary" />
+                        {translateUI("pickTemplate", currentLang)}
+                      </SheetTitle>
+                      <div className="flex items-center gap-2">
+                        <TemplateFilter />
+                      </div>
+                    </div>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto p-6 pt-4">
-                    <TemplateSelector />
+                    <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -832,8 +850,8 @@ export function HomeBiodataBuilder() {
   );
 }
 
-function EmbeddedPreviewSection({ storedTemplate }: { storedTemplate: string }) {
-  const formData = useWatch();
+function EmbeddedPreviewSection({ storedTemplate, control }: { storedTemplate: string; control: any }) {
+  const formData = useWatch({ control });
   const [isClientMounted, setIsClientMounted] = useState(false);
   const customTemplates = useBiodataStore((state) => state.customTemplates);
 

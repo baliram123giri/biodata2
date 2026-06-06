@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { FileText, FileType, ImageIcon, Sparkles, Crown, Check, Tag, X, Lock, Download } from "lucide-react";
+import { FileText, FileType, ImageIcon, Sparkles, Crown, Check, Tag, X, Lock, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { translateUI } from "@/lib/translations";
@@ -73,6 +73,11 @@ export function PriceModal({
 
   React.useEffect(() => {
     if (isOpen) {
+      setCouponCode("");
+      setAppliedCoupon(null);
+      setCouponError(null);
+      setSelectedFormat("combo");
+
       const fetchActiveCoupons = async () => {
         setIsLoadingCoupons(true);
         try {
@@ -236,15 +241,19 @@ export function PriceModal({
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         placeholder="Enter coupon code"
-                        className="flex-1 bg-transparent text-xs font-bold focus:outline-none placeholder:text-muted-foreground/60 border-0 p-1 uppercase"
+                        className="flex-1 min-w-0 bg-transparent text-xs font-bold focus:outline-none placeholder:text-muted-foreground/60 border-0 p-1 uppercase"
                       />
                       <button
                         type="button"
                         onClick={handleApplyCoupon}
                         disabled={!couponCode || isValidating}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-0 cursor-pointer"
+                        className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-0 cursor-pointer flex items-center justify-center min-w-[64px]"
                       >
-                        Apply
+                        {isValidating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        ) : (
+                          "Apply"
+                        )}
                       </button>
                     </div>
                   )}
@@ -322,9 +331,13 @@ export function PriceModal({
                                   type="button"
                                   disabled={isValidating}
                                   onClick={() => handleQuickApply(c.code)}
-                                  className="text-[10px] font-black uppercase text-emerald-600 hover:text-emerald-700 pr-1.5 transition-all active:scale-95 disabled:opacity-50 border-0 cursor-pointer"
+                                  className="shrink-0 text-[10px] font-black uppercase text-emerald-600 hover:text-emerald-700 pr-1.5 transition-all active:scale-95 disabled:opacity-50 border-0 cursor-pointer flex items-center justify-center min-w-[48px]"
                                 >
-                                  Apply
+                                  {isValidating && couponCode === c.code ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400" />
+                                  ) : (
+                                    "Apply"
+                                  )}
                                 </button>
                               </div>
                             ))}

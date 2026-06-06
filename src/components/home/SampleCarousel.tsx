@@ -137,7 +137,7 @@ export function SampleCarousel() {
           </div>
 
           {/* Carousel */}
-          <div className="relative px-8 md:px-12">
+          <div className="relative px-2 md:px-12">
             <Carousel
               setApi={setApi}
               opts={{
@@ -150,7 +150,7 @@ export function SampleCarousel() {
                 {SAMPLES.map((sample) => (
                   <CarouselItem
                     key={sample.id}
-                    className="pl-4 md:pl-6 basis-full sm:basis-1/2 md:basis-1/3"
+                    className="pl-4 md:pl-6 basis-[85%] sm:basis-1/2 md:basis-1/3"
                   >
                     <div className="premium-gold-border premium-gold-card group flex flex-col h-full bg-card border border-[#C9A84C]/20 dark:border-stone-850 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-[#C9A84C]/60 hover:-translate-y-1">
                       {/* Image Preview Area */}
@@ -211,8 +211,8 @@ export function SampleCarousel() {
               </CarouselContent>
 
               {/* Navigation Controls */}
-              <CarouselPrevious className="absolute left-2 md:-left-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 border-[#C9A84C]/45 hover:border-[#C9A84C] shadow-md" />
-              <CarouselNext className="absolute right-2 md:-right-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 border-[#C9A84C]/45 hover:border-[#C9A84C] shadow-md" />
+              <CarouselPrevious className="hidden md:flex absolute -left-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 border-[#C9A84C]/45 hover:border-[#C9A84C] shadow-md" />
+              <CarouselNext className="hidden md:flex absolute -right-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 border-[#C9A84C]/45 hover:border-[#C9A84C] shadow-md" />
             </Carousel>
           </div>
         </div>

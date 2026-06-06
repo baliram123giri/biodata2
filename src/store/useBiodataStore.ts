@@ -49,6 +49,10 @@ interface BiodataState {
   fetchCustomTemplates: () => Promise<void>;
   fetchInitialTemplate: (templateId?: string | null) => Promise<void>;
   fetchCustomStickers: () => Promise<void>;
+  langFilter: string;
+  priceFilter: "all" | "free" | "premium";
+  setLangFilter: (lang: string) => void;
+  setPriceFilter: (price: "all" | "free" | "premium") => void;
   resetStore: () => void;
   resetFormDataOnly: () => void;
   resetDesignOnly: () => void;
@@ -71,6 +75,10 @@ export const useBiodataStore = create<BiodataState>()(
         selectedTemplate: "",
         customTemplates: [],
         customStickers: [],
+        langFilter: "all",
+        priceFilter: "all",
+        setLangFilter: (lang) => set({ langFilter: lang }),
+        setPriceFilter: (price) => set({ priceFilter: price }),
         setFormData: (data) => set((state) => ({
           formData: {
             ...state.formData,

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { MantraAutocomplete } from "./MantraAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2, X } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES, translateUI } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
@@ -32,7 +32,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const currentLang = watchLang || "English";
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
-  const [mantraReligion, setMantraReligion] = useState("Hindu");
   const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
     addSticker: s.addSticker,
     removeSticker: s.removeSticker,
@@ -47,9 +46,9 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const defaultBorderSize = templateConfig?.photo?.showBorder !== false ? 2 : 0;
 
   const { data: mantraStickers, isLoading: isLoadingMantras } = useQuery({
-    queryKey: ["mantraStickers", mantraReligion],
+    queryKey: ["mantraStickers"],
     queryFn: async () => {
-      const res = await fetch(`/api/stickers?type=Mantra&religion=${mantraReligion}&limit=50`);
+      const res = await fetch(`/api/stickers?type=Mantra&limit=100`);
       if (!res.ok) throw new Error("Failed to load mantras");
       const data = await res.json();
       return (data.stickers || []) as { id: string; name: string; url: string }[];
@@ -176,35 +175,50 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
 
                 <div className="flex items-stretch gap-3">
                   {/* Premium Sign Selector Thumbnail Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsMantraDialogOpen(true)}
-                    className={cn(
-                      "relative group w-14 h-14 shrink-0 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden p-1 shadow-sm",
-                      currentMantraSticker
-                        ? "border-primary bg-primary/5 hover:bg-primary/10"
-                        : "border-dashed border-border/80 bg-muted/20 hover:bg-muted/30 hover:border-primary/40"
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsMantraDialogOpen(true)}
+                      className={cn(
+                        "relative group w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden p-1 shadow-sm",
+                        currentMantraSticker
+                          ? "border-primary bg-primary/5 hover:bg-primary/10"
+                          : "border-dashed border-border/80 bg-muted/20 hover:bg-muted/30 hover:border-primary/40"
+                      )}
+                      title={currentMantraSticker ? "Change Sign" : "Add Sign"}
+                    >
+                      {currentMantraSticker ? (
+                        <>
+                          <img
+                            src={currentMantraSticker.type}
+                            alt="Selected religious mantra sign"
+                            className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Pencil className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="text-[9px] font-bold text-muted-foreground group-hover:text-primary tracking-tight mt-0.5 text-center leading-none">Add Sign</span>
+                        </>
+                      )}
+                    </button>
+                    {currentMantraSticker && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSticker(currentMantraSticker.id);
+                        }}
+                        className="absolute -top-1.5 -right-1.5 z-20 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full w-5 h-5 flex items-center justify-center shadow-md transition-transform active:scale-95 cursor-pointer border border-background"
+                        title="Remove Sign"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
                     )}
-                    title={currentMantraSticker ? "Change Sign" : "Add Sign"}
-                  >
-                    {currentMantraSticker ? (
-                      <>
-                        <img
-                          src={currentMantraSticker.type}
-                          alt="Selected religious mantra sign"
-                          className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Pencil className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        <span className="text-[9px] font-bold text-muted-foreground group-hover:text-primary tracking-tight mt-0.5 text-center leading-none">Add Sign</span>
-                      </>
-                    )}
-                  </button>
+                  </div>
 
                   {/* Mantra Input */}
                   <div className="flex-1 flex flex-col justify-center relative">
@@ -220,16 +234,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
                         />
                       )}
                     />
-                    {currentMantraSticker && (
-                      <button
-                        type="button"
-                        onClick={() => removeSticker(currentMantraSticker.id)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive/80 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/10 transition-all z-10 bg-card shadow-sm"
-                        title="Remove Sign"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -260,24 +264,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
 
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin">
             <div className="space-y-3">
-              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Religion</Label>
-              <Select value={mantraReligion} onValueChange={setMantraReligion}>
-                <SelectTrigger className="w-full h-11 border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
-                  <SelectValue placeholder="Select Religion" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Hindu">Hindu</SelectItem>
-                  <SelectItem value="Muslim">Muslim</SelectItem>
-                  <SelectItem value="Sikh">Sikh</SelectItem>
-                  <SelectItem value="Jain">Jain</SelectItem>
-                  <SelectItem value="Christian">Christian</SelectItem>
-                  <SelectItem value="Buddhist">Buddhist</SelectItem>
-                  <SelectItem value="All">All Religions</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 Available Signs
                 {isLoadingMantras && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
@@ -285,7 +271,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
 
               {!isLoadingMantras && mantraStickers?.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-xl bg-muted/10">
-                  No signs available for {mantraReligion} yet.
+                  No signs available yet.
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
@@ -299,7 +285,9 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
                           if (currentMantraSticker) {
                             removeSticker(currentMantraSticker.id);
                           }
-                          addSticker({ type: sticker.url, x: 250, y: 50, scaleX: 1, scaleY: 1, isMantra: true });
+                          if (!isSelected) {
+                            addSticker({ type: sticker.url, x: 250, y: 50, scaleX: 1, scaleY: 1, isMantra: true });
+                          }
                           setIsMantraDialogOpen(false);
                         }}
                         className={cn(
@@ -323,10 +311,28 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
             </div>
           </div>
 
-          <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex sm:justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsMantraDialogOpen(false)} className="w-full sm:w-auto">
-              Cancel
-            </Button>
+          <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-2">
+            {currentMantraSticker ? (
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    removeSticker(currentMantraSticker.id);
+                  }}
+                  className="w-full sm:w-auto rounded-xl font-bold transition-all shadow-sm px-4"
+                >
+                  Remove Current Sign
+                </Button>
+              </DialogClose>
+            ) : (
+              <div className="hidden sm:block" />
+            )}
+            <DialogClose asChild>
+              <Button type="button" variant="outline" className="w-full sm:w-28 rounded-xl border-border/60 hover:bg-muted/50 font-bold transition-all text-muted-foreground hover:text-foreground shadow-sm">
+                Cancel
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -336,7 +342,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
 
 const FieldSection = memo(function FieldSection({ name, title, currentLang, icon }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string, icon: React.ReactNode }) {
   const { control, register } = useFormContext<BiodataFormValues>();
-  const { fields, append, remove, swap } = useFieldArray({
+  const { fields, append, remove, swap, update } = useFieldArray({
     control,
     name,
   });
@@ -597,16 +603,18 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
             }}
           />
           <DialogFooter>
-            <Button size="sm" variant="outline" onClick={() => {
-              if (dialogState) {
-                const currentValue = getValues(`${name}.${dialogState.index}.value` as any);
-                if (currentValue === "Other") {
-                  setValue(`${name}.${dialogState.index}.value` as any, "");
+            <DialogClose asChild>
+              <Button size="sm" variant="outline" onClick={() => {
+                if (dialogState) {
+                  const currentValue = getValues(`${name}.${dialogState.index}.value` as any);
+                  if (currentValue === "Other") {
+                    setValue(`${name}.${dialogState.index}.value` as any, "");
+                  }
                 }
-              }
-              setDialogState(null);
-              setCustomInput("");
-            }}>Cancel</Button>
+                setDialogState(null);
+                setCustomInput("");
+              }} className="w-full sm:w-24 rounded-xl border-border/60 hover:bg-muted/50 font-bold transition-all text-muted-foreground hover:text-foreground shadow-sm">Cancel</Button>
+            </DialogClose>
             <Button size="sm" id="add-custom-option-btn" onClick={() => {
               if (customInput.trim() && dialogState) {
                 const newOptions = [...dialogState.options];
@@ -616,12 +624,18 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                 } else {
                   newOptions.push(customInput.trim());
                 }
-                setValue(`${name}.${dialogState.index}.options` as any, newOptions);
-                setValue(`${name}.${dialogState.index}.value` as any, customInput.trim());
+                
+                // Use useFieldArray's update to correctly modify the field's options and selected value in sync
+                update(dialogState.index, {
+                  ...fields[dialogState.index],
+                  options: newOptions,
+                  value: customInput.trim()
+                });
+
                 setCustomInput("");
                 setDialogState(null);
               }
-            }}>Add</Button>
+            }} className="w-full sm:w-24 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

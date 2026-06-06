@@ -27,6 +27,9 @@ import {
   Loader2,
   ShieldCheck,
   Trash2,
+  Globe,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -53,6 +56,7 @@ import { ChromePicker } from "react-color";
 const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
 const StickerSelector = dynamic(() => import("@/components/editor/StickerSelector").then(mod => mod.StickerSelector));
 const BackgroundSelector = dynamic(() => import("@/components/editor/BackgroundSelector").then(mod => mod.BackgroundSelector));
+import { TemplateFilter } from "@/components/editor/TemplateFilter";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
@@ -77,7 +81,12 @@ import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 import { translateUI } from "@/lib/translations";
 export default function EditPage() {
   const router = useRouter();
-  const { formData, selectedTemplate, customTemplates, setFormData } = useBiodataStore();
+  const {
+    formData,
+    selectedTemplate,
+    customTemplates,
+    setFormData
+  } = useBiodataStore();
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
     defaultValues: defaultBiodataValues,
@@ -395,7 +404,8 @@ export default function EditPage() {
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
-      setIsRightOpen(false);
+      const searchParams = new URLSearchParams(window.location.search);
+      setIsRightOpen(searchParams.has("template"));
     }
 
     // Disable browser pull-to-refresh on this page
@@ -637,14 +647,14 @@ export default function EditPage() {
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0 mt-4">
                   <DialogClose asChild>
-                    <Button variant="outline">{translateUI("cancel", currentLang)}</Button>
+                    <Button variant="outline" className="w-full sm:w-28 rounded-xl border-border/60 hover:bg-muted/50 font-bold transition-all text-muted-foreground hover:text-foreground shadow-sm">{translateUI("cancel", currentLang)}</Button>
                   </DialogClose>
                   <DialogClose asChild onClick={() => {
                     useBiodataStore.getState().resetDesignOnly();
                     useThemeStore.getState().resetTheme();
                     methods.reset(useBiodataStore.getState().formData);
                   }}>
-                    <Button className="relative overflow-hidden bg-gradient-primary text-white border-0">
+                    <Button className="relative overflow-hidden bg-gradient-primary text-white border-0 w-full sm:w-28 rounded-xl font-bold shadow-sm">
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
                       <span className="relative">{translateUI("resetDesignBtn", currentLang)}</span>
                     </Button>
@@ -811,13 +821,23 @@ export default function EditPage() {
         >
           {/* Header Panel */}
           <div className="select-none shrink-0 border-b border-stitch-outline/5">
-            <div className="p-6 pb-4 relative">
-              <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
-                {translateUI(activeTab, currentLang)}
-              </h2>
-              <p className="text-[11px] text-stitch-on-surface-variant font-bold uppercase tracking-widest mt-1">
-                {translateUI("customizeDesignProperties", currentLang)}
-              </p>
+            <div className="p-6 pb-4 relative flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
+                  {translateUI(activeTab, currentLang)}
+                </h2>
+                <p className="text-[11px] text-stitch-on-surface-variant font-bold uppercase tracking-widest mt-1">
+                  {activeTab === "fields"
+                    ? translateUI("formInputsAndDetails", currentLang)
+                    : translateUI("customizeDesignProperties", currentLang)}
+                </p>
+              </div>
+
+              {activeTab === "templates" && (
+                <div className="mr-8 lg:mr-0">
+                  <TemplateFilter />
+                </div>
+              )}
 
               {/* Close Button for Mobile Drawer */}
               <button
@@ -836,12 +856,6 @@ export default function EditPage() {
 
               {activeTab === "fields" && (
                 <div className="flex flex-col gap-6 text-left">
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-[10px] uppercase tracking-[0.2em] font-bold text-stitch-on-surface-variant">{translateUI("editFormDetails", currentLang)}</Label>
-                    <p className="text-[10.5px] text-stitch-on-surface-variant/70 leading-relaxed italic">
-                      {translateUI("modifyBiodataInstructions", currentLang)}
-                    </p>
-                  </div>
                   <FormProvider {...methods}>
                     <BiodataForm />
                   </FormProvider>
@@ -852,10 +866,10 @@ export default function EditPage() {
                 <div className="flex flex-col gap-6">
                   <Tabs defaultValue="bg" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl mb-6">
-                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
+                      <TabsTrigger value="bg" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer [&:not([data-active])]:hover:!bg-transparent data-active:!bg-gradient-to-r data-active:from-pink-500 data-active:via-rose-500 data-active:to-amber-500 data-active:text-white data-active:shadow-[0_4px_12px_rgba(244,63,94,0.25)] data-active:hover:!bg-gradient-to-r data-active:hover:from-pink-500 data-active:hover:via-rose-500 data-active:hover:to-amber-500">
                         {translateUI("backgroundThemes", currentLang)}
                       </TabsTrigger>
-                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_12px_rgba(244,63,94,0.25)]">
+                      <TabsTrigger value="text" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer [&:not([data-active])]:hover:!bg-transparent data-active:!bg-gradient-to-r data-active:from-pink-500 data-active:via-rose-500 data-active:to-amber-500 data-active:text-white data-active:shadow-[0_4px_12px_rgba(244,63,94,0.25)] data-active:hover:!bg-gradient-to-r data-active:hover:from-pink-500 data-active:hover:via-rose-500 data-active:hover:to-amber-500">
                         {translateUI("textThemes", currentLang)}
                       </TabsTrigger>
                     </TabsList>
@@ -1220,10 +1234,10 @@ export default function EditPage() {
               {activeTab === "graphics" && (
                 <Tabs defaultValue="stickers" className="w-full flex flex-col gap-4">
                   <TabsList className="grid w-full grid-cols-2 bg-stitch-surface-variant/20 p-1 rounded-xl">
-                    <TabsTrigger value="stickers" className="font-bold py-2 rounded-lg transition-all text-xs">
+                    <TabsTrigger value="stickers" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer [&:not([data-active])]:hover:!bg-transparent data-active:!bg-gradient-to-r data-active:from-pink-500 data-active:via-rose-500 data-active:to-amber-500 data-active:text-white data-active:shadow-[0_4px_12px_rgba(244,63,94,0.25)] data-active:hover:!bg-gradient-to-r data-active:hover:from-pink-500 data-active:hover:via-rose-500 data-active:hover:to-amber-500">
                       {translateUI("stickers", currentLang)}
                     </TabsTrigger>
-                    <TabsTrigger value="backgrounds" className="font-bold py-2 rounded-lg transition-all text-xs">
+                    <TabsTrigger value="backgrounds" className="font-bold py-2 rounded-lg transition-all text-xs cursor-pointer [&:not([data-active])]:hover:!bg-transparent data-active:!bg-gradient-to-r data-active:from-pink-500 data-active:via-rose-500 data-active:to-amber-500 data-active:text-white data-active:shadow-[0_4px_12px_rgba(244,63,94,0.25)] data-active:hover:!bg-gradient-to-r data-active:hover:from-pink-500 data-active:hover:via-rose-500 data-active:hover:to-amber-500">
                       {translateUI("bgImages", currentLang)}
                     </TabsTrigger>
                   </TabsList>

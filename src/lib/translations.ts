@@ -15,6 +15,7 @@ export const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
 
 export function translateDynamicOption(opt: string, t: Record<string, string>): string {
   if (!opt) return opt;
+  if (opt.trim().toLowerCase() === "other") return opt;
   if (t[opt]) return t[opt];
 
   let translated = opt;
@@ -2760,9 +2761,21 @@ export function translateUI(key: string, lang: string): string {
       "বাংলা": "ডিজাইন বৈশিষ্ট্য কাস্টমাইজ করুন",
       "தமிழ்": "வடிவமைப்பு பண்புகளைத் தனிப்பயனாக்கு",
       "తెలుగు": "డిజైన్ లక్షణాలను అనుకూలీకరించండి",
-      "ಕನ್ನಡ": "ವಿನ್ಯಾಸ ಗುಣಲಕ್ಷಣಗಳನ್ನು কಸ್ಟಮೈಸ್ ಮಾಡಿ",
+      "ಕನ್ನಡ": "ವಿನ್ಯಾಸ ಗುಣಲಕ್ಷಣಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
       "ਪੰਜਾਬੀ": "ਡਿਜ਼ਾਈਨ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਨੂੰ ਕਸटਮਾਈਜ਼ ਕਰੋ",
       "اردو": "ڈیزائن کی خصوصیات کو تبدیل کریں"
+    },
+    "formInputsAndDetails": {
+      "English": "Form Inputs & Details",
+      "हिंदी": "फ़ॉर्म इनपुट और विवरण",
+      "मराठी": "फॉर्म इनपुट आणि तपशील",
+      "ગુજરાતી": "ફોર્મ ઇનપુટ્સ અને વિગતો",
+      "বাংলা": "ফর্ম ইনপুট এবং বিবরণ",
+      "தமிழ்": "படிவ உள்ளீடுகள் மற்றும் விவரங்கள்",
+      "తెలుగు": "ఫారమ్ ఇన్‌పుట్‌లు & వివరాలు",
+      "ಕನ್ನಡ": "ಫಾರ್ಮ್ ಇನ್‌ಪುಟ್‌ಗಳು ಮತ್ತು ವಿವರಗಳು",
+      "ਪੰਜਾਬੀ": "ਫਾਰਮ ਇਨਪੁਟ ਅਤੇ ਵੇਰਵੇ",
+      "اردو": "فارم ان پٹ اور تفصیلات"
     },
     "editFormDetails": {
       "English": "Edit Form Details",
