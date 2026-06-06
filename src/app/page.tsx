@@ -248,7 +248,7 @@ export default function Home() {
         <div className="container mx-auto max-w-6xl">
           {/* Section Header */}
           <div className="space-y-2 mb-8 md:mb-10 text-left">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[#8A7233] dark:text-[#E6C97A] block font-sans">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-[#9B1B30] dark:text-[#E6C97A] block font-sans">
               WHO IS THIS FOR
             </span>
             <h2 className="text-[22px] md:text-[26px] font-medium text-stone-900 dark:text-white tracking-tight leading-snug font-sans">
@@ -439,7 +439,7 @@ export default function Home() {
       >
         <div className="container mx-auto max-w-6xl space-y-6 relative z-10 text-stone-700 dark:text-stone-300">
           {/* Label */}
-          <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[#8A7233] dark:text-[#E6C97A] mb-2 font-sans">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-[#9B1B30] dark:text-[#E6C97A] mb-2 font-sans">
             know before you start
           </p>
 

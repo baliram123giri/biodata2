@@ -28,51 +28,51 @@ const SAMPLES = [
   {
     id: "1",
     src: "/preview_samples/Baliram Giri.jpeg",
-    title: "Classic Traditional Gold",
-    community: "Hindu / Marathi",
-    description: "Elegant golden border pattern with traditional motifs and clean typography."
+    title: "Elegant Marathi Biodata Sample",
+    community: "Marathi / Hindu",
+    description: "A complete pre-filled matrimonial profile showcasing clean formatting, elegant styling, and proper photo frame integration."
   },
   {
     id: "2",
     src: "/preview_samples/effqtr5upgc4k4sp87cp.png",
-    title: "Royal Crimson & Saffron",
-    community: "Hindu Traditional",
-    description: "Deep crimson borders paired with traditional saffron accents."
+    title: "Shubh Vivah Parichay",
+    community: "Marathi / Regional",
+    description: "A complete Marathi marriage biodata template featuring a crimson border, floral corner motifs, and traditional styling."
   },
   {
     id: "3",
     src: "/preview_samples/ewqlvpmwlvhpijrs72w6.png",
-    title: "Elegant Floral Pastel",
-    community: "Modern / Universal",
-    description: "Soft pastel floral corners designed for a contemporary look."
+    title: "Watercolor Blue & Orange",
+    community: "Hindi / Universal",
+    description: "A clean and elegant Hindi marriage biodata template featuring a soft watercolor background with blue and orange tones."
   },
   {
     id: "4",
     src: "/preview_samples/nbmzkftttzofbvuis0uw.png",
-    title: "Peacock Royal Blue",
-    community: "Premium Designer",
-    description: "Stunning royal blue and gold accents inspired by peacock feathers."
+    title: "Royal Gold Marathi Style",
+    community: "Hindi / Marathi",
+    description: "A traditional Hindi marriage biodata template with deep maroon backgrounds, gold borders, and clear layout."
   },
   {
     id: "5",
     src: "/preview_samples/template_preview_hq_1780654994849.png",
-    title: "Premium Marigold Garland",
-    community: "Festive Traditional",
-    description: "Intricate marigold patterns representing prosperity and new beginnings."
+    title: "Premium Floral Heritage",
+    community: "Traditional Hindu",
+    description: "A premium matrimonial biodata design featuring intricate floral borders and gold ornamental frame accents."
   },
   {
     id: "6",
     src: "/preview_samples/vysbvo5lwv7wxhj2ahzw.png",
-    title: "Elegant Arch Design",
-    community: "Classic Indian",
-    description: "A traditional palace arch layout frame framing the details beautifully."
+    title: "Traditional Marathi Parichay",
+    community: "Marathi / Regional",
+    description: "A beautifully structured marriage biodata template crafted for Marathi families, featuring elegant gold ornamental borders."
   },
   {
     id: "7",
     src: "/preview_samples/मराठी विवाह परिचय पत्र Template _ Marathi Marriage Biodata Design 2026 – Printable PDF_preview_hq_1780753314877 (1).png",
-    title: "Marathi Vivah Patrika",
-    community: "Marathi / Regional",
-    description: "Beautifully structured regional language template with classic accents."
+    title: "Marathi Vivah Parichay Patra",
+    community: "मराठी / Regional",
+    description: "The most trusted Marathi matrimonial biodata template of 2026, optimized for high-quality printing and sharing."
   }
 ];
 
@@ -154,7 +154,7 @@ export function SampleCarousel() {
                   >
                     <div className="premium-gold-border premium-gold-card group flex flex-col h-full bg-card border border-[#C9A84C]/20 dark:border-stone-850 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-[#C9A84C]/60 hover:-translate-y-1">
                       {/* Image Preview Area */}
-                      <div 
+                      <div
                         className="relative aspect-[595/842] w-full overflow-hidden bg-stone-50 dark:bg-stone-900 border-b border-[#C9A84C]/10 cursor-pointer"
                         onClick={() => {
                           setSelectedImage(sample.src);
