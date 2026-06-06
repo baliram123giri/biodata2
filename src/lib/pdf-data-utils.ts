@@ -29,17 +29,33 @@ export const processPDFField = (
   let displayLabel = field.label;
   let logoUrl;
 
-  // 2. Translate Label
+  // 2. Translate Label if it hasn't been customized by the user
   const fieldKey = field.id || (field.label?.toLowerCase() === "company name" ? "companyName" : "");
-  if (fieldKey && t[fieldKey]) {
-    displayLabel = t[fieldKey];
-  } else if (t[field.label]) {
-    displayLabel = t[field.label];
-  } else {
-    const englishT = translations["English"];
-    const key = Object.keys(englishT).find(k => englishT[k] === field.label);
-    if (key && t[key]) {
-      displayLabel = t[key];
+  
+  let isStandard = false;
+  if (fieldKey) {
+    for (const lang of Object.keys(translations)) {
+      const langT = translations[lang];
+      if (langT && (langT[fieldKey] === field.label || langT[field.id] === field.label)) {
+        isStandard = true;
+        break;
+      }
+    }
+  }
+
+  // If the label matches a standard translation in some language, translate it.
+  // Otherwise, it was customized, so preserve the user's custom label.
+  if (isStandard) {
+    if (fieldKey && t[fieldKey]) {
+      displayLabel = t[fieldKey];
+    } else if (t[field.label]) {
+      displayLabel = t[field.label];
+    } else {
+      const englishT = translations["English"];
+      const key = Object.keys(englishT).find(k => englishT[k] === field.label);
+      if (key && t[key]) {
+        displayLabel = t[key];
+      }
     }
   }
 

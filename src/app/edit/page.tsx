@@ -143,6 +143,24 @@ export default function EditPage() {
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [hasRated, setHasRated] = useState(false);
   const [filename, setFilename] = useState("biodata");
+  const [pendingAction, setPendingAction] = useState<"download" | "whatsapp">("download");
+  const pendingWhatsAppRef = useRef<{
+    phoneNumber: string;
+    countryCode: string;
+    resolve: (res: any) => void;
+    reject: (err: any) => void;
+  } | null>(null);
+
+  const handlePriceModalOpenChange = (open: boolean) => {
+    setIsPriceModalOpen(open);
+    if (!open) {
+      if (pendingWhatsAppRef.current) {
+        pendingWhatsAppRef.current.resolve({ success: false, error: "Payment cancelled" });
+        pendingWhatsAppRef.current = null;
+      }
+      setPendingAction("download");
+    }
+  };
 
   // AI Photo Generator states removed (migrated to BiodataForm)
 
@@ -170,7 +188,7 @@ export default function EditPage() {
     };
   }, [methods, setFormData]);
 
-  const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { handleDownload: triggerDownload, sendWhatsAppDelivery, isGenerating } = useDownloadBiodata();
   const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep, paymentIdInfo, setPaymentStep, setIsProcessing } = useRazorpayPayment();
 
   const processPremiumPaymentAndDownload = async (currentData: any, format: DownloadFormat, modalFilename: string, couponCode?: string) => {
@@ -219,12 +237,60 @@ export default function EditPage() {
           if (result && !result.success) {
             throw result.error || new Error("Download failed");
           }
+
+          if (pendingAction === "whatsapp" && pendingWhatsAppRef.current) {
+            try {
+              const res = await sendWhatsAppDelivery(
+                pendingWhatsAppRef.current.phoneNumber,
+                pendingWhatsAppRef.current.countryCode,
+                currentData,
+                selectedTemplate,
+                theme
+              );
+              pendingWhatsAppRef.current.resolve(res);
+            } catch (err: any) {
+              pendingWhatsAppRef.current.reject(err);
+            } finally {
+              pendingWhatsAppRef.current = null;
+            }
+          }
+
           setIsFeedbackOpen(true);
         }
       });
     } catch (paymentErr) {
       console.error("Payment failed or cancelled:", paymentErr);
+      if (pendingWhatsAppRef.current) {
+        pendingWhatsAppRef.current.resolve({ success: false, error: "Payment failed or cancelled" });
+        pendingWhatsAppRef.current = null;
+      }
     }
+  };
+
+  const handleSubmitWhatsApp = (phoneNumber: string, countryCode: string) => {
+    return new Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }>(async (resolve, reject) => {
+      const currentData = methods.getValues();
+      const nameField =
+        currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+        "biodata";
+      const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+      setFilename(cleanName);
+
+      if (activeTemplate?.isPremium) {
+        pendingWhatsAppRef.current = { phoneNumber, countryCode, resolve, reject };
+        setPendingAction("whatsapp");
+        setIsPriceModalOpen(true);
+      } else {
+        // Free template: send immediately
+        try {
+          const res = await sendWhatsAppDelivery(phoneNumber, countryCode, currentData, selectedTemplate, theme);
+          resolve(res);
+          setIsFeedbackOpen(true);
+        } catch (err: any) {
+          reject(err);
+        }
+      }
+    });
   };
 
   const [zoom, setZoom] = useState(1);
@@ -1175,7 +1241,7 @@ export default function EditPage() {
               {activeTab === "whatsapp" && (
                 <div className="flex flex-col gap-6">
                   <WhatsAppDeliveryCard
-                    onTriggerDownload={handleDownload}
+                    onSubmitWhatsApp={handleSubmitWhatsApp}
                     isGenerating={isGenerating}
                   />
                 </div>
@@ -1206,7 +1272,7 @@ export default function EditPage() {
       />
       <PriceModal
         isOpen={isPriceModalOpen}
-        onOpenChange={setIsPriceModalOpen}
+        onOpenChange={handlePriceModalOpenChange}
         isPremium={activeTemplate?.isPremium}
         isGenerating={isGenerating}
         onSelectFormat={async (format, couponCode) => {

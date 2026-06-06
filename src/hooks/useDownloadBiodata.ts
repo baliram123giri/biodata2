@@ -391,8 +391,120 @@ export function useDownloadBiodata() {
     return { success: true };
   };
 
+  const sendWhatsAppDelivery = async (
+    phoneNumber: string,
+    countryCode: string,
+    formData: any,
+    templateId: string,
+    themeData: any
+  ): Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }> => {
+    try {
+      const { formData: preparedFormData, theme: preparedTheme } = await prepareDataForGeneration(formData, themeData, templateId);
+
+      const response = await fetch("/api/whatsapp-deliver", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber,
+          countryCode,
+          formData: preparedFormData,
+          templateId,
+          theme: preparedTheme,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorJson = await response.json();
+        throw new Error(errorJson.details || errorJson.error || "Failed to deliver PDF via WhatsApp Cloud API");
+      }
+
+      const resJson = await response.json();
+
+      if (resJson.fallback) {
+        const nameField =
+          preparedFormData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+          "biodata";
+
+        const pdfBlob = await generatePdfBlob(preparedFormData, templateId, preparedTheme);
+        
+        const getTemplateMessage = (name: string, url?: string) => {
+          let msg = `*Matrimonial Biodata* 💍\n\n`;
+          msg += `Hello! 🙏 Please find attached the matrimonial biodata of *${name}* for your review.\n\n`;
+          msg += `We hope you find the profile suitable. Looking forward to connecting and discussing further.\n\n`;
+          if (url) {
+            msg += `📄 View PDF Online: ${url}\n\n`;
+          }
+          msg += `Created via biodata99.com`;
+          return msg;
+        };
+
+        let downloadUrl = "";
+
+        try {
+          const body = new FormData();
+          body.append("file", pdfBlob, `${nameField}.pdf`);
+
+          const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
+            method: "POST",
+            body: body,
+          });
+
+          if (uploadRes.ok) {
+            const uploadJson = await uploadRes.json();
+            if (uploadJson.status === "success" && uploadJson.data?.url) {
+              downloadUrl = uploadJson.data.url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/");
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("tmpfiles.org upload failed, trying file.io", uploadErr);
+        }
+
+        if (!downloadUrl) {
+          try {
+            const body = new FormData();
+            body.append("file", pdfBlob, `${nameField}.pdf`);
+            body.append("expiry", "1d");
+
+            const uploadRes = await fetch("https://file.io", {
+              method: "POST",
+              body: body,
+            });
+
+            if (uploadRes.ok) {
+              const uploadJson = await uploadRes.json();
+              if (uploadJson.success) {
+                downloadUrl = uploadJson.link;
+              }
+            }
+          } catch (uploadErr) {
+            console.warn("file.io upload failed/blocked", uploadErr);
+          }
+        }
+
+        const formattedNum = `${countryCode.replace("+", "")}${phoneNumber.trim()}`;
+        const shareText = getTemplateMessage(nameField, downloadUrl);
+        const shareTextEncoded = encodeURIComponent(shareText);
+
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const whatsappUrl = isMobile
+          ? `whatsapp://send?phone=${formattedNum}&text=${shareTextEncoded}`
+          : `https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`;
+
+        return { success: true, fallback: true, whatsappUrl };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error("sendWhatsAppDelivery error:", err);
+      return { success: false, error: err instanceof Error ? err.message : "Failed to deliver WhatsApp message" };
+    }
+  };
+
   return {
     handleDownload,
+    sendWhatsAppDelivery,
     isGenerating,
   };
 }

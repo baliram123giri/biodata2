@@ -69,7 +69,7 @@ export function HomeBiodataBuilder() {
   const theme = useThemeStore();
   const prevTemplateRef = useRef<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const { handleDownload: triggerDownload, isGenerating } = useDownloadBiodata();
+  const { handleDownload: triggerDownload, sendWhatsAppDelivery, isGenerating } = useDownloadBiodata();
   const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep, paymentIdInfo, setPaymentStep, setIsProcessing } = useRazorpayPayment();
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -79,6 +79,50 @@ export function HomeBiodataBuilder() {
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [filename, setFilename] = useState("biodata");
+  const [pendingAction, setPendingAction] = useState<"download" | "whatsapp">("download");
+  const pendingWhatsAppRef = useRef<{
+    phoneNumber: string;
+    countryCode: string;
+    resolve: (res: any) => void;
+    reject: (err: any) => void;
+  } | null>(null);
+
+  const handlePriceModalOpenChange = (open: boolean) => {
+    setIsPriceModalOpen(open);
+    if (!open) {
+      if (pendingWhatsAppRef.current) {
+        pendingWhatsAppRef.current.resolve({ success: false, error: "Payment cancelled" });
+        pendingWhatsAppRef.current = null;
+      }
+      setPendingAction("download");
+    }
+  };
+
+  const handleSubmitWhatsApp = (phoneNumber: string, countryCode: string) => {
+    return new Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }>(async (resolve, reject) => {
+      const currentData = methods.getValues();
+      const nameField =
+        currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+        "biodata";
+      const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+      setFilename(cleanName);
+
+      if (activeTemplate?.isPremium) {
+        pendingWhatsAppRef.current = { phoneNumber, countryCode, resolve, reject };
+        setPendingAction("whatsapp");
+        setIsPriceModalOpen(true);
+      } else {
+        // Free template: send immediately
+        try {
+          const res = await sendWhatsAppDelivery(phoneNumber, countryCode, currentData, storedTemplate, theme);
+          resolve(res);
+          setIsFeedbackOpen(true);
+        } catch (err: any) {
+          reject(err);
+        }
+      }
+    });
+  };
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -284,16 +328,38 @@ export function HomeBiodataBuilder() {
         customerPhone: properPhone,
         currency: activeTemplate?.currency || "INR",
         couponCode: couponCode,
-        onDownload: async () => {
-          const result = await triggerDownload(currentData, storedTemplate, format, modalFilename);
+        onDownload: async (orderId?: string) => {
+          const result = await triggerDownload(currentData, storedTemplate, format, modalFilename, orderId);
           if (result && !result.success) {
             throw result.error || new Error("Download failed");
           }
+
+          if (pendingAction === "whatsapp" && pendingWhatsAppRef.current) {
+            try {
+              const res = await sendWhatsAppDelivery(
+                pendingWhatsAppRef.current.phoneNumber,
+                pendingWhatsAppRef.current.countryCode,
+                currentData,
+                storedTemplate,
+                theme
+              );
+              pendingWhatsAppRef.current.resolve(res);
+            } catch (err: any) {
+              pendingWhatsAppRef.current.reject(err);
+            } finally {
+              pendingWhatsAppRef.current = null;
+            }
+          }
+
           setIsFeedbackOpen(true);
         }
       });
     } catch (paymentErr) {
       console.error("Payment failed or cancelled:", paymentErr);
+      if (pendingWhatsAppRef.current) {
+        pendingWhatsAppRef.current.resolve({ success: false, error: "Payment failed or cancelled" });
+        pendingWhatsAppRef.current = null;
+      }
     }
   };
 
@@ -525,7 +591,7 @@ export function HomeBiodataBuilder() {
           {/* Get on WhatsApp Widget (Matching mockup) */}
           <div className="mt-6 md:mt-32 px-2 sm:px-4 w-full flex justify-center">
             <WhatsAppDeliveryCard
-              onTriggerDownload={handleDownload}
+              onSubmitWhatsApp={handleSubmitWhatsApp}
               isGenerating={isGenerating}
             />
           </div>
@@ -659,7 +725,7 @@ export function HomeBiodataBuilder() {
         />
         <PriceModal
           isOpen={isPriceModalOpen}
-          onOpenChange={setIsPriceModalOpen}
+          onOpenChange={handlePriceModalOpenChange}
           isPremium={activeTemplate?.isPremium}
           isGenerating={isGenerating}
           onSelectFormat={async (format, couponCode) => {

@@ -25,13 +25,13 @@ function WhatsAppLogo({ className }: { className?: string }) {
 }
 
 interface WhatsAppDeliveryCardProps {
-  onTriggerDownload?: (format: "pdf" | "jpg") => Promise<void>;
+  onSubmitWhatsApp?: (phoneNumber: string, countryCode: string) => Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }>;
   isGenerating?: boolean;
   className?: string;
 }
 
 export function WhatsAppDeliveryCard({
-  onTriggerDownload,
+  onSubmitWhatsApp,
   isGenerating = false,
   className,
 }: WhatsAppDeliveryCardProps) {
@@ -61,128 +61,146 @@ export function WhatsAppDeliveryCard({
     setErrorMessage("");
 
     try {
-      // 1. Retrieve details from stores
-      const storeData = useBiodataStore.getState();
-      const themeData = useThemeStore.getState();
-      const formData = storeData.formData;
-      const selectedTemplate = storeData.selectedTemplate;
-
-      // Pre-resolve all assets (background watermark, field logos, and stickers) client-side
-      const { formData: preparedFormData, theme: preparedTheme } = await prepareDataForGeneration(formData, themeData, selectedTemplate);
-
-      // 2. Call the server-side whatsapp-deliver API
-      const response = await fetch("/api/whatsapp-deliver", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber,
-          countryCode,
-          formData: preparedFormData,
-          templateId: selectedTemplate,
-          theme: preparedTheme,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorJson = await response.json();
-        throw new Error(errorJson.details || errorJson.error || "Failed to deliver PDF via WhatsApp Cloud API");
-      }
-
-      const resJson = await response.json();
-
-      // 3. Check if server requested Client-Side fallback
-      if (resJson.fallback) {
-        const nameField =
-          preparedFormData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
-          "biodata";
-
-        // Generate PDF Blob on client - passing the pre-fetched objects directly
-        const pdfBlob = await generatePdfBlob(preparedFormData, selectedTemplate, preparedTheme);
-        // Prefilled template message builder
-        const getTemplateMessage = (name: string, url?: string) => {
-          let msg = `*Matrimonial Biodata* 💍\n\n`;
-          msg += `Hello! 🙏 Please find attached the matrimonial biodata of *${name}* for your review.\n\n`;
-          msg += `We hope you find the profile suitable. Looking forward to connecting and discussing further.\n\n`;
-          if (url) {
-            msg += `📄 View PDF Online: ${url}\n\n`;
+      if (onSubmitWhatsApp) {
+        const resJson = await onSubmitWhatsApp(phoneNumber, countryCode);
+        if (!resJson.success) {
+          throw new Error(resJson.error || "Failed to deliver WhatsApp message");
+        }
+        if (resJson.fallback && resJson.whatsappUrl) {
+          setStatus("redirecting");
+          const opened = window.open(resJson.whatsappUrl, "_blank");
+          if (!opened || opened.closed || typeof opened.closed === "undefined") {
+            setBlockedPopupUrl(resJson.whatsappUrl);
+            setShowBlockedDialog(true);
           }
-          msg += `Created via biodata99.com`;
-          return msg;
-        };
+        }
+        setStatus("success");
+        setTimeout(() => setStatus("idle"), 5000);
+      } else {
+        // Fallback: local implementation without parent interception
+        // 1. Retrieve details from stores
+        const storeData = useBiodataStore.getState();
+        const themeData = useThemeStore.getState();
+        const formData = storeData.formData;
+        const selectedTemplate = storeData.selectedTemplate;
 
-        // Change status to uploading client-side for desktop/non-compatible browsers
-        setStatus("uploading");
+        // Pre-resolve all assets (background watermark, field logos, and stickers) client-side
+        const { formData: preparedFormData, theme: preparedTheme } = await prepareDataForGeneration(formData, themeData, selectedTemplate);
 
-        let downloadUrl = "";
+        // 2. Call the server-side whatsapp-deliver API
+        const response = await fetch("/api/whatsapp-deliver", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phoneNumber,
+            countryCode,
+            formData: preparedFormData,
+            templateId: selectedTemplate,
+            theme: preparedTheme,
+          }),
+        });
 
-        // 1. Try uploading to tmpfiles.org (high rate limits, CORS supported)
-        try {
-          const body = new FormData();
-          body.append("file", pdfBlob, `${nameField}.pdf`);
-
-          const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
-            method: "POST",
-            body: body,
-          });
-
-          if (uploadRes.ok) {
-            const uploadJson = await uploadRes.json();
-            if (uploadJson.status === "success" && uploadJson.data?.url) {
-              // Convert to direct download url by adding /dl/
-              downloadUrl = uploadJson.data.url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/");
-            }
-          }
-        } catch (uploadErr) {
-          console.warn("tmpfiles.org upload failed, trying file.io", uploadErr);
+        if (!response.ok) {
+          const errorJson = await response.json();
+          throw new Error(errorJson.details || errorJson.error || "Failed to deliver PDF via WhatsApp Cloud API");
         }
 
-        // 2. Try file.io if tmpfiles.org failed
-        if (!downloadUrl) {
+        const resJson = await response.json();
+
+        // 3. Check if server requested Client-Side fallback
+        if (resJson.fallback) {
+          const nameField =
+            preparedFormData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
+            "biodata";
+
+          // Generate PDF Blob on client - passing the pre-fetched objects directly
+          const pdfBlob = await generatePdfBlob(preparedFormData, selectedTemplate, preparedTheme);
+          // Prefilled template message builder
+          const getTemplateMessage = (name: string, url?: string) => {
+            let msg = `*Matrimonial Biodata* 💍\n\n`;
+            msg += `Hello! 🙏 Please find attached the matrimonial biodata of *${name}* for your review.\n\n`;
+            msg += `We hope you find the profile suitable. Looking forward to connecting and discussing further.\n\n`;
+            if (url) {
+              msg += `📄 View PDF Online: ${url}\n\n`;
+            }
+            msg += `Created via biodata99.com`;
+            return msg;
+          };
+
+          // Change status to uploading client-side for desktop/non-compatible browsers
+          setStatus("uploading");
+
+          let downloadUrl = "";
+
+          // 1. Try uploading to tmpfiles.org (high rate limits, CORS supported)
           try {
             const body = new FormData();
             body.append("file", pdfBlob, `${nameField}.pdf`);
-            body.append("expiry", "1d");
 
-            const uploadRes = await fetch("https://file.io", {
+            const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", {
               method: "POST",
               body: body,
             });
 
             if (uploadRes.ok) {
               const uploadJson = await uploadRes.json();
-              if (uploadJson.success) {
-                downloadUrl = uploadJson.link;
+              if (uploadJson.status === "success" && uploadJson.data?.url) {
+                // Convert to direct download url by adding /dl/
+                downloadUrl = uploadJson.data.url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/");
               }
             }
           } catch (uploadErr) {
-            console.warn("file.io upload failed/blocked", uploadErr);
+            console.warn("tmpfiles.org upload failed, trying file.io", uploadErr);
+          }
+
+          // 2. Try file.io if tmpfiles.org failed
+          if (!downloadUrl) {
+            try {
+              const body = new FormData();
+              body.append("file", pdfBlob, `${nameField}.pdf`);
+              body.append("expiry", "1d");
+
+              const uploadRes = await fetch("https://file.io", {
+                method: "POST",
+                body: body,
+              });
+
+              if (uploadRes.ok) {
+                const uploadJson = await uploadRes.json();
+                if (uploadJson.success) {
+                  downloadUrl = uploadJson.link;
+                }
+              }
+            } catch (uploadErr) {
+              console.warn("file.io upload failed/blocked", uploadErr);
+            }
+          }
+
+          setStatus("redirecting");
+
+          // Construct direct WhatsApp link
+          const formattedNum = `${countryCode.replace("+", "")}${phoneNumber.trim()}`;
+          const shareText = getTemplateMessage(nameField, downloadUrl);
+          const shareTextEncoded = encodeURIComponent(shareText);
+
+          // Open WhatsApp Web/App
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          const whatsappUrl = isMobile
+            ? `whatsapp://send?phone=${formattedNum}&text=${shareTextEncoded}`
+            : `https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`;
+
+          const opened = window.open(whatsappUrl, "_blank");
+          if (!opened || opened.closed || typeof opened.closed === "undefined") {
+            setBlockedPopupUrl(whatsappUrl);
+            setShowBlockedDialog(true);
           }
         }
 
-        setStatus("redirecting");
-
-        // Construct direct WhatsApp link
-        const formattedNum = `${countryCode.replace("+", "")}${phoneNumber.trim()}`;
-        const shareText = getTemplateMessage(nameField, downloadUrl);
-        const shareTextEncoded = encodeURIComponent(shareText);
-
-        // Open WhatsApp Web/App
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const whatsappUrl = isMobile
-          ? `whatsapp://send?phone=${formattedNum}&text=${shareTextEncoded}`
-          : `https://web.whatsapp.com/send?phone=${formattedNum}&text=${shareTextEncoded}`;
-
-        const opened = window.open(whatsappUrl, "_blank");
-        if (!opened || opened.closed || typeof opened.closed === "undefined") {
-          setBlockedPopupUrl(whatsappUrl);
-          setShowBlockedDialog(true);
-        }
+        setStatus("success");
+        setTimeout(() => setStatus("idle"), 5000);
       }
-
-      setStatus("success");
-      setTimeout(() => setStatus("idle"), 5000);
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err instanceof Error ? err.message : translateUI("failedToDeliver", currentLang));

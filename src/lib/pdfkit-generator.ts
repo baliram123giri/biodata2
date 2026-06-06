@@ -1190,52 +1190,64 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
       const defaultAccent = "";
       const finalUrl = getFrameImageUrl(config.frame as any, primaryColor);
       
-      if (finalUrl && (finalUrl.toLowerCase().includes(".svg") || finalUrl.startsWith("data:image/svg+xml"))) {
-        try {
-          let svgXml = "";
-          if (finalUrl.startsWith("data:image/svg+xml")) {
-            const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
-            if (finalUrl.includes(";base64,")) {
-              svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+      if (finalUrl) {
+        if (finalUrl.toLowerCase().includes(".svg") || finalUrl.startsWith("data:image/svg+xml")) {
+          try {
+            let svgXml = "";
+            if (finalUrl.startsWith("data:image/svg+xml")) {
+              const base64Content = finalUrl.substring(finalUrl.indexOf(",") + 1);
+              if (finalUrl.includes(";base64,")) {
+                svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
+              } else {
+                svgXml = decodeURIComponent(base64Content);
+              }
+            } else if (finalUrl.startsWith("/")) {
+              const fs = require("fs");
+              const localPath = path.join(process.cwd(), 'public', finalUrl);
+              if (fs.existsSync(localPath)) {
+                svgXml = fs.readFileSync(localPath, "utf-8");
+              } else {
+                console.warn(`[generatePDFBuffer] Local SVG frame file not found at: ${localPath}`);
+              }
             } else {
-              svgXml = decodeURIComponent(base64Content);
+              // Fetch the SVG file from remote URL
+              const fetchRes = await fetch(finalUrl);
+              if (fetchRes.ok) {
+                svgXml = await fetchRes.text();
+              }
             }
-          } else if (finalUrl.startsWith("/")) {
-            const fs = require("fs");
-            const localPath = path.join(process.cwd(), 'public', finalUrl);
-            if (fs.existsSync(localPath)) {
-              svgXml = fs.readFileSync(localPath, "utf-8");
-            } else {
-              console.warn(`[generatePDFBuffer] Local SVG frame file not found at: ${localPath}`);
-            }
-          } else {
-            // Fetch the SVG file from remote URL
-            const fetchRes = await fetch(finalUrl);
-            if (fetchRes.ok) {
-              svgXml = await fetchRes.text();
-            }
-          }
-          
-          if (svgXml) {
-            const enableSvgTint = config.bgConfig?.enableSvgTint !== false;
-            // Apply the tintSvg function to colorize the SVG elements
-            const colorizedSvg = tintSvg(
-              svgXml,
-              defaultPrimary,
-              enableSvgTint ? primaryColor : "",
-              defaultAccent,
-              enableSvgTint ? accentColor : ""
-            );
             
-            const sharp = require("sharp");
-            const pngBuffer = await sharp(Buffer.from(colorizedSvg), { density: 300 })
-              .png()
-              .toBuffer();
+            if (svgXml) {
+              const enableSvgTint = config.bgConfig?.enableSvgTint !== false;
+              // Apply the tintSvg function to colorize the SVG elements
+              const colorizedSvg = tintSvg(
+                svgXml,
+                defaultPrimary,
+                enableSvgTint ? primaryColor : "",
+                defaultAccent,
+                enableSvgTint ? accentColor : ""
+              );
               
-            theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+              const sharp = require("sharp");
+              const pngBuffer = await sharp(Buffer.from(colorizedSvg), { density: 300 })
+                .png()
+                .toBuffer();
+                
+              theme.rasterizedFrameBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+            }
+          } catch (rasterError) {
+            console.error("Failed to rasterize and colorize SVG frame to PNG:", rasterError);
           }
-        } catch (rasterError) {
-          console.error("Failed to rasterize and colorize SVG frame to PNG:", rasterError);
+        } else {
+          // If the frame image is a PNG or JPEG, pre-fetch/convert it to base64
+          try {
+            const base64 = await resolveAndConvertImage(finalUrl);
+            if (base64) {
+              theme.rasterizedFrameBase64 = base64;
+            }
+          } catch (e) {
+            console.error("Error pre-fetching frame image:", e);
+          }
         }
       }
     }
@@ -1265,6 +1277,12 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
           const metadata = await sharp(photoBuffer).metadata();
           photoWidth = metadata.width || 0;
           photoHeight = metadata.height || 0;
+          
+          // Convert to base64 data URL to avoid network fetch during react-pdf rendering
+          const contentType = formData.photo.startsWith("data:") 
+            ? formData.photo.split(";")[0].split(":")[1] 
+            : (metadata.format ? `image/${metadata.format}` : "image/jpeg");
+          formData.photo = `data:${contentType};base64,${photoBuffer.toString("base64")}`;
         }
       } catch (err) {
         console.error("Error reading photo metadata for PDF:", err);
