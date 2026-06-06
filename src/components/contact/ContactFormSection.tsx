@@ -278,7 +278,7 @@ export function ContactFormSection() {
               <Tooltip.Trigger asChild>
                 <a
                   id="social-instagram"
-                  href="https://www.instagram.com/officialbiodata99"
+                  href="https://www.instagram.com/biodata99.co/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative flex flex-col items-center gap-3 p-5 rounded-2xl border border-pink-500/20 bg-pink-500/5 hover:border-pink-500/50 hover:bg-gradient-to-br hover:from-[#f9ce71]/15 hover:via-[#ee583f]/15 hover:to-[#d12e8b]/15 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(209,46,139,0.2)] active:scale-95 cursor-pointer"
@@ -288,7 +288,7 @@ export function ContactFormSection() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-sm font-black text-foreground">Instagram</p>
-                    <p className="text-xs text-pink-700 dark:text-pink-400 font-semibold">@officialbiodata99</p>
+                    <p className="text-xs text-pink-700 dark:text-pink-400 font-semibold">@biodata99.co</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-tight">Templates & reels</p>
                   <ExternalLink className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40 group-hover:text-pink-400 transition-colors" />

@@ -28,7 +28,7 @@ const orgSchema = {
   "foundingLocation": "Pune, Maharashtra, India",
   "email": "support@biodata99.com",
   "sameAs": [
-    "https://www.instagram.com/officialbiodata99",
+    "https://www.instagram.com/biodata99.co/",
     "https://www.youtube.com/@biodata99",
     "https://www.pinterest.com/biodata99"
   ],

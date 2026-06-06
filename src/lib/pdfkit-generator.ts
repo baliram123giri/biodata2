@@ -417,6 +417,15 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             let bgSrc = theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '';
             if (bgSrc && bgSrc.startsWith("/")) {
               bgSrc = path.join(process.cwd(), 'public', bgSrc);
+            } else if (bgSrc && bgSrc.startsWith("http")) {
+              try {
+                const parsedUrl = new URL(bgSrc);
+                const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
+                const fs = require("fs");
+                if (fs.existsSync(localPath)) {
+                  bgSrc = localPath;
+                }
+              } catch (e) {}
             }
             
             return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
@@ -432,140 +441,21 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               } as any
             }) : null;
           })(),
-          config.frame.type === 'image' ? (() => {
-            const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
-            const fallbackX = -offset;
-            const fallbackY = -offset;
-            const fallbackW = A4_W + (offset * 2);
-            const fallbackH = A4_H + (offset * 2);
-            
-            const isDefault = (config.bgConfig?.frameImageX === "0" || config.bgConfig?.frameImageX == null) && 
-                              (config.bgConfig?.frameImageY === "0" || config.bgConfig?.frameImageY == null);
-            
-            const x = isDefault && offset !== 0 ? fallbackX : (parseInt(config.bgConfig?.frameImageX) || fallbackX);
-            const y = isDefault && offset !== 0 ? fallbackY : (parseInt(config.bgConfig?.frameImageY) || fallbackY);
-            const width = isDefault && offset !== 0 ? fallbackW : (parseInt(config.bgConfig?.frameImageWidth) || fallbackW);
-            const height = isDefault && offset !== 0 ? fallbackH : (parseInt(config.bgConfig?.frameImageHeight) || fallbackH);
-
-            return React.createElement(Image, { 
-              src: theme?.rasterizedFrameBase64 || (() => {
-                let url = getFrameImageUrl(config.frame, primary);
-                // Force PNG format by replacing f_auto with f_png and translating .svg to .png
-                // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
-                url = url.replace(/f_auto/g, 'f_png');
-                if (url.toLowerCase().endsWith('.svg')) {
-                  url = url.substring(0, url.length - 4) + '.png';
-                } else if (url.toLowerCase().includes('.svg?')) {
-                  url = url.replace(/\.svg\?/i, '.png?');
-                }
-                if (url.startsWith("/")) {
-                  url = path.join(process.cwd(), 'public', url);
-                }
-                return url;
-              })(), 
-              style: [{ 
-                position: 'absolute', 
-                top: y, 
-                left: x, 
-                width: width, 
-                height: height,
-                objectFit: 'fill' 
-              }] as any
-            });
-          })()
-          : config.frame.type === 'gradient' ?
-            React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-              React.createElement(Rect, { 
-                x: config.frame.outerInset, 
-                y: config.frame.outerInset, 
-                width: A4_W - config.frame.outerInset * 2, 
-                height: A4_H - config.frame.outerInset * 2, 
-                stroke: primary, 
-                strokeWidth: config.frame.outerStrokeWidth,
-                rx: config.frame.outerCornerRadius,
-                fill: "none"
-              }),
-              React.createElement(Rect, { 
-                x: config.frame.innerInset, 
-                y: config.frame.innerInset, 
-                width: A4_W - config.frame.innerInset * 2, 
-                height: A4_H - config.frame.innerInset * 2, 
-                stroke: primary, 
-                strokeWidth: config.frame.innerStrokeWidth,
-                rx: config.frame.innerCornerRadius,
-                strokeOpacity: 0.3,
-                fill: "none"
-              })
-            )
-          : config.frame.type === 'custom' ?
-            React.createElement(View, { style: styles.frame as any },
-              React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
-            )
-          : 
-            React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-              React.createElement(Rect, { 
-                x: config.frame.outerInset, 
-                y: config.frame.outerInset, 
-                width: A4_W - config.frame.outerInset * 2, 
-                height: A4_H - config.frame.outerInset * 2, 
-                stroke: primary, 
-                strokeWidth: config.frame.outerStrokeWidth,
-                rx: config.frame.outerCornerRadius,
-                fill: "none"
-              }),
-              React.createElement(Rect, { 
-                x: config.frame.innerInset, 
-                y: config.frame.innerInset, 
-                width: A4_W - config.frame.innerInset * 2, 
-                height: A4_H - config.frame.innerInset * 2, 
-                stroke: primary, 
-                strokeWidth: config.frame.innerStrokeWidth,
-                rx: config.frame.innerCornerRadius,
-                strokeOpacity: 0.6,
-                fill: "none"
-              }),
-              config.frame.hasCornerCurves ? React.createElement(G, {},
-                // Top-Left
-                React.createElement(Path, { 
-                  d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
-                  stroke: primary,
-                  strokeWidth: config.frame.outerStrokeWidth
-                }),
-                // Top-Right
-                React.createElement(Path, { 
-                  d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
-                  stroke: primary,
-                  strokeWidth: config.frame.outerStrokeWidth
-                }),
-                // Bottom-Left
-                React.createElement(Path, { 
-                  d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
-                  stroke: primary,
-                  strokeWidth: config.frame.outerStrokeWidth
-                }),
-                // Bottom-Right
-                React.createElement(Path, { 
-                  d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
-                  stroke: primary,
-                  strokeWidth: config.frame.outerStrokeWidth
-                })
-              ) : null
-            ),
           
-        WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
-          style: {
-            position: 'absolute',
-            left: (A4_W - WATERMARK_CONFIG.width) / 2,
-            top: (A4_H - WATERMARK_CONFIG.height) / 2,
-            width: WATERMARK_CONFIG.width,
-            height: WATERMARK_CONFIG.height,
-            opacity: WATERMARK_CONFIG.opacity,
-            transform: `rotate(${WATERMARK_CONFIG.rotation || 0}deg)`,
-          } as any
-        }, React.createElement(Image, {
-          src: path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath),
-          style: { width: '100%', height: '100%' } as any
-        })) : null,
+          WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
+            style: {
+              position: 'absolute',
+              left: (A4_W - WATERMARK_CONFIG.width) / 2,
+              top: (A4_H - WATERMARK_CONFIG.height) / 2,
+              width: WATERMARK_CONFIG.width,
+              height: WATERMARK_CONFIG.height,
+              opacity: WATERMARK_CONFIG.opacity,
+              transform: `rotate(${WATERMARK_CONFIG.rotation || 0}deg)`,
+            } as any
+          }, React.createElement(Image, {
+            src: path.join(process.cwd(), WATERMARK_CONFIG.fallbackPngPath),
+            style: { width: '100%', height: '100%' } as any
+          })) : null,
 
         (() => {
           const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
@@ -715,6 +605,15 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
                         if (srcUrl && srcUrl.startsWith("/")) {
                           srcUrl = path.join(process.cwd(), 'public', srcUrl);
+                        } else if (srcUrl && srcUrl.startsWith("http")) {
+                          try {
+                            const parsed = new URL(srcUrl);
+                            const localPath = path.join(process.cwd(), 'public', parsed.pathname);
+                            const fs = require("fs");
+                            if (fs.existsSync(localPath)) {
+                              srcUrl = localPath;
+                            }
+                          } catch (e) {}
                         }
                         return srcUrl;
                       })(),
@@ -731,6 +630,15 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
                         if (srcUrl && srcUrl.startsWith("/")) {
                           srcUrl = path.join(process.cwd(), 'public', srcUrl);
+                        } else if (srcUrl && srcUrl.startsWith("http")) {
+                          try {
+                            const parsed = new URL(srcUrl);
+                            const localPath = path.join(process.cwd(), 'public', parsed.pathname);
+                            const fs = require("fs");
+                            if (fs.existsSync(localPath)) {
+                              srcUrl = localPath;
+                            }
+                          } catch (e) {}
                         }
                         return srcUrl;
                       })(),
@@ -766,7 +674,22 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           );
         })(),
         data.photo ? React.createElement(Image, { 
-          src: data.photo, 
+          src: (() => {
+            let srcUrl = data.photo;
+            if (srcUrl && srcUrl.startsWith("/")) {
+              srcUrl = path.join(process.cwd(), 'public', srcUrl);
+            } else if (srcUrl && srcUrl.startsWith("http")) {
+              try {
+                const parsed = new URL(srcUrl);
+                const localPath = path.join(process.cwd(), 'public', parsed.pathname);
+                const fs = require("fs");
+                if (fs.existsSync(localPath)) {
+                  srcUrl = localPath;
+                }
+              } catch (e) {}
+            }
+            return srcUrl;
+          })(),
           style: { ...styles.photo, objectFit: 'cover' } as any 
         }) : null,
         data.photo && pBorderSize > 0 ? React.createElement(View, { style: styles.photoBorder as any }) : null,
@@ -920,6 +843,16 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       } else if (f.logoUrl.startsWith("/")) {
                         resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
                       }
+                      if (typeof resolvedSrc === "string" && resolvedSrc.startsWith("http")) {
+                        try {
+                          const parsed = new URL(resolvedSrc);
+                          const localPath = path.join(process.cwd(), 'public', parsed.pathname);
+                          const fs = require("fs");
+                          if (fs.existsSync(localPath)) {
+                            resolvedSrc = localPath;
+                          }
+                        } catch (e) {}
+                      }
                       return React.createElement(Image, { 
                         src: resolvedSrc, 
                         style: [styles.logo, { width: fSize, height: fSize, marginTop: fSize * 0.05, marginRight: 4 }] as any 
@@ -960,7 +893,21 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
         }),
         (data.stickers || []).filter((s: any) => !s.isMantra).map((sticker: any, i: number) => {
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
-          const resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
+          let resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
+          if (resolvedSrc) {
+            if (resolvedSrc.startsWith("/")) {
+              resolvedSrc = path.join(process.cwd(), 'public', resolvedSrc);
+            } else if (resolvedSrc.startsWith("http")) {
+              try {
+                const parsedUrl = new URL(resolvedSrc);
+                const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
+                const fs = require("fs");
+                if (fs.existsSync(localPath)) {
+                  resolvedSrc = localPath;
+                }
+              } catch (e) {}
+            }
+          }
           
           const sX = sticker.scaleX ?? 1;
           const sY = sticker.scaleY ?? 1;
@@ -989,7 +936,135 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             : 
               React.createElement(View, {})
           );
-        })
+        }),
+        config.frame.type === 'image' ? (() => {
+          const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
+          const fallbackX = -offset;
+          const fallbackY = -offset;
+          const fallbackW = A4_W + (offset * 2);
+          const fallbackH = A4_H + (offset * 2);
+          
+          const isDefault = (config.bgConfig?.frameImageX === "0" || config.bgConfig?.frameImageX == null) && 
+                            (config.bgConfig?.frameImageY === "0" || config.bgConfig?.frameImageY == null);
+          
+          const x = isDefault && offset !== 0 ? fallbackX : (parseInt(config.bgConfig?.frameImageX) || fallbackX);
+          const y = isDefault && offset !== 0 ? fallbackY : (parseInt(config.bgConfig?.frameImageY) || fallbackY);
+          const width = isDefault && offset !== 0 ? fallbackW : (parseInt(config.bgConfig?.frameImageWidth) || fallbackW);
+          const height = isDefault && offset !== 0 ? fallbackH : (parseInt(config.bgConfig?.frameImageHeight) || fallbackH);
+
+          return React.createElement(Image, { 
+            src: theme?.rasterizedFrameBase64 || (() => {
+              let url = getFrameImageUrl(config.frame, primary);
+              // Force PNG format by replacing f_auto with f_png and translating .svg to .png
+              // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
+              url = url.replace(/f_auto/g, 'f_png');
+              if (url.toLowerCase().endsWith('.svg')) {
+                url = url.substring(0, url.length - 4) + '.png';
+              } else if (url.toLowerCase().includes('.svg?')) {
+                url = url.replace(/\.svg\?/i, '.png?');
+              }
+              if (url.startsWith("/")) {
+                url = path.join(process.cwd(), 'public', url);
+              } else if (url.startsWith("http")) {
+                try {
+                  const parsedUrl = new URL(url);
+                  const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
+                  const fs = require("fs");
+                  if (fs.existsSync(localPath)) {
+                    url = localPath;
+                  }
+                } catch (e) {}
+              }
+              return url;
+            })(), 
+            style: [{ 
+              position: 'absolute', 
+              top: y, 
+              left: x, 
+              width: width, 
+              height: height,
+              objectFit: 'fill' 
+            }] as any
+          });
+        })()
+        : config.frame.type === 'gradient' ?
+          React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+            React.createElement(Rect, { 
+              x: config.frame.outerInset, 
+              y: config.frame.outerInset, 
+              width: A4_W - config.frame.outerInset * 2, 
+              height: A4_H - config.frame.outerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.outerStrokeWidth,
+              rx: config.frame.outerCornerRadius,
+              fill: "none"
+            }),
+            React.createElement(Rect, { 
+              x: config.frame.innerInset, 
+              y: config.frame.innerInset, 
+              width: A4_W - config.frame.innerInset * 2, 
+              height: A4_H - config.frame.innerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.innerStrokeWidth,
+              rx: config.frame.innerCornerRadius,
+              strokeOpacity: 0.3,
+              fill: "none"
+            })
+          )
+        : config.frame.type === 'custom' ?
+          React.createElement(View, { style: styles.frame as any },
+            React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
+          )
+        : 
+          React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+            React.createElement(Rect, { 
+              x: config.frame.outerInset, 
+              y: config.frame.outerInset, 
+              width: A4_W - config.frame.outerInset * 2, 
+              height: A4_H - config.frame.outerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.outerStrokeWidth,
+              rx: config.frame.outerCornerRadius,
+              fill: "none"
+            }),
+            React.createElement(Rect, { 
+              x: config.frame.innerInset, 
+              y: config.frame.innerInset, 
+              width: A4_W - config.frame.innerInset * 2, 
+              height: A4_H - config.frame.innerInset * 2, 
+              stroke: primary, 
+              strokeWidth: config.frame.innerStrokeWidth,
+              rx: config.frame.innerCornerRadius,
+              strokeOpacity: 0.6,
+              fill: "none"
+            }),
+            config.frame.hasCornerCurves ? React.createElement(G, {},
+              // Top-Left
+              React.createElement(Path, { 
+                d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
+                stroke: primary,
+                strokeWidth: config.frame.outerStrokeWidth
+              }),
+              // Top-Right
+              React.createElement(Path, { 
+                d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
+                stroke: primary,
+                strokeWidth: config.frame.outerStrokeWidth
+              }),
+              // Bottom-Left
+              React.createElement(Path, { 
+                d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
+                stroke: primary,
+                strokeWidth: config.frame.outerStrokeWidth
+              }),
+              // Bottom-Right
+              React.createElement(Path, { 
+                d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
+                stroke: primary,
+                strokeWidth: config.frame.outerStrokeWidth
+              })
+            ) : null
+          )
         ].filter(Boolean))
       )
     )
@@ -1007,15 +1082,33 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
   try {
     let buffer: Buffer;
     let contentType = "image/png";
-    let isSvg = url.toLowerCase().endsWith(".svg") || url.toLowerCase().includes(".svg?");
+    let resolvedUrl = url;
     
-    if (url.startsWith("data:image/svg+xml")) {
+    // Check if this remote URL is actually a local asset under the public directory
+    if (url.startsWith("http")) {
+      try {
+        const parsedUrl = new URL(url);
+        const pathname = parsedUrl.pathname;
+        const fs = require("fs");
+        const localPath = path.join(process.cwd(), 'public', pathname);
+        if (fs.existsSync(localPath)) {
+          console.log(`[resolveAndConvertImage] Resolved remote URL pathname to local file: ${localPath}`);
+          resolvedUrl = pathname;
+        }
+      } catch (e) {
+        console.error("[resolveAndConvertImage] Error parsing URL for local resolution:", e);
+      }
+    }
+
+    let isSvg = resolvedUrl.toLowerCase().endsWith(".svg") || resolvedUrl.toLowerCase().includes(".svg?");
+    
+    if (resolvedUrl.startsWith("data:image/svg+xml")) {
       console.log("[resolveAndConvertImage] SVG Data URL detected, rasterizing...");
       try {
-        const commaIdx = url.indexOf(",");
-        const base64Content = url.substring(commaIdx + 1);
+        const commaIdx = resolvedUrl.indexOf(",");
+        const base64Content = resolvedUrl.substring(commaIdx + 1);
         let svgXml = "";
-        if (url.includes(";base64,")) {
+        if (resolvedUrl.includes(";base64,")) {
           svgXml = Buffer.from(base64Content, "base64").toString("utf-8");
         } else {
           svgXml = decodeURIComponent(base64Content);
@@ -1028,17 +1121,17 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         return `data:image/png;base64,${pngBuffer.toString("base64")}`;
       } catch (rasterError) {
         console.error("[resolveAndConvertImage] Failed to rasterize data SVG to PNG:", rasterError);
-        return url;
+        return resolvedUrl;
       }
-    } else if (url.startsWith("http")) {
-      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${url}"`);
-      const response = await fetch(url, {
+    } else if (resolvedUrl.startsWith("http")) {
+      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${resolvedUrl}"`);
+      const response = await fetch(resolvedUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
       if (!response.ok) {
-        console.error(`[resolveAndConvertImage] Fetch failed for ${url} with status ${response.status} ${response.statusText}`);
+        console.error(`[resolveAndConvertImage] Fetch failed for ${resolvedUrl} with status ${response.status} ${response.statusText}`);
         return undefined;
       }
       const arrayBuffer = await response.arrayBuffer();
@@ -1050,21 +1143,21 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
       } else {
         contentType = mime;
       }
-    } else if (url.startsWith("/")) {
-      console.log(`[resolveAndConvertImage] Local public file detected: "${url}"`);
+    } else if (resolvedUrl.startsWith("/")) {
+      console.log(`[resolveAndConvertImage] Local public file detected: "${resolvedUrl}"`);
       const fs = require("fs");
-      const localPath = path.join(process.cwd(), 'public', url);
+      const localPath = path.join(process.cwd(), 'public', resolvedUrl);
       if (!fs.existsSync(localPath)) {
         console.warn(`[resolveAndConvertImage] Local file does not exist at: ${localPath}`);
         return undefined;
       }
       buffer = fs.readFileSync(localPath);
-      if (url.toLowerCase().endsWith(".svg")) {
+      if (resolvedUrl.toLowerCase().endsWith(".svg")) {
         isSvg = true;
       }
     } else {
-      console.log(`[resolveAndConvertImage] Treating as direct local path/data URL (starts with: "${url.substring(0, 30)}...")`);
-      return url;
+      console.log(`[resolveAndConvertImage] Treating as direct local path/data URL (starts with: "${resolvedUrl.substring(0, 30)}...")`);
+      return resolvedUrl;
     }
     
     if (isSvg) {
@@ -1077,11 +1170,11 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         console.log(`[resolveAndConvertImage] SVG rasterization successful. Output size: ${pngBuffer.length}`);
         return `data:image/png;base64,${pngBuffer.toString("base64")}`;
       } catch (sharpError) {
-        console.error(`[resolveAndConvertImage] Failed to rasterize SVG: ${url}`, sharpError);
+        console.error(`[resolveAndConvertImage] Failed to rasterize SVG: ${resolvedUrl}`, sharpError);
       }
     }
 
-    const isWebp = contentType.includes("webp") || url.toLowerCase().includes(".webp");
+    const isWebp = contentType.includes("webp") || resolvedUrl.toLowerCase().includes(".webp");
     if (isWebp) {
       try {
         console.log(`[resolveAndConvertImage] WebP detected. Converting to PNG via sharp...`);
@@ -1093,7 +1186,7 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         buffer = pngBuffer;
         contentType = "image/png";
       } catch (sharpError) {
-        console.error(`[resolveAndConvertImage] Failed to convert WebP to PNG: ${url}`, sharpError);
+        console.error(`[resolveAndConvertImage] Failed to convert WebP to PNG: ${resolvedUrl}`, sharpError);
       }
     }
     
