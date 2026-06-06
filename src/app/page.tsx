@@ -10,6 +10,7 @@ import { howToSchema, generateFaqSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
+import { SampleCarousel } from "@/components/home/SampleCarousel";
 
 const HomeBiodataBuilder = dynamic(
   () => import("@/components/biodata/HomeBiodataBuilder").then(mod => mod.HomeBiodataBuilder)
@@ -238,6 +239,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Interactive Samples Carousel */}
+      <SampleCarousel />
 
       {/* Who Is This For Section */}
       <section id="who-is-this-for" aria-label="Who is this for" className="py-12 md:py-16 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
