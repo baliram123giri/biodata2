@@ -53,7 +53,7 @@ export function MantraAutocomplete({
   }, [open])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -68,7 +68,11 @@ export function MantraAutocomplete({
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1 bg-popover text-popover-foreground rounded-lg border shadow-md max-h-72 overflow-hidden flex flex-col z-[9999]" align="start">
+      <PopoverContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="w-[var(--radix-popover-trigger-width)] p-1 bg-popover text-popover-foreground rounded-lg border shadow-md max-h-72 overflow-hidden flex flex-col z-[9999]"
+        align="start"
+      >
         <div className="p-1 pb-0 shrink-0">
           <div className="flex h-10 items-center rounded-lg border border-input/30 bg-input/30 px-2 shadow-none gap-2">
             <Search className="size-4 shrink-0 opacity-50" />

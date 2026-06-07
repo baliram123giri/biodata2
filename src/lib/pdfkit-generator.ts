@@ -14,6 +14,7 @@ import { STICKER_ASSETS } from './sticker-assets';
 import { getLightBgColor } from './color-utils';
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from './watermark-utils';
 import path from 'path';
+import fs from 'fs';
 
 const A4_W = 595;
 const A4_H = 842;
@@ -415,17 +416,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             const top = baseTop + yOffset - (baseH * (scale - 1)) / 2;
             
             let bgSrc = theme?.bgImageUrlBase64 || theme?.bgImageUrl || config.bgConfig?.url || '';
-            if (bgSrc && bgSrc.startsWith("/")) {
-              bgSrc = path.join(process.cwd(), 'public', bgSrc);
-            } else if (bgSrc && bgSrc.startsWith("http")) {
-              try {
-                const parsedUrl = new URL(bgSrc);
-                const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
-                const fs = require("fs");
-                if (fs.existsSync(localPath)) {
-                  bgSrc = localPath;
-                }
-              } catch (e) {}
+            const localBgSrc = getAbsoluteLocalPath(bgSrc);
+            if (localBgSrc) {
+              bgSrc = localBgSrc;
             }
             
             return (theme?.bgImageUrl || config.bgConfig?.url) ? React.createElement(Image, {
@@ -601,22 +594,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       } as any
                     }, item.text ? String(item.text) : ""),
                     React.createElement(Image, {
-                      src: (() => {
-                        let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
-                        if (srcUrl && srcUrl.startsWith("/")) {
-                          srcUrl = path.join(process.cwd(), 'public', srcUrl);
-                        } else if (srcUrl && srcUrl.startsWith("http")) {
-                          try {
-                            const parsed = new URL(srcUrl);
-                            const localPath = path.join(process.cwd(), 'public', parsed.pathname);
-                            const fs = require("fs");
-                            if (fs.existsSync(localPath)) {
-                              srcUrl = localPath;
-                            }
-                          } catch (e) {}
-                        }
-                        return srcUrl;
-                      })(),
+                      src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
                       style: {
                         position: 'absolute',
                         top: -6,
@@ -626,22 +604,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       } as any
                     }),
                     React.createElement(Image, {
-                      src: (() => {
-                        let srcUrl = mantraSticker.resolvedUrl || mantraSticker.type;
-                        if (srcUrl && srcUrl.startsWith("/")) {
-                          srcUrl = path.join(process.cwd(), 'public', srcUrl);
-                        } else if (srcUrl && srcUrl.startsWith("http")) {
-                          try {
-                            const parsed = new URL(srcUrl);
-                            const localPath = path.join(process.cwd(), 'public', parsed.pathname);
-                            const fs = require("fs");
-                            if (fs.existsSync(localPath)) {
-                              srcUrl = localPath;
-                            }
-                          } catch (e) {}
-                        }
-                        return srcUrl;
-                      })(),
+                      src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
                       style: {
                         position: 'absolute',
                         top: -6,
@@ -674,22 +637,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           );
         })(),
         data.photo ? React.createElement(Image, { 
-          src: (() => {
-            let srcUrl = data.photo;
-            if (srcUrl && srcUrl.startsWith("/")) {
-              srcUrl = path.join(process.cwd(), 'public', srcUrl);
-            } else if (srcUrl && srcUrl.startsWith("http")) {
-              try {
-                const parsed = new URL(srcUrl);
-                const localPath = path.join(process.cwd(), 'public', parsed.pathname);
-                const fs = require("fs");
-                if (fs.existsSync(localPath)) {
-                  srcUrl = localPath;
-                }
-              } catch (e) {}
-            }
-            return srcUrl;
-          })(),
+          src: getAbsoluteLocalPath(data.photo) || data.photo,
           style: { ...styles.photo, objectFit: 'cover' } as any 
         }) : null,
         data.photo && pBorderSize > 0 ? React.createElement(View, { style: styles.photoBorder as any }) : null,
@@ -840,18 +788,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         resolvedSrc = Buffer.from(base64Content, "base64");
                       } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
                         resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
-                      } else if (f.logoUrl.startsWith("/")) {
-                        resolvedSrc = path.join(process.cwd(), "public", f.logoUrl);
                       }
-                      if (typeof resolvedSrc === "string" && resolvedSrc.startsWith("http")) {
-                        try {
-                          const parsed = new URL(resolvedSrc);
-                          const localPath = path.join(process.cwd(), 'public', parsed.pathname);
-                          const fs = require("fs");
-                          if (fs.existsSync(localPath)) {
-                            resolvedSrc = localPath;
-                          }
-                        } catch (e) {}
+                      if (typeof resolvedSrc === "string") {
+                        resolvedSrc = getAbsoluteLocalPath(resolvedSrc) || resolvedSrc;
                       }
                       return React.createElement(Image, { 
                         src: resolvedSrc, 
@@ -895,18 +834,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
           let resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
           if (resolvedSrc) {
-            if (resolvedSrc.startsWith("/")) {
-              resolvedSrc = path.join(process.cwd(), 'public', resolvedSrc);
-            } else if (resolvedSrc.startsWith("http")) {
-              try {
-                const parsedUrl = new URL(resolvedSrc);
-                const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
-                const fs = require("fs");
-                if (fs.existsSync(localPath)) {
-                  resolvedSrc = localPath;
-                }
-              } catch (e) {}
-            }
+            resolvedSrc = getAbsoluteLocalPath(resolvedSrc) || resolvedSrc;
           }
           
           const sX = sticker.scaleX ?? 1;
@@ -963,19 +891,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               } else if (url.toLowerCase().includes('.svg?')) {
                 url = url.replace(/\.svg\?/i, '.png?');
               }
-              if (url.startsWith("/")) {
-                url = path.join(process.cwd(), 'public', url);
-              } else if (url.startsWith("http")) {
-                try {
-                  const parsedUrl = new URL(url);
-                  const localPath = path.join(process.cwd(), 'public', parsedUrl.pathname);
-                  const fs = require("fs");
-                  if (fs.existsSync(localPath)) {
-                    url = localPath;
-                  }
-                } catch (e) {}
-              }
-              return url;
+              return getAbsoluteLocalPath(url) || url;
             })(), 
             style: [{ 
               position: 'absolute', 
@@ -1071,6 +987,48 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   );
 };
 
+function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | null {
+  if (!urlOrPath) return null;
+
+  // If it's already an absolute path and exists, return it
+  if (path.isAbsolute(urlOrPath)) {
+    try {
+      if (fs.existsSync(urlOrPath)) {
+        return urlOrPath;
+      }
+    } catch (e) {}
+  }
+
+  let pathname = urlOrPath;
+  if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+    try {
+      const parsed = new URL(urlOrPath);
+      pathname = parsed.pathname;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Check upload folder first if it starts with /uploads/
+  if (pathname.startsWith("/uploads/")) {
+    const relativeUploadPath = pathname.substring("/uploads/".length);
+    const uploadDir = process.env.UPLOAD_DIR || 
+                      (fs.existsSync("/var/www/biodata99/uploads") ? "/var/www/biodata99/uploads" : path.join(process.cwd(), "public", "uploads"));
+    const localPath = path.join(uploadDir, relativeUploadPath);
+    if (fs.existsSync(localPath)) {
+      return localPath;
+    }
+  }
+
+  // Check public directory
+  const publicPath = path.join(process.cwd(), 'public', pathname.startsWith("/") ? pathname : "/" + pathname);
+  if (fs.existsSync(publicPath)) {
+    return publicPath;
+  }
+
+  return null;
+}
+
 async function resolveAndConvertImage(url: string): Promise<string | undefined> {
   if (!url) {
     console.log("[resolveAndConvertImage] Empty URL received.");
@@ -1084,20 +1042,11 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
     let contentType = "image/png";
     let resolvedUrl = url;
     
-    // Check if this remote URL is actually a local asset under the public directory
-    if (url.startsWith("http")) {
-      try {
-        const parsedUrl = new URL(url);
-        const pathname = parsedUrl.pathname;
-        const fs = require("fs");
-        const localPath = path.join(process.cwd(), 'public', pathname);
-        if (fs.existsSync(localPath)) {
-          console.log(`[resolveAndConvertImage] Resolved remote URL pathname to local file: ${localPath}`);
-          resolvedUrl = pathname;
-        }
-      } catch (e) {
-        console.error("[resolveAndConvertImage] Error parsing URL for local resolution:", e);
-      }
+    // Check if this URL/path can be resolved to a local file
+    const localPath = getAbsoluteLocalPath(url);
+    if (localPath) {
+      console.log(`[resolveAndConvertImage] Resolved remote URL/path to local file: ${localPath}`);
+      resolvedUrl = localPath;
     }
 
     let isSvg = resolvedUrl.toLowerCase().endsWith(".svg") || resolvedUrl.toLowerCase().includes(".svg?");
@@ -1123,6 +1072,8 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         console.error("[resolveAndConvertImage] Failed to rasterize data SVG to PNG:", rasterError);
         return resolvedUrl;
       }
+    } else if (localPath) {
+      buffer = await fs.promises.readFile(localPath);
     } else if (resolvedUrl.startsWith("http")) {
       console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${resolvedUrl}"`);
       const response = await fetch(resolvedUrl, {
@@ -1142,18 +1093,6 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         isSvg = true;
       } else {
         contentType = mime;
-      }
-    } else if (resolvedUrl.startsWith("/")) {
-      console.log(`[resolveAndConvertImage] Local public file detected: "${resolvedUrl}"`);
-      const fs = require("fs");
-      const localPath = path.join(process.cwd(), 'public', resolvedUrl);
-      if (!fs.existsSync(localPath)) {
-        console.warn(`[resolveAndConvertImage] Local file does not exist at: ${localPath}`);
-        return undefined;
-      }
-      buffer = fs.readFileSync(localPath);
-      if (resolvedUrl.toLowerCase().endsWith(".svg")) {
-        isSvg = true;
       }
     } else {
       console.log(`[resolveAndConvertImage] Treating as direct local path/data URL (starts with: "${resolvedUrl.substring(0, 30)}...")`);
@@ -1257,12 +1196,12 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
     if (formData.stickers && formData.stickers.length > 0) {
       const { STICKER_ASSETS } = require("./sticker-assets");
       for (const sticker of formData.stickers) {
-        if (sticker.resolvedUrl && !sticker.resolvedUrl.startsWith("data:image/svg+xml")) {
+        if (sticker.resolvedUrl && sticker.resolvedUrl.startsWith("data:") && !sticker.resolvedUrl.startsWith("data:image/svg+xml")) {
           continue; // Skip if already pre-fetched as a clean PNG/JPEG Base64
         }
         
         const asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
-        const urlToResolve = sticker.resolvedUrl || (asset && asset.url);
+        const urlToResolve = sticker.resolvedUrl || (asset && asset.url) || (sticker.type?.startsWith("http") || sticker.type?.startsWith("/") ? sticker.type : null);
         if (urlToResolve) {
           try {
             const base64 = await resolveAndConvertImage(urlToResolve);
@@ -1294,19 +1233,16 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
               } else {
                 svgXml = decodeURIComponent(base64Content);
               }
-            } else if (finalUrl.startsWith("/")) {
-              const fs = require("fs");
-              const localPath = path.join(process.cwd(), 'public', finalUrl);
-              if (fs.existsSync(localPath)) {
-                svgXml = fs.readFileSync(localPath, "utf-8");
-              } else {
-                console.warn(`[generatePDFBuffer] Local SVG frame file not found at: ${localPath}`);
-              }
             } else {
-              // Fetch the SVG file from remote URL
-              const fetchRes = await fetch(finalUrl);
-              if (fetchRes.ok) {
-                svgXml = await fetchRes.text();
+              const localPath = getAbsoluteLocalPath(finalUrl);
+              if (localPath) {
+                svgXml = await fs.promises.readFile(localPath, "utf-8");
+              } else {
+                // Fetch the SVG file from remote URL
+                const fetchRes = await fetch(finalUrl);
+                if (fetchRes.ok) {
+                  svgXml = await fetchRes.text();
+                }
               }
             }
             
@@ -1353,16 +1289,15 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
         if (formData.photo.startsWith("data:image/")) {
           const commaIdx = formData.photo.indexOf(",");
           photoBuffer = Buffer.from(formData.photo.substring(commaIdx + 1), "base64");
-        } else if (formData.photo.startsWith("http")) {
-          const res = await fetch(formData.photo);
-          if (res.ok) {
-            photoBuffer = Buffer.from(await res.arrayBuffer());
-          }
-        } else if (formData.photo.startsWith("/")) {
-          const fs = require("fs");
-          const localPath = path.join(process.cwd(), "public", formData.photo);
-          if (fs.existsSync(localPath)) {
-            photoBuffer = fs.readFileSync(localPath);
+        } else {
+          const localPath = getAbsoluteLocalPath(formData.photo);
+          if (localPath) {
+            photoBuffer = await fs.promises.readFile(localPath);
+          } else if (formData.photo.startsWith("http")) {
+            const res = await fetch(formData.photo);
+            if (res.ok) {
+              photoBuffer = Buffer.from(await res.arrayBuffer());
+            }
           }
         }
         if (photoBuffer) {

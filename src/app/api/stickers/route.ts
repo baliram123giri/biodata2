@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 export async function GET(req: Request) {
   try {
@@ -29,8 +31,7 @@ export async function GET(req: Request) {
     });
   } catch (error: any) {
     try {
-      const fs = require("fs");
-      fs.writeFileSync("error.log", error?.stack || String(error));
+      await fs.promises.writeFile(path.join(process.cwd(), "error.log"), error?.stack || String(error));
     } catch (e) {}
     console.error("Fetch public stickers error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

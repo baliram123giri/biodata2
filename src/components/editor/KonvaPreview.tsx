@@ -29,6 +29,32 @@ if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
 }
 
+function getClientImageUrl(src: string | null | undefined): string {
+  if (!src) return "";
+  if (src.startsWith("data:")) return src;
+
+  if (typeof window !== "undefined") {
+    try {
+      const parsedUrl = new URL(src, window.location.origin);
+      if (parsedUrl.hostname === window.location.hostname) {
+        const relativePath = parsedUrl.pathname + parsedUrl.search;
+        return relativePath.includes("?") ? `${relativePath}&canvas=true` : `${relativePath}?canvas=true`;
+      }
+      
+      const isProduction = process.env.NODE_ENV === "production" || window.location.hostname !== "localhost";
+      if (isProduction) {
+        return src;
+      }
+      
+      return `/api/proxy-logo?url=${encodeURIComponent(src)}`;
+    } catch (e) {
+      return src;
+    }
+  }
+  
+  return src;
+}
+
 import { getLightBgColor } from "@/lib/color-utils";
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
 
@@ -149,7 +175,8 @@ const PhotoImage = React.forwardRef<Konva.Group, {
   onDragEnd,
   onTransformEnd,
 }, ref) {
-  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
+  const resolvedSrc = getClientImageUrl(src);
+  const [image] = useImage(resolvedSrc, resolvedSrc.startsWith("data:") ? undefined : "anonymous");
   if (!image) return null;
   console.log(image.width, "image.width")
   // object-fit: contain — fill the container without cropping
@@ -272,14 +299,14 @@ const PhotoImage = React.forwardRef<Konva.Group, {
 });
 
 const LogoImage = React.memo(function LogoImage({ src, x, y, size }: { src: string; x: number; y: number; size: number }) {
-  // Add cache-busting to bypass browser CORS cache conflicts between img and canvas tags
-  const cacheBustedSrc = src.includes("?") ? `${src}&canvas=true` : `${src}?canvas=true`;
-  const [image] = useImage(cacheBustedSrc, "anonymous");
+  const resolvedSrc = getClientImageUrl(src);
+  const [image] = useImage(resolvedSrc, resolvedSrc.startsWith("data:") ? undefined : "anonymous");
   return image ? <KonvaImage image={image} x={x} y={y} width={size} height={size} /> : null;
 });
 
 const StickerImage = React.memo(function StickerImage({ src }: { src: string }) {
-  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
+  const resolvedSrc = getClientImageUrl(src);
+  const [image] = useImage(resolvedSrc, resolvedSrc.startsWith("data:") ? undefined : "anonymous");
   return image ? <KonvaImage image={image} width={100} height={100} /> : null;
 });
 
@@ -318,7 +345,8 @@ const BgWatermarkImage = React.memo(function BgWatermarkImage({
   isCustom?: boolean;
 }) {
   const bgUrl = bgConfig?.url || "";
-  const [image] = useImage(bgUrl, bgUrl.startsWith("data:") ? undefined : "anonymous");
+  const resolvedUrl = getClientImageUrl(bgUrl);
+  const [image] = useImage(resolvedUrl, resolvedUrl.startsWith("data:") ? undefined : "anonymous");
   if (!bgConfig || !bgUrl || !image) return null;
 
   let x = bgConfig.x;
@@ -456,8 +484,9 @@ const ImageFrame = React.memo(function ImageFrame({
   bgConfig?: BgConfig;
 }) {
   const frameUrl = getFrameImageUrl(config, primaryColor);
+  const resolvedFrameUrl = getClientImageUrl(frameUrl);
   const image = useColorizedFrameImage(
-    frameUrl,
+    resolvedFrameUrl,
     defaultPrimary,
     enableSvgTint ? primaryColor : "",
     defaultAccent,

@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
 import { uploadToVPS } from "@/lib/vps-upload";
+import fs from "fs";
+import path from "path";
 
 export const TEMPLATES_CACHE_KEY = "admin:templates";
 
@@ -255,8 +257,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Create template error:", error);
     try {
-      const fs = require("fs");
-      fs.writeFileSync("d:\\MERN\/\/biodata\\biodata2\\prisma-create-error.log", JSON.stringify({
+      await fs.promises.writeFile(path.join(process.cwd(), "prisma-create-error.log"), JSON.stringify({
         errorMessage: error.message,
         errorStack: error.stack,
         requestBody: body

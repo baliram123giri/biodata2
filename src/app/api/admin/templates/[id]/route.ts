@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { z } from "zod";
 import { uploadToVPS, deleteFromVPS } from "@/lib/vps-upload";
+import fs from "fs";
+import path from "path";
 
 export const BgConfigSchema = z.object({
   url: z.string().optional().nullable(),
@@ -305,8 +307,7 @@ export async function PATCH(
   } catch (error: any) {
     console.error("Update template error:", error);
     try {
-      const fs = require("fs");
-      fs.writeFileSync("d:\\MERN\/\/biodata\\biodata2\\prisma-update-error.log", JSON.stringify({
+      await fs.promises.writeFile(path.join(process.cwd(), "prisma-update-error.log"), JSON.stringify({
         errorMessage: error.message,
         errorStack: error.stack,
         requestBody: body
