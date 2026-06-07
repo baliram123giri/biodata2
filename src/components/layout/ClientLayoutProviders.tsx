@@ -44,31 +44,39 @@ function ScreenshotProtection() {
     let isMetaPressed = false;
     let isShiftPressed = false;
     let wasScreenshotShortcutPressed = false;
+    let blurTimeout: any = null;
 
     const handleBlur = () => {
-      // If the active element is a form input/dropdown/interactive button, 
-      // do not flag this as a screenshot blur.
-      if (typeof document !== "undefined" && document.activeElement) {
-        const tag = document.activeElement.tagName.toLowerCase();
-        if (
-          ["input", "select", "textarea", "button"].includes(tag) || 
-          document.activeElement.getAttribute("role") === "combobox" ||
-          document.activeElement.getAttribute("role") === "listbox"
-        ) {
-          return;
+      if (blurTimeout) clearTimeout(blurTimeout);
+
+      // 80ms delay allows focus transition to settle before deciding to trigger the Content Shield
+      blurTimeout = setTimeout(() => {
+        if (typeof document !== "undefined" && document.activeElement) {
+          const tag = document.activeElement.tagName.toLowerCase();
+          const isDropdownInput = 
+            ["input", "select", "textarea", "button"].includes(tag) || 
+            document.activeElement.getAttribute("role") === "combobox" ||
+            document.activeElement.getAttribute("role") === "listbox" ||
+            document.activeElement.closest("[data-radix-popper-content-wrapper]") !== null ||
+            document.activeElement.closest("[role='dialog']") !== null;
+
+          if (isDropdownInput) {
+            return;
+          }
         }
-      }
 
-      blurTime = Date.now();
-      wasBlurred = true;
+        blurTime = Date.now();
+        wasBlurred = true;
 
-      // On mobile only, we use focus/blur cycles to detect system screenshot/multitasking overlays.
-      if (isMobile()) {
-        setIsScreenShielded(true);
-      }
+        // On mobile only, we use focus/blur cycles to detect system screenshot/multitasking overlays.
+        if (isMobile()) {
+          setIsScreenShielded(true);
+        }
+      }, 80);
     };
 
     const handleFocus = () => {
+      if (blurTimeout) clearTimeout(blurTimeout);
       setIsScreenShielded(false);
       
       // Reset modifier key states on focus restore
@@ -91,6 +99,8 @@ function ScreenshotProtection() {
     };
 
     const handleVisibilityChange = () => {
+      if (blurTimeout) clearTimeout(blurTimeout);
+
       if (document.visibilityState === "visible") {
         setIsScreenShielded(false);
         isMetaPressed = false;
@@ -199,6 +209,7 @@ function ScreenshotProtection() {
     window.addEventListener("keyup", handleKeyUp);
 
     return () => {
+      if (blurTimeout) clearTimeout(blurTimeout);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
