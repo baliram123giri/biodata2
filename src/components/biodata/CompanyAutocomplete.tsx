@@ -16,23 +16,23 @@ interface Company {
 }
 
 const POPULAR_COMPANIES: Company[] = [
-  { name: "TCS", domain: "tcs.com", logo: "https://icon.horse/icon/tcs.com" },
-  { name: "Infosys", domain: "infosys.com", logo: "https://icon.horse/icon/infosys.com" },
-  { name: "Wipro", domain: "wipro.com", logo: "https://icon.horse/icon/wipro.com" },
-  { name: "Cognizant", domain: "cognizant.com", logo: "https://icon.horse/icon/cognizant.com" },
-  { name: "Accenture", domain: "accenture.com", logo: "https://icon.horse/icon/accenture.com" },
-  { name: "Google", domain: "google.com", logo: "https://icon.horse/icon/google.com" },
-  { name: "Microsoft", domain: "microsoft.com", logo: "https://icon.horse/icon/microsoft.com" },
-  { name: "Amazon", domain: "amazon.com", logo: "https://icon.horse/icon/amazon.com" },
-  { name: "Flipkart", domain: "flipkart.com", logo: "https://icon.horse/icon/flipkart.com" },
-  { name: "Reliance", domain: "ril.com", logo: "https://icon.horse/icon/ril.com" },
-  { name: "Tata Motors", domain: "tatamotors.com", logo: "https://icon.horse/icon/tatamotors.com" },
-  { name: "HDFC Bank", domain: "hdfcbank.com", logo: "https://icon.horse/icon/hdfcbank.com" },
-  { name: "ICICI Bank", domain: "icicibank.com", logo: "https://icon.horse/icon/icicibank.com" },
-  { name: "SBI", domain: "sbi.co.in", logo: "https://icon.horse/icon/sbi.co.in" },
-  { name: "L&T", domain: "larsentoubro.com", logo: "https://icon.horse/icon/larsentoubro.com" },
-  { name: "Mahindra", domain: "mahindra.com", logo: "https://icon.horse/icon/mahindra.com" },
-  { name: "Government of India", domain: "india.gov.in", logo: "https://icon.horse/icon/india.gov.in" },
+  { name: "TCS", domain: "tcs.com", logo: "https://www.google.com/s2/favicons?domain=tcs.com&sz=128" },
+  { name: "Infosys", domain: "infosys.com", logo: "https://www.google.com/s2/favicons?domain=infosys.com&sz=128" },
+  { name: "Wipro", domain: "wipro.com", logo: "https://www.google.com/s2/favicons?domain=wipro.com&sz=128" },
+  { name: "Cognizant", domain: "cognizant.com", logo: "https://www.google.com/s2/favicons?domain=cognizant.com&sz=128" },
+  { name: "Accenture", domain: "accenture.com", logo: "https://www.google.com/s2/favicons?domain=accenture.com&sz=128" },
+  { name: "Google", domain: "google.com", logo: "https://www.google.com/s2/favicons?domain=google.com&sz=128" },
+  { name: "Microsoft", domain: "microsoft.com", logo: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128" },
+  { name: "Amazon", domain: "amazon.com", logo: "https://www.google.com/s2/favicons?domain=amazon.com&sz=128" },
+  { name: "Flipkart", domain: "flipkart.com", logo: "https://www.google.com/s2/favicons?domain=flipkart.com&sz=128" },
+  { name: "Reliance", domain: "ril.com", logo: "https://www.google.com/s2/favicons?domain=ril.com&sz=128" },
+  { name: "Tata Motors", domain: "tatamotors.com", logo: "https://www.google.com/s2/favicons?domain=tatamotors.com&sz=128" },
+  { name: "HDFC Bank", domain: "hdfcbank.com", logo: "https://www.google.com/s2/favicons?domain=hdfcbank.com&sz=128" },
+  { name: "ICICI Bank", domain: "icicibank.com", logo: "https://www.google.com/s2/favicons?domain=icicibank.com&sz=128" },
+  { name: "SBI", domain: "sbi.co.in", logo: "https://www.google.com/s2/favicons?domain=sbi.co.in&sz=128" },
+  { name: "L&T", domain: "larsentoubro.com", logo: "https://www.google.com/s2/favicons?domain=larsentoubro.com&sz=128" },
+  { name: "Mahindra", domain: "mahindra.com", logo: "https://www.google.com/s2/favicons?domain=mahindra.com&sz=128" },
+  { name: "Government of India", domain: "india.gov.in", logo: "https://www.google.com/s2/favicons?domain=india.gov.in&sz=128" },
 ];
 
 export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { value: string; logo?: string; onChange: (v: string, logo?: string) => void; placeholder?: string }) {
@@ -184,7 +184,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
                   key={company.domain}
                   onClick={() => {
                     const domain = company.domain || (company.logo ? company.logo.replace("https://logo.clearbit.com/", "") : "");
-                    const logoUrl = domain ? `https://icon.horse/icon/${domain}` : (company.logo || "");
+                    const logoUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : (company.logo || "");
                     
                     setLogoMap(prev => ({ ...prev, [company.name]: logoUrl }))
                     onChange(company.name, logoUrl)
@@ -200,7 +200,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
                     <img src={company.logo} alt={company.name} className="h-6 w-6 rounded object-contain bg-white shrink-0" />
                   ) : company.domain ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`https://icon.horse/icon/${company.domain}`} alt={company.name} className="h-6 w-6 rounded object-contain bg-white shrink-0" />
+                    <img src={`https://www.google.com/s2/favicons?domain=${company.domain}&sz=128`} alt={company.name} className="h-6 w-6 rounded object-contain bg-white shrink-0" />
                   ) : (
                     <Building2 className="h-6 w-6 text-muted-foreground opacity-50 shrink-0" />
                   )}
@@ -218,7 +218,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
                 <div
                   onClick={() => {
                     const potentialDomain = query.includes(".") ? query.replace(/https?:\/\//, "").split("/")[0].trim() : "";
-                    const logoUrl = potentialDomain ? `https://icon.horse/icon/${potentialDomain}` : undefined;
+                    const logoUrl = potentialDomain ? `https://www.google.com/s2/favicons?domain=${potentialDomain}&sz=128` : undefined;
                     onChange(query, logoUrl)
                     setOpen(false)
                   }}

@@ -59,11 +59,32 @@ async function imageUrlToBase64(url: string): Promise<string> {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+    return new Promise<string>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width || 32;
+        canvas.height = img.height || 32;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Canvas context is null"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(objectUrl);
+        try {
+          resolve(canvas.toDataURL("image/png"));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = (e) => {
+        URL.revokeObjectURL(objectUrl);
+        reject(e);
+      };
+      img.src = objectUrl;
     });
   } catch (fetchErr) {
     console.warn("Client fetch failed for base64 conversion, trying canvas...", fetchErr);

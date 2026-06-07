@@ -108,7 +108,10 @@ export function HomeBiodataBuilder() {
 
   const handleSubmitWhatsApp = (phoneNumber: string, countryCode: string) => {
     return new Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }>(async (resolve, reject) => {
-      const currentData = methods.getValues();
+      const currentData = {
+        ...useBiodataStore.getState().formData,
+        ...methods.getValues(),
+      };
       const nameField =
         currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
         "biodata";
@@ -747,7 +750,10 @@ export function HomeBiodataBuilder() {
           isPremium={activeTemplate?.isPremium}
           isGenerating={isGenerating}
           onSelectFormat={async (format, couponCode) => {
-            const currentData = methods.getValues();
+            const currentData = {
+              ...useBiodataStore.getState().formData,
+              ...methods.getValues(),
+            };
             if (activeTemplate?.isPremium) {
               setIsPriceModalOpen(false);
               await processPremiumPaymentAndDownload(currentData, format, filename, couponCode);

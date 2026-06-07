@@ -75,9 +75,11 @@ export const processPDFField = (
     }
   }
 
-  // 4. Handle Company Logo — read from field.logo (set by CompanyAutocomplete)
+  // 4. Handle Company Logo — read from field.logo or field.logoUrl
   if (field.logo && typeof field.logo === "string" && field.logo.trim()) {
     logoUrl = field.logo.trim();
+  } else if (field.logoUrl && typeof field.logoUrl === "string" && field.logoUrl.trim()) {
+    logoUrl = field.logoUrl.trim();
   }
 
   // 5. Date formatting

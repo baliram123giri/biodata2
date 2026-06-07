@@ -17,7 +17,7 @@ import path from 'path';
 import fs from 'fs';
 
 const A4_W = 595;
-const A4_H = 842;
+const A4_H = 841;
 const FONT_BASE_URL = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf';
 
 // ── FONT REGISTRATION ──────────────────────────────────────────────
@@ -785,9 +785,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                     f.logoUrl ? (() => {
                       let resolvedSrc: any = f.logoUrl;
                       if (f.logoUrl.startsWith("data:image/")) {
-                        const commaIdx = f.logoUrl.indexOf(",");
-                        const base64Content = f.logoUrl.substring(commaIdx + 1);
-                        resolvedSrc = Buffer.from(base64Content, "base64");
+                        resolvedSrc = f.logoUrl;
                       } else if (f.logoUrl.startsWith("/api/proxy-logo?url=")) {
                         resolvedSrc = decodeURIComponent(f.logoUrl.split("?url=")[1]);
                       }
@@ -1074,11 +1072,59 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
         console.error("[resolveAndConvertImage] Failed to rasterize data SVG to PNG:", rasterError);
         return resolvedUrl;
       }
+    } else if (resolvedUrl.startsWith("data:image/")) {
+      try {
+        const commaIdx = resolvedUrl.indexOf(",");
+        if (commaIdx === -1) {
+          console.error("[resolveAndConvertImage] Data URL missing comma");
+          return undefined;
+        }
+        const base64Content = resolvedUrl.substring(commaIdx + 1);
+        const imgBuffer = Buffer.from(base64Content, "base64");
+        const sharp = require("sharp");
+        
+        // This validates that sharp can parse/process the image
+        const metadata = await sharp(imgBuffer).metadata();
+        const mimeType = metadata.format || "";
+        const isStandard = mimeType === "png" || mimeType === "jpeg" || mimeType === "jpg";
+        
+        if (!isStandard) {
+          console.log(`[resolveAndConvertImage] Non-standard data URL detected (type: ${mimeType}), converting to PNG...`);
+          const pngBuffer = await sharp(imgBuffer)
+            .png()
+            .toBuffer();
+          console.log(`[resolveAndConvertImage] Convert non-standard image successful. size: ${pngBuffer.length}`);
+          return `data:image/png;base64,${pngBuffer.toString("base64")}`;
+        }
+        
+        // Normalize mime type in data URL header to match actual format if needed
+        const match = resolvedUrl.match(/^data:image\/([a-zA-Z0-9.-]+);base64,/);
+        const urlMime = match ? match[1].toLowerCase() : "";
+        if (urlMime !== mimeType) {
+          const actualMime = mimeType === "jpg" ? "jpeg" : mimeType;
+          return `data:image/${actualMime};base64,${base64Content}`;
+        }
+        
+        return resolvedUrl;
+      } catch (err) {
+        console.error(`[resolveAndConvertImage] Data URL is corrupt or unsupported format:`, err);
+        return undefined; // Return undefined to prevent crashing react-pdf
+      }
     } else if (localPath) {
       buffer = await fs.promises.readFile(localPath);
     } else if (resolvedUrl.startsWith("http")) {
-      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${resolvedUrl}"`);
-      const response = await fetch(resolvedUrl, {
+      let urlToFetch = resolvedUrl;
+      if (resolvedUrl.includes("icon.horse/icon/")) {
+        try {
+          const domain = resolvedUrl.split("icon.horse/icon/")[1].split("?")[0];
+          urlToFetch = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          console.log(`[resolveAndConvertImage] Rewriting icon.horse URL "${resolvedUrl}" to Google Favicon API: "${urlToFetch}"`);
+        } catch (e) {
+          console.error("[resolveAndConvertImage] Failed to parse icon.horse URL domain:", e);
+        }
+      }
+      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${urlToFetch}"`);
+      const response = await fetch(urlToFetch, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
@@ -1115,19 +1161,19 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
       }
     }
 
-    const isWebp = contentType.includes("webp") || resolvedUrl.toLowerCase().includes(".webp");
-    if (isWebp) {
+    const isPngOrJpg = contentType.includes("png") || contentType.includes("jpeg") || contentType.includes("jpg");
+    if (!isPngOrJpg && !isSvg) {
       try {
-        console.log(`[resolveAndConvertImage] WebP detected. Converting to PNG via sharp...`);
+        console.log(`[resolveAndConvertImage] Non-standard image type detected: ${contentType}. Converting to PNG via sharp...`);
         const sharp = require("sharp");
         const pngBuffer = await sharp(buffer)
           .png()
           .toBuffer();
-        console.log(`[resolveAndConvertImage] WebP to PNG conversion successful. Output size: ${pngBuffer.length}`);
+        console.log(`[resolveAndConvertImage] Image format conversion successful. Output size: ${pngBuffer.length}`);
         buffer = pngBuffer;
         contentType = "image/png";
       } catch (sharpError) {
-        console.error(`[resolveAndConvertImage] Failed to convert WebP to PNG: ${resolvedUrl}`, sharpError);
+        console.error(`[resolveAndConvertImage] Failed to convert image format ${contentType} to PNG: ${resolvedUrl}`, sharpError);
       }
     }
     
@@ -1212,6 +1258,33 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
             }
           } catch (e) {
             console.error(`Failed to pre-fetch sticker ${sticker.type}:`, e);
+          }
+        }
+      }
+    }
+
+    // Pre-fetch and convert field company logos to base64 data URL server-side
+    const logoSections = ['personalDetails', 'educationDetails', 'familyDetails', 'contactDetails'];
+    for (const sec of logoSections) {
+      if (formData[sec] && Array.isArray(formData[sec])) {
+        for (const field of formData[sec]) {
+          const logoToResolve = field.logo || field.logoUrl;
+          if (logoToResolve && typeof logoToResolve === "string") {
+            try {
+              const base64 = await resolveAndConvertImage(logoToResolve);
+              if (base64) {
+                if (field.logo) field.logo = base64;
+                if (field.logoUrl) field.logoUrl = base64;
+              } else {
+                console.log(`[generatePDFBuffer] Invalid/unresolvable logo detected for field ${field.id}. Removing logo to prevent PDF render crash.`);
+                delete field.logo;
+                delete field.logoUrl;
+              }
+            } catch (e) {
+              console.error(`Failed to resolve field logo server-side for ${field.id}:`, e);
+              delete field.logo;
+              delete field.logoUrl;
+            }
           }
         }
       }
@@ -1308,11 +1381,20 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
           photoWidth = metadata.width || 0;
           photoHeight = metadata.height || 0;
           
-          // Convert to base64 data URL to avoid network fetch during react-pdf rendering
-          const contentType = formData.photo.startsWith("data:") 
-            ? formData.photo.split(";")[0].split(":")[1] 
-            : (metadata.format ? `image/${metadata.format}` : "image/jpeg");
-          formData.photo = `data:${contentType};base64,${photoBuffer.toString("base64")}`;
+          let format = metadata.format;
+          let finalBuffer = photoBuffer;
+          if (format !== "png" && format !== "jpeg" && format !== "jpg") {
+            console.log(`[generatePDFBuffer] Converting photo from ${format} to png...`);
+            try {
+              finalBuffer = await sharp(photoBuffer).png().toBuffer();
+              format = "png";
+            } catch (err) {
+              console.error("[generatePDFBuffer] Failed to convert photo to PNG:", err);
+            }
+          }
+          
+          const contentType = format === "png" ? "image/png" : "image/jpeg";
+          formData.photo = `data:${contentType};base64,${finalBuffer.toString("base64")}`;
         }
       } catch (err) {
         console.error("Error reading photo metadata for PDF:", err);
