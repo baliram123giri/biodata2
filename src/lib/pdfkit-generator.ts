@@ -637,7 +637,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                             style: {
                               position: 'absolute',
                               top: -6,
-                              left: A4_W / 2 + halfW + gap + imgW,
+                              left: A4_W / 2 + halfW + gap,
                               width: imgW,
                               height: imgH
                             } as any
@@ -670,7 +670,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                             style: {
                               position: 'absolute',
                               top: -6,
-                              left: A4_W / 2 + halfW + gap + imgW,
+                              left: A4_W / 2 + halfW + gap,
                               width: imgW,
                               height: imgH,
                               transform: 'scaleX(-1)'
