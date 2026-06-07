@@ -62,9 +62,23 @@ const registerFonts = () => {
   registerNoto('Telugu');
   registerNoto('Kannada');
   registerNoto('Gurmukhi');
+  registerNoto('Arabic');
 };
 
 registerFonts();
+
+export function getFontForText(text: string, fallbackFont: string): string {
+  if (!text) return fallbackFont;
+  if (/[\u0900-\u097F]/.test(text)) return 'Noto Sans Devanagari';
+  if (/[\u0A80-\u0AFF]/.test(text)) return 'Noto Sans Gujarati';
+  if (/[\u0980-\u09FF]/.test(text)) return 'Noto Sans Bengali';
+  if (/[\u0B80-\u0BFF]/.test(text)) return 'Noto Sans Tamil';
+  if (/[\u0C00-\u0C7F]/.test(text)) return 'Noto Sans Telugu';
+  if (/[\u0C80-\u0CFF]/.test(text)) return 'Noto Sans Kannada';
+  if (/[\u0A00-\u0A7F]/.test(text)) return 'Noto Sans Gurmukhi';
+  if (/[\u0600-\u06FF]/.test(text)) return 'Noto Sans Arabic';
+  return fallbackFont;
+}
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
 function CustomPDFFrame({ componentId, primaryColor }: { componentId: string; primaryColor: string }) {
   return React.createElement(View, {});
@@ -189,11 +203,11 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
     let cursorY = paddingY + 20;
     const headerItems: any[] = [];
     if (data.mantra) {
-      headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10, fontSize: fSize * 1.2, font: 'Noto Sans Devanagari' });
+      headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10, fontSize: fSize * 1.2, font: getFontForText(data.mantra, fontFamily) });
       cursorY += fSize * 2;
     }
     if (data.title) {
-      headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: fontFamily });
+      headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: getFontForText(data.title, fontFamily) });
       cursorY += fSize * 2.8;
     }
 
@@ -581,6 +595,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   const imgW = 45;
                   const imgH = 45;
                   
+                  const parsedSvg = mantraSticker.svgContent ? parseSvgContent(mantraSticker.svgContent) : null;
+                  
                   return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W, height: Math.max(item.fontSize, imgH) } as any },
                     React.createElement(Text, {
                       style: {
@@ -595,27 +611,73 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         color: primary
                       } as any
                     }, item.text ? String(item.text) : ""),
-                    React.createElement(Image, {
-                      src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
-                      style: {
-                        position: 'absolute',
-                        top: -6,
-                        left: A4_W / 2 - halfW - gap - imgW,
-                        width: imgW,
-                        height: imgH
-                      } as any
-                    }),
-                    React.createElement(Image, {
-                      src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
-                      style: {
-                        position: 'absolute',
-                        top: -6,
-                        left: A4_W / 2 + halfW + gap + imgW,
-                        width: imgW,
-                        height: imgH,
-                        transform: 'scaleX(-1)'
-                      } as any
-                    })
+                    
+                    parsedSvg ? (
+                      React.createElement(React.Fragment, null,
+                        React.createElement(View, {
+                          style: {
+                            position: 'absolute',
+                            top: -6,
+                            left: A4_W / 2 - halfW - gap - imgW,
+                            width: imgW,
+                            height: imgH
+                          } as any
+                        },
+                          React.createElement(Svg, { viewBox: parsedSvg.viewBox, width: '100%', height: '100%' },
+                            parsedSvg.paths.map((p: any, idx: number) => 
+                              React.createElement(Path, { 
+                                key: idx, 
+                                d: p.d, 
+                                fill: primary 
+                              })
+                            )
+                          )
+                        ),
+                        React.createElement(View, {
+                          style: {
+                            position: 'absolute',
+                            top: -6,
+                            left: A4_W / 2 + halfW + gap + imgW,
+                            width: imgW,
+                            height: imgH
+                          } as any
+                        },
+                          React.createElement(Svg, { viewBox: parsedSvg.viewBox, width: '100%', height: '100%', style: { transform: 'scaleX(-1)' } as any },
+                            parsedSvg.paths.map((p: any, idx: number) => 
+                              React.createElement(Path, { 
+                                key: idx, 
+                                d: p.d, 
+                                fill: primary 
+                              })
+                            )
+                          )
+                        )
+                      )
+                    ) : (
+                      React.createElement(React.Fragment, null,
+                        React.createElement(Image, {
+                          src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
+                          style: {
+                            position: 'absolute',
+                            top: -6,
+                            left: A4_W / 2 - halfW - gap - imgW,
+                            width: imgW,
+                            height: imgH
+                          } as any
+                        }),
+                        React.createElement(Image, {
+                          src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
+                          style: {
+                            position: 'absolute',
+                            top: -6,
+                            left: A4_W / 2 + halfW + gap + imgW,
+                            width: imgW,
+                            height: imgH,
+                            transform: 'scaleX(-1)'
+                          } as any
+                        })
+                      )
+                    )
                   );
                 }
               }
@@ -713,7 +775,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   left: padding + 10 + offset.x,
                   top: absTitleY + 2,
                   fontSize: Math.round(fSize * 1.4), 
-                  fontFamily: fontFamily, 
+                  fontFamily: getFontForText(sec.title, fontFamily), 
                   fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
                   color: titleColor 
                 }
@@ -743,7 +805,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       left: colX + offset.x,
                       width: lblW, 
                       fontSize: fSize, 
-                      fontFamily: fontFamily, 
+                      fontFamily: getFontForText(f.displayLabel, fontFamily), 
                       fontWeight: fontStyle === 'bold' ? 'bold' : 'normal', 
                       color: fieldColor,
                       lineHeight: 1.1
@@ -802,7 +864,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         styles.value, 
                         { 
                           fontSize: fSize, 
-                          fontFamily: fontFamily, 
+                          fontFamily: getFontForText(f.displayValue, fontFamily), 
                           color: fieldColor,
                           width: f.valueW,
                           lineHeight: 1.1
@@ -840,6 +902,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           const sX = sticker.scaleX ?? 1;
           const sY = sticker.scaleY ?? 1;
           
+          const parsedSvg = sticker.svgContent ? parseSvgContent(sticker.svgContent) : null;
+          
           return React.createElement(View, {
             key: `sticker-${i}`,
             style: {
@@ -852,7 +916,17 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               ...(sticker.rotation ? { transform: `rotate(${sticker.rotation}deg)` } : {}),
             } as any
           },
-            resolvedSrc ? 
+            parsedSvg ?
+              React.createElement(Svg, { viewBox: parsedSvg.viewBox || "0 0 100 100", width: '100%', height: '100%' },
+                parsedSvg.paths.map((p: any, idx: number) => 
+                  React.createElement(Path, { 
+                    key: idx, 
+                    d: p.d, 
+                    fill: primary 
+                  })
+                )
+              )
+            : resolvedSrc ? 
               React.createElement(Image, { 
                 src: resolvedSrc, 
                 style: { width: '100%', height: '100%', objectFit: 'fill' } as any
@@ -1029,10 +1103,93 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
   return null;
 }
 
+interface ParsedSvg {
+  viewBox: string;
+  paths: { d: string; fill?: string; stroke?: string; strokeWidth?: string }[];
+}
+
+function parseSvgContent(svgContent: string): ParsedSvg | null {
+  try {
+    const viewBoxMatch = svgContent.match(/viewBox=["']([^"']+)["']/i);
+    const viewBox = viewBoxMatch ? viewBoxMatch[1] : "0 0 100 100";
+
+    // Extract paths and extract their d attribute
+    const pathRegex = /<path\s+[^>]*d=["']([^"']+)["'][^>]*/gi;
+    const paths: ParsedSvg["paths"] = [];
+    let match;
+    while ((match = pathRegex.exec(svgContent)) !== null) {
+      const fullTag = match[0];
+      const d = match[1];
+      const fillMatch = fullTag.match(/fill=["']([^"']+)["']/i);
+      const strokeMatch = fullTag.match(/stroke=["']([^"']+)["']/i);
+      const strokeWidthMatch = fullTag.match(/stroke-width=["']([^"']+)["']/i);
+
+      paths.push({
+        d,
+        fill: fillMatch ? fillMatch[1] : undefined,
+        stroke: strokeMatch ? strokeMatch[1] : undefined,
+        strokeWidth: strokeWidthMatch ? strokeWidthMatch[1] : undefined,
+      });
+    }
+    
+    if (paths.length === 0) return null;
+    return { viewBox, paths };
+  } catch (e) {
+    console.error("Failed to parse SVG content:", e);
+    return null;
+  }
+}
+
+async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
+  if (!urlOrPath) return undefined;
+
+  if (urlOrPath.startsWith("data:image/svg+xml")) {
+    try {
+      const commaIdx = urlOrPath.indexOf(",");
+      const base64Content = urlOrPath.substring(commaIdx + 1);
+      if (urlOrPath.includes(";base64,")) {
+        return Buffer.from(base64Content, "base64").toString("utf-8");
+      } else {
+        return decodeURIComponent(base64Content);
+      }
+    } catch (e) {
+      console.error("Failed to decode data SVG URL:", e);
+    }
+  }
+  
+  const localPath = getAbsoluteLocalPath(urlOrPath);
+  if (localPath) {
+    try {
+      return await fs.promises.readFile(localPath, "utf-8");
+    } catch (e) {
+      console.error(`Error reading local SVG file ${localPath}:`, e);
+    }
+  }
+  
+  if (urlOrPath.startsWith("http")) {
+    try {
+      const res = await fetch(urlOrPath);
+      if (res.ok) {
+        return await res.text();
+      }
+    } catch (e) {
+      console.error(`Error fetching remote SVG ${urlOrPath}:`, e);
+    }
+  }
+  
+  return undefined;
+}
+
 async function resolveAndConvertImage(url: string): Promise<string | undefined> {
   if (!url) {
     console.log("[resolveAndConvertImage] Empty URL received.");
     return undefined;
+  }
+  
+  // Cloudinary SVG dynamic PNG conversion fallback to avoid server-side librsvg system dependency issues
+  if (url.includes("res.cloudinary.com") && (url.toLowerCase().endsWith(".svg") || url.toLowerCase().includes(".svg?"))) {
+    url = url.replace(/\.svg(\?|$)/i, ".png$1");
+    console.log(`[resolveAndConvertImage] Cloudinary SVG detected, dynamically rewritten to PNG: "${url}"`);
   }
   
   console.log(`[resolveAndConvertImage] Resolving URL: "${url.substring(0, 150)}..."`);
@@ -1240,21 +1397,30 @@ export async function generatePDFBuffer(opts: any): Promise<Buffer> {
       }
     }
 
-    // Pre-fetch stickers to base64 (handling SVGs)
+    // Pre-fetch stickers (handling SVGs by parsing paths directly, falling back to PNG base64)
     if (formData.stickers && formData.stickers.length > 0) {
       const { STICKER_ASSETS } = require("./sticker-assets");
       for (const sticker of formData.stickers) {
-        if (sticker.resolvedUrl && sticker.resolvedUrl.startsWith("data:") && !sticker.resolvedUrl.startsWith("data:image/svg+xml")) {
-          continue; // Skip if already pre-fetched as a clean PNG/JPEG Base64
-        }
-        
         const asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
         const urlToResolve = sticker.resolvedUrl || (asset && asset.url) || (sticker.type?.startsWith("http") || sticker.type?.startsWith("/") ? sticker.type : null);
         if (urlToResolve) {
           try {
-            const base64 = await resolveAndConvertImage(urlToResolve);
-            if (base64) {
-              sticker.resolvedUrl = base64;
+            const isSvg = urlToResolve.toLowerCase().endsWith(".svg") || 
+                          urlToResolve.toLowerCase().includes(".svg?") || 
+                          urlToResolve.startsWith("data:image/svg+xml");
+            if (isSvg) {
+              const svgXml = await resolveSvgXml(urlToResolve);
+              if (svgXml) {
+                sticker.svgContent = svgXml;
+              }
+            } else {
+              if (sticker.resolvedUrl && sticker.resolvedUrl.startsWith("data:") && !sticker.resolvedUrl.startsWith("data:image/svg+xml")) {
+                continue; // Skip if already pre-fetched as a clean PNG/JPEG Base64
+              }
+              const base64 = await resolveAndConvertImage(urlToResolve);
+              if (base64) {
+                sticker.resolvedUrl = base64;
+              }
             }
           } catch (e) {
             console.error(`Failed to pre-fetch sticker ${sticker.type}:`, e);
