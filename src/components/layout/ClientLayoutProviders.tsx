@@ -85,11 +85,7 @@ function ScreenshotProtection() {
 
       if (isMobile()) {
         if (wasBlurred) {
-          const timeDiff = Date.now() - blurTime;
-          // Trigger if blurred for a typical screenshot/multitasking window duration (down to 150ms)
-          if (timeDiff > 150 && timeDiff < 15000) {
-            setShowWarning(true);
-          }
+          // No need to show warning modal on mobile, just rely on the screen shield
           wasBlurred = false;
         }
       } else if (wasScreenshotShortcutPressed) {
@@ -107,10 +103,7 @@ function ScreenshotProtection() {
         isShiftPressed = false;
 
         if (isMobile() && wasBlurred) {
-          const timeDiff = Date.now() - blurTime;
-          if (timeDiff > 150 && timeDiff < 15000) {
-            setShowWarning(true);
-          }
+          // No need to show warning modal on mobile, just rely on the screen shield
           wasBlurred = false;
         } else if (wasScreenshotShortcutPressed) {
           setShowWarning(true);

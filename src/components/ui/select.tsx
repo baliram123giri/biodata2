@@ -171,7 +171,7 @@ const SelectContent = React.forwardRef<
 
         {showSearch && (
           <div
-            className="flex items-center gap-2 px-2.5 py-1.5 border-b sticky top-0 bg-popover z-20 order-first"
+            className="hidden md:flex items-center gap-2 px-2.5 py-1.5 border-b sticky top-0 bg-popover z-20 order-first"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
