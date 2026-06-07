@@ -30,14 +30,13 @@ function ScreenshotProtection() {
   const [isScreenShielded, setIsScreenShielded] = useState(false);
 
   useEffect(() => {
-    // Robust check if on mobile/tablet device (handles iPads that report as Macintosh)
+    // Robust check if on mobile/tablet device (strictly checks touch-based mobile and iPads, excluding desktop windows)
     const isMobile = () => {
       if (typeof window === "undefined") return false;
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-      const isMobileWidth = window.innerWidth < 1025; // Catch tablets/iPads in both portrait and landscape
-      const isTouchDevice = typeof navigator !== "undefined" && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
-      return isMobileUA || isMobileWidth || isTouchDevice;
+      const isIPad = typeof navigator !== "undefined" && navigator.maxTouchPoints && navigator.maxTouchPoints > 1 && userAgent.includes("Macintosh");
+      return isMobileUA || isIPad;
     };
 
     let wasBlurred = false;
@@ -47,6 +46,19 @@ function ScreenshotProtection() {
     let wasScreenshotShortcutPressed = false;
 
     const handleBlur = () => {
+      // If the active element is a form input/dropdown/interactive button, 
+      // do not flag this as a screenshot blur.
+      if (typeof document !== "undefined" && document.activeElement) {
+        const tag = document.activeElement.tagName.toLowerCase();
+        if (
+          ["input", "select", "textarea", "button"].includes(tag) || 
+          document.activeElement.getAttribute("role") === "combobox" ||
+          document.activeElement.getAttribute("role") === "listbox"
+        ) {
+          return;
+        }
+      }
+
       blurTime = Date.now();
       wasBlurred = true;
 
@@ -95,7 +107,9 @@ function ScreenshotProtection() {
           wasScreenshotShortcutPressed = false;
         }
       } else {
-        // Tab became hidden
+        // Tab became hidden (app-switch, tab-switch, minimize)
+        wasBlurred = false; // Reset mobile blur tracker to prevent false warnings on app restore
+        
         if (isMobile()) {
           setIsScreenShielded(true);
         } else {
