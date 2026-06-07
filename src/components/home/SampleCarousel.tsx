@@ -147,7 +147,7 @@ export function SampleCarousel() {
               className="w-full"
             >
               <CarouselContent className="-ml-4 md:-ml-6">
-                {SAMPLES.map((sample) => (
+                {SAMPLES.map((sample, index) => (
                   <CarouselItem
                     key={sample.id}
                     className="pl-4 md:pl-6 basis-[85%] sm:basis-1/2 md:basis-1/3"
@@ -167,6 +167,7 @@ export function SampleCarousel() {
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
                           quality={75}
+                          priority={index < 2}
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         {/* Hover Overlay */}
