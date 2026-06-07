@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { CompanyAutocomplete } from "./CompanyAutocomplete";
 import { MantraAutocomplete } from "./MantraAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2, X, Clock, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
 import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES, translateUI } from "@/lib/translations";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -68,6 +69,66 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
     },
     staleTime: 1000 * 60 * 30,
   });
+
+  // One-time cleanup: remove any stray non-standard occupation/profession fields
+  // from familyDetails that may have been added by a previous session
+  useEffect(() => {
+    const standardFamilyIds = new Set([
+      "fatherName", "fatherOccupation", "motherName", "motherOccupation",
+      "totalBrothers", "totalSisters", "nativePlace"
+    ]);
+    const family = getValues("familyDetails") || [];
+    const cleaned = family.filter(f => {
+      // Keep standard fields always
+      if (standardFamilyIds.has(f.id)) return true;
+      // Keep fields with a value (user typed something)
+      if (f.value && f.value.trim()) return true;
+      // Remove stray occupation/profession select fields with no value
+      const labelLower = (f.label || "").toLowerCase();
+      if (f.type === "select" && (labelLower.includes("occupation") || labelLower.includes("profession") || labelLower.includes("व्यवसाय") || labelLower.includes("पेशा"))) {
+        return false;
+      }
+      return true;
+    });
+    if (cleaned.length !== family.length) {
+      setValue("familyDetails", cleaned as any);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const personal = getValues("personalDetails") || [];
+    const hasKuldaivat = personal.some(f => f.id === "kuldaivat");
+
+    const kuldaivatLangs: Record<string, string> = {
+      "मराठी": "कुलदैवत",
+      "हिंदी": "कुलदेवता",
+    };
+
+    const kuldaivatLabel = kuldaivatLangs[currentLang];
+
+    if (kuldaivatLabel) {
+      if (!hasKuldaivat) {
+        const gotraIdx = personal.findIndex(f => f.id === "gotra");
+        const newField = { id: "kuldaivat", label: kuldaivatLabel, value: "", type: "text" as const, isDefault: true };
+        const newPersonal = [...personal];
+        if (gotraIdx !== -1) {
+          newPersonal.splice(gotraIdx + 1, 0, newField);
+        } else {
+          newPersonal.push(newField);
+        }
+        setValue("personalDetails", newPersonal);
+      }
+    } else {
+      if (hasKuldaivat) {
+        const field = personal.find(f => f.id === "kuldaivat");
+        if (field && !field.value) {
+          const newPersonal = personal.filter(f => f.id !== "kuldaivat");
+          setValue("personalDetails", newPersonal);
+        }
+      }
+    }
+  }, [currentLang, setValue, getValues]);
 
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
@@ -311,23 +372,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
             </div>
           </div>
 
-          <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-2">
-            {currentMantraSticker ? (
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => {
-                    removeSticker(currentMantraSticker.id);
-                  }}
-                  className="w-full sm:w-auto rounded-xl font-bold transition-all shadow-sm px-4"
-                >
-                  Remove Current Sign
-                </Button>
-              </DialogClose>
-            ) : (
-              <div className="hidden sm:block" />
-            )}
+          <DialogFooter className="p-4 md:p-6 border-t border-border/50 sticky bottom-0 bg-card z-10 flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-2">
             <DialogClose asChild>
               <Button type="button" variant="outline" className="w-full sm:w-28 rounded-xl border-border/60 hover:bg-muted/50 font-bold transition-all text-muted-foreground hover:text-foreground shadow-sm">
                 Cancel
@@ -391,22 +436,25 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                 />
               );
             }
-            const isAnnualIncome = field.id === "annualIncome" || 
-                                  field.label?.trim().toLowerCase() === "annual income" ||
-                                  field.label?.trim() === "वार्षिक आय" ||
-                                  field.label?.trim() === "वार्षिक उत्पन्न" ||
-                                  field.label?.trim() === "વાર્ષિક આવક" ||
-                                  field.label?.trim() === "বার্ষিক আয়" ||
-                                  field.label?.trim() === "ஆண்டு வருமானம்" ||
-                                  field.label?.trim() === "వార్షిక ఆదాయం" ||
-                                  field.label?.trim() === "ವಾರ್ಷಿಕ ಆದಾಯ" ||
-                                  field.label?.trim() === "ਸਾਲਾਨਾ ਆਮਦਨ" ||
-                                  field.label?.trim() === "سالانہ آمدنی";
+            const isAnnualIncome = field.id === "annualIncome" ||
+              field.label?.trim().toLowerCase() === "annual income" ||
+              field.label?.trim() === "वार्षिक आय" ||
+              field.label?.trim() === "वार्षिक उत्पन्न" ||
+              field.label?.trim() === "વાર્ષિક આવક" ||
+              field.label?.trim() === "বার্ষিক আয়" ||
+              field.label?.trim() === "ஆண்டு வருமானம்" ||
+              field.label?.trim() === "వార్షిక ఆదాయం" ||
+              field.label?.trim() === "ವಾರ್ಷಿಕ ಆದಾಯ" ||
+              field.label?.trim() === "ਸਾਲਾਨਾ ਆਮਦਨ" ||
+              field.label?.trim() === "سالانہ آمدنی";
             const isParentOccupation = field.id === "fatherOccupation" || field.id === "motherOccupation" ||
-                                      field.label?.trim().toLowerCase() === "father's occupation" ||
-                                      field.label?.trim().toLowerCase() === "mother's occupation";
+              field.label?.trim().toLowerCase() === "father's occupation" ||
+              field.label?.trim().toLowerCase() === "mother's occupation" ||
+              (t.fatherOccupation && field.label?.trim() === t.fatherOccupation) ||
+              (t.motherOccupation && field.label?.trim() === t.motherOccupation);
 
             let fieldType = isAnnualIncome ? "text" : field.type;
+            // Force select for parent occupation fields even if type got lost
             if (isParentOccupation) {
               fieldType = "select";
             }
@@ -436,11 +484,13 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                     control={control}
                     render={({ field: selectField }) => {
                       const parentOccupationOptions = [
-                        "Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business", 
-                        "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)", 
+                        "Software Engineer", "Doctor", "Teacher / Professor", "Government Job", "Business",
+                        "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)",
                         "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
                       ];
-                      const liveOptions = (watchedOptions[index] as string[] | undefined) || field.options || parentOccupationOptions;
+                      const liveOptions = (watchedOptions[index] as string[] | undefined) 
+                        || field.options 
+                        || (isParentOccupation ? parentOccupationOptions : []);
                       return (
                         <Select onValueChange={(val) => {
                           if (val === "Other") {
@@ -451,14 +501,28 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                           }
                         }} value={selectField.value}>
                           <SelectTrigger aria-label={`Select ${liveLabel}`}>
-                            <SelectValue placeholder={`${t.select || "Select"} ${liveLabel}...`} />
+                            <SelectValue placeholder={currentLang === "English" ? `${t.select || "Select"} ${liveLabel}` : `${liveLabel} ${t.select || "Select"}`} />
                           </SelectTrigger>
                           <SelectContent>
-                            {liveOptions?.map((opt: string) => (
-                              <SelectItem key={opt} value={opt}>{translateDynamicOption(opt, t)}</SelectItem>
-                            ))}
+                            {liveOptions?.map((opt: string) => {
+                              const isOther = opt === "Other";
+                              return (
+                                <SelectItem
+                                  key={opt}
+                                  value={opt}
+                                  className={isOther ? "text-primary font-semibold italic border-t border-border/40 mt-1 pt-1 bg-primary/10 rounded-sm" : ""}
+                                >
+                                  {isOther ? (
+                                    <span className="flex items-center gap-1.5">
+                                      <Pencil className="w-3 h-3" />
+                                      {translateDynamicOption(opt, t, field.id)}
+                                    </span>
+                                  ) : translateDynamicOption(opt, t, field.id)}
+                                </SelectItem>
+                              );
+                            })}
                             {selectField.value && !liveOptions?.includes(selectField.value) && (
-                              <SelectItem key={selectField.value} value={selectField.value}>{translateDynamicOption(selectField.value, t)}</SelectItem>
+                              <SelectItem key={selectField.value} value={selectField.value}>{translateDynamicOption(selectField.value, t, field.id)}</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -494,7 +558,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                                 } as any);
                               }
                             }}
-                            placeholder={`${t.enter || "Enter"} ${liveLabel}...`}
+                            placeholder={currentLang === "English" ? `${t.enter || "Enter"} ${liveLabel}` : `${liveLabel} ${t.enter || "Enter"}`}
                           />
                         );
                       }}
@@ -504,62 +568,31 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                   <Controller
                     name={`${name}.${index}.value` as const}
                     control={control}
-                    render={({ field: timeField }) => {
-                      const timeValue = timeField.value || "10:00 (Morning)";
-                      const parts = timeValue.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
-                      const hhPart: string = (parts?.[1] ?? "10");
-                      const mmPart: string = (parts?.[2] ?? "00");
-                      const periodPart: string = (parts?.[3] ?? "Morning");
-
-                      const updateValue = (h: string, m: string, p: string) => {
-                        timeField.onChange(`${h}:${m} (${p})`);
-                      };
-
-                      const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-                      const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-
-                      return (
-                        <div className="flex flex-col gap-2">
-                          <div className="flex gap-2">
-                            <Select value={hhPart} onValueChange={(val) => updateValue(val || "10", mmPart, periodPart)}>
-                              <SelectTrigger className="flex-1" aria-label="Select Hour">
-                                <SelectValue placeholder="HH" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <Select value={mmPart} onValueChange={(val) => updateValue(hhPart, val || "00", periodPart)}>
-                              <SelectTrigger className="flex-1" aria-label="Select Minute">
-                                <SelectValue placeholder="MM" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <Select value={periodPart} onValueChange={(val) => updateValue(hhPart, mmPart, val || "Morning")}>
-                            <SelectTrigger className="w-full" aria-label="Select AM/PM Period">
-                              <SelectValue placeholder={t.select || "Select Period"}>
-                                {periodPart ? (t[periodPart] || periodPart) : undefined}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Early Morning">{t["Early Morning"] || "Early Morning"}</SelectItem>
-                              <SelectItem value="Morning">{t.Morning || "Morning"}</SelectItem>
-                              <SelectItem value="Afternoon">{t.Afternoon || "Afternoon"}</SelectItem>
-                              <SelectItem value="Evening">{t.Evening || "Evening"}</SelectItem>
-                              <SelectItem value="Night">{t.Night || "Night"}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    }}
+                    render={({ field: timeField }) => (
+                      <TimePickerPopover
+                        value={timeField.value || "10:00 (Morning)"}
+                        onChange={timeField.onChange}
+                        t={t}
+                      />
+                    )}
+                  />
+                ) : fieldType === "date" ? (
+                  <Controller
+                    name={`${name}.${index}.value` as const}
+                    control={control}
+                    render={({ field: dateField }) => (
+                      <DatePickerPopover
+                        value={dateField.value}
+                        onChange={dateField.onChange}
+                        currentLang={currentLang}
+                        t={t}
+                      />
+                    )}
                   />
                 ) : fieldType === "textarea" ? (
-                  <Textarea {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
+                  <Textarea {...register(`${name}.${index}.value` as const)} placeholder={currentLang === "English" ? `${t.enter || "Enter"} ${liveLabel}` : `${liveLabel} ${t.enter || "Enter"}`} />
                 ) : (
-                  <Input type={fieldType} {...register(`${name}.${index}.value` as const)} placeholder={`${t.enter || "Enter"} ${liveLabel}...`} />
+                  <Input type={fieldType} {...register(`${name}.${index}.value` as const)} placeholder={currentLang === "English" ? `${t.enter || "Enter"} ${liveLabel}` : `${liveLabel} ${t.enter || "Enter"}`} />
                 )}
               </motion.div>
             );
@@ -593,7 +626,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
           <Input
             value={customInput}
             onChange={e => setCustomInput(e.target.value)}
-            placeholder={`${t.enter || "Enter"} ${dialogState?.label || ""}...`}
+            placeholder={currentLang === "English" ? `${t.enter || "Enter"} ${dialogState?.label || ""}` : `${dialogState?.label || ""} ${t.enter || "Enter"}`}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -624,7 +657,7 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                 } else {
                   newOptions.push(customInput.trim());
                 }
-                
+
                 // Use useFieldArray's update to correctly modify the field's options and selected value in sync
                 update(dialogState.index, {
                   ...fields[dialogState.index],
@@ -754,7 +787,7 @@ const PhotoCustomizationSliders = memo(function PhotoCustomizationSliders({ watc
   const setPhotoBorderSize = useThemeStore(s => s.setPhotoBorderSize);
   const photoScale = useThemeStore(s => s.photoScale);
   const setPhotoScale = useThemeStore(s => s.setPhotoScale);
-  
+
   const photoXOffset = useThemeStore(s => s.photoXOffset);
   const photoYOffset = useThemeStore(s => s.photoYOffset);
   const setPhotoXOffset = useThemeStore(s => s.setPhotoXOffset);
@@ -825,3 +858,353 @@ const PhotoCustomizationSliders = memo(function PhotoCustomizationSliders({ watc
     </div>
   );
 });
+
+const TimePickerPopover = ({ value, onChange, t }: { value: string; onChange: (val: string) => void; t: Record<string, string> }) => {
+  const parts = value.match(/(\d{1,2}):(\d{2})\s*(?:\((.*)\))?/i);
+  const hhPart = parts?.[1] ?? "10";
+  const mmPart = parts?.[2] ?? "00";
+  const periodPart = parts?.[3] ?? "Morning";
+
+  const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+  const updateValue = (h: string, m: string, p: string) => {
+    onChange(`${h}:${m} (${p})`);
+  };
+
+  const hourScrollContainerRef = useRef<HTMLDivElement>(null);
+  const minuteScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        const activeHourElem = hourScrollContainerRef.current?.querySelector('[data-active="true"]');
+        activeHourElem?.scrollIntoView({ block: "center", behavior: "auto" });
+
+        const activeMinuteElem = minuteScrollContainerRef.current?.querySelector('[data-active="true"]');
+        activeMinuteElem?.scrollIntoView({ block: "center", behavior: "auto" });
+      }, 50);
+    }
+  }, [isOpen]);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between text-left font-normal h-10 border-input/30 bg-card hover:bg-muted/40 shadow-sm rounded-lg"
+        >
+          <span className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground opacity-70 shrink-0" />
+            <span>{translateDynamicOption(value, t) || "Select Time..."}</span>
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 bg-popover text-popover-foreground rounded-xl border shadow-lg flex flex-col gap-3 z-[9999]" align="start">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Period / Time of Day</span>
+          <div className="grid grid-cols-5 gap-0.5 bg-muted/40 p-0.5 rounded-lg border border-border/20">
+            {["Early Morning", "Morning", "Afternoon", "Evening", "Night"].map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => updateValue(hhPart, mmPart, p)}
+                className={cn(
+                  "text-[9px] py-1.5 rounded-md font-bold transition-all truncate px-0.5 text-center",
+                  periodPart === p
+                    ? "bg-primary text-primary-foreground shadow-sm scale-[1.02]"
+                    : "text-muted-foreground hover:bg-muted/60"
+                )}
+              >
+                {t[p] || p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 border-t pt-3 border-border/40">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold text-muted-foreground text-center uppercase tracking-wider">Hour</span>
+            <div
+              ref={hourScrollContainerRef}
+              className="h-44 overflow-y-auto border border-border/30 rounded-lg p-1 bg-muted/10 flex flex-col gap-0.5 scrollbar-thin scrollbar-thumb-muted"
+            >
+              {hours.map((h) => {
+                const isActive = hhPart === h;
+                return (
+                  <button
+                    key={h}
+                    type="button"
+                    data-active={isActive ? "true" : "false"}
+                    onClick={() => updateValue(h, mmPart, periodPart)}
+                    className={cn(
+                      "py-1.5 px-3 rounded-md text-sm font-semibold transition-all text-center",
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold border border-primary/20 scale-[1.02]"
+                        : "hover:bg-muted text-foreground"
+                    )}
+                  >
+                    {h}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-bold text-muted-foreground text-center uppercase tracking-wider">Minute</span>
+            <div
+              ref={minuteScrollContainerRef}
+              className="h-44 overflow-y-auto border border-border/30 rounded-lg p-1 bg-muted/10 flex flex-col gap-0.5 scrollbar-thin scrollbar-thumb-muted"
+            >
+              {minutes.map((m) => {
+                const isActive = mmPart === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    data-active={isActive ? "true" : "false"}
+                    onClick={() => updateValue(hhPart, m, periodPart)}
+                    className={cn(
+                      "py-1.5 px-3 rounded-md text-sm font-semibold transition-all text-center",
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold border border-primary/20 scale-[1.02]"
+                        : "hover:bg-muted text-foreground"
+                    )}
+                  >
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const DatePickerPopover = ({ value, onChange, currentLang, t }: { value: string; onChange: (val: string) => void; currentLang: string; t: Record<string, string> }) => {
+  const parts = value ? value.split("-") : [];
+  const selectedYear = parts[0] ? parseInt(parts[0], 10) : null;
+  const selectedMonth = parts[1] ? parseInt(parts[1], 10) - 1 : null;
+  const selectedDay = parts[2] ? parseInt(parts[2], 10) : null;
+
+  const [viewYear, setViewYear] = useState(selectedYear || 1995);
+  const [viewMonth, setViewMonth] = useState(selectedMonth !== null ? selectedMonth : 0);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedYear) setViewYear(selectedYear);
+    if (selectedMonth !== null) setViewMonth(selectedMonth);
+  }, [value, isOpen]);
+
+  const getLocaleCode = (lang: string) => {
+    const map: Record<string, string> = {
+      "English": "en",
+      "हिंदी": "hi",
+      "मराठी": "mr",
+      "ગુજરાતી": "gu",
+      "বাংলা": "bn",
+      "தமிழ்": "ta",
+      "తెలుగు": "te",
+      "ಕನ್ನಡ": "kn",
+      "ਪੰਜਾਬੀ": "pa",
+      "اردو": "ur"
+    };
+    return map[lang] || "en";
+  };
+
+  const getNumberingSystem = (lang: string) => {
+    const map: Record<string, string> = {
+      "हिंदी": "deva",
+      "मराठी": "deva",
+      "ગુજરાતી": "gujr",
+      "বাংলা": "beng",
+      "ಕನ್ನಡ": "knda",
+      "ਪੰਜਾਬੀ": "guru",
+      "اردو": "arabext"
+    };
+    return map[lang] || "latn";
+  };
+
+  const locale = getLocaleCode(currentLang);
+  const numSys = getNumberingSystem(currentLang);
+
+  const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'long' });
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i,
+    label: monthFormatter.format(new Date(2000, i, 1))
+  }));
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1940 + 1 }, (_, i) => 1940 + i).reverse();
+
+  const dayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+  const weekdays = Array.from({ length: 7 }, (_, i) => {
+    return dayFormatter.format(new Date(2026, 5, 7 + i));
+  });
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+
+  const cells: { dayNum: number | null; isCurrent: boolean }[] = [];
+
+  for (let i = 0; i < firstDayIndex; i++) {
+    cells.push({ dayNum: null, isCurrent: false });
+  }
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    cells.push({ dayNum: i, isCurrent: true });
+  }
+
+  const handleSelectDay = (day: number) => {
+    const formattedMonth = (viewMonth + 1).toString().padStart(2, '0');
+    const formattedDay = day.toString().padStart(2, '0');
+    onChange(`${viewYear}-${formattedMonth}-${formattedDay}`);
+    setIsOpen(false);
+  };
+
+  const navigateMonth = (direction: 'next' | 'prev') => {
+    if (direction === 'prev') {
+      if (viewMonth === 0) {
+        setViewMonth(11);
+        setViewYear(prev => prev - 1);
+      } else {
+        setViewMonth(prev => prev - 1);
+      }
+    } else {
+      if (viewMonth === 11) {
+        setViewMonth(0);
+        setViewYear(prev => prev + 1);
+      } else {
+        setViewMonth(prev => prev + 1);
+      }
+    }
+  };
+
+  const formatDateLabel = (val: string) => {
+    if (!val) return t.selectDate || "Select Date...";
+    const [y, m, d] = val.split("-");
+    if (!y || !m || !d) return val;
+    const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    if (isNaN(dateObj.getTime())) return val;
+
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      numberingSystem: numSys
+    } as any).format(dateObj);
+  };
+
+  const dayNumberFormatter = new Intl.NumberFormat(locale, { numberingSystem: numSys });
+  const yearFormatter = new Intl.NumberFormat(locale, { useGrouping: false, numberingSystem: numSys });
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between text-left font-normal h-10 border-input/30 bg-card hover:bg-muted/40 shadow-sm rounded-lg"
+        >
+          <span className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground opacity-70 shrink-0" />
+            <span>{formatDateLabel(value)}</span>
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-3 bg-popover text-popover-foreground rounded-xl border shadow-lg flex flex-col gap-3 z-[9999]" align="start">
+        <div className="flex items-center justify-between gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => navigateMonth('prev')}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <div className="flex gap-1 flex-1 justify-center">
+            <select
+              value={viewMonth}
+              onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
+              className="h-8 py-0 px-2 text-xs font-semibold bg-muted/60 border border-border/20 rounded-lg outline-none focus:ring-1 focus:ring-primary w-[110px] cursor-pointer"
+            >
+              {months.map(m => (
+                <option key={m.value} value={m.value} className="bg-popover text-popover-foreground">
+                  {m.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={viewYear}
+              onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
+              className="h-8 py-0 px-2 text-xs font-semibold bg-muted/60 border border-border/20 rounded-lg outline-none focus:ring-1 focus:ring-primary w-[80px] cursor-pointer"
+            >
+              {years.map(y => (
+                <option key={y} value={y} className="bg-popover text-popover-foreground">
+                  {yearFormatter.format(y)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => navigateMonth('next')}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-7 text-center">
+            {weekdays.map((wd, i) => (
+              <span key={i} className="text-[10px] font-bold text-muted-foreground py-0.5">
+                {wd}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-y-1">
+            {cells.map((cell, idx) => {
+              if (cell.dayNum === null) {
+                return <div key={`empty-${idx}`} className="h-8 w-8" />;
+              }
+
+              const isSelected = selectedYear === viewYear && selectedMonth === viewMonth && selectedDay === cell.dayNum;
+              const isToday = new Date().getDate() === cell.dayNum && new Date().getMonth() === viewMonth && new Date().getFullYear() === viewYear;
+
+              return (
+                <button
+                  key={`day-${cell.dayNum}`}
+                  type="button"
+                  onClick={() => handleSelectDay(cell.dayNum!)}
+                  className={cn(
+                    "h-8 w-8 text-xs font-semibold rounded-full flex items-center justify-center transition-all mx-auto",
+                    isSelected
+                      ? "bg-primary text-primary-foreground font-bold shadow-sm scale-105"
+                      : isToday
+                        ? "border border-primary text-primary font-bold"
+                        : "hover:bg-muted text-foreground"
+                  )}
+                >
+                  {dayNumberFormatter.format(cell.dayNum)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+

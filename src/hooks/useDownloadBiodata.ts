@@ -123,9 +123,22 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
               field.logoUrl = base64;
             }
           } catch (e) {
+            console.error(`Failed to pre-fetch logoUrl for field ${field.id}:`, e);
+          }
+        }
+
+        // Also convert the company logo URL stored directly in field.logo
+        if (field.logo && typeof field.logo === "string" && field.logo.startsWith("http")) {
+          try {
+            const base64 = await imageUrlToBase64(field.logo);
+            if (base64 && base64.startsWith("data:")) {
+              field.logo = base64;
+            }
+          } catch (e) {
             console.error(`Failed to pre-fetch logo for field ${field.id}:`, e);
           }
         }
+
       }
     }
   }

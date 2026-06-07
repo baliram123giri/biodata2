@@ -62,20 +62,63 @@ export const processPDFField = (
   // 3. Merge Occupations
   if (field.id === "fatherName") {
     const occ = fields.find(f => f.id === "fatherOccupation")?.value;
-    if (occ) displayValue = `${field.value} (${occ})`;
+    if (occ) {
+      const transOcc = translateDynamicOption(occ, t);
+      displayValue = `${field.value} (${transOcc})`;
+    }
   }
   if (field.id === "motherName") {
     const occ = fields.find(f => f.id === "motherOccupation")?.value;
-    if (occ) displayValue = `${field.value} (${occ})`;
+    if (occ) {
+      const transOcc = translateDynamicOption(occ, t);
+      displayValue = `${field.value} (${transOcc})`;
+    }
   }
 
-  // 4. Handle Company Logo (Disabled)
-  logoUrl = undefined;
+  // 4. Handle Company Logo — read from field.logo (set by CompanyAutocomplete)
+  if (field.logo && typeof field.logo === "string" && field.logo.trim()) {
+    logoUrl = field.logo.trim();
+  }
 
   // 5. Date formatting
   if (field.type === "date" && displayValue) {
     const [y, m, d] = displayValue.split("-");
-    if (y && m && d) displayValue = `${d}/${m}/${y}`;
+    if (y && m && d) {
+      const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      if (!isNaN(dateObj.getTime())) {
+        const currentLang = Object.keys(translations).find(lang => translations[lang] === t) || "English";
+        const map: Record<string, string> = {
+          "English": "en",
+          "हिंदी": "hi",
+          "मराठी": "mr",
+          "ગુજરાતી": "gu",
+          "বাংলা": "bn",
+          "தமிழ்": "ta",
+          "తెలుగు": "te",
+          "ಕನ್ನಡ": "kn",
+          "ਪੰਜਾਬੀ": "pa",
+          "اردو": "ur"
+        };
+        const locale = map[currentLang] || "en";
+        const numberingSystemMap: Record<string, string> = {
+          "हिंदी": "deva",
+          "मराठी": "deva",
+          "ગુજરાતી": "gujr",
+          "বাংলা": "beng",
+          "ಕನ್ನಡ": "knda",
+          "ਪੰਜਾਬੀ": "guru",
+          "اردو": "arabext"
+        };
+        const numSys = numberingSystemMap[currentLang] || "latn";
+        
+        displayValue = new Intl.DateTimeFormat(locale, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          numberingSystem: numSys
+        } as any).format(dateObj);
+      }
+    }
   }
 
   // 5.5 Format numbers in Annual Income field
@@ -99,7 +142,7 @@ export const processPDFField = (
   }
 
   // 6. Translate options (Final Value Translation)
-  displayValue = translateDynamicOption(displayValue, t);
+  displayValue = translateDynamicOption(displayValue, t, field.id);
 
   return {
     id: field.id,

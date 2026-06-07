@@ -1223,15 +1223,18 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
   const mantraGeometry = useMemo(() => {
     if (!mantraSticker) return null;
-    const textWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
-    const halfW = textWidth / 2;
-    const gap = 7;
+    // Use the wider of mantra text or title text so stickers clear both lines
+    const mantraWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
+    const titleWidth = formData.title ? formData.title.length * (layout.fSize * 2 * 0.55) : 0;
+    const halfW = Math.max(mantraWidth, titleWidth) / 2;
+    const gap = 10;
     const imgW = 45; // 100 * 0.45
     return {
       leftX: A4_W / 2 - halfW - gap - imgW,
+      // scaleX:-0.45 mirrors from anchor leftward, so push anchor rightward by imgW
       rightX: A4_W / 2 + halfW + gap + imgW,
     };
-  }, [formData.mantra, mantraSticker, layout.fSize]);
+  }, [formData.mantra, formData.title, mantraSticker, layout.fSize]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;

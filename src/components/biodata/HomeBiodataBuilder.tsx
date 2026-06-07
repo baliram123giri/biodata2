@@ -578,7 +578,7 @@ export function HomeBiodataBuilder() {
                   <DownloadDropdown
                     onDownload={handleDownload}
                     isGenerating={isGenerating}
-                    labels={{ download: t.download, downloadPdf: t.downloadPdf, generating: t.generating }}
+                    labels={{ download: "Download", downloadPdf: "Download PDF", generating: "Generating..." }}
                     variant="compact"
                     className="rounded-full bg-gradient-primary transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
                     isPremium={activeTemplate?.isPremium}
@@ -594,7 +594,7 @@ export function HomeBiodataBuilder() {
                     onClick={() => setShowResetDialog(true)}
                     disabled={isGenerating}
                   >
-                    <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> {t.reset || "Reset"}
+                    <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> Reset
                   </Button>
                 </div>
               </div>
@@ -689,7 +689,7 @@ export function HomeBiodataBuilder() {
             <DownloadDropdown
               onDownload={handleDownload}
               isGenerating={isGenerating}
-              labels={{ download: t.download, generating: t.generating }}
+              labels={{ download: "Download", generating: "Generating..." }}
               variant="compact"
               isPremium={activeTemplate?.isPremium}
               price={activeTemplate?.price}
@@ -704,19 +704,19 @@ export function HomeBiodataBuilder() {
         <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>{t.reset || "Reset"} All Fields?</DialogTitle>
+              <DialogTitle>Reset All Fields?</DialogTitle>
               <DialogDescription>
-                {t.resetDescription || "This will clear all the information you've entered and revert to the default template. This action cannot be undone."}
+                {"This will clear all the information you've entered and revert to the default template. This action cannot be undone."}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-2 sm:gap-0 mt-4">
-              <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">{t.cancel || "Cancel"}</Button>
+              <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">Cancel</Button>
               <Button
                 onClick={handleReset}
                 className="relative overflow-hidden rounded-full bg-gradient-primary border-0"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-                <span className="relative">{t.yesReset || "Yes, Reset"}</span>
+                <span className="relative">Yes, Reset</span>
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -7,6 +7,7 @@ export const FieldSchema = z.object({
   type: z.enum(["text", "date", "time", "time12", "select", "textarea", "number", "company", "hidden"]),
   options: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
+  logo: z.string().optional(), // Company logo URL stored by CompanyAutocomplete
 });
 
 export const biodataSchema = z.object({

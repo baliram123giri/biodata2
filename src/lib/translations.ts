@@ -13,12 +13,11 @@ export const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
   "اردو": "Urdu (اردو)"
 };
 
-export function translateDynamicOption(opt: string, t: Record<string, string>): string {
+export function translateDynamicOption(opt: string, t: Record<string, string>, fieldId?: string): string {
   if (!opt) return opt;
-  if (opt.trim().toLowerCase() === "other") return opt;
-  if (t[opt]) return t[opt];
+  if (opt.trim().toLowerCase() === "other") return t["Other"] || opt;
 
-  let translated = opt;
+  let translated = t[opt] || opt;
   if (translated.includes("ft")) {
     translated = translated.replace(/\bft\b/g, t.ft || "ft");
   }
@@ -30,6 +29,9 @@ export function translateDynamicOption(opt: string, t: Record<string, string>): 
   }
   if (translated.includes("LPA")) {
     translated = translated.replace(/\bLPA\b/g, t.lpa || "LPA");
+  }
+  if (translated.includes("Early Morning")) {
+    translated = translated.replace(/\bEarly Morning\b/g, t["Early Morning"] || "Early Morning");
   }
   if (translated.includes("Morning")) {
     translated = translated.replace(/\bMorning\b/g, t.Morning || "Morning");
@@ -43,15 +45,37 @@ export function translateDynamicOption(opt: string, t: Record<string, string>): 
   if (translated.includes("Night")) {
     translated = translated.replace(/\bNight\b/g, t.Night || "Night");
   }
-  if (translated.includes("Early Morning")) {
-    translated = translated.replace(/\bEarly Morning\b/g, t["Early Morning"] || "Early Morning");
-  }
   if (translated.includes("AM")) {
     translated = translated.replace(/\bAM\b/g, t.AM || "AM");
   }
   if (translated.includes("PM")) {
     translated = translated.replace(/\bPM\b/g, t.PM || "PM");
   }
+
+  // Determine if this is a contact field (where we want to preserve standard Latin digits)
+  const isContactField = fieldId === "mobileNumber" || 
+                         fieldId === "email" || 
+                         fieldId === "residentialAddress" || 
+                         fieldId === "address" ||
+                         fieldId === "companyLogo";
+
+  if (!isContactField) {
+    const numeralMaps: Record<string, string[]> = {
+      "हिंदी": ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"],
+      "मराठी": ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"],
+      "ગુજરાતી": ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"],
+      "বাংলা": ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"],
+      "ಕನ್ನಡ": ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"],
+      "ਪੰਜਾਬੀ": ["੦", "੧", "੨", "੩", "੪", "੫", "੬", "੭", "੮", "੯"],
+      "اردو": ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"]
+    };
+    const currentLang = Object.keys(translations).find(lang => translations[lang] === t) || "English";
+    const digitMap = numeralMaps[currentLang];
+    if (digitMap) {
+      translated = translated.replace(/\d/g, m => digitMap[parseInt(m, 10)]);
+    }
+  }
+
   return translated;
 }
 
@@ -70,6 +94,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "Defense / Police",
     "Private Job": "Private Job",
     "Not Working": "Not Working",
+    "Retired": "Retired",
+    "Homemaker": "Homemaker",
     "10th": "10th",
     "12th": "12th",
     "Diploma": "Diploma",
@@ -149,6 +175,7 @@ export const translations: Record<string, Record<string, string>> = {
     "Harita": "Harita",
     "fullName": "Full Name",
     "dateOfBirth": "Date of Birth",
+    "selectDate": "Select Date of Birth",
     "timeOfBirth": "Time of Birth",
     "placeOfBirth": "Place of Birth",
     "height": "Height",
@@ -158,6 +185,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "Religion",
     "caste": "Caste",
     "gotra": "Gotra",
+    "kuldaivat": "Family Deity (Kuldaivat)",
     "manglik": "Manglik",
     "education": "Highest Education",
     "college": "College/University",
@@ -178,6 +206,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "Biodata",
     "customField": "Custom Field",
     "addMoreField": "Add More Field",
+    "addProfession": "Add Profession",
     "addNew": "Add New",
     "personal": "Personal Details",
     "educationSec": "Education & Career",
@@ -238,6 +267,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "रक्षा / पुलिस",
     "Private Job": "निजी नौकरी",
     "Not Working": "काम नहीं कर रहे",
+    "Retired": "सेवानिवृत्त",
+    "Homemaker": "गृहणी",
     "10th": "10वीं",
     "12th": "12वीं",
     "Diploma": "डिप्लोमा",
@@ -313,10 +344,11 @@ export const translations: Record<string, Record<string, string>> = {
     "Vatsa": "वत्स",
     "Mudgala": "मुद्गल",
     "Parashara": "पराशर",
-    "Upamanayu": "उपमन्यु",
+    "Upamanyu": "उपमन्यु",
     "Harita": "हरित",
     "fullName": "पूरा नाम",
     "dateOfBirth": "जन्म तिथि",
+    "selectDate": "जन्म तिथि चुनें",
     "timeOfBirth": "जन्म समय",
     "placeOfBirth": "जन्म स्थान",
     "height": "ऊंचाई",
@@ -326,6 +358,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "धर्म",
     "caste": "जाति",
     "gotra": "गोत्र",
+    "kuldaivat": "कुलदेवता",
     "manglik": "मांगलिक",
     "education": "उच्चतम शिक्षा",
     "college": "कॉलेज/विश्वविद्यालय",
@@ -346,6 +379,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "बायोडाटा",
     "customField": "कस्टम फ़ील्ड",
     "addMoreField": "और फ़ील्ड जोड़ें",
+    "addProfession": "पेशा जोड़ें",
     "addNew": "नया जोड़ें",
     "personal": "व्यक्तिगत विवरण",
     "educationSec": "शिक्षा और करियर",
@@ -384,6 +418,7 @@ export const translations: Record<string, Record<string, string>> = {
     "Evening": "शाम",
     "Night": "रात",
     "Early Morning": "तड़के",
+    "AM": "AM",
     "PM": "PM",
     "download": "डाउनलोड",
     "reset": "रीसेट",
@@ -406,6 +441,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "संरक्षण / पोलीस",
     "Private Job": "खासगी नोकरी",
     "Not Working": "काम करत नाही",
+    "Retired": "सेवानिवृत्त",
+    "Homemaker": "गृहिणी",
     "10th": "10वी",
     "12th": "12वी",
     "Diploma": "डिप्लोमा",
@@ -485,6 +522,7 @@ export const translations: Record<string, Record<string, string>> = {
     "Harita": "हरित",
     "fullName": "पूर्ण नाव",
     "dateOfBirth": "जन्म तारीख",
+    "selectDate": "जन्म तारीख निवडा",
     "timeOfBirth": "जन्म वेळ",
     "placeOfBirth": "जन्म ठिकाण",
     "height": "उंची",
@@ -494,6 +532,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "धर्म",
     "caste": "जात",
     "gotra": "गोत्र",
+    "kuldaivat": "कुलदैवत",
     "manglik": "मांगलिक",
     "education": "शिक्षण",
     "college": "महाविद्यालय/विद्यापीठ",
@@ -511,9 +550,10 @@ export const translations: Record<string, Record<string, string>> = {
     "email": "ईमेल आयडी",
     "residentialAddress": "रहिवासी पत्ता",
     "mantra": "॥ श्री गणेशाय नमः ॥",
-    "title": "बायोडाटा",
+    "title": "परिचय पत्र",
     "customField": "कस्टम फील्ड",
     "addMoreField": "अधिक फील्ड जोडा",
+    "addProfession": "व्यवसाय जोडा",
     "addNew": "नवीन जोडा",
     "personal": "वैयक्तिक तपशील",
     "educationSec": "शिक्षण आणि करिअर",
@@ -558,7 +598,8 @@ export const translations: Record<string, Record<string, string>> = {
     "downloadPdf": "डाउनलोड करा",
     "resetDescription": "यामुळे तुम्ही प्रविष्ट केलेली सर्व माहिती पुसली जाईल आणि डीफॉल्ट टेम्पलेटवर परत येईल. ही क्रिया पूर्ववत केली जाऊ शकत नाही।",
     "cancel": "रद्द करा",
-    "yesReset": "हो, रीसेट करा"
+    "yesReset": "हो, रीसेट करा",
+    "AM": "AM"
   },
   "ગુજરાતી": {
     "Software Engineer": "સોફ્ટવેર એન્જિનિયર",
@@ -574,6 +615,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "સંરક્ષણ / પોલીસ",
     "Private Job": "ખાનગી નોકરી",
     "Not Working": "કામ કરતા નથી",
+    "Retired": "નિવૃત્ત",
+    "Homemaker": "ગૃહિણી",
     "10th": "10મું",
     "12th": "12મું",
     "Diploma": "ડિપ્લોમા",
@@ -633,8 +676,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "પૂર્વા ભાદ્રપદ",
     "Uttara Bhadrapada": "ઉત્તરા ભાદ્રપદ",
     "Revati": "રેવતી",
+    "Agastya": "અગસ્ત્ય",
+    "Angirasa": "અંગિરસ",
+    "Atri": "અત્રિ",
+    "Bharadwaja": "ભરદ્વાજ",
+    "Bhrigu": "ભૃગુ",
+    "Gautama": "ગૌતમ",
+    "Jamadagni": "જમદગ્નિ",
+    "Kashyapa": "કશ્યપ",
+    "Shandilya": "શાંડિલ્ય",
+    "Vashishta": "વસિષ્ઠ",
+    "Vishvamitra": "વિશ્વામિત્ર",
+    "Gargya": "ગાર્ગ્ય",
+    "Kaushika": "કૌશિક",
+    "Vatsa": "વત્સ",
+    "Mudgala": "મુદ્ગલ",
+    "Parashara": "પરાશર",
+    "Upamanyu": "ઉપમન્યુ",
+    "Harita": "હરિત",
     "fullName": "પૂરું નામ",
     "dateOfBirth": "જન્મ તારીખ",
+    "selectDate": "જન્મ તારીખ પસંદ કરો",
     "timeOfBirth": "જન્મ સમય",
     "placeOfBirth": "જન્મ સ્થળ",
     "height": "ઊંચાઈ",
@@ -644,6 +706,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "ધર્મ",
     "caste": "જાતિ",
     "gotra": "ગોત્ર",
+    "kuldaivat": "કુળદેવી / કુળદેવતા",
     "manglik": "માંગલિક",
     "education": "શિક્ષણ",
     "college": "કોલેજ/યુનિવર્સિટી",
@@ -664,6 +727,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "બાયોડેટા",
     "customField": "કસ્ટમ ફીલ્ડ",
     "addMoreField": "વધુ ફીલ્ડ ઉમેરો",
+    "addProfession": "વ્યવસાય ઉમેરો",
     "addNew": "નવું ઉમેરો",
     "personal": "વ્યક્તિગત વિગતો",
     "educationSec": "શિક્ષણ અને કારકિર્દી",
@@ -696,7 +760,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "ફૂટ",
     "inches": "ઇંચ",
     "cm": "સેમી",
-    "lpa": "લાખ/વર્ષ"
+    "lpa": "લાખ/વર્ષ",
+    "Morning": "સવાર",
+    "Afternoon": "બપોર",
+    "Evening": "સાંજ",
+    "Night": "રાત",
+    "Early Morning": "વહેલી સવાર",
+    "PM": "PM",
+    "AM": "AM",
+    "download": "ડાઉનલોડ",
+    "reset": "રીસેટ",
+    "downloadPdf": "ડાઉનલોડ PDF",
+    "resetDescription": "આનાથી તમે દાખલ કરેલી બધી માહિતી ભૂંસાઈ જશે અને ડિફોલ્ટ ટેમ્પલેટ પર પાછા આવી જશે. આ ક્રિયા પાછી ખેંચી શકાશે નહીં.",
+    "cancel": "રદ કરો",
+    "yesReset": "હા, રીસેટ કરો"
   },
   "বাংলা": {
     "Software Engineer": "সফটওয়্যার ইঞ্জিনিয়ার",
@@ -712,6 +789,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "প্রতিরক্ষা / পুলিশ",
     "Private Job": "বেসরকারি চাকরি",
     "Not Working": "কর্মরত নন",
+    "Retired": "অবসরপ্রাপ্ত",
+    "Homemaker": "গৃহিণী",
     "10th": "১০ম",
     "12th": "১২শ",
     "Diploma": "ডিপ্লোমা",
@@ -771,8 +850,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "পূর্ব ভাদ্রপদ",
     "Uttara Bhadrapada": "উত্তর ভাদ্রপদ",
     "Revati": "রেবতী",
+    "Agastya": "অগস্ত্য",
+    "Angirasa": "অঙ্গিরস",
+    "Atri": "অত্রি",
+    "Bharadwaja": "ভরদ্বাজ",
+    "Bhrigu": "ভৃগু",
+    "Gautama": "গৌতম",
+    "Jamadagni": "জমদগ্নি",
+    "Kashyapa": "কশ্যপ",
+    "Shandilya": "শাণ্ডিল্য",
+    "Vashishta": "বশিষ্ঠ",
+    "Vishvamitra": "বিশ্বামিত্র",
+    "Gargya": "গার্গ্য",
+    "Kaushika": "কৌশিক",
+    "Vatsa": "বৎস",
+    "Mudgala": "মুদ্গল",
+    "Parashara": "পরাশর",
+    "Upamanyu": "উপমন্যু",
+    "Harita": "হরিত",
     "fullName": "পুরো নাম",
     "dateOfBirth": "জন্ম তারিখ",
+    "selectDate": "জন্ম তারিখ নির্বাচন করুন",
     "timeOfBirth": "জন্ম সময়",
     "placeOfBirth": "জন্ম স্থান",
     "height": "উচ্চতা",
@@ -782,6 +880,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "ধর্ম",
     "caste": "জাতি",
     "gotra": "গোত্র",
+    "kuldaivat": "কুলদেবতা",
     "manglik": "মাঙ্গলিক",
     "education": "শিক্ষাগত যোগ্যতা",
     "college": "কলেজ/বিশ্ববিদ্যালয়",
@@ -802,6 +901,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "বায়োডাটা",
     "customField": "কাস্টম ক্ষেত্র",
     "addMoreField": "আরও ক্ষেত্র যোগ করুন",
+    "addProfession": "পেশা যোগ করুন",
     "addNew": "নতুন যোগ করুন",
     "personal": "ব্যক্তিগত বিবরণ",
     "educationSec": "শিক্ষা ও ক্যারিয়ার",
@@ -834,7 +934,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "ফুট",
     "inches": "ইঞ্চি",
     "cm": "সেমি",
-    "lpa": "লাখ/বছর"
+    "lpa": "লাখ/বছর",
+    "Morning": "সকাল",
+    "Afternoon": "দুপুর",
+    "Evening": "সন্ধ্যা",
+    "Night": "রাত",
+    "Early Morning": "ভোর",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "ডাউনলোড",
+    "reset": "রিসেট",
+    "downloadPdf": "PDF ডাউনলোড",
+    "resetDescription": "এটি আপনার দেওয়া সমস্ত তথ্য মুছে ফেলবে এবং ডিফল্ট টেমপ্লেটে ফিরে যাবে। এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না।",
+    "cancel": "বাতিল করুন",
+    "yesReset": "হ্যাঁ, রিসেট করুন"
   },
   "தமிழ்": {
     "Software Engineer": "மென்பொருள் பொறியாளர்",
@@ -850,6 +963,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "பாதுகாப்பு / காவல்துறை",
     "Private Job": "தனியார் வேலை",
     "Not Working": "வேலையில் இல்லை",
+    "Retired": "ஓய்வு பெற்றவர்",
+    "Homemaker": "இல்லத்தரசி",
     "10th": "10ஆம் வகுப்பு",
     "12th": "12ஆம் வகுப்பு",
     "Diploma": "டிப்ளமோ",
@@ -909,8 +1024,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "பூரட்டாதி",
     "Uttara Bhadrapada": "உத்திரட்டாதி",
     "Revati": "ரேவதி",
+    "Agastya": "அகஸ்திய",
+    "Angirasa": "அங்கிரஸ்",
+    "Atri": "அத்ரி",
+    "Bharadwaja": "பாரத்வாஜ்",
+    "Bhrigu": "பிருகு",
+    "Gautama": "கௌதம",
+    "Jamadagni": "ஜமதக்னி",
+    "Kashyapa": "கஸ்யப",
+    "Shandilya": "சாண்டில்ய",
+    "Vashishta": "வசிஷ்ட",
+    "Vishvamitra": "விஸ்வாமித்ரா",
+    "Gargya": "கார்க்ய",
+    "Kaushika": "கௌசிக",
+    "Vatsa": "வத்ஸ",
+    "Mudgala": "முத்கல",
+    "Parashara": "பராசர",
+    "Upamanyu": "உபமன்யு",
+    "Harita": "ஹரித",
     "fullName": "முழு பெயர்",
     "dateOfBirth": "பிறந்த தேதி",
+    "selectDate": "பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்",
     "timeOfBirth": "பிறந்த நேரம்",
     "placeOfBirth": "பிறந்த இடம்",
     "height": "உயரம்",
@@ -920,6 +1054,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "மதம்",
     "caste": "ஜாதி",
     "gotra": "கோத்ரம்",
+    "kuldaivat": "குலதெய்வம்",
     "manglik": "செவ்வாய் தோஷம்",
     "education": "கல்வி",
     "college": "கல்லூரி/பல்கலைக்கழகம்",
@@ -940,6 +1075,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "பயோடேட்டா",
     "customField": "தனிப்பயன் புலம்",
     "addMoreField": "மேலும் புலம் சேர்க்கவும்",
+    "addProfession": "தொழில் சேர்க்கவும்",
     "addNew": "புதிதாகச் சேர்",
     "personal": "தனிப்பட்ட விவரங்கள்",
     "educationSec": "கல்வி & தொழில்",
@@ -972,7 +1108,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "அடி",
     "inches": "அங்குலம்",
     "cm": "செ.மீ",
-    "lpa": "லட்சம்/ஆண்டு"
+    "lpa": "லட்சம்/ஆண்டு",
+    "Morning": "காலை",
+    "Afternoon": "மதியம்",
+    "Evening": "மாலை",
+    "Night": "இரவு",
+    "Early Morning": "அதிகாலை",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "பதிவிறக்கம்",
+    "reset": "மீட்டமை",
+    "downloadPdf": "PDF பதிவிறக்கம்",
+    "resetDescription": "இது நீங்கள் உள்ளிட்ட அனைத்து தகவல்களையும் அழிக்கும் மற்றும் இயல்புநிலை வார்ப்புருவுக்கு திரும்பும். இந்த செயலை மீட்க முடியாது.",
+    "cancel": "ரத்து செய்",
+    "yesReset": "ஆம், மீட்டமை"
   },
   "తెలుగు": {
     "Software Engineer": "సాఫ్ట్‌వేర్ ఇంజనీర్",
@@ -988,6 +1137,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "డిఫెన్స్ / పోలీస్",
     "Private Job": "ప్రైవేట్ ఉద్యోగం",
     "Not Working": "పనిచేయడం లేదు",
+    "Retired": "పదవీ విరమణ పొందిన",
+    "Homemaker": "గృహిణి",
     "10th": "10వ తరగతి",
     "12th": "12వ తరగతి",
     "Diploma": "డిప్లొమా",
@@ -1047,8 +1198,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "పూర్వాభాద్ర",
     "Uttara Bhadrapada": "ఉత్తరాభాద్ర",
     "Revati": "రేవతి",
+    "Agastya": "అగస్త్య",
+    "Angirasa": "అంగిరస",
+    "Atri": "అత్రి",
+    "Bharadwaja": "భారద్వాజ",
+    "Bhrigu": "భృగు",
+    "Gautama": "గౌతమ",
+    "Jamadagni": "జమదగ్ని",
+    "Kashyapa": "కశ్యప",
+    "Shandilya": "శాండిల్య",
+    "Vashishta": "వశిష్ఠ",
+    "Vishvamitra": "విశ్వామిత్ర",
+    "Gargya": "గార్గ్య",
+    "Kaushika": "కౌశిక",
+    "Vatsa": "వత్స",
+    "Mudgala": "ముద్గల",
+    "Parashara": "పరాశర",
+    "Upamanyu": "ఉపమన్యు",
+    "Harita": "హరిత",
     "fullName": "పూర్తి పేరు",
     "dateOfBirth": "పుట్టిన తేదీ",
+    "selectDate": "పుట్టిన తేదీని ఎంచుకోండి",
     "timeOfBirth": "పుట్టిన సమయం",
     "placeOfBirth": "పుట్టిన స్థలం",
     "height": "ఎత్తు",
@@ -1058,6 +1228,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "మతం",
     "caste": "కులం",
     "gotra": "గోత్రం",
+    "kuldaivat": "కులదైవం",
     "manglik": "మాంగ్లిక్",
     "education": "విద్య",
     "college": "కళాశాల/విశ్వవిద్యాలయం",
@@ -1078,6 +1249,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "బయోడేటా",
     "customField": "కస్టమ్ ఫీల్డ్",
     "addMoreField": "మరిన్ని ఫీల్డ్‌లను జోడించండి",
+    "addProfession": "వృత్తిని జోడించండి",
     "addNew": "కొత్తది జోడించండి",
     "personal": "వ్యక్తిగత వివరాలు",
     "educationSec": "విద్య & కెరీర్",
@@ -1110,7 +1282,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "అడుగులు",
     "inches": "అంగుళాలు",
     "cm": "సెం.మీ",
-    "lpa": "లక్షలు/సంవత్సరం"
+    "lpa": "లక్షలు/సంవత్సరం",
+    "Morning": "ఉదయం",
+    "Afternoon": "మధ్యాహ్నం",
+    "Evening": "సాయంత్రం",
+    "Night": "రాత్రి",
+    "Early Morning": "తెల్లవారుజామున",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "డౌన్‌లోడ్",
+    "reset": "రీసెట్",
+    "downloadPdf": "PDF డౌన్‌లోడ్",
+    "resetDescription": "ఇది మీరు నమోదు చేసిన అన్ని సమాచారాన్ని తొలగిస్తుంది మరియు డిఫాల్ట్ టెంప్లేట్‌కు వెళ్తుంది. ఈ చర్యను రద్దు చేయలేరు.",
+    "cancel": "రద్దు చేయి",
+    "yesReset": "అవును, రీసెట్ చేయి"
   },
   "ಕನ್ನಡ": {
     "Software Engineer": "ಸಾಫ್ಟ್ ವೇರ್ ಇಂಜಿನಿಯರ್",
@@ -1126,6 +1311,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "ರಕ್ಷಣೆ / ಪೊಲೀಸ್",
     "Private Job": "ಖಾಸಗಿ ಉದ್ಯೋಗ",
     "Not Working": "ಕೆಲಸ ಮಾಡುತ್ತಿಲ್ಲ",
+    "Retired": "ನಿವೃತ್ತ",
+    "Homemaker": "ಗೃಹಿಣಿ",
     "10th": "10ನೇ",
     "12th": "12ನೇ",
     "Diploma": "ಡಿಪ್ಲೊಮಾ",
@@ -1185,8 +1372,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "ಪೂರ್ವ ಭಾದ್ರಪದ",
     "Uttara Bhadrapada": "ಉತ್ತರ ಭಾದ್ರಪದ",
     "Revati": "ರೇವತಿ",
+    "Agastya": "ಅಗಸ್ತ್ಯ",
+    "Angirasa": "ಅಂಗಿರಸ",
+    "Atri": "ಅತ್ರಿ",
+    "Bharadwaja": "ಭರದ್ವಾಜ",
+    "Bhrigu": "ಭೃಗು",
+    "Gautama": "ಗೌತಮ",
+    "Jamadagni": "ಜಮದಗ್ನಿ",
+    "Kashyapa": "ಕಶ್ಯಪ",
+    "Shandilya": "ಶಾಂಡಿಲ್ಯ",
+    "Vashishta": "ವಶಿಷ್ಠ",
+    "Vishvamitra": "ವಿಶ್ವಾಮಿತ್ರ",
+    "Gargya": "ಗಾರ್ಗ್ಯ",
+    "Kaushika": "ಕೌಶಿಕ",
+    "Vatsa": "ವತ್ಸ",
+    "Mudgala": "ಮುದ್ಗಲ",
+    "Parashara": "ಪರಾಶರ",
+    "Upamanyu": "ಉಪಮನ್ಯು",
+    "Harita": "ಹರಿತ",
     "fullName": "ಪೂರ್ಣ ಹೆಸರು",
     "dateOfBirth": "ಹುಟ್ಟಿದ ದಿನಾಂಕ",
+    "selectDate": "ಜನ್ม ದಿನಾಂಕವನ್ನು ಆರಿಸಿ",
     "timeOfBirth": "ಹುಟ್ಟಿದ ಸಮಯ",
     "placeOfBirth": "ಹುಟ್ಟಿದ ಸ್ಥಳ",
     "height": "ಎತ್ತರ",
@@ -1196,6 +1402,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "ಧರ್ಮ",
     "caste": "ಜಾತಿ",
     "gotra": "ಗೋತ್ರ",
+    "kuldaivat": "ಕುಲದೇವತೆ",
     "manglik": "ಮಾಂಗ್ಲಿಕ್",
     "education": "ಶಿಕ್ಷಣ",
     "college": "ಕಾಲೇಜು/ವಿಶ್ವವಿದ್ಯಾಲಯ",
@@ -1216,6 +1423,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "ಬಯೋಡೇಟಾ",
     "customField": "ಕಸ್ಟಮ್ ಕ್ಷೇತ್ರ",
     "addMoreField": "ಹೆಚ್ಚಿನ ಕ್ಷೇತ್ರ ಸೇರಿಸಿ",
+    "addProfession": "ವೃತ್ತಿ ಸೇರಿಸಿ",
     "addNew": "ಹೊಸದನ್ನು ಸೇರಿಸಿ",
     "personal": "ವೈಯಕ್ತಿಕ ವಿವರಗಳು",
     "educationSec": "ಶಿಕ್ಷಣ ಮತ್ತು ವೃತ್ತಿ",
@@ -1248,7 +1456,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "ಅಡಿ",
     "inches": "ಇಂಚು",
     "cm": "ಸೆಂ.ಮೀ",
-    "lpa": "ಲಕ್ಷ/ವರ್ಷ"
+    "lpa": "ಲಕ್ಷ/ವರ್ಷ",
+    "Morning": "ಬೆಳಗ್ಗೆ",
+    "Afternoon": "ಮಧ್ಯಾಹ್ನ",
+    "Evening": "ಸಂಜೆ",
+    "Night": "ರಾತ್ರಿ",
+    "Early Morning": "ಬೆಳಗಿನ ಜಾವ",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "ಡೌನ್‌ಲೋಡ್",
+    "reset": "ರೀಸೆಟ್",
+    "downloadPdf": "PDF ಡೌನ್‌ಲೋಡ್",
+    "resetDescription": "ಇದು ನೀವು ನಮೂದಿಸಿದ ಎಲ್ಲಾ ಮಾಹಿತಿಯನ್ನು ತೆರವುಗೊಳಿಸುತ್ತದೆ ಮತ್ತು ಡೀಫಾಲ್ಟ್ ಟೆಂಪ್ಲೇಟ್‌ಗೆ ಹಿಂತಿರುಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ.",
+    "cancel": "ರದ್ದು ಮಾಡು",
+    "yesReset": "ಹೌದು, ರೀಸೆಟ್ ಮಾಡು"
   },
   "ਪੰਜਾਬੀ": {
     "Software Engineer": "ਸਾਫਟਵੇਅਰ ਇੰਜੀਨੀਅਰ",
@@ -1264,6 +1485,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "ਰੱਖਿਆ / ਪੁਲਿਸ",
     "Private Job": "ਪ੍ਰਾਈਵੇਟ ਨੌਕਰੀ",
     "Not Working": "ਕੰਮ ਨਹੀਂ ਕਰ ਰਹੇ",
+    "Retired": "ਸੇਵਾਮੁਕਤ",
+    "Homemaker": "ਘਰੇਲੂ ਮਹਿਲਾ",
     "10th": "10ਵੀਂ",
     "12th": "12ਵੀਂ",
     "Diploma": "ਡਿਪਲੋਮਾ",
@@ -1323,8 +1546,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "ਪੂਰਵਾ ਭਾਦਰਪਦ",
     "Uttara Bhadrapada": "ਉੱਤਰਾ ਭਾਦਰਪਦ",
     "Revati": "ਰੇਵਤੀ",
+    "Agastya": "ਅਗਸਤਯ",
+    "Angirasa": "ਅੰਗਿਰਸ",
+    "Atri": "ਅਤਰਿ",
+    "Bharadwaja": "ਭਾਰਦਵਾਜ",
+    "Bhrigu": "ਭ੍ਰਿਗੁ",
+    "Gautama": "ਗੌਤਮ",
+    "Jamadagni": "ਜਮਦਗਨੀ",
+    "Kashyapa": "ਕਸ਼ਯਪ",
+    "Shandilya": "ਸ਼ਾਂਡਿਲਯ",
+    "Vashishta": "ਵਸ਼ਿਸ਼ਟ",
+    "Vishvamitra": "ਵਿਸ਼ਵਾਮਿਤਰ",
+    "Gargya": "ਗਾਰਗਯ",
+    "Kaushika": "ਕੌਸ਼ਿਕ",
+    "Vatsa": "ਵਤਸ",
+    "Mudgala": "ਮੁਦਗਲ",
+    "Parashara": "ਪਰਾਸ਼ਰ",
+    "Upamanyu": "ਉਪਮਨਯੁ",
+    "Harita": "ਹਰਿਤ",
     "fullName": "ਪੂਰਾ ਨਾਮ",
     "dateOfBirth": "ਜਨਮ ਤਾਰੀਖ",
+    "selectDate": "ਜਨਮ ਤਾਰੀਖ ਚੁਣੋ",
     "timeOfBirth": "ਜਨਮ ਦਾ ਸਮਾਂ",
     "placeOfBirth": "ਜਨਮ ਸਥਾਨ",
     "height": "ਕੱਦ",
@@ -1334,6 +1576,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "ਧਰਮ",
     "caste": "ਜਾਤ",
     "gotra": "ਗੋਤ",
+    "kuldaivat": "ਕੁਲਦੇਵਤਾ",
     "manglik": "ਮਾਂਗਲਿਕ",
     "education": "ਪੜ੍ਹਾਈ",
     "college": "ਕਾਲਜ/ਯੂਨੀਵਰਸਿਟੀ",
@@ -1354,6 +1597,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "ਬਾਇਓਡਾਟਾ",
     "customField": "ਕਸਟਮ ਫੀਲਡ",
     "addMoreField": "ਹੋਰ ਫੀਲਡ ਸ਼ਾਮਲ ਕਰੋ",
+    "addProfession": "ਪੇਸ਼ਾ ਸ਼ਾਮਲ ਕਰੋ",
     "addNew": "ਨਵਾਂ ਸ਼ਾਮਲ ਕਰੋ",
     "personal": "ਨਿੱਜੀ ਵੇਰਵੇ",
     "educationSec": "ਸਿੱਖਿਆ ਅਤੇ ਕਰੀਅਰ",
@@ -1386,7 +1630,20 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "ਫੁੱਟ",
     "inches": "ਇੰਚ",
     "cm": "ਸੈ.ਮੀ",
-    "lpa": "ਲੱਖ/ਸਾਲ"
+    "lpa": "ਲੱਖ/ਸਾਲ",
+    "Morning": "ਸਵੇਰ",
+    "Afternoon": "ਦੁਪਹਿਰ",
+    "Evening": "ਸ਼ਾਮ",
+    "Night": "ਰਾਤ",
+    "Early Morning": "ਤੜਕੇ",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "ਡਾਊਨਲੋਡ",
+    "reset": "ਰੀਸੈਟ",
+    "downloadPdf": "PDF ਡਾਊਨਲੋਡ",
+    "resetDescription": "ਇਹ ਤੁਹਾਡੇ ਦੁਆਰਾ ਦਰਜ ਕੀਤੀ ਗਈ ਸਾਰੀ ਜਾਣਕਾਰੀ ਨੂੰ ਮਿਟਾ ਦੇਵੇਗਾ ਅਤੇ ਡਿਫੌਲਟ ਟੈਂਪਲੇਟ 'ਤੇ ਵਾਪਸ ਆ ਜਾਵੇਗਾ। ਇਹ ਕਾਰਵਾਈ ਅਨਡੂ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕਦੀ।",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "yesReset": "ਹਾਂ, ਰੀਸੈਟ ਕਰੋ"
   },
   "اردو": {
     "Software Engineer": "سافٹ ویئر انجینئر",
@@ -1402,6 +1659,8 @@ export const translations: Record<string, Record<string, string>> = {
     "Defense / Police": "دفاع / پولیس",
     "Private Job": "نجی نوکری",
     "Not Working": "کام نہیں کر رہے",
+    "Retired": "ریٹائرڈ",
+    "Homemaker": "گھریلو خاتون",
     "10th": "دسویں",
     "12th": "بارہویں",
     "Diploma": "ڈپلومہ",
@@ -1461,8 +1720,27 @@ export const translations: Record<string, Record<string, string>> = {
     "Purva Bhadrapada": "پوروا بھادرپد",
     "Uttara Bhadrapada": "اترا بھادرپد",
     "Revati": "ریوتی",
+    "Agastya": "اگستیہ",
+    "Angirasa": "انگیرس",
+    "Atri": "اتری",
+    "Bharadwaja": "بھاردواج",
+    "Bhrigu": "بھریگو",
+    "Gautama": "گوتم",
+    "Jamadagni": "جمدگنی",
+    "Kashyapa": "کشیپ",
+    "Shandilya": "شانڈلیہ",
+    "Vashishta": "وشسٹھ",
+    "Vishvamitra": "وشوامتر",
+    "Gargya": "گارگیہ",
+    "Kaushika": "کوشک",
+    "Vatsa": "وتس",
+    "Mudgala": "مدگل",
+    "Parashara": "پراشر",
+    "Upamanyu": "اپمنیو",
+    "Harita": "ہریت",
     "fullName": "پورا نام",
     "dateOfBirth": "تاریخ پیدائش",
+    "selectDate": "تاریخ پیدائش منتخب کریں",
     "timeOfBirth": "پیدائش کا وقت",
     "placeOfBirth": "پیدائش کی جگہ",
     "height": "قد",
@@ -1472,6 +1750,7 @@ export const translations: Record<string, Record<string, string>> = {
     "religion": "مذہب",
     "caste": "ذات",
     "gotra": "گوترا",
+    "kuldaivat": "خاندانی دیوتا (کلدیوتا)",
     "manglik": "مانگلک",
     "education": "تعلیم",
     "college": "کالج/یونیورسٹی",
@@ -1492,6 +1771,7 @@ export const translations: Record<string, Record<string, string>> = {
     "title": "بائیو ڈیٹا",
     "customField": "کسٹم فیلڈ",
     "addMoreField": "مزید فیلڈ شامل کریں",
+    "addProfession": "پیشہ شامل کریں",
     "addNew": "نیا شامل کریں",
     "personal": "ذاتی تفصیلات",
     "educationSec": "تعلیم اور کیریئر",
@@ -1524,11 +1804,71 @@ export const translations: Record<string, Record<string, string>> = {
     "ft": "فٹ",
     "inches": "انچ",
     "cm": "سینٹی میٹر",
-    "lpa": "لاکھ/سال"
+    "lpa": "لاکھ/سال",
+    "Morning": "صبح",
+    "Afternoon": "دوپہر",
+    "Evening": "شام",
+    "Night": "رات",
+    "Early Morning": "سحر",
+    "AM": "AM",
+    "PM": "PM",
+    "download": "ڈاؤن لوڈ",
+    "reset": "ری سیٹ",
+    "downloadPdf": "PDF ڈاؤن لوڈ",
+    "resetDescription": "اس سے آپ کی درج کردہ تمام معلومات مٹ جائیں گی اور ڈیفالٹ ٹیمپلیٹ پر واپس آ جائے گا۔ یہ عمل واپس نہیں ہو سکتا۔",
+    "cancel": "منسوخ کریں",
+    "yesReset": "ہاں، ری سیٹ کریں"
   }
 };
 
+// Keys that must always render in English regardless of the selected language.
+// These are tool/action labels (buttons, drawers, dialogs) — not biodata content.
+const ALWAYS_ENGLISH_KEYS = new Set([
+  // Toolbar / action buttons
+  "download", "downloadPdf", "generating", "premiumDownload",
+  "reset", "yesReset", "resetDescription", "cancel",
+  "editInDesigner", "design", "preview",
+  "templates", "pickTemplate",
+  "loading",
+  // Undo / Redo
+  "undo", "redo",
+  // Designer panel tabs (sidebar)
+  "fields", "theme", "spacing", "graphics",
+  // Reset design dialog
+  "resetDesignTitle", "resetDesignDesc", "resetDesignBtn",
+  // Download modal actions
+  "selectDownloadFormat", "selectPackageDownload",
+  "submitPay", "submitDownloadFree", "skipPay", "skipDownload",
+  // Edit-screen drawer panel headings & section labels
+  "formInputsAndDetails", "customizeDesignProperties",
+  "editFormDetails", "modifyBiodataInstructions",
+  // Theme panel
+  "backgroundThemes", "textThemes", "themePalettes",
+  "customColors", "primary", "secondary", "accent",
+  "titlesHeaders", "fieldValues", "labelsOrnaments",
+  // Typography panel
+  "typography", "fontFamily", "fontStyle", "fontSize",
+  // Spacing panel
+  "spacingMargins", "adjustMarginsDesc", "pageSpacingOptions",
+  "adjustPaddingInstructions",
+  "topPadding", "sidePadding", "leftPadding", "rightPadding",
+  // Graphics panel
+  "stickers", "bgImages", "graphicsStickers", "decorations",
+  "addTraditionalDecorations", "dragRepositionInstructions",
+  "doubleTapToDelete", "premiumGraphicsSymbols",
+  "yourUploadedStickers", "uploadCustomGraphic", "addCustomGraphic",
+  // Misc panel labels
+  "none", "profilePhoto", "addPhoto", "changePhoto", "cropPhoto",
+]);
+
 export function translateUI(key: string, lang: string): string {
+  // Tool/action keys are always shown in English
+  if (ALWAYS_ENGLISH_KEYS.has(key)) {
+    const en = translations["English"];
+    if (en && en[key]) return en[key];
+    // fall through to colorMap/uiMap English lookup below
+  }
+
   const t = translations[lang] || translations["English"];
   if (t && t[key]) return t[key];
 
@@ -2484,6 +2824,7 @@ export function translateUI(key: string, lang: string): string {
   };
 
   if (colorMap[key]) {
+    if (ALWAYS_ENGLISH_KEYS.has(key)) return colorMap[key]["English"] || key;
     return colorMap[key][lang] || colorMap[key]["English"] || key;
   }
 
@@ -3031,5 +3372,8 @@ export function translateUI(key: string, lang: string): string {
     }
   };
 
+  if (ALWAYS_ENGLISH_KEYS.has(key)) {
+    return uiMap[key]?.["English"] || key;
+  }
   return uiMap[key]?.[lang] || uiMap[key]?.["English"] || key;
 }

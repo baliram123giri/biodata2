@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     // Compile translated constraints for select fields
     const allowedValuesInstructions = selectFieldConfig.map(cfg => {
       const englishOptions = getOptionsForField(cfg.section, cfg.id);
-      const translatedOptions = englishOptions.map(opt => translateDynamicOption(opt, t));
+      const translatedOptions = englishOptions.map(opt => translateDynamicOption(opt, t, cfg.id));
       return `- ${cfg.id}: MUST be exactly one of: [${translatedOptions.join(", ")}]`;
     }).join("\n");
 
@@ -144,7 +144,7 @@ Generate biodata for a ${gender} person from ${religion} religion. Make all deta
       if (typeof genVal === "string" && genVal) {
         const englishOptions = getOptionsForField(cfg.section, cfg.id);
         const match = englishOptions.find(opt => {
-          const trans = translateDynamicOption(opt, t).trim().toLowerCase();
+          const trans = translateDynamicOption(opt, t, cfg.id).trim().toLowerCase();
           const eng = opt.trim().toLowerCase();
           const gen = genVal.trim().toLowerCase();
           return trans === gen || eng === gen;

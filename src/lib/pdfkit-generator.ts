@@ -572,10 +572,12 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               if (item.type === 'mantra') {
                 const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
                 if (mantraSticker) {
-                  // Estimate text width
-                  const textWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
-                  const halfW = textWidth / 2;
-                  const gap = 7;
+                  // Use the wider of mantra text or title text so stickers clear both
+                  const mantraTextWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
+                  const titleItem = layout.headerItems.find((h: any) => h.type === 'title');
+                  const titleTextWidth = titleItem?.text ? String(titleItem.text).length * (titleItem.fontSize * 0.55) : 0;
+                  const halfW = Math.max(mantraTextWidth, titleTextWidth) / 2;
+                  const gap = 10;
                   const imgW = 45;
                   const imgH = 45;
                   
@@ -608,7 +610,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       style: {
                         position: 'absolute',
                         top: -6,
-                        left: A4_W / 2 + halfW + gap,
+                        left: A4_W / 2 + halfW + gap + imgW,
                         width: imgW,
                         height: imgH,
                         transform: 'scaleX(-1)'
