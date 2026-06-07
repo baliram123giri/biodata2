@@ -1061,6 +1061,29 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   );
 };
 
+function isSameDomain(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+    
+    // Check environment variables
+    const uploadBaseUrl = process.env.UPLOAD_BASE_URL;
+    const nextAuthUrl = process.env.NEXTAUTH_URL;
+    
+    const domains = ["biodata99.com", "localhost", "127.0.0.1"];
+    if (uploadBaseUrl) {
+      try { domains.push(new URL(uploadBaseUrl).hostname); } catch(e) {}
+    }
+    if (nextAuthUrl) {
+      try { domains.push(new URL(nextAuthUrl).hostname); } catch(e) {}
+    }
+    
+    return domains.some(d => hostname === d || hostname.endsWith("." + d));
+  } catch (e) {
+    return false;
+  }
+}
+
 function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | null {
   if (!urlOrPath) return null;
 
@@ -1075,29 +1098,63 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
 
   let pathname = urlOrPath;
   if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
-    try {
-      const parsed = new URL(urlOrPath);
-      pathname = parsed.pathname;
-    } catch (e) {
+    if (isSameDomain(urlOrPath)) {
+      try {
+        const parsed = new URL(urlOrPath);
+        pathname = parsed.pathname;
+      } catch (e) {
+        return null;
+      }
+    } else {
       return null;
     }
   }
 
-  // Check upload folder first if it starts with /uploads/
-  if (pathname.startsWith("/uploads/")) {
-    const relativeUploadPath = pathname.substring("/uploads/".length);
-    const uploadDir = process.env.UPLOAD_DIR ||
-      (fs.existsSync("/var/www/biodata99/uploads") ? "/var/www/biodata99/uploads" : path.join(process.cwd(), "public", "uploads"));
-    const localPath = path.join(uploadDir, relativeUploadPath);
-    if (fs.existsSync(localPath)) {
-      return localPath;
+  // Normalize pathname to remove multiple slashes
+  pathname = pathname.replace(/\/+/g, "/");
+
+  // Check upload folder first if it contains /uploads/ or starts with /uploads/
+  if (pathname.includes("/uploads/")) {
+    const idx = pathname.indexOf("/uploads/");
+    const relativeUploadPath = pathname.substring(idx + "/uploads/".length);
+    
+    // Check multiple possible directories
+    const dirsToCheck = [
+      process.env.UPLOAD_DIR,
+      "/var/www/biodata99/uploads",
+      path.join(process.cwd(), "public", "uploads"),
+      path.join(process.cwd(), "uploads"),
+      path.join(process.cwd(), "..", "uploads"),
+      path.join(process.cwd(), "..", "..", "uploads")
+    ].filter(Boolean) as string[];
+
+    for (const dir of dirsToCheck) {
+      try {
+        const localPath = path.join(dir, relativeUploadPath);
+        if (fs.existsSync(localPath)) {
+          console.log(`[getAbsoluteLocalPath] Found upload file at: ${localPath}`);
+          return localPath;
+        }
+      } catch (e) {}
     }
   }
 
   // Check public directory
-  const publicPath = path.join(process.cwd(), 'public', pathname.startsWith("/") ? pathname : "/" + pathname);
-  if (fs.existsSync(publicPath)) {
-    return publicPath;
+  const relativePublicPath = pathname.startsWith("/") ? pathname : "/" + pathname;
+  const publicDirsToCheck = [
+    path.join(process.cwd(), 'public'),
+    path.join(process.cwd()),
+    path.join(process.cwd(), '..', 'public')
+  ];
+
+  for (const dir of publicDirsToCheck) {
+    try {
+      const publicPath = path.join(dir, relativePublicPath);
+      if (fs.existsSync(publicPath)) {
+        console.log(`[getAbsoluteLocalPath] Found public file at: ${publicPath}`);
+        return publicPath;
+      }
+    } catch (e) {}
   }
 
   return null;
@@ -1141,6 +1198,7 @@ function parseSvgContent(svgContent: string): ParsedSvg | null {
 }
 
 async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
+  console.log(`[resolveSvgXml] Resolving: "${urlOrPath ? urlOrPath.substring(0, 150) : ""}"`);
   if (!urlOrPath) return undefined;
 
   if (urlOrPath.startsWith("data:image/svg+xml")) {
@@ -1153,30 +1211,50 @@ async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
         return decodeURIComponent(base64Content);
       }
     } catch (e) {
-      console.error("Failed to decode data SVG URL:", e);
+      console.error("[resolveSvgXml] Failed to decode data SVG URL:", e);
     }
   }
-
+  
   const localPath = getAbsoluteLocalPath(urlOrPath);
   if (localPath) {
     try {
-      return await fs.promises.readFile(localPath, "utf-8");
+      const content = await fs.promises.readFile(localPath, "utf-8");
+      console.log(`[resolveSvgXml] Read successfully from local path: ${localPath} (${content.length} chars)`);
+      return content;
     } catch (e) {
-      console.error(`Error reading local SVG file ${localPath}:`, e);
+      console.error(`[resolveSvgXml] Error reading local SVG file ${localPath}:`, e);
     }
   }
-
+  
   if (urlOrPath.startsWith("http")) {
-    try {
-      const res = await fetch(urlOrPath);
-      if (res.ok) {
-        return await res.text();
+    const urlsToTry = [urlOrPath];
+    if (isSameDomain(urlOrPath)) {
+      try {
+        const parsed = new URL(urlOrPath);
+        const port = process.env.PORT || "3000";
+        urlsToTry.unshift(`http://127.0.0.1:${port}${parsed.pathname}`);
+        urlsToTry.unshift(`http://localhost:${port}${parsed.pathname}`);
+      } catch (e) {}
+    }
+    
+    for (const targetUrl of urlsToTry) {
+      try {
+        console.log(`[resolveSvgXml] Fetching SVG: ${targetUrl}`);
+        const res = await fetch(targetUrl);
+        if (res.ok) {
+          const text = await res.text();
+          console.log(`[resolveSvgXml] Successfully fetched SVG from: ${targetUrl} (${text.length} chars)`);
+          return text;
+        } else {
+          console.warn(`[resolveSvgXml] Fetch returned status ${res.status} for: ${targetUrl}`);
+        }
+      } catch (e: any) {
+        console.error(`[resolveSvgXml] Failed to fetch SVG from ${targetUrl}:`, e.message || e);
       }
-    } catch (e) {
-      console.error(`Error fetching remote SVG ${urlOrPath}:`, e);
     }
   }
-
+  
+  console.warn(`[resolveSvgXml] Failed to resolve SVG content for: ${urlOrPath}`);
   return undefined;
 }
 
@@ -1280,20 +1358,50 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
           console.error("[resolveAndConvertImage] Failed to parse icon.horse URL domain:", e);
         }
       }
-      console.log(`[resolveAndConvertImage] HTTP URL detected, fetching: "${urlToFetch}"`);
-      const response = await fetch(urlToFetch, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      
+      const urlsToTry = [urlToFetch];
+      if (isSameDomain(urlToFetch)) {
+        try {
+          const parsed = new URL(urlToFetch);
+          const port = process.env.PORT || "3000";
+          urlsToTry.unshift(`http://127.0.0.1:${port}${parsed.pathname}`);
+          urlsToTry.unshift(`http://localhost:${port}${parsed.pathname}`);
+        } catch (e) {}
+      }
+
+      let fetchSuccess = false;
+      let finalResponse: any = null;
+      
+      for (const targetUrl of urlsToTry) {
+        try {
+          console.log(`[resolveAndConvertImage] Fetching image from: ${targetUrl}`);
+          const response = await fetch(targetUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          });
+          if (response.ok) {
+            finalResponse = response;
+            fetchSuccess = true;
+            console.log(`[resolveAndConvertImage] Successfully fetched image from: ${targetUrl}`);
+            break;
+          } else {
+            console.warn(`[resolveAndConvertImage] Fetch returned status ${response.status} for: ${targetUrl}`);
+          }
+        } catch (fetchErr: any) {
+          console.error(`[resolveAndConvertImage] Failed to fetch image from ${targetUrl}:`, fetchErr.message || fetchErr);
         }
-      });
-      if (!response.ok) {
-        console.error(`[resolveAndConvertImage] Fetch failed for ${resolvedUrl} with status ${response.status} ${response.statusText}`);
+      }
+
+      if (!fetchSuccess || !finalResponse) {
+        console.error(`[resolveAndConvertImage] Fetch failed for ${resolvedUrl} across all URL options`);
         return undefined;
       }
-      const arrayBuffer = await response.arrayBuffer();
+
+      const arrayBuffer = await finalResponse.arrayBuffer();
       buffer = Buffer.from(arrayBuffer);
-      const mime = response.headers.get("content-type") || "";
-      console.log(`[resolveAndConvertImage] Fetch successful. Status: ${response.status}, Content-Type: ${mime}, Buffer size: ${buffer.length}`);
+      const mime = finalResponse.headers.get("content-type") || "";
+      console.log(`[resolveAndConvertImage] Fetch completed. Content-Type: ${mime}, Buffer size: ${buffer.length}`);
       if (mime.includes("svg")) {
         isSvg = true;
       } else {
