@@ -111,6 +111,8 @@ export function HomeBiodataBuilder() {
       const currentData = {
         ...useBiodataStore.getState().formData,
         ...methods.getValues(),
+        stickers: useBiodataStore.getState().formData.stickers,
+        layout: useBiodataStore.getState().formData.layout,
       };
       const nameField =
         currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
@@ -189,7 +191,6 @@ export function HomeBiodataBuilder() {
 
     // Load dynamic templates from database on initial page load
     useBiodataStore.getState().fetchInitialTemplate?.();
-    useBiodataStore.getState().fetchCustomStickers?.();
 
     const performHomeReset = () => {
       // 1. Reset template, layout and stickers in biodata store while preserving form values
@@ -753,6 +754,8 @@ export function HomeBiodataBuilder() {
             const currentData = {
               ...useBiodataStore.getState().formData,
               ...methods.getValues(),
+              stickers: useBiodataStore.getState().formData.stickers,
+              layout: useBiodataStore.getState().formData.layout,
             };
             if (activeTemplate?.isPremium) {
               setIsPriceModalOpen(false);

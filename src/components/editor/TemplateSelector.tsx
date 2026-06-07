@@ -182,6 +182,8 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const customTemplates = useBiodataStore(s => s.customTemplates);
   const fetchCustomTemplates = useBiodataStore(s => s.fetchCustomTemplates);
 
+  const hasLoadedAllTemplates = useBiodataStore(s => s.hasLoadedAllTemplates);
+
   const setPalette = useThemeStore(s => s.setPalette);
   const setPadding = useThemeStore(s => s.setPadding);
   const setPaddingY = useThemeStore(s => s.setPaddingY);
@@ -189,13 +191,13 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (customTemplates.length <= 1) {
+    if (!hasLoadedAllTemplates) {
       setIsLoading(true);
       fetchCustomTemplates().finally(() => {
         setIsLoading(false);
       });
     }
-  }, [fetchCustomTemplates, customTemplates.length]);
+  }, [fetchCustomTemplates, hasLoadedAllTemplates]);
 
   const langFilter = useBiodataStore(s => s.langFilter);
   const priceFilter = useBiodataStore(s => s.priceFilter);

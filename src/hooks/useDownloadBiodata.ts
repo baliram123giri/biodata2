@@ -164,7 +164,7 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
     }
   }
 
-  // 2. Resolve stickers client-side and convert to base64 data URLs
+  // 2. Resolve stickers client-side and set their raw URL in resolvedUrl (without base64 conversion)
   if (clonedData.stickers && clonedData.stickers.length > 0) {
     try {
       const { STICKER_ASSETS } = require("@/lib/sticker-assets");
@@ -175,23 +175,11 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
         }
         const urlToResolve = sticker.resolvedUrl || (asset && asset.url);
         if (urlToResolve) {
-          try {
-            if (urlToResolve.startsWith("data:")) {
-              sticker.resolvedUrl = urlToResolve;
-              continue;
-            }
-            console.log(`[useDownloadBiodata] Pre-fetching sticker: ${urlToResolve}`);
-            const base64 = await imageUrlToBase64(urlToResolve);
-            if (base64 && base64.startsWith("data:")) {
-              sticker.resolvedUrl = base64;
-            }
-          } catch (e) {
-            console.error(`Failed to pre-fetch sticker ${sticker.type} client-side:`, e);
-          }
+          sticker.resolvedUrl = urlToResolve;
         }
       }
     } catch (err) {
-      console.error("Error loading sticker assets for client-side pre-fetch:", err);
+      console.error("Error loading sticker assets for client-side resolution:", err);
     }
   }
 
@@ -209,8 +197,10 @@ export async function prepareDataForGeneration(
   const storeState = useBiodataStore.getState();
   const mergedFormData = {
     ...formData,
-    layout: formData?.layout || storeState.formData?.layout,
-    stickers: (formData?.stickers && formData.stickers.length > 0) ? formData.stickers : (storeState.formData?.stickers || []),
+    layout: storeState.formData?.layout || formData?.layout,
+    stickers: storeState.formData?.stickers && storeState.formData.stickers.length > 0 
+      ? storeState.formData.stickers 
+      : (formData?.stickers || []),
   };
 
   const preparedFormData = await prepareFormDataWithBase64Logos(mergedFormData);

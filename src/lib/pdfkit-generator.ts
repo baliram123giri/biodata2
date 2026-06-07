@@ -1098,14 +1098,10 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
 
   let pathname = urlOrPath;
   if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
-    if (isSameDomain(urlOrPath)) {
-      try {
-        const parsed = new URL(urlOrPath);
-        pathname = parsed.pathname;
-      } catch (e) {
-        return null;
-      }
-    } else {
+    try {
+      const parsed = new URL(urlOrPath);
+      pathname = parsed.pathname;
+    } catch (e) {
       return null;
     }
   }
@@ -1282,6 +1278,16 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
     if (localPath) {
       console.log(`[resolveAndConvertImage] Resolved remote URL/path to local file: ${localPath}`);
       resolvedUrl = localPath;
+      const ext = path.extname(localPath).toLowerCase();
+      if (ext === ".jpg" || ext === ".jpeg") {
+        contentType = "image/jpeg";
+      } else if (ext === ".png") {
+        contentType = "image/png";
+      } else if (ext === ".webp") {
+        contentType = "image/webp";
+      } else if (ext === ".svg") {
+        contentType = "image/svg+xml";
+      }
     }
 
     let isSvg = resolvedUrl.toLowerCase().endsWith(".svg") || resolvedUrl.toLowerCase().includes(".svg?");

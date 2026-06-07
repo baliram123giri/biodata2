@@ -278,7 +278,12 @@ export default function EditPage() {
 
   const handleSubmitWhatsApp = (phoneNumber: string, countryCode: string) => {
     return new Promise<{ success: boolean; error?: string; fallback?: boolean; whatsappUrl?: string }>(async (resolve, reject) => {
-      const currentData = methods.getValues();
+      const currentData = {
+        ...useBiodataStore.getState().formData,
+        ...methods.getValues(),
+        stickers: useBiodataStore.getState().formData.stickers,
+        layout: useBiodataStore.getState().formData.layout,
+      };
       const nameField =
         currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
         "biodata";
@@ -399,8 +404,6 @@ export default function EditPage() {
   // Fix hydration issues and layout listening
   useEffect(() => {
     setIsMounted(true);
-
-    useBiodataStore.getState().fetchCustomStickers();
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
@@ -1293,6 +1296,8 @@ export default function EditPage() {
           const currentData = {
             ...useBiodataStore.getState().formData,
             ...methods.getValues(),
+            stickers: useBiodataStore.getState().formData.stickers,
+            layout: useBiodataStore.getState().formData.layout,
           };
           if (activeTemplate?.isPremium) {
             setIsPriceModalOpen(false);

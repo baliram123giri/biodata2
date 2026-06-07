@@ -38,6 +38,7 @@ interface BiodataState {
   selectedTemplate: string;
   customTemplates: TemplateConfig[];
   customStickers: any[];
+  hasLoadedAllTemplates: boolean;
   setFormData: (data: any) => void;
   updateField: (section: keyof BiodataFormValues, id: string, value: string) => void;
   updateLayout: (id: string, x: number, y: number) => void;
@@ -75,6 +76,7 @@ export const useBiodataStore = create<BiodataState>()(
         selectedTemplate: "",
         customTemplates: [],
         customStickers: [],
+        hasLoadedAllTemplates: false,
         langFilter: "all",
         priceFilter: "all",
         setLangFilter: (lang) => set({ langFilter: lang }),
@@ -148,6 +150,7 @@ export const useBiodataStore = create<BiodataState>()(
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 return {
                   customTemplates: data.templates,
+                  hasLoadedAllTemplates: true,
                   selectedTemplate: hasSelected ? currentSelected : fallbackTemplateId,
                 };
               });
@@ -167,27 +170,40 @@ export const useBiodataStore = create<BiodataState>()(
               registerDynamicTemplates(loaded);
             }
 
-            // If we already have database templates loaded in the store
-            if (loaded.length > 0) {
+            // If we already have the target template loaded in the store, return early
+            const isTargetLoaded = loaded.some((t) => t.id === targetId) || !!getTemplateConfig(targetId || "");
+            if (loaded.length > 0 && isTargetLoaded) {
               if (templateId) {
                 set({ selectedTemplate: templateId });
               }
               return;
             }
 
-            // Otherwise, fetch all active templates from API
-            const res = await fetch("/api/templates");
+            // Fetch only the default or requested target template initially to optimize page load
+            const url = targetId 
+              ? `/api/templates?id=${targetId}` 
+              : "/api/templates?default=true";
+            const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
               
-              set(() => {
+              set((state) => {
                 const hasSelected = data.templates.some((t: any) => t.id === targetId) || !!getTemplateConfig(targetId || "");
                 const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 
+                // Merge the new template into customTemplates to preserve already loaded templates
+                const existingTemplates = state.customTemplates || [];
+                const mergedTemplates = [...existingTemplates];
+                data.templates.forEach((newTpl: any) => {
+                  if (!mergedTemplates.some((t) => t.id === newTpl.id)) {
+                    mergedTemplates.push(newTpl);
+                  }
+                });
+
                 return {
-                  customTemplates: data.templates,
+                  customTemplates: mergedTemplates,
                   selectedTemplate: hasSelected ? (targetId || fallbackTemplateId) : fallbackTemplateId,
                 };
               });
@@ -249,7 +265,7 @@ export const useBiodataStore = create<BiodataState>()(
                 education: { x: 320, y: 280 },
                 footer: { x: 0, y: 1023 },
               },
-              stickers: []
+              stickers: (state.formData.stickers || []).filter((s) => s.isMantra)
             },
             selectedTemplate: currentSelected || (defaultTemplate ? defaultTemplate.id : "royal")
           };
