@@ -164,7 +164,37 @@ async function prepareFormDataWithBase64Logos(formData: any): Promise<any> {
     }
   }
 
-  // 2. Resolve stickers (Removed client-side pre-fetching as the server pdfkit-generator resolves and converts them perfectly)
+  // 2. Resolve stickers client-side and convert to base64 data URLs
+  if (clonedData.stickers && clonedData.stickers.length > 0) {
+    try {
+      const { STICKER_ASSETS } = require("@/lib/sticker-assets");
+      for (const sticker of clonedData.stickers) {
+        let asset = STICKER_ASSETS.find((a: any) => a.id === sticker.type);
+        if (!asset && sticker.type) {
+          asset = { id: sticker.type, type: "image", url: sticker.type };
+        }
+        const urlToResolve = sticker.resolvedUrl || (asset && asset.url);
+        if (urlToResolve) {
+          try {
+            if (urlToResolve.startsWith("data:")) {
+              sticker.resolvedUrl = urlToResolve;
+              continue;
+            }
+            console.log(`[useDownloadBiodata] Pre-fetching sticker: ${urlToResolve}`);
+            const base64 = await imageUrlToBase64(urlToResolve);
+            if (base64 && base64.startsWith("data:")) {
+              sticker.resolvedUrl = base64;
+            }
+          } catch (e) {
+            console.error(`Failed to pre-fetch sticker ${sticker.type} client-side:`, e);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error loading sticker assets for client-side pre-fetch:", err);
+    }
+  }
+
   return clonedData;
 }
 
@@ -180,7 +210,7 @@ export async function prepareDataForGeneration(
   const mergedFormData = {
     ...formData,
     layout: formData?.layout || storeState.formData?.layout,
-    stickers: formData?.stickers || storeState.formData?.stickers || [],
+    stickers: (formData?.stickers && formData.stickers.length > 0) ? formData.stickers : (storeState.formData?.stickers || []),
   };
 
   const preparedFormData = await prepareFormDataWithBase64Logos(mergedFormData);
@@ -295,6 +325,14 @@ export function useDownloadBiodata() {
       getFieldVal(preparedData.personalDetails, "fullName") ||
       "biodata";
 
+    // Extract proper name for database logging, preserving Unicode characters
+    const actualName =
+      getFieldVal(preparedData.personalDetails, "fullName") ||
+      preparedData.personalDetails?.[0]?.value ||
+      customFilename ||
+      "biodata";
+    const nameFieldForLog = actualName.trim() || "biodata";
+
     const timestamp = Date.now();
 
     const locField =
@@ -308,7 +346,7 @@ export function useDownloadBiodata() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: nameField,
+        name: nameFieldForLog,
         location: locField,
         format,
         templateId,

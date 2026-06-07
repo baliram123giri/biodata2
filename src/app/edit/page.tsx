@@ -282,7 +282,7 @@ export default function EditPage() {
       const nameField =
         currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
         "biodata";
-      const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+      const cleanName = nameField.replace(/[\\/:*?"<>|]/g, "").trim() || "biodata";
       setFilename(cleanName);
 
       if (activeTemplate?.isPremium) {
@@ -519,7 +519,7 @@ export default function EditPage() {
     const nameField =
       formData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
       "biodata";
-    const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+    const cleanName = nameField.replace(/[\\/:*?"<>|]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
     setIsPriceModalOpen(true);
@@ -1290,12 +1290,16 @@ export default function EditPage() {
         isPremium={activeTemplate?.isPremium}
         isGenerating={isGenerating}
         onSelectFormat={async (format, couponCode) => {
+          const currentData = {
+            ...useBiodataStore.getState().formData,
+            ...methods.getValues(),
+          };
           if (activeTemplate?.isPremium) {
             setIsPriceModalOpen(false);
-            await processPremiumPaymentAndDownload(formData, format, filename, couponCode);
+            await processPremiumPaymentAndDownload(currentData, format, filename, couponCode);
           } else {
             try {
-              await triggerDownload(formData, selectedTemplate, format, filename);
+              await triggerDownload(currentData, selectedTemplate, format, filename);
             } catch (err) {
               console.error("Free download failed:", err);
             } finally {

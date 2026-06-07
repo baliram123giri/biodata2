@@ -115,7 +115,7 @@ export function HomeBiodataBuilder() {
       const nameField =
         currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
         "biodata";
-      const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+      const cleanName = nameField.replace(/[\\/:*?"<>|]/g, "").trim() || "biodata";
       setFilename(cleanName);
 
       if (activeTemplate?.isPremium) {
@@ -291,7 +291,7 @@ export function HomeBiodataBuilder() {
     const nameField =
       currentData.personalDetails?.find((f: any) => f.id === "fullName")?.value ||
       "biodata";
-    const cleanName = nameField.replace(/[^a-zA-Z0-9\s-_]/g, "").trim() || "biodata";
+    const cleanName = nameField.replace(/[\\/:*?"<>|]/g, "").trim() || "biodata";
     setFilename(cleanName);
 
     setIsPriceModalOpen(true);
