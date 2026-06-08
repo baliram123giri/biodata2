@@ -36,7 +36,7 @@ export const PALETTES: Palette[] = [
   { name: "Classic Ivory", primary: "#5D4037", secondary: "#3E2723", accent: "#8D6E63", bgColors: ["#FCFBF7", "#FAF7EE", "#F4F0E0"] },
 ];
 
-export type FontFamily = "noto" | "inter" | "playfair";
+export type FontFamily = "noto" | "inter" | "playfair" | "cormorant" | "cinzel" | "lora" | "ebgaramond" | "raleway";
 export type FontWeight = "regular" | "medium" | "bold";
 export type Alignment = "left" | "center" | "right";
 

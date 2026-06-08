@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { tintSvg } from '@/lib/frame-config';
+import { getClientImageUrl } from '@/lib/utils';
 
 // Client-side in-memory cache for raw SVG text templates
 const svgCache: Record<string, string> = {};
@@ -19,18 +20,20 @@ export function useColorizedFrameImage(
       return;
     }
 
+    const resolvedSrc = getClientImageUrl(src);
+
     // Check if the source is an SVG
-    const isSvg = src.toLowerCase().includes('.svg') || src.startsWith('data:image/svg+xml');
+    const isSvg = resolvedSrc.toLowerCase().includes('.svg') || resolvedSrc.startsWith('data:image/svg+xml');
 
     if (!isSvg) {
       // Load standard images normally
       const img = new window.Image();
-      if (!src.startsWith('data:')) {
+      if (!resolvedSrc.startsWith('data:')) {
         img.crossOrigin = 'anonymous';
       }
       img.onload = () => setImage(img);
       img.onerror = () => setImage(null);
-      img.src = src;
+      img.src = resolvedSrc;
       return;
     }
 
@@ -40,22 +43,22 @@ export function useColorizedFrameImage(
       try {
         let svgText = "";
         
-        if (svgCache[src]) {
-          svgText = svgCache[src];
-        } else if (src.startsWith('data:image/svg+xml;base64,')) {
-          const base64Content = src.split(',')[1];
+        if (svgCache[resolvedSrc]) {
+          svgText = svgCache[resolvedSrc];
+        } else if (resolvedSrc.startsWith('data:image/svg+xml;base64,')) {
+          const base64Content = resolvedSrc.split(',')[1];
           svgText = atob(base64Content);
-        } else if (src.startsWith('data:image/svg+xml;utf8,')) {
-          svgText = decodeURIComponent(src.split('utf8,')[1]);
-        } else if (src.startsWith('data:image/svg+xml,')) {
-          svgText = decodeURIComponent(src.split(',')[1]);
+        } else if (resolvedSrc.startsWith('data:image/svg+xml;utf8,')) {
+          svgText = decodeURIComponent(resolvedSrc.split('utf8,')[1]);
+        } else if (resolvedSrc.startsWith('data:image/svg+xml,')) {
+          svgText = decodeURIComponent(resolvedSrc.split(',')[1]);
         } else {
           // Fetch from remote URL directly
-          const res = await fetch(src);
+          const res = await fetch(resolvedSrc);
           if (!res.ok) throw new Error("Failed to fetch SVG");
           svgText = await res.text();
           // Cache the successfully retrieved SVG content
-          svgCache[src] = svgText;
+          svgCache[resolvedSrc] = svgText;
         }
 
         if (!isMounted) return;
@@ -80,7 +83,7 @@ export function useColorizedFrameImage(
         console.error("Error colorizing frame SVG:", err);
         // Fallback: load the original SVG
         const img = new window.Image();
-        if (!src.startsWith('data:')) {
+        if (!resolvedSrc.startsWith('data:')) {
           img.crossOrigin = 'anonymous';
         }
         img.onload = () => {
@@ -89,7 +92,7 @@ export function useColorizedFrameImage(
         img.onerror = (e) => {
           console.error("Failed to load fallback original SVG:", e);
         };
-        img.src = src;
+        img.src = resolvedSrc;
       }
     };
 
@@ -102,3 +105,4 @@ export function useColorizedFrameImage(
 
   return image;
 }
+

@@ -18,6 +18,9 @@ const footerLinks = {
     { label: "About Us", href: "/about-us" },
     { label: "Contact Us", href: "/contact-us" },
   ],
+  resources: [
+    { label: "Biodata Format Guide", href: "/biodata-format" },
+  ],
   legal: [
     { label: "Privacy Policy", href: "/privacy-policy" },
     { label: "Refund Policy", href: "/refund-policy" },
@@ -72,7 +75,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
 
             {/* Brand Column */}
-            <div className="md:col-span-5 flex flex-col gap-3">
+            <div className="md:col-span-4 flex flex-col gap-3">
               <Logo iconClassName="h-8 md:h-10" disableShine />
               <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
@@ -106,7 +109,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
             </div>
 
             {/* Company Links */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
                 Company
               </h3>
@@ -125,8 +128,28 @@ export function Footer({ children }: { children?: React.ReactNode }) {
               </ul>
             </div>
 
+            {/* Resources Links */}
+            <div className="md:col-span-3">
+              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
+                Resources
+              </h3>
+              <ul className="space-y-2">
+                {footerLinks.resources.map(({ label, href }) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                    >
+                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {/* Legal Links */}
-            <div className="md:col-span-4">
+            <div className="md:col-span-3">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
                 Legal
               </h3>

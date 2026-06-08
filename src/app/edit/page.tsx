@@ -64,7 +64,7 @@ import { useStore } from "zustand";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 const BiodataForm = dynamic(() => import("@/components/biodata/BiodataForm").then(mod => mod.BiodataForm));
@@ -92,6 +92,9 @@ export default function EditPage() {
     defaultValues: defaultBiodataValues,
     mode: "onBlur",
   });
+  
+  const searchParams = useSearchParams();
+  const templateParam = searchParams.get('template');
 
   const theme = useThemeStore();
   const prevTemplateRef = useRef<string | null>(null);
@@ -396,10 +399,8 @@ export default function EditPage() {
   // Fetch initial template only after store hydration is complete to prevent race conditions
   useEffect(() => {
     if (!isStoreHydrated) return;
-    const searchParams = new URLSearchParams(window.location.search);
-    const templateParam = searchParams.get('template');
     useBiodataStore.getState().fetchInitialTemplate(templateParam);
-  }, [isStoreHydrated]);
+  }, [isStoreHydrated, templateParam]);
 
   // Fix hydration issues and layout listening
   useEffect(() => {
@@ -407,8 +408,7 @@ export default function EditPage() {
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
-      const searchParams = new URLSearchParams(window.location.search);
-      setIsRightOpen(searchParams.has("template"));
+      setIsRightOpen(!!templateParam);
     }
 
     // Disable browser pull-to-refresh on this page
@@ -598,6 +598,9 @@ export default function EditPage() {
       {/* Top Navigation Bar */}
       <header className="w-full shrink-0 bg-stitch-surface/80 backdrop-blur-xl border-b border-stitch-outline/10 shadow-sm flex justify-between items-center px-4 md:px-6 h-16">
         <div className="flex items-center gap-2 md:gap-4">
+          <Link href="/" className="shrink-0 hidden sm:block">
+            <Logo iconClassName="h-6 md:h-8" disableShine />
+          </Link>
           <Button
             variant="ghost"
             className="group gap-1 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 text-stitch-primary hover:bg-stitch-primary/10 rounded-full font-medium transition-all flex items-center border border-stitch-primary/20 hover:border-stitch-primary/40 shadow-sm"
@@ -729,7 +732,7 @@ export default function EditPage() {
 
         {/* Canvas Area */}
         <main id="canvas-container" className="flex-1 overflow-hidden relative bg-transparent h-full flex items-center justify-center">
-          {customTemplates.length === 0 ? (
+          {customTemplates.length === 0 || (templateParam && selectedTemplate !== templateParam) ? (
             <PreviewLoader />
           ) : (
             <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />

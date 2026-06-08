@@ -84,7 +84,10 @@ model Template {
   bgConfig               Json?
   detailsLayout          String   @default("classic")
   titleShape             String   @default("simple")
+  mantraSignPlacement    String   @default("both")
+  mantraSignVertical     String   @default("top")
   language               String   @default("English")
+  religion               String?  @default("Hindu")
   active                 Boolean  @default(true)
   // Pricing
   isPremium              Boolean  @default(false)

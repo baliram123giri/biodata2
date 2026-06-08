@@ -65,9 +65,14 @@ export default async function TemplatesPage() {
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
             Don't worry! You can change your template and layout style with a single click inside the editor **without losing any filled details**. Start with any design and customize it later.
           </p>
-          <Button size="lg" className="rounded-full bg-gradient-primary border-0 font-bold px-8 shadow-md" asChild>
-            <Link href="/edit">Open Creator Studio</Link>
-          </Button>
+          <div className="pt-2 flex flex-col items-center gap-4">
+            <Button size="lg" className="rounded-full bg-gradient-primary border-0 font-bold px-8 shadow-md" asChild>
+              <Link href="/edit">Open Creator Studio</Link>
+            </Button>
+            <Link href="/biodata-format" className="text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-medium text-sm transition-colors">
+              Not sure what to include? Read our complete guide on biodata format for marriage &rarr;
+            </Link>
+          </div>
         </div>
       </div>
       <JsonLd schema={templatesPageSchema} />

@@ -26,6 +26,7 @@ export function RichTextEditor({
   minHeight = "min-h-[150px]",
 }: RichTextEditorProps) {
   const editor = useEditor({
+    immediatelyRender: true,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -50,8 +51,16 @@ export function RichTextEditor({
 
   // Sync value if it changes externally
   React.useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+    if (editor && !editor.isDestroyed) {
+      // Safely wrap in try-catch in case editor state is in transition
+      try {
+        const currentContent = editor.getHTML();
+        if (value !== currentContent) {
+          editor.commands.setContent(value);
+        }
+      } catch (e) {
+        console.warn("Editor sync error:", e);
+      }
     }
   }, [value, editor]);
 

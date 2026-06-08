@@ -171,7 +171,7 @@ export const useBiodataStore = create<BiodataState>()(
             }
 
             // If we already have the target template loaded in the store, return early
-            const isTargetLoaded = loaded.some((t) => t.id === targetId) || !!getTemplateConfig(targetId || "");
+            const isTargetLoaded = loaded.some((t) => t.id === targetId);
             if (loaded.length > 0 && isTargetLoaded) {
               if (templateId) {
                 set({ selectedTemplate: templateId });
@@ -189,7 +189,7 @@ export const useBiodataStore = create<BiodataState>()(
               registerDynamicTemplates(data.templates);
               
               set((state) => {
-                const hasSelected = data.templates.some((t: any) => t.id === targetId) || !!getTemplateConfig(targetId || "");
+                const hasSelected = data.templates.some((t: any) => t.id === targetId);
                 const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 
@@ -207,6 +207,8 @@ export const useBiodataStore = create<BiodataState>()(
                   selectedTemplate: hasSelected ? (targetId || fallbackTemplateId) : fallbackTemplateId,
                 };
               });
+            } else if (targetId) {
+              set({ selectedTemplate: targetId });
             }
           } catch (err) {
             console.error("Store failed to fetch initial templates:", err);

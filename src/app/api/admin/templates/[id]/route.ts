@@ -129,6 +129,10 @@ export async function PATCH(
       "active",
       "detailsLayout",
       "titleShape",
+      "mantraSignPlacement",
+      "mantraSignVertical",
+      "religion",
+      "rawInput",
     ];
 
     fields.forEach((field) => {

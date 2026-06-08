@@ -517,13 +517,19 @@ export default function Home() {
               preferences. The template is just a starting point. No account
               needed, and it takes a few minutes.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <a
                 href="#builder"
                 className="inline-flex items-center text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-[15px] transition-colors"
               >
                 Create your biodata free &rarr;
               </a>
+              <Link
+                href="/biodata-format"
+                className="inline-flex items-center text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-[15px] transition-colors"
+              >
+                Read our biodata format for marriage guide &rarr;
+              </Link>
             </div>
           </div>
         </div>

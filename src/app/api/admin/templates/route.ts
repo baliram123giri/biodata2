@@ -123,6 +123,8 @@ export async function POST(req: Request) {
       language, // template language e.g. "English", "मराठी", "हिंदी", etc.
       detailsLayout,
       titleShape,
+      mantraSignPlacement,
+      mantraSignVertical,
       photoShowBorder,
       // Pricing
       isPremium,
@@ -136,10 +138,10 @@ export async function POST(req: Request) {
       jpgDiscountPrice,
       pngPrice,
       pngDiscountPrice,
-      comboPrice,
       comboDiscountPrice,
       previewPhotoFile,
       rawInput,
+      religion,
       isDefault,
     } = body;
 
@@ -226,10 +228,13 @@ export async function POST(req: Request) {
         thumbnailUrl,
         previewPhotoUrl,
         rawInput: rawInput || undefined,
+        religion: religion || "Hindu",
         bgConfig: bgConfigData || undefined,
         language: language || "English",
         detailsLayout: detailsLayout || "classic",
         titleShape: titleShape || "simple",
+        mantraSignPlacement: mantraSignPlacement || "both",
+        mantraSignVertical: mantraSignVertical || "top",
         photoShowBorder: photoShowBorder !== false, // default true
         active: true,
         isDefault: isDefault === true,

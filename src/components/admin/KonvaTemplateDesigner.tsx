@@ -7,8 +7,9 @@ import Konva from "konva";
 import { translations } from "@/lib/translations";
 import { getLightBgColor } from "@/lib/color-utils";
 import { loadKonvaFonts, getKonvaFontFamily } from "@/lib/konva-fonts";
-import { ZoomIn, ZoomOut, Maximize, Download } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize, Download, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { useColorizedFrameImage } from "@/hooks/useColorizedFrameImage";
+import { getClientImageUrl } from "@/lib/utils";
 
 if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
@@ -48,7 +49,8 @@ const PhotoImage = React.memo(function PhotoImage({
   cornerRadius: number;
   borderColor: string;
 }) {
-  const [image] = useImage(src, src.startsWith("data:") ? undefined : "anonymous");
+  const resolvedSrc = getClientImageUrl(src);
+  const [image] = useImage(resolvedSrc, resolvedSrc.startsWith("data:") ? undefined : "anonymous");
 
   let crop = undefined;
   if (image) {
@@ -324,7 +326,8 @@ export function KonvaTemplateDesigner({
 
   // Watermark SVG/WebP image
   const watermarkSrc = formState.bgImageFile || formState.bgImageUrl || "";
-  const [watermarkImage] = useImage(watermarkSrc, watermarkSrc.startsWith("data:") ? undefined : "anonymous");
+  const resolvedWatermarkSrc = getClientImageUrl(watermarkSrc);
+  const [watermarkImage] = useImage(resolvedWatermarkSrc, resolvedWatermarkSrc.startsWith("data:") ? undefined : "anonymous");
 
   // Custom frame template PNG/SVG
   const frameImageSrc = formState.frameFile || template?.frameUrlTemplate || null;
@@ -336,8 +339,8 @@ export function KonvaTemplateDesigner({
     formState.enableSvgTint ? formState.defaultAccent : ""
   );
 
-  // Noto Sans Devanagari is standard for dynamic language rendering
-  const fontFamily = getKonvaFontFamily("noto");
+  // Resolve selected font key → CSS family name for Konva Text nodes
+  const fontFamily = getKonvaFontFamily(formState.defaultFontFamily || "noto");
 
   useEffect(() => {
     loadKonvaFonts([fontFamily, "Noto Sans Devanagari"]).then(() => {
@@ -842,7 +845,7 @@ export function KonvaTemplateDesigner({
       const secLineSpacing = secFontSize * 0.5 + 2;
 
       const titleY = cursorY;
-      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 12;
+      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 16;
       const fieldLayouts: any[] = [];
 
       let i = 0;
@@ -938,23 +941,38 @@ export function KonvaTemplateDesigner({
     return { sectionLayouts, fSize: baseFontSize };
   }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
 
-  const [signImage] = useImage(mantraSignUrl || "", mantraSignUrl?.startsWith("data:") ? undefined : "anonymous");
+  const resolvedMantraSignUrl = getClientImageUrl(mantraSignUrl);
+  const [signImage] = useImage(resolvedMantraSignUrl || "", resolvedMantraSignUrl?.startsWith("data:") ? undefined : "anonymous");
 
   const mantraGeometry = useMemo(() => {
     if (!mantraSignUrl) return null;
     const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
     const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
-    const halfW = textWidth / 2;
-    const gap = 7;
+    const align = sectionStyles["header"]?.textAlign || "center";
     const imgW = 45;
-    return {
-      leftX: A4_W / 2 - halfW - gap - imgW,
-      rightX: A4_W / 2 + halfW + gap + imgW,
-    };
-  }, [mantra, mantraSignUrl, layout.fSize, currentLang]);
+    const gap = 7;
+    
+    if (align === "left") {
+      return {
+        leftX: paddingLeft,
+        rightX: paddingLeft + textWidth + gap * 2 + imgW,
+      };
+    } else if (align === "right") {
+      return {
+        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
+        rightX: A4_W - paddingRight,
+      };
+    } else {
+      const halfW = textWidth / 2;
+      return {
+        leftX: A4_W / 2 - halfW - gap - imgW,
+        rightX: A4_W / 2 + halfW + gap + imgW,
+      };
+    }
+  }, [mantra, mantraSignUrl, layout.fSize, currentLang, sectionStyles, paddingLeft, paddingRight]);
 
   const isSectionId = useCallback((id: string) => {
-    return id.startsWith("sec-") || ["personal", "educationSec", "family", "contact"].includes(id);
+    return id.startsWith("sec-") || ["personal", "educationSec", "family", "contact", "header"].includes(id);
   }, []);
 
   const getSectionData = useCallback((id: string) => {
@@ -1659,139 +1677,176 @@ export function KonvaTemplateDesigner({
                     />
                   )}
 
-                  {/* Header Mantra */}
-                  <Group y={paddingTop + 10}>
-                    <Text
-                      x={A4_W / 2}
-                      y={0}
-                      text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
-                      fontSize={layout.fSize * 1.2}
-                      fontFamily={fontFamily}
-                      fontStyle="bold"
-                      fill={primaryColor}
-                      align="center"
-                      width={A4_W}
-                      offsetX={A4_W / 2}
-                    />
-                    {signImage && mantraGeometry && (
-                      <>
-                        <KonvaImage
-                          image={signImage}
-                          x={mantraGeometry.leftX}
-                          y={-6}
-                          width={45}
-                          height={45}
-                        />
-                        <KonvaImage
-                          image={signImage}
-                          x={mantraGeometry.rightX}
-                          y={-6}
-                          width={45}
-                          height={45}
-                          scaleX={-1}
-                        />
-                      </>
-                    )}
-                  </Group>
-
-                  {/* Document Title "BIODATA" */}
-                  {(() => {
-                    const titleY = paddingTop + 10 + layout.fSize * 2;
-                    const titleHeight = layout.fSize * 2;
-
-                    if (formState.titleShape === "ribbon") {
-                      const ribbonW = 320;
-                      const ribbonH = layout.fSize * 2.8;
-                      const ribbonX = (A4_W - ribbonW) / 2;
-                      const ribbonY = titleY - 4;
-
-                      return (
-                        <Group>
-                          <Rect
-                            x={ribbonX}
-                            y={ribbonY}
-                            width={ribbonW}
-                            height={ribbonH}
-                            fill={primaryColor}
-                            cornerRadius={6}
-                            stroke={accentColor || primaryColor}
-                            strokeWidth={2}
-                          />
+                    {/* Header Mantra */}
+                    <Group y={paddingTop + 10}>
+                      {(() => {
+                        const hasMantraSticker = !!mantraSignUrl;
+                        const gap = 7;
+                        const imgW = 45;
+                        const textX = paddingLeft + (hasMantraSticker ? (imgW + gap) : 0);
+                        const textWidth = A4_W - paddingLeft - paddingRight - (hasMantraSticker ? (imgW + gap) * 2 : 0);
+                        return (
                           <Text
-                            x={ribbonX}
-                            y={ribbonY + (ribbonH - titleHeight) / 2}
-                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
-                            fontSize={layout.fSize * 1.8}
+                            x={textX}
+                            y={0}
+                            text={mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
+                            fontSize={layout.fSize * 1.2}
                             fontFamily={fontFamily}
                             fontStyle="bold"
-                            fill="#ffffff"
-                            align="center"
-                            width={ribbonW}
+                            fill={primaryColor}
+                            align={sectionStyles["header"]?.textAlign || "center"}
+                            width={textWidth}
                           />
-                        </Group>
-                      );
-                    } else if (formState.titleShape === "arch") {
-                      return (
-                        <Group>
-                          <Path
-                            data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
-                            stroke={accentColor || primaryColor}
-                            strokeWidth={2.5}
-                            lineCap="round"
-                          />
+                        );
+                      })()}
+                      {signImage && mantraGeometry && (() => {
+                        const placement = formState.mantraSignPlacement || "both";
+                        const vertical = formState.mantraSignVertical || "top";
+                        const signY = vertical === "middle"
+                          ? (A4_H / 2) - paddingTop - 10 - 22
+                          : -6;
+
+                        // top-center: single sign centered above mantra row
+                        if (placement === "top-center") {
+                          return (
+                            <KonvaImage
+                              image={signImage}
+                              x={(A4_W - 45) / 2}
+                              y={signY - 50}
+                              width={45}
+                              height={45}
+                            />
+                          );
+                        }
+
+                        const showLeft = placement === "both" || placement === "left";
+                        const showRight = placement === "both" || placement === "right";
+                        return (
+                          <>
+                            {showLeft && (
+                              <KonvaImage
+                                image={signImage}
+                                x={mantraGeometry.leftX}
+                                y={signY}
+                                width={45}
+                                height={45}
+                              />
+                            )}
+                            {showRight && (
+                              <KonvaImage
+                                image={signImage}
+                                x={mantraGeometry.rightX}
+                                y={signY}
+                                width={45}
+                                height={45}
+                                scaleX={-1}
+                              />
+                            )}
+                          </>
+                        );
+                      })()}
+                    </Group>
+
+                    {/* Document Title "BIODATA" */}
+                    {(() => {
+                      const titleY = paddingTop + 10 + layout.fSize * 2;
+                      const titleHeight = layout.fSize * 2;
+                      const align = sectionStyles["header"]?.textAlign || "center";
+
+                      if (formState.titleShape === "ribbon") {
+                        const titleVal = formState.title || "BIODATA";
+                        const ribbonW = Math.min(
+                          Math.max(titleVal.length * layout.fSize * 1.05 + 60, 180),
+                          A4_W - paddingLeft - paddingRight
+                        );
+                        const ribbonH = layout.fSize * 2.8;
+                        const ribbonX = (A4_W - ribbonW) / 2;
+                        const ribbonY = titleY - 4;
+ 
+                        return (
+                          <Group>
+                            <Rect
+                              x={ribbonX}
+                              y={ribbonY}
+                              width={ribbonW}
+                              height={ribbonH}
+                              fill={primaryColor}
+                              cornerRadius={6}
+                              stroke={accentColor || primaryColor}
+                              strokeWidth={2}
+                            />
+                            <Text
+                              x={ribbonX}
+                              y={ribbonY + (ribbonH - titleHeight) / 2}
+                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              fontSize={layout.fSize * 1.8}
+                              fontFamily={fontFamily}
+                              fontStyle="bold"
+                              fill="#ffffff"
+                              align="center"
+                              width={ribbonW}
+                            />
+                          </Group>
+                        );
+                      } else if (formState.titleShape === "arch") {
+                        return (
+                          <Group>
+                            <Path
+                              data={`M ${A4_W / 2 - 120},${titleY - 8} C ${A4_W / 2 - 80},${titleY - 24} ${A4_W / 2 - 30},${titleY - 30} ${A4_W / 2},${titleY - 30} C ${A4_W / 2 + 30},${titleY - 30} ${A4_W / 2 + 80},${titleY - 24} ${A4_W / 2 + 120},${titleY - 8}`}
+                              stroke={accentColor || primaryColor}
+                              strokeWidth={2.5}
+                              lineCap="round"
+                            />
+                            <Text
+                              x={paddingLeft}
+                              y={titleY}
+                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              fontSize={layout.fSize * 2}
+                              fontFamily={fontFamily}
+                              fontStyle="bold"
+                              fill={primaryColor}
+                              align="center"
+                              width={A4_W - paddingLeft - paddingRight}
+                            />
+                          </Group>
+                        );
+                      } else if (formState.titleShape === "ornament") {
+                        return (
+                          <Group>
+                            <Text
+                              x={paddingLeft}
+                              y={titleY}
+                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              fontSize={layout.fSize * 2}
+                              fontFamily={fontFamily}
+                              fontStyle="bold"
+                              fill={primaryColor}
+                              align="center"
+                              width={A4_W - paddingLeft - paddingRight}
+                            />
+                            <Line
+                              points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
+                              stroke={accentColor || primaryColor}
+                              strokeWidth={1.5}
+                            />
+                          </Group>
+                        );
+                      } else {
+                        return (
                           <Text
-                            x={A4_W / 2}
+                            x={paddingLeft}
                             y={titleY}
                             text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
-                            fontSize={layout.fSize * 2}
+                            fontSize={layout.fSize * 2.2}
                             fontFamily={fontFamily}
                             fontStyle="bold"
                             fill={primaryColor}
-                            align="center"
-                            width={A4_W}
-                            offsetX={A4_W / 2}
+                            align={align}
+                            width={A4_W - paddingLeft - paddingRight}
                           />
-                        </Group>
-                      );
-                    } else if (formState.titleShape === "ornament") {
-                      return (
-                        <Group>
-                          <Text
-                            x={A4_W / 2}
-                            y={titleY}
-                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
-                            fontSize={layout.fSize * 2}
-                            fontFamily={fontFamily}
-                            fontStyle="bold"
-                            fill={primaryColor}
-                            align="center"
-                            width={A4_W}
-                            offsetX={A4_W / 2}
-                          />
-                          <Line
-                            points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
-                            stroke={accentColor || primaryColor}
-                            strokeWidth={1.5}
-                          />
-                        </Group>
-                      );
-                    } else {
-                      return (
-                        <Text
-                          x={A4_W / 2}
-                          y={titleY}
-                          text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
-                          fontSize={layout.fSize * 2.2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
-                        />
-                      );
-                    }
-                  })()}
+                        );
+                      }
+                    })()}
                 </Group>
               );
             })()}
@@ -1896,23 +1951,41 @@ export function KonvaTemplateDesigner({
                     />
                   )}
 
-                  {/* Section Header Underline Decoration */}
-                  <Line
-                    points={[paddingLeft, sec.titleY + 15, paddingLeft + 5, sec.titleY + 15]}
-                    stroke={accentColor || primaryColor}
-                    strokeWidth={3}
-                    lineCap="round"
-                    listening={false}
-                  />
-                  <Text
-                    x={paddingLeft + 10}
-                    y={sec.titleY + 2}
-                    text={applyTransform(sec.titleText)}
-                    fontSize={Math.round(fSize * 1.4)}
-                    fontFamily={fontFamily}
-                    fontStyle={fontStyle}
-                    fill={titleColor}
-                  />
+                    {/* Section Header Underline Decoration */}
+                    {(() => {
+                      const align = style.textAlign || "left";
+                      let linePoints;
+                      const barY = sec.titleY + Math.round(fSize * 1.4) + 8;
+                      if (align === "center") {
+                        const mid = A4_W / 2;
+                        linePoints = [mid - 10, barY, mid + 10, barY];
+                      } else if (align === "right") {
+                        const end = A4_W - paddingRight;
+                        linePoints = [end - 20, barY, end, barY];
+                      } else {
+                        linePoints = [paddingLeft, barY, paddingLeft + 20, barY];
+                      }
+                      return (
+                        <Line
+                          points={linePoints}
+                          stroke={accentColor || primaryColor}
+                          strokeWidth={3}
+                          lineCap="round"
+                          listening={false}
+                        />
+                      );
+                    })()}
+                    <Text
+                      x={paddingLeft}
+                      y={sec.titleY + 2}
+                      width={A4_W - paddingLeft - paddingRight}
+                      text={applyTransform(sec.titleText)}
+                      fontSize={Math.round(fSize * 1.4)}
+                      fontFamily={fontFamily}
+                      fontStyle={fontStyle}
+                      fill={titleColor}
+                      align={style.textAlign || "left"}
+                    />
 
                   {/* Section Fields mapping */}
                   {sec.fields.map((field: any) => {
@@ -1924,6 +1997,28 @@ export function KonvaTemplateDesigner({
                     const lblW = field.labelW ?? (field.isHalf ? field.labelW : 130);
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
+
+                    const align = style.textAlign || "left";
+
+                    if (align === "center" || align === "right") {
+                      const fullText = `${applyTransform(field.label)}: ${applyTransform(field.value)}`;
+                      return (
+                        <Group key={field.id}>
+                          <Text
+                            x={colX}
+                            y={field.y}
+                            width={field.isHalf ? field.halfW : A4_W - paddingLeft - paddingRight - 20}
+                            text={fullText}
+                            fontSize={fSize}
+                            fontFamily={fontFamily}
+                            fontStyle={fontStyle}
+                            fill={fieldColor}
+                            align={align}
+                            lineHeight={1.1}
+                          />
+                        </Group>
+                      );
+                    }
 
                     return (
                       <Group key={field.id}>
@@ -2081,7 +2176,7 @@ listening={false}
           </div>
 
           {/* Render section-specific controllers only when selectedId is a section */}
-          {selectedId.startsWith("sec-") && selectedSectionStyle !== null && (
+          {isSectionId(selectedId) && selectedSectionStyle !== null && (
             <>
               {/* Title Color swatch */}
               <label className="relative cursor-pointer flex items-center gap-1.5 hover:bg-muted px-2 py-1 rounded-lg transition-colors" title="Title Color">
@@ -2174,14 +2269,14 @@ listening={false}
 
               {/* Alignment */}
               {([
-                { val: "left",   label: "⬛︎", sym: "▤", title: "Align Left" },
-                { val: "center", label: "⬛︎", sym: "▥", title: "Align Center" },
-                { val: "right",  label: "⬛︎", sym: "▦", title: "Align Right" },
-              ] as const).map(({ val, sym, title }) => (
+                { val: "left",   icon: <AlignLeft className="w-4 h-4" />, title: "Align Left" },
+                { val: "center", icon: <AlignCenter className="w-4 h-4" />, title: "Align Center" },
+                { val: "right",  icon: <AlignRight className="w-4 h-4" />, title: "Align Right" },
+              ] as const).map(({ val, icon, title }) => (
                 <button key={val} type="button" title={title}
                   onClick={() => updateSectionStyle(selectedId, { textAlign: val })}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs cursor-pointer border-0 transition-all ${(selectedSectionStyle.textAlign || "left") === val ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
-                  {val === "left" ? "≡" : val === "center" ? "≡" : "≡"}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-0 transition-all ${(selectedSectionStyle.textAlign || "left") === val ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+                  {icon}
                 </button>
               ))}
             </>

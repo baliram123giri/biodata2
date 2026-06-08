@@ -16,6 +16,7 @@ import { MantraAutocomplete } from "./MantraAutocomplete";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Plus, Trash2, Pencil, Globe, User, Briefcase, Users, Phone, Palette, ArrowUp, ArrowDown, Sparkles, Loader2, X, Clock, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import type { BiodataFormValues } from "@/types/biodata";
+import { defaultBiodataValues } from "@/lib/default-biodata";
 import { LANGUAGES, translations, translateDynamicOption, LANGUAGE_DISPLAY_NAMES, translateUI } from "@/lib/translations";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
@@ -26,11 +27,485 @@ import { Slider } from "@/components/ui/slider";
 import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
 
+const COMMUNITY_FIELDS: Record<string, any[]> = {
+  Hindu: [
+    { id: "religion", label: "Religion", value: "Hindu", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "caste", label: "Caste", value: "", type: "text", isDefault: true },
+    { id: "gotra", label: "Gotra", value: "", type: "select", options: [
+      "Agastya", "Angirasa", "Atri", "Bharadwaja", "Bhrigu", "Gautama", "Jamadagni", "Kashyapa", "Shandilya", "Vashishta", "Vishvamitra", "Gargya", "Kaushika", "Vatsa", "Mudgala", "Parashara", "Upamanyu", "Harita", "Other"
+    ], isDefault: true },
+    { id: "rashi", label: "Rashi (Zodiac)", value: "", type: "select", options: ["Mesh (Aries)", "Vrishabh (Taurus)", "Mithun (Gemini)", "Kark (Cancer)", "Singh (Leo)", "Kanya (Virgo)", "Tula (Libra)", "Vrishchik (Scorpio)", "Dhanu (Sagittarius)", "Makar (Capricorn)", "Kumbh (Aquarius)", "Meen (Pisces)", "Other"], isDefault: true },
+    { id: "nakshatra", label: "Nakshatra", value: "", type: "select", options: ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati", "Other"], isDefault: true },
+    { id: "manglik", label: "Manglik", value: "", type: "select", options: ["No", "Yes", "Partial (Anshik)", "Don't Know", "Other"], isDefault: true },
+  ],
+  Muslim: [
+    { id: "religion", label: "Religion", value: "Muslim", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "sect", label: "Sect", value: "", type: "select", options: ["Sunni", "Shia", "Other"], isDefault: true },
+    { id: "caste", label: "Caste/Sub-Caste", value: "", type: "text", isDefault: true },
+    { id: "namaz", label: "Namaz / Prayer", value: "", type: "select", options: ["5 Times Daily", "Only Friday", "Occasionally", "Other"], isDefault: true },
+  ],
+  Christian: [
+    { id: "religion", label: "Religion", value: "Christian", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "denomination", label: "Denomination", value: "", type: "select", options: ["Roman Catholic", "Protestant", "Pentecostal", "Orthodox", "Anglican", "Methodist", "Baptist", "Other"], isDefault: true },
+    { id: "parish", label: "Parish / Church", value: "", type: "text", isDefault: true },
+  ],
+  Sikh: [
+    { id: "religion", label: "Religion", value: "Sikh", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "caste", label: "Caste/Clan", value: "", type: "text", isDefault: true },
+    { id: "gotra", label: "Gotra (Goth)", value: "", type: "text", isDefault: true },
+    { id: "ancestralVillage", label: "Ancestral Village", value: "", type: "text", isDefault: true },
+  ],
+  Jain: [
+    { id: "religion", label: "Religion", value: "Jain", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "sect", label: "Sect", value: "", type: "select", options: ["Digambar", "Shvetambar", "Other"], isDefault: true },
+    { id: "gotra", label: "Gotra", value: "", type: "text", isDefault: true },
+    { id: "diet", label: "Dietary Preference", value: "", type: "select", options: ["Jain Vegetarian", "Strict Vegetarian", "Other"], isDefault: true },
+  ],
+  General: [
+    { id: "religion", label: "Religion", value: "", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+  ]
+};
+
+const COMMUNITY_HEADER_DEFAULTS: Record<string, Record<string, { mantra: string; title: string }>> = {
+  Hindu: {
+    English: { mantra: "|| Shree Ganeshay Namah ||", title: "Marriage Biodata" },
+    हिंदी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "शादी का बायोडाटा" },
+    मराठी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "लग्नाचा बायोडाटा" },
+    ગુજરાતી: { mantra: "॥ શ્રી ગણેશાય નમઃ ॥", title: "લગ્નનો બાયોડેટા" },
+    বাংলা: { mantra: "॥ শ্রী গণেশায় নমঃ ॥", title: "বিবাহের বায়োডাটা" },
+    தமிழ்: { mantra: "॥ ஸ்ரீ கணேசாய நமஃ ॥", title: "திருமண பயோடேட்டா" },
+    తెలుగు: { mantra: "॥ శ్రీ గణేసాయ నమః ॥", title: "వివాహ బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "॥ ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ॥", title: "ವಿವಾಹ ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "॥ ਸ਼੍ਰੀ ਗਣੇਸ਼ਾਏ ਨਮਹ ॥", title: "ਵਿਆਹ ਦਾ ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "|| شری گنیشائے نمہ ||", title: "شادی کا بائیو ڈیٹا" }
+  },
+  Muslim: {
+    English: { mantra: "|| Bismillah-ir-Rahman-ir-Rahim ||", title: "Nikah Biodata" },
+    हिंदी: { mantra: "॥ बिस्मिल्लाह-हिर-रहमान-निर-रहीम ॥", title: "निकाह बायोडाटा" },
+    मराठी: { mantra: "॥ बिस्मिल्लाह-हिर-रहमान-निर-रहीम ॥", title: "निकाह बायोडाटा" },
+    ગુજરાતી: { mantra: "॥ બિસ્મિલ્લાહ-હિર-रहમાન-નિર્-રહીમ ॥", title: "નિકાહ બાયોડેટા" },
+    বাংলা: { mantra: "|| বিসমিল্লাহির রহমানির রাহিম ||", title: "নিকাহ বায়োডাটা" },
+    தமிழ்: { mantra: "|| பிஸ்மில்லாஹிர் ரஹ்மானிர் ரஹீம் ||", title: "நிக்காஹ் பயோடேட்டா" },
+    తెలుగు: { mantra: "|| బిస్మిల్లాహిర్ రహ్మానిర్ రహీమ్ ||", title: "నికాహ్ బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "|| ಬಿಸ್ಮಿಲ್ಲಾಹಿರ್ ರಹ್ರಾನಿರ್ ರಹೀಮ್ ||", title: "ನಿಕಾಹ್ ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "|| ਬਿਸਮਿੱਲਾਹ-ਹਿਰ-ਰਹਿਮਾਨ-ਨਿਰ-ਰਹੀਮ ||", title: "ਨਿਕਾਹ ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم", title: "نکاح بائیو ڈیٹا" }
+  },
+  Sikh: {
+    English: { mantra: "|| Ek Onkar Satgur Prasad ||", title: "Sikh Marriage Biodata" },
+    हिंदी: { mantra: "॥ एक ओंकार सतगुर प्रसाद ॥", title: "सिख विवाह बायोडाटा" },
+    मराठी: { mantra: "॥ एक ओंकार सतगुर प्रसाद ॥", title: "शीख विवाह बायोडाटा" },
+    ગુજરાતી: { mantra: "॥ એક ઓન્ਕਾਰ સત્ગુર પ્રસાદ ॥", title: "શીખ લગ્ન બાયોડેટા" },
+    বাংলা: { mantra: "|| এক ওঙ্কার সৎগুর প্রসাদ ||", title: "শিখ বিবাহের বায়োডাটা" },
+    தமிழ்: { mantra: "|| ஏக் ஓங்கார் சத்குர் பிரசாத் ||", title: "சீக்கிய திருமண பயோடேட்டா" },
+    తెలుగు: { mantra: "|| ஏక్ ఓంకార్ సత్గుర్ ప్రసాద్ ||", title: "సిక్కు వివాహ బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "|| ಏಕ್ ಓಂಕಾರ್ ಸದ್ಗುರ್ ಪ್ರಸಾದ್ ||", title: "ಸಿಖ್ ವಿವಾಹ ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "ੴ ਸਤਿਗੁਰ ਪ੍ਰਸਾਦਿ", title: "ਵਿਆਹ ਦਾ ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "|| اک اونکار ستگر پرساد ||", title: "شادی کا بائیو ڈیٹا" }
+  },
+  Christian: {
+    English: { mantra: "|| Praise the Lord ||", title: "Christian Marriage Biodata" },
+    हिंदी: { mantra: "॥ ईश्वर की स्तुति हो ॥", title: "क्रिश्चियन विवाह बायोडाटा" },
+    मराठी: { mantra: "॥ प्रभूची स्तुती असो ॥", title: "ख्रिश्चन विवाह बायोडाटा" },
+    ગુજરાતી: { mantra: "॥ પ્રભુની સ્તુતિ હો ॥", title: "ખ્રિસ્તી લગ્ન બાયોડેટા" },
+    বাংলা: { mantra: "|| প্রভুর প্রশংসা হোক ||", title: "খ্রিস্টান বিবাহের বায়োডাটা" },
+    தமிழ்: { mantra: "|| கர்த்தருக்கு ஸ்தோத்திரம் ||", title: "கிறிஸ்தவ திருமண பயோடேட்டா" },
+    తెలుగు: { mantra: "|| ప్రభువుకు స్తుతి కలుగును గాక ||", title: "క్రైస్తవ వివాహ బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "|| ದೇವರಿಗೆ ಸ್ತೋತ್ರವಾಗಲಿ ||", title: "ಕ್ರಿಶ್ಚಿಯನ್ ವಿವಾಹ ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "|| ਪ੍ਰਭੂ ਦੀ ਉਸਤਤ ਹੋਵੇ ||", title: "ਈਸਾਈ ਵਿਆਹ ਦਾ ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "|| خدا کی تعریف ہو ||", title: "عیسائی شادی کا بائیو ڈیٹا" }
+  },
+  Jain: {
+    English: { mantra: "|| Jai Jinendra ||", title: "Jain Marriage Biodata" },
+    हिंदी: { mantra: "॥ जय जिनेंद्र ॥", title: "जैन विवाह बायोडाटा" },
+    मराठी: { mantra: "॥ जय जिनेंद्र ॥", title: "जैन विवाह बायोडाटा" },
+    ગુજરાતી: { mantra: "॥ જય જિનેન્દ્ર ॥", title: "જૈન લગ્ન બાયોડેટા" },
+    বাংলা: { mantra: "|| জয় জিনেন্দ্র ||", title: "জৈন বিবাহের বায়োডাটা" },
+    தமிழ்: { mantra: "|| ஜெய் ஜினேந்திரா ||", title: "சைன திருமண பயோடேட்டா" },
+    తెలుగు: { mantra: "|| జై జినేంద్ర ||", title: "జైన్ వివాహ బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "|| జై ಜಿನೇಂದ್ರ ||", title: "ಜೈನ್ ವಿವಾಹ ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "|| ਜੈ ਜਿਨੇਂਦਰ ||", title: "ਜੈਨ ਵਿਆਹ ਦਾ ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "|| جے جینندرا ||", title: "شادی کا بائیو ڈیٹا" }
+  },
+  General: {
+    English: { mantra: "", title: "Biodata" },
+    हिंदी: { mantra: "", title: "बायोडाटा" },
+    मराठी: { mantra: "", title: "बायोडाटा" },
+    ગુજરાતી: { mantra: "", title: "બાયોડેટા" },
+    বাংলা: { mantra: "", title: "বায়োডাটা" },
+    தமிழ்: { mantra: "", title: "பയോடேட்டா" },
+    తెలుగు: { mantra: "", title: "బయోడేటా" },
+    ಕನ್ನಡ: { mantra: "", title: "ಬಯೋಡೇಟಾ" },
+    ਪੰਜਾਬੀ: { mantra: "", title: "ਬਾਇਓਡਾਟਾ" },
+    اردو: { mantra: "", title: "بائیو ڈیٹا" }
+  }
+};
+
+const findBestMantraSticker = (stickers: any[], community: string) => {
+  if (community === "General") return null;
+  
+  // 1. Try exact religion match
+  let matched = stickers.find(s => s.religion?.toLowerCase() === community.toLowerCase());
+  if (matched) return matched;
+  
+  // 2. Fallback to name-based match
+  const nameMap: Record<string, string[]> = {
+    Hindu: ["ganesh", "swastik", "om", "kalash"],
+    Muslim: ["crescent", "moon", "bismillah", "allah", "mosque"],
+    Sikh: ["khanda", "onkar", "sikh"],
+    Christian: ["cross", "church", "christian"],
+    Jain: ["jain", "mahavir", "swastika"]
+  };
+  
+  const keywords = nameMap[community] || [];
+  for (const kw of keywords) {
+    matched = stickers.find(s => 
+      (s.name || "").toLowerCase().includes(kw) || 
+      (s.url || "").toLowerCase().includes(kw)
+    );
+    if (matched) return matched;
+  }
+  
+  return null;
+};
+
+const LOCAL_TRANSLATIONS: Record<string, Record<string, string>> = {
+  "English": {
+    "sect": "Sect",
+    "denomination": "Denomination",
+    "parish": "Parish / Church",
+    "diet": "Dietary Preference",
+    "ancestralVillage": "Ancestral Village",
+    "namaz": "Namaz / Prayer",
+  },
+  "हिंदी": {
+    "sect": "फ़िरक़ा / संप्रदाय",
+    "denomination": "पंथ",
+    "parish": "पारिश / चर्च",
+    "diet": "आहार प्राथमिकता",
+    "ancestralVillage": "पैतृक गाँव",
+    "namaz": "नमाज़ / प्रार्थना",
+  },
+  "मराठी": {
+    "sect": "पंथ / संप्रदाय",
+    "denomination": "पंथ",
+    "parish": "पॅरिश / चर्च",
+    "diet": "आहार प्राधान्य",
+    "ancestralVillage": "मूळ गाव",
+    "namaz": "नमाज / प्रार्थना",
+  },
+  "ગુજરાતી": {
+    "sect": "ફિરકો / સંપ્રદાય",
+    "denomination": "સંપ્રદાય",
+    "parish": "પેરિશ / ચર્ચ",
+    "diet": "આહાર પસંદગી",
+    "ancestralVillage": "પૂર્વજોનું ગામ",
+    "namaz": "નમાઝ / પ્રાર્થના",
+  },
+  "বাংলা": {
+    "sect": "সম্প্রদায়",
+    "denomination": "সম্প্রদায়",
+    "parish": "প্যারিশ / গির্জা",
+    "diet": "খাদ্য পছন্দ",
+    "ancestralVillage": "পৈতৃক গ্রাম",
+    "namaz": "নামাজ / প্রার্থনা",
+  },
+  "தமிழ்": {
+    "sect": "பிரிவு",
+    "denomination": "சமயம்",
+    "parish": "பங்கு / தேவாலயம்",
+    "diet": "உணவு விருப்பம்",
+    "ancestralVillage": "பூர்வீக கிராமம்",
+    "namaz": "தொழுகை",
+  },
+  "తెలుగు": {
+    "sect": "శాఖ",
+    "denomination": "శాఖ",
+    "parish": "పారిష్ / చర్చి",
+    "diet": "ఆహార ప్రాధాన్యత",
+    "ancestralVillage": "పూర్వీకుల గ్రామం",
+    "namaz": "నమాజ్",
+  },
+  "ಕನ್ನಡ": {
+    "sect": "ಪಂಥ",
+    "denomination": "ಪಂಥ",
+    "parish": "ಪ್ಯಾರಿಷ್ / ಚರ್ಚ್",
+    "diet": "आಹಾರದ ಆದ್ಯತೆ",
+    "ancestralVillage": "ಪೂರ್ವಜರ ಗ್ರಾಮ",
+    "namaz": "ನಮಾಜ್",
+  },
+  "ਪੰਜਾਬੀ": {
+    "sect": "ਫਿਰਕਾ",
+    "denomination": "ਫਿਰਕਾ",
+    "parish": "ਪੈਰਿਸ਼ / ਚਰਚ",
+    "diet": "ਖੁਰਾਕ ਤਰਜੀਹ",
+    "ancestralVillage": "ਜੱਦੀ ਪਿੰਡ",
+    "namaz": "ਨਮਾਜ਼",
+  },
+  "اردو": {
+    "sect": "فرقہ",
+    "denomination": "فرقہ",
+    "parish": "چرچ / پیرش",
+    "diet": "کھانے کی ترجیح",
+    "ancestralVillage": "آبائی گاؤں",
+    "namaz": "نماز",
+  }
+};
+
+const LOCAL_UI_TRANSLATIONS: Record<string, Record<string, string>> = {
+  "English": {
+    "communityLabel": "Community / Religion",
+    "communityPlaceholder": "Select Community",
+    "langDesc": "Select template language",
+    "commDesc": "Tailor input fields dynamically",
+    "General": "General / Other",
+    "Hindu": "Hindu",
+    "Muslim": "Muslim",
+    "Sikh": "Sikh",
+    "Christian": "Christian",
+    "Jain": "Jain",
+  },
+  "हिंदी": {
+    "communityLabel": "समुदाय / धर्म",
+    "communityPlaceholder": "समुदाय चुनें",
+    "langDesc": "बायोडाटा की भाषा चुनें",
+    "commDesc": "इनपुट फ़ील्ड को अनुकूलित करें",
+    "General": "सामान्य / अन्य",
+    "Hindu": "हिंदू",
+    "Muslim": "मुस्लिम",
+    "Sikh": "सिख",
+    "Christian": "ईसाई",
+    "Jain": "जैन",
+  },
+  "मराठी": {
+    "communityLabel": "समुदाय / धर्म",
+    "communityPlaceholder": "समुदाय निवडा",
+    "langDesc": "बायोडाटाची भाषा निवडा",
+    "commDesc": "इनपुट फील्ड सानुकूलित करा",
+    "General": "सामान्य / इतर",
+    "Hindu": "हिंदू",
+    "Muslim": "मुस्लिम",
+    "Sikh": "शीख",
+    "Christian": "ख्रिश्चन",
+    "Jain": "जैन",
+  },
+  "ગુજરાતી": {
+    "communityLabel": "સમુદાય / ધર્મ",
+    "communityPlaceholder": "સમુદાય પસંદ કરો",
+    "langDesc": "બાયોડેટાની ભાષા પસંદ કરો",
+    "commDesc": "ઇનપુટ ફિલ્ડ બદલો",
+    "General": "સામાન્ય / અન્ય",
+    "Hindu": "હિન્દુ",
+    "Muslim": "મુસ્લિમ",
+    "Sikh": "શિખ",
+    "Christian": "ખ્રિસ્તી",
+    "Jain": "જૈન",
+  },
+  "বাংলা": {
+    "communityLabel": "সম্প্রদায় / धर्म",
+    "communityPlaceholder": "সম্প্রदाय নির্বাচন করুন",
+    "langDesc": "বায়োডাটার ভাষা নির্বাচন করুন",
+    "commDesc": "ইনপুট ফিল্ড মানানসই করুন",
+    "General": "সাধারণ / অন্যান্য",
+    "Hindu": "हिंदू",
+    "Muslim": "মুসলিম",
+    "Sikh": "শিখ",
+    "Christian": "খ্রিস্টান",
+    "Jain": "জৈন",
+  },
+  "தமிழ்": {
+    "communityLabel": "சமூகம் / மதம்",
+    "communityPlaceholder": "சமூகத்தைத் தேர்ந்தெடுக்கவும்",
+    "langDesc": "பயோடேட்டா மொழியைத் தேர்ந்தெடுக்கவும்",
+    "commDesc": "உள்ளீட்டு புலங்களை மாற்றுக",
+    "General": "பொது / பிற",
+    "Hindu": "இந்து",
+    "Muslim": "முஸ்லிம்",
+    "Sikh": "சீக்கியர்",
+    "Christian": "கிறிஸ்தவர்",
+    "Jain": "சைனர்",
+  },
+  "తెలుగు": {
+    "communityLabel": "సమూహం / మతం",
+    "communityPlaceholder": "సమూహాన్ని ఎంచుకోండి",
+    "langDesc": "బయోడేటా భాషను ఎంచుకోండి",
+    "commDesc": "ఫీల్డ్లను మార్చండి",
+    "General": "సాధారణ / ఇతర",
+    "Hindu": "హిందూ",
+    "Muslim": "ముస్లిం",
+    "Sikh": "సిక్కు",
+    "Christian": "క్రైస్తవ",
+    "Jain": "జైన్",
+  },
+  "ಕನ್ನಡ": {
+    "communityLabel": "ಸಮುದಾಯ / ಧರ್ಮ",
+    "communityPlaceholder": "ಸಮುದಾಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "langDesc": "ಬಯೋಡೇಟಾ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "commDesc": "ಕ್ಷೇತ್ರಗಳನ್ನು ಬದಲಾಯಿಸಿ",
+    "General": "ಸಾನ್ಯ / ಇತರ",
+    "Hindu": "ಹಿಂದೂ",
+    "Muslim": "ಮುಸ್ಲಿం",
+    "Sikh": "ಸಿಖ್",
+    "Christian": "ಕ್ರಿಶ್ಚಿಯನ್",
+    "Jain": "ಜೈನ್",
+  },
+  "ਪੰਜਾਬੀ": {
+    "communityLabel": "ਭਾਈਚਾਰਾ / ਧਰਮ",
+    "communityPlaceholder": "ਭਾਈਚਾਰਾ ਚੁਣੋ",
+    "langDesc": "ਬਾਇਓਡਾਟਾ ਭਾਸ਼ਾ ਚੁਣੋ",
+    "commDesc": "ਖੇਤਰਾਂ ਨੂੰ ਬਦਲੋ",
+    "General": "ਆਮ / ਹੋਰ",
+    "Hindu": "ਹਿੰਦੂ",
+    "Muslim": "ਮੁਸਲਿਮ",
+    "Sikh": "ਸਿੱਖ",
+    "Christian": "ਈਸਾਈ",
+    "Jain": "ਜੈਨ",
+  },
+  "اردو": {
+    "communityLabel": "برادری / مذہب",
+    "communityPlaceholder": "برادری منتخب کریں",
+    "langDesc": "بائیو ڈیٹا کی زبان منتخب کریں",
+    "commDesc": "ان پٹ فیلڈز کو تبدیل کریں",
+    "General": "عام / دیگر",
+    "Hindu": "ہندو",
+    "Muslim": "مسلمان",
+    "Sikh": "سکھ",
+    "Christian": "عیسائی",
+    "Jain": "جین",
+  }
+};
+
 export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: boolean; hideSliders?: boolean } = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const watchPhoto = useWatch({ control, name: "photo" });
   const currentLang = watchLang || "English";
+
+  const personalDetails = useWatch({ control, name: "personalDetails" }) || [];
+  const religionField = personalDetails.find((f: any) => f.id === "religion");
+  const religionValue = religionField?.value || "";
+
+  // Map religion value to community selection
+  const [selectedCommunity, setSelectedCommunity] = useState<string>(() => {
+    if (["Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(religionValue)) {
+      return religionValue;
+    }
+    // If empty but has gotra and rashi fields, default to Hindu
+    const hasGotra = personalDetails.some((f: any) => f.id === "gotra");
+    const hasRashi = personalDetails.some((f: any) => f.id === "rashi");
+    if (hasGotra && hasRashi) {
+      return "Hindu";
+    }
+    return "General";
+  });
+
+  useEffect(() => {
+    if (religionValue && ["Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(religionValue)) {
+      setSelectedCommunity(religionValue);
+    }
+  }, [religionValue]);
+
+  const handleCommunityChange = async (community: string) => {
+    setSelectedCommunity(community);
+
+    // Get current field values to preserve them
+    const currentPersonal = getValues("personalDetails") || [];
+    const valuesMap = new Map<string, string>();
+    currentPersonal.forEach((f: any) => {
+      valuesMap.set(f.id, f.value);
+    });
+
+    // Core standard fields
+    const standardIds = ["fullName", "dateOfBirth", "timeOfBirth", "placeOfBirth", "height", "maritalStatus", "bloodGroup", "complexion"];
+
+    // Build the new personalDetails array
+    const newPersonal: any[] = [];
+
+    // 1. Add standard fields with preserved values
+    currentPersonal.forEach((f: any) => {
+      if (standardIds.includes(f.id)) {
+        newPersonal.push({ ...f });
+      }
+    });
+
+    // If any standard fields are missing, add them from default
+    const defaultPersonal = defaultBiodataValues.personalDetails;
+    standardIds.forEach(id => {
+      if (!newPersonal.some((f: any) => f.id === id)) {
+        const defField = defaultPersonal.find(f => f.id === id);
+        if (defField) {
+          newPersonal.push({ ...defField, value: valuesMap.get(id) || "" });
+        }
+      }
+    });
+
+    // 2. Add community specific fields
+    const specFields = COMMUNITY_FIELDS[community] || COMMUNITY_FIELDS.General;
+    const currentT = { ...(translations[currentLang] || translations["English"]), ...(LOCAL_TRANSLATIONS[currentLang] || LOCAL_TRANSLATIONS["English"]) };
+    
+    specFields.forEach(f => {
+      // Set the default value or the preserved value
+      let val = valuesMap.get(f.id) || f.value || "";
+      if (f.id === "religion") {
+        val = community === "General" ? (valuesMap.get("religion") || "") : community;
+      }
+      
+      // Also apply translations to label if key exists
+      let label = f.label;
+      if (currentT[f.id]) {
+        label = currentT[f.id];
+      }
+
+      newPersonal.push({
+        ...f,
+        label,
+        value: val
+      });
+    });
+
+    // Update the form values
+    setValue("personalDetails", newPersonal);
+
+    // 3. Fill Header Details: Mantra Text and Title Text
+    const defaults = COMMUNITY_HEADER_DEFAULTS[community]?.[currentLang] || 
+                     COMMUNITY_HEADER_DEFAULTS[community]?.English || 
+                     COMMUNITY_HEADER_DEFAULTS.General.English;
+    setValue("mantra", defaults.mantra);
+    setValue("title", defaults.title);
+
+    // 4. Fill Header Details: Mantra Sign/Sticker
+    try {
+      let stickersToSearch = mantraStickers || [];
+      if (stickersToSearch.length === 0) {
+        const res = await fetch(`/api/stickers?type=Mantra&limit=100`);
+        if (res.ok) {
+          const data = await res.json();
+          stickersToSearch = data.stickers || [];
+        }
+      }
+
+      // Remove existing mantra sticker if any
+      const existingMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
+      if (existingMantraSticker) {
+        removeSticker(existingMantraSticker.id);
+      }
+
+      // Add new mantra sticker if found for community
+      const bestSticker = findBestMantraSticker(stickersToSearch, community);
+      if (bestSticker) {
+        addSticker({
+          type: bestSticker.url,
+          x: 250,
+          y: 50,
+          scaleX: 1,
+          scaleY: 1,
+          isMantra: true
+        });
+      }
+    } catch (err) {
+      console.error("Failed to automatically update community sticker:", err);
+    }
+  };
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
   const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
@@ -54,7 +529,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
       const data = await res.json();
       return (data.stickers || []) as { id: string; name: string; url: string }[];
     },
-    enabled: isMantraDialogOpen,
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
     gcTime: 1000 * 60 * 60,    // Keep garbage collection time at 1 hour
   });
@@ -133,8 +607,9 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
     setValue("language", newLang);
-    const t = translations[newLang];
-    if (!t) return;
+    const baseT = translations[newLang];
+    if (!baseT) return;
+    const t = { ...baseT, ...(LOCAL_TRANSLATIONS[newLang] || LOCAL_TRANSLATIONS["English"]) };
 
     // Translate main titles if they match standard
     const currentMantra = getValues("mantra");
@@ -160,7 +635,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
     });
   };
 
-  const t = translations[currentLang] || translations["English"];
+  const t = { ...(translations[currentLang] || translations["English"]), ...(LOCAL_TRANSLATIONS[currentLang] || LOCAL_TRANSLATIONS["English"]) };
 
   const FormComponent = asDiv ? "div" : "form";
 
@@ -169,22 +644,61 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
       className="space-y-6 pb-0"
       onSubmit={asDiv ? (e: any) => { e.preventDefault(); e.stopPropagation(); } : undefined}
     >
-      {/* Language Selector */}
-      <div className="bg-card p-4 rounded-lg border flex items-center justify-between mb-6 shadow-sm">
-        <div className="flex items-center gap-2 text-primary font-semibold">
-          <Globe className="w-5 h-5" />
-          <span>Language</span>
+      {/* Selector Container */}
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Language Selector */}
+        <div className="group relative bg-gradient-to-br from-card to-card/95 p-4 rounded-2xl border border-border/80 hover:border-primary/40 flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-foreground leading-tight">Language</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">
+                {LOCAL_UI_TRANSLATIONS[currentLang]?.langDesc || LOCAL_UI_TRANSLATIONS["English"].langDesc}
+              </span>
+            </div>
+          </div>
+          <Select value={currentLang} onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-[160px] bg-background/50 border-border/60 rounded-xl focus:ring-primary hover:bg-background/80 transition-colors" aria-label="Select Language">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/80">
+              {LANGUAGES.map(lang => (
+                <SelectItem key={lang} value={lang} className="focus:bg-primary/10 rounded-lg">{LANGUAGE_DISPLAY_NAMES[lang] || lang}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={currentLang} onValueChange={handleLanguageChange}>
-          <SelectTrigger className="w-[180px]" aria-label="Select Language">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent>
-            {LANGUAGES.map(lang => (
-              <SelectItem key={lang} value={lang}>{LANGUAGE_DISPLAY_NAMES[lang] || lang}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        {/* Community Selector */}
+        <div className="group relative bg-gradient-to-br from-card to-card/95 p-4 rounded-2xl border border-border/80 hover:border-primary/40 flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-foreground leading-tight">
+                {LOCAL_UI_TRANSLATIONS[currentLang]?.communityLabel || LOCAL_UI_TRANSLATIONS["English"].communityLabel}
+              </span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">
+                {LOCAL_UI_TRANSLATIONS[currentLang]?.commDesc || LOCAL_UI_TRANSLATIONS["English"].commDesc}
+              </span>
+            </div>
+          </div>
+          <Select value={selectedCommunity} onValueChange={handleCommunityChange}>
+            <SelectTrigger className="w-[160px] bg-background/50 border-border/60 rounded-xl focus:ring-primary hover:bg-background/80 transition-colors" aria-label="Select Community">
+              <SelectValue placeholder={LOCAL_UI_TRANSLATIONS[currentLang]?.communityPlaceholder || LOCAL_UI_TRANSLATIONS["English"].communityPlaceholder} />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/80">
+              {["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].map(comm => (
+                <SelectItem key={comm} value={comm} className="focus:bg-primary/10 rounded-lg">
+                  {LOCAL_UI_TRANSLATIONS[currentLang]?.[comm] || LOCAL_UI_TRANSLATIONS["English"][comm]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <p className="privacy-note">

@@ -13,6 +13,7 @@ import { getTemplateConfig, getFrameImageUrl, tintSvg } from './frame-config';
 import { STICKER_ASSETS } from './sticker-assets';
 import { getLightBgColor } from './color-utils';
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from './watermark-utils';
+import { ENGLISH_FONTS } from './konva-fonts';
 import path from 'path';
 import fs from 'fs';
 
@@ -196,7 +197,10 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
 
   const currentLang = data.language || "English";
   const t = translations[currentLang] || translations["English"];
-  const fontFamily = currentLang === "English" ? (theme.fontFamily === 'inter' ? 'Inter' : theme.fontFamily === 'playfair' ? 'Playfair' : 'Noto Serif') : getPDFFontFamily(currentLang);
+  const engFont = ENGLISH_FONTS.find(f => f.key === theme.fontFamily);
+  const fontFamily = currentLang === "English"
+    ? (engFont?.family ?? "Noto Serif")
+    : getPDFFontFamily(currentLang);
 
   // ── Layout Algorithm (with Dynamic Scaling) ────────────────────
   const calculateLayout = (fSize: number) => {
@@ -236,7 +240,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 4;
+      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 16;
       const fieldRows: any[] = [];
 
       let i = 0;
@@ -476,6 +480,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               } as any
             },
               ...layout.headerItems.map((item, i) => {
+                const align = sectionStyles["header"]?.textAlign || "center";
                 if (item.type === 'title') {
                   if (titleShape === "ribbon") {
                     const ribbonW = 320;
@@ -539,6 +544,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       ),
                       React.createElement(Text, {
                         style: {
+                          position: 'absolute',
+                          left: padLeft,
+                          width: A4_W - padLeft - padRight,
                           textAlign: 'center',
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -573,6 +581,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       ),
                       React.createElement(Text, {
                         style: {
+                          position: 'absolute',
+                          left: padLeft,
+                          width: A4_W - padLeft - padRight,
                           textAlign: 'center',
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -590,21 +601,37 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                     const mantraTextWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
                     const titleItem = layout.headerItems.find((h: any) => h.type === 'title');
                     const titleTextWidth = titleItem?.text ? String(titleItem.text).length * (titleItem.fontSize * 0.55) : 0;
-                    const halfW = Math.max(mantraTextWidth, titleTextWidth) / 2;
+                    const textWidth = Math.max(mantraTextWidth, titleTextWidth);
+                    const halfW = textWidth / 2;
                     const gap = 10;
                     const imgW = 45;
                     const imgH = 45;
 
+                    let leftStickerX, rightStickerX;
+                    if (align === "left") {
+                      leftStickerX = padLeft;
+                      rightStickerX = padLeft + imgW + gap + textWidth + gap;
+                    } else if (align === "right") {
+                      leftStickerX = A4_W - padRight - imgW - gap - textWidth - gap - imgW;
+                      rightStickerX = A4_W - padRight - imgW;
+                    } else {
+                      leftStickerX = A4_W / 2 - halfW - gap - imgW;
+                      rightStickerX = A4_W / 2 + halfW + gap;
+                    }
+
                     const parsedSvg = mantraSticker.svgContent ? parseSvgContent(mantraSticker.svgContent) : null;
+                    const placement = config.mantraSignPlacement || "both";
+                    const showLeft = placement === "both" || placement === "left";
+                    const showRight = placement === "both" || placement === "right";
 
                     return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W, height: Math.max(item.fontSize, imgH) } as any },
                       React.createElement(Text, {
                         style: {
                           position: 'absolute',
                           top: 0,
-                          left: 0,
-                          width: A4_W,
-                          textAlign: 'center',
+                          left: padLeft + imgW + gap,
+                          width: A4_W - padLeft - padRight - (imgW + gap) * 2,
+                          textAlign: align,
                           fontSize: item.fontSize,
                           fontFamily: item.font,
                           fontWeight: 'bold',
@@ -612,13 +639,13 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         } as any
                       }, item.text ? String(item.text) : ""),
 
-                      parsedSvg ? (
-                        React.createElement(React.Fragment, null,
+                      React.createElement(React.Fragment, null,
+                        showLeft && (parsedSvg ? (
                           React.createElement(View, {
                             style: {
                               position: 'absolute',
                               top: -6,
-                              left: A4_W / 2 - halfW - gap - imgW,
+                              left: leftStickerX,
                               width: imgW,
                               height: imgH
                             } as any
@@ -632,12 +659,25 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                                 })
                               )
                             )
-                          ),
+                          )
+                        ) : (
+                          React.createElement(Image, {
+                            src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
+                            style: {
+                              position: 'absolute',
+                              top: -6,
+                              left: leftStickerX,
+                              width: imgW,
+                              height: imgH
+                            } as any
+                          })
+                        )),
+                        showRight && (parsedSvg ? (
                           React.createElement(View, {
                             style: {
                               position: 'absolute',
                               top: -6,
-                              left: A4_W / 2 + halfW + gap,
+                              left: rightStickerX,
                               width: imgW,
                               height: imgH
                             } as any
@@ -652,31 +692,19 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                               )
                             )
                           )
-                        )
-                      ) : (
-                        React.createElement(React.Fragment, null,
+                        ) : (
                           React.createElement(Image, {
                             src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
                             style: {
                               position: 'absolute',
                               top: -6,
-                              left: A4_W / 2 - halfW - gap - imgW,
-                              width: imgW,
-                              height: imgH
-                            } as any
-                          }),
-                          React.createElement(Image, {
-                            src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
-                            style: {
-                              position: 'absolute',
-                              top: -6,
-                              left: A4_W / 2 + halfW + gap,
+                              left: rightStickerX,
                               width: imgW,
                               height: imgH,
                               transform: 'scaleX(-1)'
                             } as any
                           })
-                        )
+                        ))
                       )
                     );
                   }
@@ -688,9 +716,9 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   style: {
                     position: 'absolute',
                     top: item.y,
-                    left: 0,
-                    width: A4_W,
-                    textAlign: 'center',
+                    left: padLeft,
+                    width: A4_W - padLeft - padRight,
+                    textAlign: align,
                     fontSize: item.fontSize,
                     fontFamily: item.font,
                     fontWeight: 'bold',
@@ -756,24 +784,42 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                 );
               })() : null,
 
-              React.createElement(View, {
-                key: `bar-${si}`,
-                style: [
-                  styles.sectionTitleBar,
-                  {
-                    left: padding + offset.x,
-                    top: absTitleY + 15,
-                    backgroundColor: accent || titleColor
-                  }
-                ] as any
-              }),
+              (() => {
+                const align = style.textAlign || "left";
+                let barLeft, barWidth;
+                if (align === "center") {
+                  barLeft = A4_W / 2 - 15 + offset.x;
+                  barWidth = 30;
+                } else if (align === "right") {
+                  barLeft = A4_W - padRight - 30 + offset.x;
+                  barWidth = 30;
+                } else {
+                  barLeft = padding + offset.x;
+                  barWidth = 30;
+                }
+
+                return React.createElement(View, {
+                  key: `bar-${si}`,
+                  style: [
+                    styles.sectionTitleBar,
+                    {
+                      left: barLeft,
+                      top: absTitleY + Math.round(fSize * 1.4) + 8,
+                      width: barWidth,
+                      backgroundColor: accent || titleColor
+                    }
+                  ] as any
+                });
+              })(),
               React.createElement(Text, {
                 key: `title-${si}`,
                 style: [
                   styles.sectionTitleText,
                   {
-                    left: padding + 10 + offset.x,
+                    left: padLeft + offset.x,
+                    width: A4_W - padLeft - padRight,
                     top: absTitleY + 2,
+                    textAlign: style.textAlign || "left",
                     fontSize: Math.round(fSize * 1.4),
                     fontFamily: getFontForText(sec.title, fontFamily),
                     fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
@@ -792,6 +838,28 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                 const valX = colX + lblW + 15;
 
                 const absFieldY = f.y + offset.y;
+                const align = style.textAlign || "left";
+
+                if (align === "center" || align === "right") {
+                  const fullText = `${applyTransform(f.displayLabel)}: ${applyTransform(f.displayValue)}`;
+                  return [
+                    React.createElement(Text, {
+                      key: `val-${si}-${fi}`,
+                      style: {
+                        position: 'absolute',
+                        top: absFieldY,
+                        left: colX + offset.x,
+                        width: f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20),
+                        textAlign: align,
+                        fontSize: fSize,
+                        fontFamily: getFontForText(fullText, fontFamily),
+                        fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
+                        color: fieldColor,
+                        lineHeight: 1.1
+                      } as any
+                    }, fullText)
+                  ];
+                }
 
                 return [
                   // 1. Label

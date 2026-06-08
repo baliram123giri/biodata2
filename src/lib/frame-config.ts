@@ -94,6 +94,10 @@ export interface TemplateConfig {
   language?: string;
   detailsLayout?: string;
   titleShape?: string;
+  mantraSignPlacement?: string;
+  mantraSignVertical?: string;
+  rawInput?: any;
+  religion?: string;
   fontFamily?: string;
   fontWeight?: string;
   fontSize?: number;
@@ -300,6 +304,10 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     language: dbTpl.language || "English",
     detailsLayout: dbTpl.detailsLayout || "classic",
     titleShape: dbTpl.titleShape || "simple",
+    mantraSignPlacement: dbTpl.mantraSignPlacement || "both",
+    mantraSignVertical: (dbTpl as any).mantraSignVertical || "top",
+    rawInput: dbTpl.rawInput || undefined,
+    religion: (dbTpl as any).religion || "Hindu",
     // Pricing
     isPremium: dbTpl.isPremium === true,
     isDefault: dbTpl.isDefault === true,

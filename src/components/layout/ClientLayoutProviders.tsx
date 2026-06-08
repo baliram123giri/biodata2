@@ -30,6 +30,8 @@ function ScreenshotProtection() {
   const [isScreenShielded, setIsScreenShielded] = useState(false);
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development") return;
+
     // Robust check if on mobile/tablet device (strictly checks touch-based mobile and iPads, excluding desktop windows)
     const isMobile = () => {
       if (typeof window === "undefined") return false;
@@ -210,6 +212,8 @@ function ScreenshotProtection() {
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
+
+  if (process.env.NODE_ENV === "development") return null;
 
   return (
     <>

@@ -41,3 +41,43 @@ export function formatISTDateTime(
     ...options
   }) + " IST";
 }
+
+export function getClientImageUrl(src: string | null | undefined): string {
+  if (!src) return "";
+  if (src.startsWith("data:") || src.startsWith("blob:")) return src;
+
+  if (typeof window !== "undefined") {
+    try {
+      const parsedUrl = new URL(src, window.location.origin);
+      if (parsedUrl.hostname === window.location.hostname) {
+        const relativePath = parsedUrl.pathname + parsedUrl.search;
+        
+        // In local development, direct relative paths for assets/uploads to production
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+          const lowerPath = relativePath.toLowerCase();
+          if (
+            lowerPath.startsWith("/uploads/") ||
+            lowerPath.startsWith("/frames/") ||
+            lowerPath.startsWith("/stickers/")
+          ) {
+            return `https://biodata99.com${relativePath}`;
+          }
+        }
+        
+        return relativePath.includes("?") ? `${relativePath}&canvas=true` : `${relativePath}?canvas=true`;
+      }
+      
+      const isProduction = process.env.NODE_ENV === "production" || window.location.hostname !== "localhost";
+      if (isProduction) {
+        return src;
+      }
+      
+      return `/api/proxy-logo?url=${encodeURIComponent(src)}`;
+    } catch (e) {
+      return src;
+    }
+  }
+  
+  return src;
+}
+

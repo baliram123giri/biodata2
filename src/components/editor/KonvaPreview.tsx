@@ -29,31 +29,8 @@ if (typeof window !== "undefined") {
   Konva.pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
 }
 
-function getClientImageUrl(src: string | null | undefined): string {
-  if (!src) return "";
-  if (src.startsWith("data:")) return src;
+import { cn, getClientImageUrl } from "@/lib/utils";
 
-  if (typeof window !== "undefined") {
-    try {
-      const parsedUrl = new URL(src, window.location.origin);
-      if (parsedUrl.hostname === window.location.hostname) {
-        const relativePath = parsedUrl.pathname + parsedUrl.search;
-        return relativePath.includes("?") ? `${relativePath}&canvas=true` : `${relativePath}?canvas=true`;
-      }
-      
-      const isProduction = process.env.NODE_ENV === "production" || window.location.hostname !== "localhost";
-      if (isProduction) {
-        return src;
-      }
-      
-      return `/api/proxy-logo?url=${encodeURIComponent(src)}`;
-    } catch (e) {
-      return src;
-    }
-  }
-  
-  return src;
-}
 
 import { getLightBgColor } from "@/lib/color-utils";
 import { WATERMARK_CONFIG, getWatermarkCoordinates } from "@/lib/watermark-utils";
@@ -1130,7 +1107,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
       for (const sec of sections as any[]) {
         const titleY = cursorY;
-        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 4; // Extra padding for beautiful headings
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 16; // Extra padding for beautiful headings
         const fieldLayouts: any[] = [];
 
         let i = 0;
@@ -1226,15 +1203,30 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
     // Use the wider of mantra text or title text so stickers clear both lines
     const mantraWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
     const titleWidth = formData.title ? formData.title.length * (layout.fSize * 2 * 0.55) : 0;
-    const halfW = Math.max(mantraWidth, titleWidth) / 2;
+    const textWidth = Math.max(mantraWidth, titleWidth);
+    const align = sectionStyles["header"]?.textAlign || "center";
     const gap = 10;
     const imgW = 45; // 100 * 0.45
-    return {
-      leftX: A4_W / 2 - halfW - gap - imgW,
-      // scaleX:-0.45 mirrors from anchor leftward, so push anchor rightward by imgW
-      rightX: A4_W / 2 + halfW + gap + imgW,
-    };
-  }, [formData.mantra, formData.title, mantraSticker, layout.fSize]);
+
+    if (align === "left") {
+      return {
+        leftX: paddingLeft,
+        rightX: paddingLeft + textWidth + gap * 2 + imgW,
+      };
+    } else if (align === "right") {
+      return {
+        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
+        rightX: A4_W - paddingRight,
+      };
+    } else {
+      const halfW = textWidth / 2;
+      return {
+        leftX: A4_W / 2 - halfW - gap - imgW,
+        // scaleX:-0.45 mirrors from anchor leftward, so push anchor rightward by imgW
+        rightX: A4_W / 2 + halfW + gap + imgW,
+      };
+    }
+  }, [formData.mantra, formData.title, mantraSticker, layout.fSize, sectionStyles, paddingLeft, paddingRight]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -1435,47 +1427,85 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                 <Group x={headerOffset.x} y={headerOffset.y}>
                   {/* Mantra Rendering */}
                   <Group y={paddingY + 10}>
-                    {formData.mantra && (
-                      <Text
-                        x={A4_W / 2}
-                        y={0}
-                        text={formData.mantra}
-                        fontSize={layout.fSize * 1.2}
-                        fontFamily={fontFamily}
-                        fontStyle="bold"
-                        fill={primaryColor}
-                        align="center"
-                        width={A4_W}
-                        offsetX={A4_W / 2}
-                      />
-                    )}
-                    {mantraSticker && mantraGeometry && (
-                      <>
-                        <StickerItem
-                          sticker={{ ...mantraSticker, id: "mantra-sign-left", x: mantraGeometry.leftX, y: -6, scaleX: 0.45, scaleY: 0.45 }}
-                          color={primaryColor}
-                          isDesigner={false}
-                          isSelected={false}
-                          onClick={() => { }}
+                    {formData.mantra && (() => {
+                      const hasMantraSticker = !!mantraSticker;
+                      const gap = 10;
+                      const imgW = 45;
+                      const textX = paddingLeft + (hasMantraSticker ? (imgW + gap) : 0);
+                      const textWidth = A4_W - paddingLeft - paddingRight - (hasMantraSticker ? (imgW + gap) * 2 : 0);
+                      return (
+                        <Text
+                          x={textX}
+                          y={0}
+                          text={formData.mantra}
+                          fontSize={layout.fSize * 1.2}
+                          fontFamily={fontFamily}
+                          fontStyle="bold"
+                          fill={primaryColor}
+                          align={sectionStyles["header"]?.textAlign || "center"}
+                          width={textWidth}
                         />
-                        <StickerItem
-                          sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: -6, scaleX: -0.45, scaleY: 0.45 }}
-                          color={primaryColor}
-                          isDesigner={false}
-                          isSelected={false}
-                          onClick={() => { }}
-                        />
-                      </>
-                    )}
+                      );
+                    })()}
+                    {mantraSticker && mantraGeometry && (() => {
+                      const placement = templateConfig.mantraSignPlacement || "both";
+                      const vertical = templateConfig.mantraSignVertical || "top";
+                      const signY = vertical === "middle"
+                        ? (A4_H / 2) - (paddingY + 10) - 22
+                        : -6;
+
+                      // top-center: single sign centered above the mantra row
+                      if (placement === "top-center") {
+                        return (
+                          <StickerItem
+                            sticker={{ ...mantraSticker, id: "mantra-sign-top", x: (A4_W - 45) / 2, y: signY - 50, scaleX: 0.45, scaleY: 0.45 }}
+                            color={primaryColor}
+                            isDesigner={false}
+                            isSelected={false}
+                            onClick={() => { }}
+                          />
+                        );
+                      }
+
+                      const showLeft = placement === "both" || placement === "left";
+                      const showRight = placement === "both" || placement === "right";
+                      return (
+                        <>
+                          {showLeft && (
+                            <StickerItem
+                              sticker={{ ...mantraSticker, id: "mantra-sign-left", x: mantraGeometry.leftX, y: signY, scaleX: 0.45, scaleY: 0.45 }}
+                              color={primaryColor}
+                              isDesigner={false}
+                              isSelected={false}
+                              onClick={() => { }}
+                            />
+                          )}
+                          {showRight && (
+                            <StickerItem
+                              sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: signY, scaleX: -0.45, scaleY: 0.45 }}
+                              color={primaryColor}
+                              isDesigner={false}
+                              isSelected={false}
+                              onClick={() => { }}
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
                   </Group>
 
                   {/* Title Rendering */}
                   {formData.title && (() => {
                     const titleY = paddingY + 10 + (formData.mantra ? layout.fSize * 2 : 0);
                     const titleHeight = layout.fSize * 2;
+                    const align = sectionStyles["header"]?.textAlign || "center";
 
                     if (titleShape === "ribbon") {
-                      const ribbonW = 320;
+                      const titleVal = formData.title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
+                      const ribbonW = Math.min(
+                        Math.max(titleVal.length * layout.fSize * 1.05 + 60, 180),
+                        A4_W - paddingLeft - paddingRight
+                      );
                       const ribbonH = layout.fSize * 2.8;
                       const ribbonX = (A4_W - ribbonW) / 2;
                       const ribbonY = titleY - 4;
@@ -1556,7 +1586,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             lineCap="round"
                           />
                           <Text
-                            x={A4_W / 2}
+                            x={paddingLeft}
                             y={titleY}
                             text={formData.title}
                             fontSize={layout.fSize * 2}
@@ -1564,8 +1594,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             fontStyle="bold"
                             fill={primaryColor}
                             align="center"
-                            width={A4_W}
-                            offsetX={A4_W / 2}
+                            width={A4_W - paddingLeft - paddingRight}
                           />
                         </Group>
                       );
@@ -1589,7 +1618,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                           />
                           {/* Title Text */}
                           <Text
-                            x={A4_W / 2}
+                            x={paddingLeft}
                             y={titleY}
                             text={formData.title}
                             fontSize={layout.fSize * 2}
@@ -1597,8 +1626,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             fontStyle="bold"
                             fill={primaryColor}
                             align="center"
-                            width={A4_W}
-                            offsetX={A4_W / 2}
+                            width={A4_W - paddingLeft - paddingRight}
                           />
                           {/* Ornamental Underline */}
                           <Line
@@ -1617,16 +1645,15 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                       // Standard Simple Text
                       return (
                         <Text
-                          x={A4_W / 2}
+                          x={paddingLeft}
                           y={titleY}
                           text={formData.title}
                           fontSize={layout.fSize * 2}
                           fontFamily={fontFamily}
                           fontStyle="bold"
                           fill={primaryColor}
-                          align="center"
-                          width={A4_W}
-                          offsetX={A4_W / 2}
+                          align={align}
+                          width={A4_W - paddingLeft - paddingRight}
                         />
                       );
                     }
@@ -1672,8 +1699,39 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                   })()}
 
                   {/* Section Header */}
-                  <Line points={[padding, sec.titleY + 15, padding + 5, sec.titleY + 15]} stroke={accentColor || titleColor} strokeWidth={3} lineCap="round" />
-                  <Text x={padding + 10} y={sec.titleY + 2} text={applyTransform(sec.titleText)} fontSize={Math.round(fSize * 1.4)} fontFamily={fontFamily} fontStyle={fontStyle} fill={titleColor} />
+                  {(() => {
+                    const align = style.textAlign || "left";
+                    let linePoints;
+                    const barY = sec.titleY + Math.round(fSize * 1.4) + 8;
+                    if (align === "center") {
+                      const mid = A4_W / 2;
+                      linePoints = [mid - 10, barY, mid + 10, barY];
+                    } else if (align === "right") {
+                      const end = A4_W - paddingRight;
+                      linePoints = [end - 20, barY, end, barY];
+                    } else {
+                      linePoints = [paddingLeft, barY, paddingLeft + 20, barY];
+                    }
+                    return (
+                      <Line
+                        points={linePoints}
+                        stroke={accentColor || titleColor}
+                        strokeWidth={3}
+                        lineCap="round"
+                      />
+                    );
+                  })()}
+                  <Text
+                    x={paddingLeft}
+                    y={sec.titleY + 2}
+                    width={A4_W - paddingLeft - paddingRight}
+                    text={applyTransform(sec.titleText)}
+                    fontSize={Math.round(fSize * 1.4)}
+                    fontFamily={fontFamily}
+                    fontStyle={fontStyle}
+                    fill={titleColor}
+                    align={style.textAlign || "left"}
+                  />
 
                   {/* Section Fields */}
                   {sec.fields.map((field: any) => {
@@ -1685,6 +1743,28 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                     const lblW = field.labelW ?? (field.isHalf ? field.labelW : 130);
                     const valX = colX + lblW + 15;
                     const colonX = colX + lblW + 5;
+
+                    const align = style.textAlign || "left";
+
+                    if (align === "center" || align === "right") {
+                      const fullText = `${applyTransform(field.label)}: ${applyTransform(field.value)}`;
+                      return (
+                        <Group key={field.id}>
+                          <Text
+                            x={colX}
+                            y={field.y}
+                            width={field.isHalf ? field.halfW : A4_W - paddingLeft - paddingRight - 20}
+                            text={fullText}
+                            fontSize={fSize}
+                            fontFamily={fontFamily}
+                            fontStyle={fontStyle}
+                            fill={fieldColor}
+                            align={align}
+                            lineHeight={1.1}
+                          />
+                        </Group>
+                      );
+                    }
 
                     return (
                       <Group key={field.id}>

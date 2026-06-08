@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { cn } from "@/lib/utils";
+import { cn, getClientImageUrl } from "@/lib/utils";
+import { ENGLISH_FONTS } from "@/lib/konva-fonts";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import {
   Loader2,
@@ -120,6 +121,8 @@ interface Template {
   language?: string | null;
   detailsLayout?: string | null;
   titleShape?: string | null;
+  mantraSignPlacement?: string | null;
+  mantraSignVertical?: string | null;
   isPremium?: boolean | null;
   isDefault?: boolean | null;
   price?: number | null;
@@ -225,6 +228,8 @@ const initialFormState = {
   language: "English",
   detailsLayout: "classic",
   titleShape: "simple",
+  mantraSignPlacement: "both",
+  mantraSignVertical: "top",
   imageFrameOffset: "0",
   frameImageX: "0",
   frameImageY: "0",
@@ -307,7 +312,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const [adminAiGender, setAdminAiGender] = React.useState<"male" | "female">("male");
   const [adminAiStyle, setAdminAiStyle] = React.useState<"traditional" | "professional">("traditional");
   const [adminAiAge, setAdminAiAge] = React.useState("26");
-  const [adminAiReligion, setAdminAiReligion] = React.useState("Hindu");
+  const [adminAiReligion, setAdminAiReligion] = React.useState((template as any)?.religion || "Hindu");
   const [isAdminAiGenerating, setIsAdminAiGenerating] = React.useState(false);
   const [adminAiResultUrl, setAdminAiResultUrl] = React.useState("");
   
@@ -411,8 +416,19 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
     }
   };
 
+  const parsedRawInput = React.useMemo(() => {
+    if (template?.rawInput) {
+      try {
+        return typeof template.rawInput === "string" ? JSON.parse(template.rawInput) : template.rawInput;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }, [template?.rawInput]);
+
   const methods = useForm<BiodataFormValues>({
-    defaultValues: defaultBiodataValues,
+    defaultValues: parsedRawInput || defaultBiodataValues,
   });
 
   // Preview-only photo – stored locally, never sent to server
@@ -854,6 +870,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         language: template.language || "English",
         detailsLayout: template.detailsLayout || "classic",
         titleShape: template.titleShape || "simple",
+        mantraSignPlacement: (template as any).mantraSignPlacement || "both",
+        mantraSignVertical: (template as any).mantraSignVertical || "top",
         sectionOffsets: bgConf?.sectionOffsets || "{}",
         sectionStyles: bgConf?.sectionStyles || "{}",
         // Pricing
@@ -930,6 +948,10 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         language: formState.language,
         detailsLayout: formState.detailsLayout,
         titleShape: formState.titleShape,
+        mantraSignPlacement: formState.mantraSignPlacement,
+        mantraSignVertical: formState.mantraSignVertical,
+        religion: adminAiReligion,
+        rawInput: methods.getValues(),
         // Pricing
         isPremium: (formState as any).isPremium === true,
         isDefault: (formState as any).isDefault === true,
@@ -1412,7 +1434,15 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                         <Label className="text-xs font-bold text-muted-foreground">Template Language *</Label>
                         <Select
                           value={formState.language}
-                          onValueChange={value => setFormState({ ...formState, language: value || "English" })}
+                          onValueChange={value => {
+                            const lang = value || "English";
+                            setFormState({
+                              ...formState,
+                              language: lang,
+                              // Reset to default font when switching away from English
+                              defaultFontFamily: lang !== "English" ? "noto" : formState.defaultFontFamily,
+                            });
+                          }}
                         >
                           <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-10 px-3">
                             <SelectValue placeholder="Select Language" />
@@ -1426,6 +1456,56 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      {/* English-only font picker */}
+                      {formState.language === "English" && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">
+                            Font Family <span className="text-[10px] font-normal text-muted-foreground/60">(English only)</span>
+                          </Label>
+                          <Select
+                            value={formState.defaultFontFamily || "noto"}
+                            onValueChange={value => setFormState({ ...formState, defaultFontFamily: value })}
+                          >
+                            <SelectTrigger className="w-full text-sm rounded-lg focus:ring-primary focus:border-primary bg-background border border-border h-11 px-3">
+                              <SelectValue>
+                                {(() => {
+                                  const f = ENGLISH_FONTS.find(f => f.key === (formState.defaultFontFamily || "noto"));
+                                  return f ? (
+                                    <span className="flex items-center gap-2">
+                                      <span style={{ fontFamily: f.family }} className="text-base font-bold">Aa</span>
+                                      <span>{f.label}</span>
+                                      <span className="text-[10px] text-muted-foreground ml-auto">{f.category}</span>
+                                    </span>
+                                  ) : "Select Font";
+                                })()}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border border-border rounded-lg shadow-md">
+                              {ENGLISH_FONTS.map(font => (
+                                <SelectItem
+                                  key={font.key}
+                                  value={font.key}
+                                  className="cursor-pointer hover:bg-muted py-2.5 px-3"
+                                >
+                                  <span className="flex items-center gap-3 w-full">
+                                    <span
+                                      style={{ fontFamily: font.family }}
+                                      className="text-lg font-bold w-8 text-center leading-none"
+                                    >
+                                      Aa
+                                    </span>
+                                    <span className="flex flex-col">
+                                      <span className="text-sm font-semibold">{font.label}</span>
+                                      <span className="text-[10px] text-muted-foreground">{font.category}</span>
+                                    </span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       <div className="space-y-1.5">
                         <Label className="text-xs font-bold text-muted-foreground">Details Layout Style *</Label>
@@ -1461,6 +1541,40 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                             <SelectItem value="ornament" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ornamental Floral Ends</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+
+                      {/* ─── Mantra Sign Settings Card ─── */}
+                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-extrabold text-primary uppercase tracking-widest">Mantra Sign Settings</span>
+                          <span className="text-[10px] text-muted-foreground">(Admin Only)</span>
+                        </div>
+
+                        {/* Count / Placement */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Sign Count & Sides</Label>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {[
+                              { value: "both", label: "Both Sides", icon: "⟨⚛⟩" },
+                              { value: "left", label: "Left Only", icon: "⚛ ·" },
+                              { value: "right", label: "Right Only", icon: "· ⚛" },
+                              { value: "top-center", label: "Top Center", icon: "↑⚛" },
+                            ].map(opt => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setFormState({ ...formState, mantraSignPlacement: opt.value })}
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer
+                                  ${(formState.mantraSignPlacement || "both") === opt.value
+                                    ? "border-primary bg-primary/10 text-primary shadow"
+                                    : "border-border bg-background text-muted-foreground hover:border-primary/40"}`}
+                              >
+                                <span className="text-base">{opt.icon}</span>
+                                <span>{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="space-y-1.5 flex flex-col">
@@ -3349,7 +3463,7 @@ function OptimizedPreviewArea({
 
   const stickers = useBiodataStore(s => s.formData?.stickers);
   const mantraSticker = stickers?.find(s => s.isMantra);
-  const mantraSignUrl = mantraSticker?.type || null;
+  const mantraSignUrl = getClientImageUrl(mantraSticker?.type) || null;
 
   return previewMode === "designer" ? (
     <>
@@ -3473,6 +3587,22 @@ function TemplateSvgPreview({
 
   const currentLang = formState.language || "English";
   const t = translations[currentLang] || translations["English"];
+
+  // Pre-load the selected English font so SVG <text> elements render correctly
+  const [fontTick, setFontTick] = React.useState(0);
+  React.useEffect(() => {
+    const fontKey = formState.defaultFontFamily || "noto";
+    const fontDef = ENGLISH_FONTS.find(f => f.key === fontKey);
+    if (fontDef && currentLang === "English") {
+      import("@/lib/konva-fonts").then(({ loadKonvaFonts }) => {
+        loadKonvaFonts([fontDef.family])
+          .then(() => setFontTick(t => t + 1))
+          .catch(() => {});
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState.defaultFontFamily, currentLang]);
+
 
   const sections = React.useMemo(() => {
     if (propSections && propSections.length > 0) {
@@ -3697,7 +3827,7 @@ function TemplateSvgPreview({
       const secLineSpacing = secFontSize * 0.5 + 2;
 
       const titleY = cursorY;
-      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 12;
+      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 16;
       const fieldLayouts: any[] = [];
 
       let i = 0;
@@ -3793,19 +3923,37 @@ function TemplateSvgPreview({
     if (!mantraSignUrl) return null;
     const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
     const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
-    const halfW = textWidth / 2;
-    const gap = 7;
+    const align = sectionStyles["header"]?.textAlign || "center";
     const imgW = 45;
-    return {
-      leftX: A4_W / 2 - halfW - gap - imgW,
-      rightX: A4_W / 2 + halfW + gap + imgW,
-    };
-  }, [mantra, mantraSignUrl, layout.fSize, currentLang]);
+    const gap = 7;
+    
+    if (align === "left") {
+      return {
+        leftX: paddingLeft,
+        rightX: paddingLeft + textWidth + gap * 2 + imgW,
+      };
+    } else if (align === "right") {
+      return {
+        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
+        rightX: A4_W - paddingRight,
+      };
+    } else {
+      const halfW = textWidth / 2;
+      return {
+        leftX: A4_W / 2 - halfW - gap - imgW,
+        rightX: A4_W / 2 + halfW + gap + imgW,
+      };
+    }
+  }, [mantra, mantraSignUrl, layout.fSize, currentLang, sectionStyles, paddingLeft, paddingRight]);
 
   const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
 
+  // Resolve the selected font family name for SVG preview text elements
+  const svgFontFamily = ENGLISH_FONTS.find(f => f.key === (formState.defaultFontFamily || "noto"))?.family ?? "serif";
+
   return (
     <svg
+      key={`${svgFontFamily}-${fontTick}`}
       id="template-preview-svg"
       viewBox="0 0 595 842"
       width="100%"
@@ -4050,49 +4198,94 @@ function TemplateSvgPreview({
 
       {/* Decorative Mantra Header and title */}
       <g transform={`translate(${headerOffset.x}, ${headerOffset.y})`}>
-        <text
-          x={A4_W / 2}
-          y={paddingTop + 10 + layout.fSize * 1.2}
-          fill={primaryColor}
-          fontSize={layout.fSize * 1.2}
-          fontWeight="bold"
-          fontFamily="sans-serif"
-          textAnchor="middle"
-        >
-          {mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
-        </text>
+        {(() => {
+          const align = sectionStyles["header"]?.textAlign || "center";
+          const hasMantraSticker = !!mantraSignUrl;
+          const gap = 7;
+          const imgW = 45;
+          const textX = align === "left"
+            ? paddingLeft + (hasMantraSticker ? (imgW + gap) : 0)
+            : align === "right"
+              ? A4_W - paddingRight - (hasMantraSticker ? (imgW + gap) : 0)
+              : A4_W / 2;
+          const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
+
+          return (
+            <text
+              x={textX}
+              y={paddingTop + 10 + layout.fSize * 1.2}
+              fill={primaryColor}
+              fontSize={layout.fSize * 1.2}
+              fontWeight="bold"
+              fontFamily={svgFontFamily}
+              textAnchor={textAnchor}
+            >
+              {mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||")}
+            </text>
+          );
+        })()}
         
-        {mantraSignUrl && mantraGeometry && (
-          <>
-            <image
-              x={mantraGeometry.leftX}
-              y={paddingTop + 4}
-              width="45"
-              height="45"
-              href={mantraSignUrl}
-            />
-            <image
-              x={-mantraGeometry.rightX}
-              y={paddingTop + 4}
-              width="45"
-              height="45"
-              href={mantraSignUrl}
-              transform="scale(-1, 1)"
-            />
-          </>
-        )}
+        {mantraSignUrl && mantraGeometry && (() => {
+          const placement = formState.mantraSignPlacement || "both";
+          const vertical = formState.mantraSignVertical || "top";
+          const signY = vertical === "middle" ? A4_H / 2 - 22 : paddingTop + 4;
+
+          // top-center: single sign centered above the mantra text
+          if (placement === "top-center") {
+            return (
+              <image
+                x={(A4_W - 45) / 2}
+                y={signY - 50}
+                width="45"
+                height="45"
+                href={mantraSignUrl}
+              />
+            );
+          }
+
+          const showLeft = placement === "both" || placement === "left";
+          const showRight = placement === "both" || placement === "right";
+          return (
+            <>
+              {showLeft && (
+                <image
+                  x={mantraGeometry.leftX}
+                  y={signY}
+                  width="45"
+                  height="45"
+                  href={mantraSignUrl}
+                />
+              )}
+              {showRight && (
+                <image
+                  x={-mantraGeometry.rightX}
+                  y={signY}
+                  width="45"
+                  height="45"
+                  href={mantraSignUrl}
+                  transform="scale(-1, 1)"
+                />
+              )}
+            </>
+          );
+        })()}
         
         {/* Title Rendering */}
         {(() => {
           const titleY = paddingTop + 10 + layout.fSize * 2;
           const titleHeight = layout.fSize * 2;
           const titleVal = title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
+          const align = sectionStyles["header"]?.textAlign || "center";
+          const textX = align === "left" ? paddingLeft : align === "right" ? A4_W - paddingRight : A4_W / 2;
+          const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
 
           if (formState.titleShape === "ribbon") {
-            const ribbonW = 320;
+            const titleLen = titleVal.length;
+            const ribbonW = Math.min(Math.max(titleLen * layout.fSize * 1.05 + 60, 180), A4_W - paddingLeft - paddingRight);
             const ribbonH = layout.fSize * 2.8;
             const ribbonX = (A4_W - ribbonW) / 2;
             const ribbonY = titleY - 4;
+            const ribbonTextX = ribbonX + ribbonW / 2;
 
             return (
               <g>
@@ -4108,12 +4301,12 @@ function TemplateSvgPreview({
                   strokeWidth="2"
                 />
                 <text
-                  x={A4_W / 2}
+                  x={ribbonTextX}
                   y={ribbonY + (ribbonH - titleHeight) / 2 + layout.fSize * 1.8}
                   fill="#ffffff"
                   fontSize={layout.fSize * 1.8}
                   fontWeight="bold"
-                  fontFamily="sans-serif"
+                  fontFamily={svgFontFamily}
                   textAnchor="middle"
                 >
                   {titleVal}
@@ -4136,7 +4329,7 @@ function TemplateSvgPreview({
                   fill={primaryColor}
                   fontSize={layout.fSize * 2}
                   fontWeight="bold"
-                  fontFamily="sans-serif"
+                  fontFamily={svgFontFamily}
                   textAnchor="middle"
                 >
                   {titleVal}
@@ -4152,7 +4345,7 @@ function TemplateSvgPreview({
                   fill={primaryColor}
                   fontSize={layout.fSize * 2}
                   fontWeight="bold"
-                  fontFamily="sans-serif"
+                  fontFamily={svgFontFamily}
                   textAnchor="middle"
                 >
                   {titleVal}
@@ -4170,13 +4363,13 @@ function TemplateSvgPreview({
           } else {
             return (
               <text
-                x={A4_W / 2}
+                x={textX}
                 y={titleY + layout.fSize * 2}
                 fill={primaryColor}
                 fontSize={layout.fSize * 2.2}
                 fontWeight="bold"
-                fontFamily="sans-serif"
-                textAnchor="middle"
+                fontFamily={svgFontFamily}
+                textAnchor={textAnchor}
               >
                 {titleVal}
               </text>
@@ -4322,85 +4515,138 @@ function TemplateSvgPreview({
               );
             })()}
 
-            {/* Section Header Underline Decoration */}
-            <line
-              x1={paddingLeft}
-              y1={sec.titleY + 15}
-              x2={paddingLeft + 5}
-              y2={sec.titleY + 15}
-              stroke={accentColor || titleColor}
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <text
-              x={paddingLeft + 10}
-              y={sec.titleY + 2 + Math.round(fSize * 1.4)}
-              fill={titleColor}
-              fontSize={Math.round(fSize * 1.4)}
-              fontWeight={fontStyle === "bold" ? "bold" : "normal"}
-              fontFamily="sans-serif"
-            >
-              {applyTransform(sec.titleText)}
-            </text>
+              {/* Section Header Underline Decoration */}
+              {(() => {
+                const align = style.textAlign || "left";
+                let x1, x2;
+                const barY = sec.titleY + Math.round(fSize * 1.4) + 8;
+                if (align === "center") {
+                  const mid = A4_W / 2;
+                  x1 = mid - 10;
+                  x2 = mid + 10;
+                } else if (align === "right") {
+                  const end = A4_W - paddingRight;
+                  x1 = end - 20;
+                  x2 = end;
+                } else {
+                  x1 = paddingLeft;
+                  x2 = paddingLeft + 20;
+                }
+                return (
+                  <line
+                    x1={x1}
+                    y1={barY}
+                    x2={x2}
+                    y2={barY}
+                    stroke={accentColor || titleColor}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                );
+              })()}
+              {(() => {
+                const align = style.textAlign || "left";
+                const textX = align === "left" ? paddingLeft : align === "right" ? A4_W - paddingRight : A4_W / 2;
+                const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
 
-            {/* Section Fields */}
-            {sec.fields.map((field: any) => {
-              const colX = field.isHalf 
-                ? (field.colIndex === 0 
-                    ? (paddingLeft + 10) 
-                    : (paddingLeft + 10 + field.halfW + 10))
-                : (paddingLeft + 10);
-              const lblW = field.isHalf ? field.labelW : 130;
-              const valX = colX + lblW + 15;
-              const colonX = colX + lblW + 5;
-
-              return (
-                <g key={field.id}>
+                return (
                   <text
-                    x={colX}
-                    y={field.y + fSize}
-                    fill={fieldColor}
-                    fontSize={fSize}
+                    x={textX}
+                    y={sec.titleY + 2 + Math.round(fSize * 1.4)}
+                    fill={titleColor}
+                    fontSize={Math.round(fSize * 1.4)}
                     fontWeight={fontStyle === "bold" ? "bold" : "normal"}
-                    fontFamily="sans-serif"
+                    fontFamily={svgFontFamily}
+                    textAnchor={textAnchor}
                   >
-                    {applyTransform(field.label)}
+                    {applyTransform(sec.titleText)}
                   </text>
-                  <text
-                    x={colonX}
-                    y={field.y + fSize}
-                    fill={fieldColor}
-                    fontSize={fSize}
-                    fontFamily="sans-serif"
-                  >
-                    :
-                  </text>
-                  <text
-                    x={valX}
-                    y={field.y + fSize}
-                    width={field.availableWidth}
-                    fill={fieldColor}
-                    fontSize={fSize}
-                    fontFamily="sans-serif"
-                  >
-                    {applyTransform(field.value)}
-                  </text>
+                );
+              })()}
 
-                  {/* Elegant Divider underline */}
-                  {formState.detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
-                    <line
-                      x1={colX}
-                      y1={field.y + fSize * 1.35 + 2}
-                      x2={colX + (field.isHalf ? field.halfW : (A4_W - paddingLeft - paddingRight - 20))}
-                      y2={field.y + fSize * 1.35 + 2}
-                      stroke={fieldColor + "15"}
-                      strokeWidth="0.8"
-                      strokeDasharray="2, 2"
-                    />
-                  )}
-                </g>
-              );
-            })}
+              {/* Section Fields */}
+              {sec.fields.map((field: any) => {
+                const colX = field.isHalf 
+                  ? (field.colIndex === 0 
+                      ? (paddingLeft + 10) 
+                      : (paddingLeft + 10 + field.halfW + 10))
+                  : (paddingLeft + 10);
+                const lblW = field.isHalf ? field.labelW : 130;
+                const valX = colX + lblW + 15;
+                const colonX = colX + lblW + 5;
+
+                const align = style.textAlign || "left";
+
+                if (align === "center" || align === "right") {
+                  const fullText = `${applyTransform(field.label)}: ${applyTransform(field.value)}`;
+                  const targetX = field.isHalf
+                    ? (align === "right" ? colX + field.halfW : colX + field.halfW / 2)
+                    : (align === "right" ? A4_W - paddingRight - 10 : A4_W / 2);
+                  const textAnchor = align === "right" ? "end" : "middle";
+                  return (
+                    <g key={field.id}>
+                      <text
+                        x={targetX}
+                        y={field.y + fSize}
+                        fill={fieldColor}
+                        fontSize={fSize}
+                        fontWeight={fontStyle === "bold" ? "bold" : "normal"}
+                        fontFamily={svgFontFamily}
+                        textAnchor={textAnchor}
+                      >
+                        {fullText}
+                      </text>
+                    </g>
+                  );
+                }
+
+                return (
+                  <g key={field.id}>
+                    <text
+                      x={colX}
+                      y={field.y + fSize}
+                      fill={fieldColor}
+                      fontSize={fSize}
+                      fontWeight={fontStyle === "bold" ? "bold" : "normal"}
+                      fontFamily={svgFontFamily}
+                    >
+                      {applyTransform(field.label)}
+                    </text>
+                    <text
+                      x={colonX}
+                      y={field.y + fSize}
+                      fill={fieldColor}
+                      fontSize={fSize}
+                      fontFamily={svgFontFamily}
+                    >
+                      :
+                    </text>
+                    <text
+                      x={valX}
+                      y={field.y + fSize}
+                      width={field.availableWidth}
+                      fill={fieldColor}
+                      fontSize={fSize}
+                      fontFamily={svgFontFamily}
+                    >
+                      {applyTransform(field.value)}
+                    </text>
+
+                    {/* Elegant Divider underline */}
+                    {formState.detailsLayout === "elegant-divided" && (!field.isHalf || field.colIndex === 1) && (
+                      <line
+                        x1={colX}
+                        y1={field.y + fSize * 1.35 + 2}
+                        x2={colX + (field.isHalf ? field.halfW : (A4_W - paddingLeft - paddingRight - 20))}
+                        y2={field.y + fSize * 1.35 + 2}
+                        stroke={fieldColor + "15"}
+                        strokeWidth="0.8"
+                        strokeDasharray="2, 2"
+                      />
+                    )}
+                  </g>
+                );
+              })}
           </g>
         );
       })}
@@ -4414,7 +4660,7 @@ function TemplateSvgPreview({
         y={A4_H - 30}
         fill="#cccccc"
         fontSize="8"
-        fontFamily="sans-serif"
+        fontFamily={svgFontFamily}
         textAnchor="middle"
       >
         www.biodata99.com

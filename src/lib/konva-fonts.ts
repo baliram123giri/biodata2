@@ -1,97 +1,100 @@
 /**
  * Font loader for Konva canvas rendering.
- * Loads Google Fonts via the FontFace API so the canvas <Text> nodes
- * render with the exact same typeface the user selected.
+ * Uses the Google Fonts CSS API (injected <link> tags) for reliable font loading
+ * across all browsers. Falls back gracefully if a font fails to load.
  */
 
 export interface KonvaFontDefinition {
   family: string;
-  url: string;
   weight: number;
   style?: string;
 }
 
-const FONT_DEFINITIONS: KonvaFontDefinition[] = [
-  // Inter
-  {
-    family: "Inter",
-    url: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf",
-    weight: 400,
-  },
-  {
-    family: "Inter",
-    url: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fMZhrib2Bg-4.ttf",
-    weight: 700,
-  },
-  // Noto Serif
-  {
-    family: "Noto Serif",
-    url: "https://fonts.gstatic.com/s/notoserif/v33/ga6iaw1J5X9T9RW6j9bNVls-hfgvz8JcMofYTa32J4wsL2JAlAhZqFCjwA.ttf",
-    weight: 400,
-  },
-  {
-    family: "Noto Serif",
-    url: "https://fonts.gstatic.com/s/notoserif/v33/ga6iaw1J5X9T9RW6j9bNVls-hfgvz8JcMofYTa32J4wsL2JAlAhZT1ejwA.ttf",
-    weight: 700,
-  },
-  // Playfair Display
-  {
-    family: "Playfair Display",
-    url: "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQ.ttf",
-    weight: 400,
-  },
-  {
-    family: "Playfair Display",
-    url: "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf",
-    weight: 700,
-  },
-  // Noto Sans Devanagari (for mantra)
-  {
-    family: "Noto Sans Devanagari",
-    url: "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
-    weight: 400,
-  },
-  {
-    family: "Noto Sans Devanagari",
-    url: "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Bold.ttf",
-    weight: 700,
-  },
+/**
+ * All supported English font options — key, display label, CSS family, and category.
+ */
+export const ENGLISH_FONTS: { key: string; label: string; family: string; category: string }[] = [
+  { key: "noto",       label: "Noto Serif",        family: "Noto Serif",         category: "Serif" },
+  { key: "playfair",   label: "Playfair Display",   family: "Playfair Display",   category: "Serif" },
+  { key: "cormorant",  label: "Cormorant Garamond", family: "Cormorant Garamond", category: "Serif" },
+  { key: "cinzel",     label: "Cinzel",             family: "Cinzel",             category: "Serif" },
+  { key: "lora",       label: "Lora",               family: "Lora",               category: "Serif" },
+  { key: "ebgaramond", label: "EB Garamond",        family: "EB Garamond",        category: "Serif" },
+  { key: "inter",      label: "Inter",              family: "Inter",              category: "Sans" },
+  { key: "raleway",    label: "Raleway",            family: "Raleway",            category: "Sans" },
 ];
 
-const loadedFonts = new Set<string>();
+/**
+ * Maps each Google Font family name → the Google Fonts API query param.
+ * Noto Sans Devanagari is kept for Hindi/Marathi script rendering.
+ */
+const GOOGLE_FONTS_MAP: Record<string, string> = {
+  "Inter":                "Inter:wght@400;700",
+  "Noto Serif":           "Noto+Serif:wght@400;700",
+  "Playfair Display":     "Playfair+Display:wght@400;700",
+  "Cormorant Garamond":   "Cormorant+Garamond:wght@400;700",
+  "Cinzel":               "Cinzel:wght@400;700",
+  "Lora":                 "Lora:wght@400;700",
+  "EB Garamond":          "EB+Garamond:wght@400;700",
+  "Raleway":              "Raleway:wght@400;700",
+  "Noto Sans Devanagari": "Noto+Sans+Devanagari:wght@400;700",
+};
+
+const loadedFamilies = new Set<string>();
+
+/**
+ * Injects a Google Fonts <link> stylesheet for the given family and waits
+ * until the browser reports the font as loaded.
+ */
+async function loadGoogleFont(family: string): Promise<void> {
+  if (loadedFamilies.has(family)) return;
+
+  const query = GOOGLE_FONTS_MAP[family];
+  if (!query) {
+    console.warn(`No Google Fonts mapping for: ${family}`);
+    return;
+  }
+
+  // Only inject once per session
+  const linkId = `gfont-${family.replace(/\s+/g, "-").toLowerCase()}`;
+  if (!document.getElementById(linkId)) {
+    const link = document.createElement("link");
+    link.id = linkId;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${query}&display=swap`;
+    document.head.appendChild(link);
+
+    // Wait for the stylesheet to finish loading
+    await new Promise<void>((resolve) => {
+      link.onload = () => resolve();
+      link.onerror = () => {
+        console.warn(`Failed to load Google Font stylesheet for: ${family}`);
+        resolve();
+      };
+      // Timeout fallback in case onload never fires
+      setTimeout(resolve, 3000);
+    });
+  }
+
+  // Now wait for the browser font engine to make the font available
+  try {
+    await document.fonts.load(`700 1em "${family}"`);
+    await document.fonts.load(`400 1em "${family}"`);
+  } catch {
+    // Non-fatal: canvas will fall back to the system serif/sans
+  }
+
+  loadedFamilies.add(family);
+}
 
 /**
  * Ensures the given font families are loaded and ready for canvas rendering.
- * Returns a promise that resolves once all fonts are loaded.
+ * Call this before creating Konva Text nodes that use the font.
  */
 export async function loadKonvaFonts(families: string[]): Promise<void> {
-  const needed = FONT_DEFINITIONS.filter(
-    (def) =>
-      families.includes(def.family) &&
-      !loadedFonts.has(`${def.family}-${def.weight}`)
-  );
-
+  const needed = families.filter(f => !loadedFamilies.has(f));
   if (needed.length === 0) return;
-
-  const promises = needed.map(async (def) => {
-    const key = `${def.family}-${def.weight}`;
-    if (loadedFonts.has(key)) return;
-
-    try {
-      const fontFace = new FontFace(def.family, `url(${def.url})`, {
-        weight: String(def.weight),
-        style: def.style || "normal",
-      });
-      const loaded = await fontFace.load();
-      document.fonts.add(loaded);
-      loadedFonts.add(key);
-    } catch (err) {
-      console.warn(`Failed to load font ${def.family} (${def.weight}):`, err);
-    }
-  });
-
-  await Promise.all(promises);
-  // Let the browser settle the font metrics
+  await Promise.all(needed.map(loadGoogleFont));
   await document.fonts.ready;
 }
 
@@ -99,13 +102,6 @@ export async function loadKonvaFonts(families: string[]): Promise<void> {
  * Maps the theme fontFamily key → the CSS font-family name used by Konva.
  */
 export function getKonvaFontFamily(themeFontKey: string): string {
-  switch (themeFontKey) {
-    case "inter":
-      return "Inter";
-    case "playfair":
-      return "Playfair Display";
-    case "noto":
-    default:
-      return "Noto Serif";
-  }
+  const found = ENGLISH_FONTS.find(f => f.key === themeFontKey);
+  return found ? found.family : "Noto Serif";
 }

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
-import { cn } from "@/lib/utils";
+import { cn, getClientImageUrl } from "@/lib/utils";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { type StickerAsset } from "@/lib/sticker-assets";
@@ -34,9 +34,10 @@ const StickerItem = React.memo(function StickerItem({
               </div>
             )}
             <Image
-              src={sticker.url || ""}
+              src={getClientImageUrl(sticker.url) || ""}
               alt={`Decorative sticker: ${sticker.name}`}
               fill
+              unoptimized
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
               onLoad={() => setIsLoaded(true)}
               className={cn(
@@ -45,6 +46,7 @@ const StickerItem = React.memo(function StickerItem({
               )}
             />
           </>
+
         ) : (
           <svg
             viewBox={sticker.viewBox}
