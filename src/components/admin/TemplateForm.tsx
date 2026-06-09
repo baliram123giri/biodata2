@@ -134,7 +134,11 @@ interface Template {
   jpgDiscountPrice?: number | null;
   pngPrice?: number | null;
   pngDiscountPrice?: number | null;
+  comboPrice?: number | null;
+  comboDiscountPrice?: number | null;
   previewPhotoUrl?: string | null;
+  rawInput?: any;
+  religion?: string | null;
 }
 
 interface TemplateFormProps {
