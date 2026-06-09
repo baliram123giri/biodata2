@@ -82,7 +82,7 @@ export function CompanyLogoPreview() {
     <div className="bg-stone-50 dark:bg-stone-950/50 border border-stone-150 dark:border-stone-850 rounded-2xl p-4 select-none relative overflow-hidden flex flex-col gap-2 min-h-[140px] justify-between w-full max-w-sm mx-auto">
       <div className="flex items-center justify-between border-b border-stone-200/50 dark:border-stone-800 pb-2">
         <div className="space-y-0.5 text-left">
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Form Input</div>
+          <div className="text-[9px] font-black uppercase tracking-wider text-stone-500 dark:text-stone-400">Form Input</div>
           <div 
             className="flex items-center gap-1.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 px-2.5 py-1 rounded-md text-[11px] font-bold text-foreground min-w-[120px] h-7"
             role="textbox"
@@ -102,10 +102,10 @@ export function CompanyLogoPreview() {
           className={cn(
             "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border transition-all duration-300",
             searchState === "resolved"
-              ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+              ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
               : searchState === "searching"
-              ? "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 animate-pulse"
-              : "bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-400"
+              ? "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-400 animate-pulse"
+              : "bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/30 text-amber-800 dark:text-amber-400"
           )}
           aria-live="polite"
         >
@@ -120,7 +120,7 @@ export function CompanyLogoPreview() {
               {COMPANIES_MOCK[companyIndex].logo}
             </div>
             <div className="space-y-0.5">
-              <div className="text-[9px] font-bold text-muted-foreground/80 uppercase tracking-wider leading-none">Occupation Details</div>
+              <div className="text-[9px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider leading-none">Occupation Details</div>
               <div className="text-xs font-black text-foreground">{COMPANIES_MOCK[companyIndex].name}</div>
               <div className="text-[9.5px] text-stone-500 font-semibold">{COMPANIES_MOCK[companyIndex].role}</div>
             </div>
@@ -135,7 +135,7 @@ export function CompanyLogoPreview() {
             </div>
           </div>
         ) : (
-          <div className="text-[10px] text-muted-foreground/75 font-semibold italic flex items-center gap-1.5 py-2 animate-pulse">
+          <div className="text-[10px] text-stone-500 dark:text-stone-400 font-semibold italic flex items-center gap-1.5 py-2 animate-pulse">
             <span>💡 Type name of your company to fetch brand logo</span>
           </div>
         )}

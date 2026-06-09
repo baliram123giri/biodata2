@@ -1348,24 +1348,11 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
-          {templateConfig.frame.type === "image" ? (
-            <ImageFrame
-              config={templateConfig.frame}
-              primaryColor={primaryColor}
-              accentColor={accentColor}
-              defaultPrimary=""
-              defaultAccent=""
-              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
-              bgConfig={templateConfig.bgConfig}
-            />
-          ) : templateConfig.frame.type === "gradient" ? (
-            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
-          ) : templateConfig.frame.type === "custom" ? (
-            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
-          ) : (
-            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
-          )}
           {(() => {
+            const isJpgFrame = templateConfig.frame.type === "image" && 
+              (templateConfig.frame.urlTemplate.toLowerCase().includes(".jpg") || 
+               templateConfig.frame.urlTemplate.toLowerCase().includes(".jpeg"));
+
             const isCustomBg = !!theme.bgImageUrl;
             const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
             const baseH = isCustomBg ? 300 : (templateConfig.bgConfig?.height ?? 842);
@@ -1383,7 +1370,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             const x = baseLeft + xOffset - (baseW * (scale - 1)) / 2;
             const y = baseTop + yOffset - (baseH * (scale - 1)) / 2;
 
-            return (
+            const graphicBgElement = (
               <GraphicBgImage
                 bgConfig={{
                   url: theme.bgImageUrl || templateConfig.bgConfig?.url,
@@ -1396,6 +1383,44 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                 isCustom={isCustomBg}
               />
             );
+
+            const frameElement = (
+              <>
+                {templateConfig.frame.type === "image" ? (
+                  <ImageFrame
+                    config={templateConfig.frame}
+                    primaryColor={primaryColor}
+                    accentColor={accentColor}
+                    defaultPrimary=""
+                    defaultAccent=""
+                    enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
+                    bgConfig={templateConfig.bgConfig}
+                  />
+                ) : templateConfig.frame.type === "gradient" ? (
+                  <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
+                ) : templateConfig.frame.type === "custom" ? (
+                  <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
+                ) : (
+                  <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
+                )}
+              </>
+            );
+
+            if (isJpgFrame) {
+              return (
+                <>
+                  {frameElement}
+                  {graphicBgElement}
+                </>
+              );
+            } else {
+              return (
+                <>
+                  {graphicBgElement}
+                  {frameElement}
+                </>
+              );
+            }
           })()}
 
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}

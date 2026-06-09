@@ -469,7 +469,7 @@ export function ThumbnailsGrid() {
                   className="border border-[#C9A84C]/25 bg-card overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group rounded-none aspect-[1/1.414] relative w-full"
                 >
                   {/* Hidden template name for SEO and accessibility */}
-                  <h3 className="sr-only">{tpl.name}</h3>
+                  <h2 className="sr-only">{tpl.name}</h2>
 
                   {/* Thumbnail Container */}
                   <div className="w-full h-full relative overflow-hidden flex items-center justify-center select-none bg-muted/5 rounded-none">
@@ -523,7 +523,7 @@ export function ThumbnailsGrid() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 bg-card/10 border border-dashed border-[#C9A84C]/25 rounded-3xl gap-4">
               <SlidersHorizontal className="w-10 h-10 text-[#C9A84C]/65" />
-              <h3 className="text-lg font-bold text-foreground">No templates match filters</h3>
+              <h2 className="text-lg font-bold text-foreground">No templates match filters</h2>
               <p className="text-muted-foreground text-sm max-w-sm text-center">
                 Try adjusting your price selections, changing your language filter, or clearing search to discover formats.
               </p>
