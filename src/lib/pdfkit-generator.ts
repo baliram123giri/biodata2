@@ -453,6 +453,123 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             }) : null;
           })(),
 
+          config.frame.type === 'image' ? (() => {
+            const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
+            const fallbackX = -offset;
+            const fallbackY = -offset;
+            const fallbackW = A4_W + (offset * 2);
+            const fallbackH = A4_H + (offset * 2);
+
+            const isDefault = (config.bgConfig?.frameImageX === "0" || config.bgConfig?.frameImageX == null) &&
+              (config.bgConfig?.frameImageY === "0" || config.bgConfig?.frameImageY == null);
+
+            const x = isDefault && offset !== 0 ? fallbackX : (parseInt(config.bgConfig?.frameImageX) || fallbackX);
+            const y = isDefault && offset !== 0 ? fallbackY : (parseInt(config.bgConfig?.frameImageY) || fallbackY);
+            const width = isDefault && offset !== 0 ? fallbackW : (parseInt(config.bgConfig?.frameImageWidth) || fallbackW);
+            const height = isDefault && offset !== 0 ? fallbackH : (parseInt(config.bgConfig?.frameImageHeight) || fallbackH);
+
+            return React.createElement(Image, {
+              src: theme?.rasterizedFrameBase64 || (() => {
+                let url = getFrameImageUrl(config.frame, primary);
+                // Force PNG format by replacing f_auto with f_png and translating .svg to .png
+                // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
+                url = url.replace(/f_auto/g, 'f_png');
+                if (url.toLowerCase().endsWith('.svg')) {
+                  url = url.substring(0, url.length - 4) + '.png';
+                } else if (url.toLowerCase().includes('.svg?')) {
+                  url = url.replace(/\.svg\?/i, '.png?');
+                }
+                return getAbsoluteLocalPath(url) || url;
+              })(),
+              style: [{
+                position: 'absolute',
+                top: y,
+                left: x,
+                width: width,
+                height: height,
+                objectFit: 'fill'
+              }] as any
+            });
+          })()
+            : config.frame.type === 'gradient' ?
+              React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+                React.createElement(Rect, {
+                  x: config.frame.outerInset,
+                  y: config.frame.outerInset,
+                  width: A4_W - config.frame.outerInset * 2,
+                  height: A4_H - config.frame.outerInset * 2,
+                  stroke: primary,
+                  strokeWidth: config.frame.outerStrokeWidth,
+                  rx: config.frame.outerCornerRadius,
+                  fill: "none"
+                }),
+                React.createElement(Rect, {
+                  x: config.frame.innerInset,
+                  y: config.frame.innerInset,
+                  width: A4_W - config.frame.innerInset * 2,
+                  height: A4_H - config.frame.innerInset * 2,
+                  stroke: primary,
+                  strokeWidth: config.frame.innerStrokeWidth,
+                  rx: config.frame.innerCornerRadius,
+                  strokeOpacity: 0.3,
+                  fill: "none"
+                })
+              )
+              : config.frame.type === 'custom' ?
+                React.createElement(View, { style: styles.frame as any },
+                  React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
+                )
+                :
+                React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
+                  React.createElement(Rect, {
+                    x: config.frame.outerInset,
+                    y: config.frame.outerInset,
+                    width: A4_W - config.frame.outerInset * 2,
+                    height: A4_H - config.frame.outerInset * 2,
+                    stroke: primary,
+                    strokeWidth: config.frame.outerStrokeWidth,
+                    rx: config.frame.outerCornerRadius,
+                    fill: "none"
+                  }),
+                  React.createElement(Rect, {
+                    x: config.frame.innerInset,
+                    y: config.frame.innerInset,
+                    width: A4_W - config.frame.innerInset * 2,
+                    height: A4_H - config.frame.innerInset * 2,
+                    stroke: primary,
+                    strokeWidth: config.frame.innerStrokeWidth,
+                    rx: config.frame.innerCornerRadius,
+                    strokeOpacity: 0.6,
+                    fill: "none"
+                  }),
+                  config.frame.hasCornerCurves ? React.createElement(G, {},
+                    // Top-Left
+                    React.createElement(Path, {
+                      d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
+                      stroke: primary,
+                      strokeWidth: config.frame.outerStrokeWidth
+                    }),
+                    // Top-Right
+                    React.createElement(Path, {
+                      d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
+                      stroke: primary,
+                      strokeWidth: config.frame.outerStrokeWidth
+                    }),
+                    // Bottom-Left
+                    React.createElement(Path, {
+                      d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
+                      stroke: primary,
+                      strokeWidth: config.frame.outerStrokeWidth
+                    }),
+                    // Bottom-Right
+                    React.createElement(Path, {
+                      d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
+                      stroke: primary,
+                      strokeWidth: config.frame.outerStrokeWidth
+                    })
+                  ) : null
+                ),
+
           WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
             style: {
               position: 'absolute',
@@ -1006,123 +1123,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                     :
                     React.createElement(View, {})
             );
-          }),
-          config.frame.type === 'image' ? (() => {
-            const offset = parseInt(config.bgConfig?.imageFrameOffset) || 0;
-            const fallbackX = -offset;
-            const fallbackY = -offset;
-            const fallbackW = A4_W + (offset * 2);
-            const fallbackH = A4_H + (offset * 2);
-
-            const isDefault = (config.bgConfig?.frameImageX === "0" || config.bgConfig?.frameImageX == null) &&
-              (config.bgConfig?.frameImageY === "0" || config.bgConfig?.frameImageY == null);
-
-            const x = isDefault && offset !== 0 ? fallbackX : (parseInt(config.bgConfig?.frameImageX) || fallbackX);
-            const y = isDefault && offset !== 0 ? fallbackY : (parseInt(config.bgConfig?.frameImageY) || fallbackY);
-            const width = isDefault && offset !== 0 ? fallbackW : (parseInt(config.bgConfig?.frameImageWidth) || fallbackW);
-            const height = isDefault && offset !== 0 ? fallbackH : (parseInt(config.bgConfig?.frameImageHeight) || fallbackH);
-
-            return React.createElement(Image, {
-              src: theme?.rasterizedFrameBase64 || (() => {
-                let url = getFrameImageUrl(config.frame, primary);
-                // Force PNG format by replacing f_auto with f_png and translating .svg to .png
-                // to bypass the @react-pdf/renderer SVG-in-Image style stripping/black rendering bug.
-                url = url.replace(/f_auto/g, 'f_png');
-                if (url.toLowerCase().endsWith('.svg')) {
-                  url = url.substring(0, url.length - 4) + '.png';
-                } else if (url.toLowerCase().includes('.svg?')) {
-                  url = url.replace(/\.svg\?/i, '.png?');
-                }
-                return getAbsoluteLocalPath(url) || url;
-              })(),
-              style: [{
-                position: 'absolute',
-                top: y,
-                left: x,
-                width: width,
-                height: height,
-                objectFit: 'fill'
-              }] as any
-            });
-          })()
-            : config.frame.type === 'gradient' ?
-              React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-                React.createElement(Rect, {
-                  x: config.frame.outerInset,
-                  y: config.frame.outerInset,
-                  width: A4_W - config.frame.outerInset * 2,
-                  height: A4_H - config.frame.outerInset * 2,
-                  stroke: primary,
-                  strokeWidth: config.frame.outerStrokeWidth,
-                  rx: config.frame.outerCornerRadius,
-                  fill: "none"
-                }),
-                React.createElement(Rect, {
-                  x: config.frame.innerInset,
-                  y: config.frame.innerInset,
-                  width: A4_W - config.frame.innerInset * 2,
-                  height: A4_H - config.frame.innerInset * 2,
-                  stroke: primary,
-                  strokeWidth: config.frame.innerStrokeWidth,
-                  rx: config.frame.innerCornerRadius,
-                  strokeOpacity: 0.3,
-                  fill: "none"
-                })
-              )
-              : config.frame.type === 'custom' ?
-                React.createElement(View, { style: styles.frame as any },
-                  React.createElement(CustomPDFFrame, { componentId: config.frame.componentId, primaryColor: primary })
-                )
-                :
-                React.createElement(Svg, { style: styles.frame as any, viewBox: `0 0 ${A4_W} ${A4_H}` },
-                  React.createElement(Rect, {
-                    x: config.frame.outerInset,
-                    y: config.frame.outerInset,
-                    width: A4_W - config.frame.outerInset * 2,
-                    height: A4_H - config.frame.outerInset * 2,
-                    stroke: primary,
-                    strokeWidth: config.frame.outerStrokeWidth,
-                    rx: config.frame.outerCornerRadius,
-                    fill: "none"
-                  }),
-                  React.createElement(Rect, {
-                    x: config.frame.innerInset,
-                    y: config.frame.innerInset,
-                    width: A4_W - config.frame.innerInset * 2,
-                    height: A4_H - config.frame.innerInset * 2,
-                    stroke: primary,
-                    strokeWidth: config.frame.innerStrokeWidth,
-                    rx: config.frame.innerCornerRadius,
-                    strokeOpacity: 0.6,
-                    fill: "none"
-                  }),
-                  config.frame.hasCornerCurves ? React.createElement(G, {},
-                    // Top-Left
-                    React.createElement(Path, {
-                      d: `M ${config.frame.outerInset},${config.frame.outerInset + 30} Q ${config.frame.outerInset},${config.frame.outerInset} ${config.frame.outerInset + 30},${config.frame.outerInset}`,
-                      stroke: primary,
-                      strokeWidth: config.frame.outerStrokeWidth
-                    }),
-                    // Top-Right
-                    React.createElement(Path, {
-                      d: `M ${A4_W - config.frame.outerInset - 30},${config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${config.frame.outerInset} ${A4_W - config.frame.outerInset},${config.frame.outerInset + 30}`,
-                      stroke: primary,
-                      strokeWidth: config.frame.outerStrokeWidth
-                    }),
-                    // Bottom-Left
-                    React.createElement(Path, {
-                      d: `M ${config.frame.outerInset},${A4_H - config.frame.outerInset - 30} Q ${config.frame.outerInset},${A4_H - config.frame.outerInset} ${config.frame.outerInset + 30},${A4_H - config.frame.outerInset}`,
-                      stroke: primary,
-                      strokeWidth: config.frame.outerStrokeWidth
-                    }),
-                    // Bottom-Right
-                    React.createElement(Path, {
-                      d: `M ${A4_W - config.frame.outerInset - 30},${A4_H - config.frame.outerInset} Q ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset} ${A4_W - config.frame.outerInset},${A4_H - config.frame.outerInset - 30}`,
-                      stroke: primary,
-                      strokeWidth: config.frame.outerStrokeWidth
-                    })
-                  ) : null
-                )
+          })
         ].filter(Boolean))
       )
     )

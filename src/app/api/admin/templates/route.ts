@@ -138,6 +138,7 @@ export async function POST(req: Request) {
       jpgDiscountPrice,
       pngPrice,
       pngDiscountPrice,
+      comboPrice,
       comboDiscountPrice,
       previewPhotoFile,
       rawInput,

@@ -70,7 +70,8 @@ export function RichTextEditor({
 
   return (
     <div className="flex flex-col border rounded-lg overflow-hidden transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .tiptap-content-canvas p.is-editor-empty:first-child::before {
           color: #64748b;
           content: attr(data-placeholder);
@@ -106,24 +107,22 @@ export function RichTextEditor({
           border-radius: 0 4px 4px 0;
         }
       ` }} />
-      
+
       {/* Toolbar */}
       <div className="flex flex-wrap gap-1 bg-muted/50 p-1.5 border-b border-border">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("heading", { level: 2 }) ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("heading", { level: 2 }) ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Heading2 className="w-3.5 h-3.5" /> H2
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("heading", { level: 3 }) ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("heading", { level: 3 }) ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Heading3 className="w-3.5 h-3.5" /> H3
         </button>
@@ -131,18 +130,16 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("bold") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("bold") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Bold className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("italic") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("italic") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Italic className="w-3.5 h-3.5" />
         </button>
@@ -150,27 +147,24 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("bulletList") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("bulletList") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <List className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("orderedList") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("orderedList") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <ListOrdered className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-            editor.isActive("blockquote") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-1 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${editor.isActive("blockquote") ? "bg-primary text-primary-foreground" : "bg-card hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Quote className="w-3.5 h-3.5" />
         </button>
