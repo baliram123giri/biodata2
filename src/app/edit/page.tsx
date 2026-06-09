@@ -80,6 +80,14 @@ const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsApp
 import { GRADIENT_PRESETS } from "@/lib/gradient-presets";
 import { translateUI } from "@/lib/translations";
 export default function EditPage() {
+  return (
+    <React.Suspense fallback={<PreviewLoader />}>
+      <EditPageContent />
+    </React.Suspense>
+  );
+}
+
+function EditPageContent() {
   const router = useRouter();
   const {
     formData,
