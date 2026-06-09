@@ -8,29 +8,11 @@ import { Check, Crown, Globe, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-function getCurrencySymbol(currency?: string | null) {
-  if (currency === "USD") return "$";
-  if (currency === "EUR") return "€";
-  if (currency === "GBP") return "£";
-  return "₹"; // INR default
-}
 
-const TEMPLATE_LABELS: Record<string, string> = {
-  royal: "Royal Gold",
-  "ivory-elegance": "Ivory Elegance",
-  "modern-gradient": "Modern Gradient",
-  "new-generation": "New Generation",
-  "ornate-grandeur": "Ornate Grandeur",
-  "green-shapes": "Green Shapes",
-};
 
-const getRelativeUrl = (url?: string) => {
-  if (!url) return "";
-  if (url.startsWith("http://localhost:") || url.startsWith("http://127.0.0.1:")) {
-    return url.replace(/^https?:\/\/[^\/]+/, "");
-  }
-  return url;
-};
+
+
+
 
 interface TemplateCardProps {
   tpl: any;
@@ -49,7 +31,7 @@ const TemplateCard = React.memo(function TemplateCard({
   let cardStyle: React.CSSProperties = {};
   if (tpl.thumbnailUrl) {
     cardStyle = {
-      backgroundImage: `url(${getRelativeUrl(tpl.thumbnailUrl)})`,
+      backgroundImage: `url(${tpl.thumbnailUrl})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
@@ -90,10 +72,7 @@ const TemplateCard = React.memo(function TemplateCard({
       >
         {tpl.thumbnailUrl && (
           <Image
-            src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
-              ? tpl.thumbnailUrl.replace("/image/upload/", "/image/upload/w_595,h_842,c_fit,f_auto,q_auto/")
-              : getRelativeUrl(tpl.thumbnailUrl)
-            }
+            src={tpl.thumbnailUrl}
             alt={`Matrimonial design template: ${tpl.name}`}
             fill
             sizes="(max-width: 768px) 100vw, 30vw"
@@ -126,7 +105,7 @@ const TemplateCard = React.memo(function TemplateCard({
           {tpl.isPremium ? (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow">
               <Crown className="w-2 h-2" />
-              {getCurrencySymbol(tpl.currency)}{tpl.jpgDiscountPrice ?? tpl.jpgPrice ?? 19}
+              ₹{tpl.jpgDiscountPrice ?? tpl.jpgPrice ?? 19}
             </span>
           ) : (
             <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-black bg-green-500 text-white shadow">
@@ -181,7 +160,9 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const setSelectedTemplate = useBiodataStore(s => s.setSelectedTemplate);
   const customTemplates = useBiodataStore(s => s.customTemplates);
   const fetchCustomTemplates = useBiodataStore(s => s.fetchCustomTemplates);
-
+  const fetchMoreTemplates = useBiodataStore(s => s.fetchMoreTemplates);
+  const hasMoreTemplates = useBiodataStore(s => s.hasMoreTemplates);
+  const isFetchingMoreTemplates = useBiodataStore(s => s.isFetchingMoreTemplates);
   const hasLoadedAllTemplates = useBiodataStore(s => s.hasLoadedAllTemplates);
 
   const setPalette = useThemeStore(s => s.setPalette);
@@ -189,6 +170,9 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const setPaddingY = useThemeStore(s => s.setPaddingY);
   const resetOverrides = useThemeStore(s => s.resetOverrides);
   const [isLoading, setIsLoading] = React.useState(false);
+
+  // Sentinel ref for IntersectionObserver
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!hasLoadedAllTemplates) {
@@ -198,6 +182,22 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
       });
     }
   }, [fetchCustomTemplates, hasLoadedAllTemplates]);
+
+  // IntersectionObserver: fetch next page when sentinel enters viewport
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreTemplates && !isFetchingMoreTemplates) {
+          fetchMoreTemplates();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreTemplates, isFetchingMoreTemplates, fetchMoreTemplates]);
 
   const langFilter = useBiodataStore(s => s.langFilter);
   const priceFilter = useBiodataStore(s => s.priceFilter);
@@ -240,82 +240,84 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
     return result;
   }, [templates, deferredLangFilter, deferredPriceFilter, languagesList]);
 
+  const SkeletonCard = () => (
+    <div className="flex flex-col gap-2 animate-pulse select-none">
+      <div className="w-full aspect-[595/842] rounded-xl bg-stone-100 dark:bg-stone-900 border border-stone-200/50 dark:border-stone-800/50 relative overflow-hidden">
+        <div className="absolute top-2 left-2 w-10 h-3.5 bg-stone-200 dark:bg-stone-800 rounded-md" />
+        <div className="absolute inset-[8px] border border-dashed border-stone-200/30 dark:border-stone-800/30" />
+        <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5">
+          <div className="h-1 bg-stone-200 dark:bg-stone-800 w-3/4 rounded" />
+          <div className="h-1 bg-stone-200 dark:bg-stone-800 w-1/2 rounded" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1 px-1">
+        <div className="h-3 bg-stone-200 dark:bg-stone-800 w-2/3 rounded-md" />
+        <div className="flex justify-between items-center mt-0.5">
+          <div className="flex gap-1">
+            <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+            <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+            <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+          </div>
+          <div className="w-8 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-      {filteredTemplates.map((tpl) => {
-        const isSelected = selectedTemplate === tpl.id;
+        {filteredTemplates.map((tpl) => {
+          const isSelected = selectedTemplate === tpl.id;
+          return (
+            <TemplateCard
+              key={tpl.id}
+              tpl={tpl}
+              isSelected={isSelected}
+              priority={isSelected || filteredTemplates.indexOf(tpl) === 0}
+              onClick={() => {
+                setSelectedTemplate(tpl.id);
+                let bgColors: string[] = ["#ffffff"];
+                if (tpl.bgGradientColors && tpl.bgGradientColors.length > 0) {
+                  bgColors = tpl.bgGradientColors;
+                } else if (tpl.frame.type === "gradient") {
+                  bgColors = tpl.frame.gradientColors;
+                } else if (tpl.frame.bgColor) {
+                  bgColors = [tpl.frame.bgColor];
+                }
+                setPalette({
+                  name: "None",
+                  primary: tpl.defaultPrimary,
+                  secondary: tpl.defaultSecondary,
+                  accent: tpl.defaultAccent,
+                  bgColors: bgColors,
+                });
+                if (tpl.defaultPadding !== undefined && tpl.defaultPadding !== null) {
+                  setPadding(tpl.defaultPadding);
+                }
+                setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
+                resetOverrides();
+                onSelect?.();
+              }}
+            />
+          );
+        })}
 
-        return (
-          <TemplateCard
-            key={tpl.id}
-            tpl={tpl}
-            isSelected={isSelected}
-            priority={isSelected || filteredTemplates.indexOf(tpl) === 0}
-            onClick={() => {
-              setSelectedTemplate(tpl.id);
-              
-              // Resolve template background colors (gradients or solids)
-              let bgColors: string[] = ["#ffffff"];
-              if (tpl.bgGradientColors && tpl.bgGradientColors.length > 0) {
-                bgColors = tpl.bgGradientColors;
-              } else if (tpl.frame.type === "gradient") {
-                bgColors = tpl.frame.gradientColors;
-              } else if (tpl.frame.bgColor) {
-                bgColors = [tpl.frame.bgColor];
-              }
+        {/* Initial loading skeletons */}
+        {isLoading && Array.from({ length: 4 }).map((_, idx) => (
+          <SkeletonCard key={`skeleton-init-${idx}`} />
+        ))}
 
-              setPalette({
-                name: "None",
-                primary: tpl.defaultPrimary,
-                secondary: tpl.defaultSecondary,
-                accent: tpl.defaultAccent,
-                bgColors: bgColors,
-              });
-
-              // Apply the template's dynamic default padding from the database configuration
-              if (tpl.defaultPadding !== undefined && tpl.defaultPadding !== null) {
-                setPadding(tpl.defaultPadding);
-              }
-              setPaddingY(tpl.defaultYPadding !== null && tpl.defaultYPadding !== undefined ? tpl.defaultYPadding : undefined);
-
-              // Reset any manual padding or photo transformation overrides so template defaults apply
-              resetOverrides();
-
-              onSelect?.();
-            }}
-          />
-        );
-      })}
-
-      {/* Render individual skeleton slots next to already loaded templates while fetching */}
-      {isLoading && Array.from({ length: 4 }).map((_, idx) => (
-        <div key={`skeleton-${idx}`} className="flex flex-col gap-2 animate-pulse select-none">
-          <div className="w-full aspect-[595/842] rounded-xl bg-stone-100 dark:bg-stone-900 border border-stone-200/50 dark:border-stone-800/50 relative overflow-hidden">
-            {/* Mock Badge */}
-            <div className="absolute top-2 left-2 w-10 h-3.5 bg-stone-200 dark:bg-stone-800 rounded-md" />
-            
-            {/* Inner simulated lines */}
-            <div className="absolute inset-[8px] border border-dashed border-stone-200/30 dark:border-stone-800/30" />
-            <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-1.5">
-              <div className="h-1 bg-stone-200 dark:bg-stone-800 w-3/4 rounded" />
-              <div className="h-1 bg-stone-200 dark:bg-stone-800 w-1/2 rounded" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1 px-1">
-            <div className="h-3 bg-stone-200 dark:bg-stone-800 w-2/3 rounded-md" />
-            <div className="flex justify-between items-center mt-0.5">
-              <div className="flex gap-1">
-                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
-                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
-                <div className="w-2.5 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
-              </div>
-              <div className="w-8 h-2.5 bg-stone-200 dark:bg-stone-800 rounded-sm" />
-            </div>
-          </div>
-        </div>
-      ))}
+        {/* Infinite scroll loading skeletons */}
+        {isFetchingMoreTemplates && Array.from({ length: 2 }).map((_, idx) => (
+          <SkeletonCard key={`skeleton-more-${idx}`} />
+        ))}
       </div>
+
+      {/* Sentinel: triggers IntersectionObserver when scrolled into view */}
+      {hasMoreTemplates && (
+        <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
+      )}
     </div>
   );
 });

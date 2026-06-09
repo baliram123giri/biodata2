@@ -503,7 +503,7 @@ export function HomeBiodataBuilder() {
               </div>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto p-6 pt-4">
-              <TemplateSelector onSelect={() => setIsDrawerOpen(false)} />
+              <TemplateSelector />
             </div>
           </SheetContent>
         </Sheet>
@@ -645,7 +645,7 @@ export function HomeBiodataBuilder() {
                     </div>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto p-6 pt-4">
-                    <TemplateSelector onSelect={() => setIsMobileDrawerOpen(false)} />
+                    <TemplateSelector />
                   </div>
                 </SheetContent>
               </Sheet>

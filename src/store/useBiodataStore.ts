@@ -39,6 +39,9 @@ interface BiodataState {
   customTemplates: TemplateConfig[];
   customStickers: any[];
   hasLoadedAllTemplates: boolean;
+  hasMoreTemplates: boolean;
+  templatePage: number;
+  isFetchingMoreTemplates: boolean;
   setFormData: (data: any) => void;
   updateField: (section: keyof BiodataFormValues, id: string, value: string) => void;
   updateLayout: (id: string, x: number, y: number) => void;
@@ -48,6 +51,7 @@ interface BiodataState {
   setSelectedTemplate: (templateId: string) => void;
   setCustomTemplates: (templates: TemplateConfig[]) => void;
   fetchCustomTemplates: () => Promise<void>;
+  fetchMoreTemplates: () => Promise<void>;
   fetchInitialTemplate: (templateId?: string | null) => Promise<void>;
   fetchCustomStickers: () => Promise<void>;
   langFilter: string;
@@ -77,6 +81,9 @@ export const useBiodataStore = create<BiodataState>()(
         customTemplates: [],
         customStickers: [],
         hasLoadedAllTemplates: false,
+        hasMoreTemplates: true,
+        templatePage: 1,
+        isFetchingMoreTemplates: false,
         langFilter: "all",
         priceFilter: "all",
         setLangFilter: (lang) => set({ langFilter: lang }),
@@ -137,21 +144,36 @@ export const useBiodataStore = create<BiodataState>()(
         setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
         setCustomTemplates: (templates) => set({ customTemplates: templates }),
         fetchCustomTemplates: async () => {
+          const state = useBiodataStore.getState();
+          // If we already loaded the list of templates (not just a single template by ID), skip fetching page 1 again
+          if (state.hasLoadedAllTemplates && state.customTemplates.length > 1) {
+            return;
+          }
           try {
-            const res = await fetch("/api/templates");
+            const res = await fetch("/api/templates?page=1&limit=10");
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
-              
+              if (typeof window !== "undefined") {
+                data.templates.forEach((tpl: any) => {
+                  if (tpl.thumbnailUrl) {
+                    const img = new window.Image();
+                    img.src = tpl.thumbnailUrl;
+                  }
+                });
+              }
               set((state) => {
                 const currentSelected = state.selectedTemplate;
-                const hasSelected = data.templates.some((t: any) => t.id === currentSelected);
+                // Only auto-select default if nothing is currently selected
+                const needsSelection = !currentSelected;
                 const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
                 return {
                   customTemplates: data.templates,
                   hasLoadedAllTemplates: true,
-                  selectedTemplate: hasSelected ? currentSelected : fallbackTemplateId,
+                  hasMoreTemplates: data.hasMore ?? false,
+                  templatePage: 1,
+                  ...(needsSelection ? { selectedTemplate: fallbackTemplateId } : {}),
                 };
               });
             }
@@ -159,10 +181,43 @@ export const useBiodataStore = create<BiodataState>()(
             console.error("Store failed to fetch templates:", err);
           }
         },
+        fetchMoreTemplates: async () => {
+          const state = useBiodataStore.getState();
+          if (state.isFetchingMoreTemplates || !state.hasMoreTemplates) return;
+          set({ isFetchingMoreTemplates: true });
+          try {
+            const nextPage = state.templatePage + 1;
+            const res = await fetch(`/api/templates?page=${nextPage}&limit=10`);
+            const data = await res.json();
+            if (data.templates && data.templates.length > 0) {
+              registerDynamicTemplates(data.templates);
+              if (typeof window !== "undefined") {
+                data.templates.forEach((tpl: any) => {
+                  if (tpl.thumbnailUrl) {
+                    const img = new window.Image();
+                    img.src = tpl.thumbnailUrl;
+                  }
+                });
+              }
+              set((s) => ({
+                customTemplates: [...s.customTemplates, ...data.templates.filter((t: any) => !s.customTemplates.some(e => e.id === t.id))],
+                hasMoreTemplates: data.hasMore ?? false,
+                templatePage: nextPage,
+                isFetchingMoreTemplates: false,
+              }));
+            } else {
+              set({ hasMoreTemplates: false, isFetchingMoreTemplates: false });
+            }
+          } catch (err) {
+            console.error("Store failed to fetch more templates:", err);
+            set({ isFetchingMoreTemplates: false });
+          }
+        },
         fetchInitialTemplate: async (templateId) => {
           try {
             const currentSelected = useBiodataStore.getState().selectedTemplate;
-            const targetId = templateId || currentSelected;
+            // If a specific template is requested via URL param, use that; otherwise keep existing selection
+            const targetId = templateId || currentSelected || null;
 
             // Always make sure stored templates are registered in-memory on page load
             const loaded = useBiodataStore.getState().customTemplates;
@@ -170,8 +225,8 @@ export const useBiodataStore = create<BiodataState>()(
               registerDynamicTemplates(loaded);
             }
 
-            // If we already have the target template loaded in the store, return early
-            const isTargetLoaded = loaded.some((t) => t.id === targetId);
+            // If we already have templates and the target is loaded, just update selection if needed
+            const isTargetLoaded = targetId ? loaded.some((t) => t.id === targetId) : loaded.length > 0;
             if (loaded.length > 0 && isTargetLoaded) {
               if (templateId) {
                 set({ selectedTemplate: templateId });
@@ -179,21 +234,29 @@ export const useBiodataStore = create<BiodataState>()(
               return;
             }
 
-            // Fetch only the default or requested target template initially to optimize page load
-            const url = targetId 
-              ? `/api/templates?id=${targetId}` 
-              : "/api/templates?default=true";
+            // Fetch 10 templates on initial load: default first + 9 more
+            const url = templateId
+              ? `/api/templates?id=${templateId}`
+              : "/api/templates?default=true&limit=10";
             const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
-              
+              if (typeof window !== "undefined") {
+                data.templates.forEach((tpl: any) => {
+                  if (tpl.thumbnailUrl) {
+                    const img = new window.Image();
+                    img.src = tpl.thumbnailUrl;
+                  }
+                });
+              }
+
               set((state) => {
-                const hasSelected = data.templates.some((t: any) => t.id === targetId);
+                const existingSelected = state.selectedTemplate;
                 const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
-                
-                // Merge the new template into customTemplates to preserve already loaded templates
+
+                // Merge the new templates into customTemplates
                 const existingTemplates = state.customTemplates || [];
                 const mergedTemplates = [...existingTemplates];
                 data.templates.forEach((newTpl: any) => {
@@ -202,13 +265,26 @@ export const useBiodataStore = create<BiodataState>()(
                   }
                 });
 
+                // Priority: URL param > existing selection > default
+                const newSelected = templateId
+                  ? templateId
+                  : (existingSelected || fallbackTemplateId);
+
+                // If no templateId parameter was requested, we loaded the default first page
+                const loadedDefaultPage = !templateId;
+
                 return {
                   customTemplates: mergedTemplates,
-                  selectedTemplate: hasSelected ? (targetId || fallbackTemplateId) : fallbackTemplateId,
+                  selectedTemplate: newSelected,
+                  ...(loadedDefaultPage ? {
+                    hasLoadedAllTemplates: true,
+                    templatePage: 1,
+                    hasMoreTemplates: data.hasMore ?? false,
+                  } : {})
                 };
               });
-            } else if (targetId) {
-              set({ selectedTemplate: targetId });
+            } else if (templateId) {
+              set({ selectedTemplate: templateId });
             }
           } catch (err) {
             console.error("Store failed to fetch initial templates:", err);

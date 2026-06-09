@@ -106,9 +106,7 @@ function isBackgroundDark(
 interface KonvaPreviewProps {
   liveFormData?: BiodataFormValues & { stickers?: Sticker[]; layout?: any };
   templateId?: string;
-  scale?: number;
   isDesigner?: boolean;
-  resetKey?: number;
 }
 
 const A4_W = 595;
@@ -625,7 +623,7 @@ const GradientFrame = React.memo(function GradientFrame({ config, primaryColor }
 // ════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════
-export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, templateId, scale: propScale, isDesigner = false, resetKey = 0 }: KonvaPreviewProps) {
+export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, templateId, isDesigner = false }: KonvaPreviewProps) {
   const { formData: storeFormData, selectedTemplate: storeTemplate, customTemplates, removeSticker, updateSticker } = useBiodataStore(useShallow(s => ({
     formData: s.formData,
     selectedTemplate: s.selectedTemplate,
@@ -672,7 +670,8 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
   const [stageSize, setStageSize] = useState({ width: A4_W, height: A4_H });
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
-  const [scale, setScale] = useState(propScale || 1);
+  const hasInitializedPanRef = useRef(false);
+  const [scale, setScale] = useState(1);
   const [fontsReady, setFontsReady] = useState(false);
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
@@ -756,38 +755,68 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedStickers, removeSticker, isDesigner, formData.stickers]);
 
+  // ── Internal mount-only fit to screen ───────────────────────────
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const updateSize = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setStageSize({ width, height });
-      if (!isDesigner || (stagePos.x === 0 && stagePos.y === 0)) {
-        const initialScale = Math.min(width / A4_W, height / A4_H);
-        if (!propScale) setScale(initialScale);
-        setStagePos({ x: (width - A4_W * (propScale || initialScale)) / 2, y: (height - A4_H * (propScale || initialScale)) / 2 });
-      }
-    };
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, [isDesigner, propScale]);
+    const { width, height } = el.getBoundingClientRect();
+    setStageSize({ width, height });
+    const initialScale = Math.min(width / A4_W, height / A4_H);
+    setScale(initialScale);
+    setStagePos({ x: (width - A4_W * initialScale) / 2, y: (height - A4_H * initialScale) / 2 });
+    hasInitializedPanRef.current = true;
+  }, []);
 
+  // ── ResizeObserver: keep stage size synced when sidebar opens/closes ───
   useEffect(() => {
-    if (propScale !== undefined) {
-      setScale(propScale);
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) setStageSize({ width, height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Zoom/Fit event listeners ─────────────────────────────────────
+  useEffect(() => {
+    if (!isDesigner) return;
+    const ZOOM_STEP = 0.1;
+    const fitToScreen = () => {
       const el = containerRef.current;
-      if (el) {
-        const { width, height } = el.getBoundingClientRect();
-        setStagePos({
-          x: (width - A4_W * propScale) / 2,
-          y: (height - A4_H * propScale) / 2
-        });
-      }
-    }
-    // resetKey changes every time fit-to-screen is clicked, forcing
-    // this effect to re-run even if propScale didn't change
-  }, [propScale, resetKey]);
+      if (!el) return;
+      const { width, height } = el.getBoundingClientRect();
+      const fitScale = Math.max(0.3, Math.min(Math.min(width / A4_W, height / A4_H), 1.2));
+      setScale(fitScale);
+      setStagePos({ x: (width - A4_W * fitScale) / 2, y: (height - A4_H * fitScale) / 2 });
+      window.dispatchEvent(new CustomEvent("biodata:scale-changed", { detail: fitScale }));
+    };
+    const zoomIn = () => {
+      setScale(prev => {
+        const next = Math.min(prev + ZOOM_STEP, 2);
+        window.dispatchEvent(new CustomEvent("biodata:scale-changed", { detail: next }));
+        return next;
+      });
+    };
+    const zoomOut = () => {
+      setScale(prev => {
+        const next = Math.max(prev - ZOOM_STEP, 0.3);
+        window.dispatchEvent(new CustomEvent("biodata:scale-changed", { detail: next }));
+        return next;
+      });
+    };
+    window.addEventListener("biodata:fit-screen", fitToScreen);
+    window.addEventListener("biodata:zoom-in", zoomIn);
+    window.addEventListener("biodata:zoom-out", zoomOut);
+    return () => {
+      window.removeEventListener("biodata:fit-screen", fitToScreen);
+      window.removeEventListener("biodata:zoom-in", zoomIn);
+      window.removeEventListener("biodata:zoom-out", zoomOut);
+    };
+  }, [isDesigner]);
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!isDesigner) return;
@@ -1200,33 +1229,40 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
   const mantraGeometry = useMemo(() => {
     if (!mantraSticker) return null;
+
+    // RTL/Arabic/Urdu glyphs render narrower than Latin — use a tighter multiplier
+    const lang = formData.language || "English";
+    const isRTL = lang === "اردو";
+    const mantraCharW = isRTL ? 0.32 : 0.5;
+    const titleCharW  = isRTL ? 0.38 : 0.55;
+
     // Use the wider of mantra text or title text so stickers clear both lines
-    const mantraWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * 0.5) : 0;
-    const titleWidth = formData.title ? formData.title.length * (layout.fSize * 2 * 0.55) : 0;
-    const textWidth = Math.max(mantraWidth, titleWidth);
+    const mantraWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * mantraCharW) : 0;
+    const titleWidth  = formData.title  ? formData.title.length  * (layout.fSize * 2   * titleCharW)  : 0;
+    const textWidth   = Math.max(mantraWidth, titleWidth);
+
     const align = sectionStyles["header"]?.textAlign || "center";
     const gap = 10;
     const imgW = 45; // 100 * 0.45
 
     if (align === "left") {
       return {
-        leftX: paddingLeft,
+        leftX:  paddingLeft,
         rightX: paddingLeft + textWidth + gap * 2 + imgW,
       };
     } else if (align === "right") {
       return {
-        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
+        leftX:  A4_W - paddingRight - textWidth - gap * 2 - imgW,
         rightX: A4_W - paddingRight,
       };
     } else {
       const halfW = textWidth / 2;
       return {
-        leftX: A4_W / 2 - halfW - gap - imgW,
-        // scaleX:-0.45 mirrors from anchor leftward, so push anchor rightward by imgW
+        leftX:  A4_W / 2 - halfW - gap - imgW,
         rightX: A4_W / 2 + halfW + gap + imgW,
       };
     }
-  }, [formData.mantra, formData.title, mantraSticker, layout.fSize, sectionStyles, paddingLeft, paddingRight]);
+  }, [formData.mantra, formData.title, formData.language, mantraSticker, layout.fSize, sectionStyles, paddingLeft, paddingRight]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;

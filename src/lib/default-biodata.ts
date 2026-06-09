@@ -18,7 +18,7 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "maritalStatus", label: "Marital Status", value: "", type: "select", options: ["Single", "Divorced", "Widowed", "Separated"], isDefault: true },
     { id: "bloodGroup", label: "Blood Group", value: "", type: "select", options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], isDefault: true },
     { id: "complexion", label: "Complexion", value: "", type: "select", options: ["Fair", "Very Fair", "Wheatish", "Wheatish Brown", "Dark"], isDefault: true },
-    { id: "religion", label: "Religion", value: "", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
+    { id: "religion", label: "Religion", value: "General", type: "select", options: ["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
     { id: "caste", label: "Caste", value: "", type: "text", isDefault: true },
     { id: "gotra", label: "Gotra", value: "", type: "select", options: [
       "Agastya", "Angirasa", "Atri", "Bharadwaja", "Bhrigu", "Gautama", "Jamadagni", "Kashyapa", "Shandilya", "Vashishta", "Vishvamitra", "Gargya", "Kaushika", "Vatsa", "Mudgala", "Parashara", "Upamanyu", "Harita", "Other"

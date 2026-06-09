@@ -53,9 +53,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChromePicker } from "react-color";
-const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
-const StickerSelector = dynamic(() => import("@/components/editor/StickerSelector").then(mod => mod.StickerSelector));
-const BackgroundSelector = dynamic(() => import("@/components/editor/BackgroundSelector").then(mod => mod.BackgroundSelector));
+import { TemplateSelector } from "@/components/editor/TemplateSelector";
+import { StickerSelector } from "@/components/editor/StickerSelector";
+import { BackgroundSelector } from "@/components/editor/BackgroundSelector";
 import { TemplateFilter } from "@/components/editor/TemplateFilter";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
@@ -318,7 +318,13 @@ function EditPageContent() {
     });
   };
 
-  const [zoom, setZoom] = useState(1);
+  const [displayZoom, setDisplayZoom] = useState(1);
+  useEffect(() => {
+    const handler = (e: Event) => setDisplayZoom((e as CustomEvent).detail as number);
+    window.addEventListener("biodata:scale-changed", handler);
+    return () => window.removeEventListener("biodata:scale-changed", handler);
+  }, []);
+
   const [selectedStickersCount, setSelectedStickersCount] = useState(0);
 
   useEffect(() => {
@@ -329,7 +335,7 @@ function EditPageContent() {
     window.addEventListener("biodata:selection-changed", handleSelection);
     return () => window.removeEventListener("biodata:selection-changed", handleSelection);
   }, []);
-  const [fitResetKey, setFitResetKey] = useState(0);
+
   const [activeTab, setActiveTab] = useState<"templates" | "fields" | "theme" | "spacing" | "photo" | "graphics" | "whatsapp">("fields");
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
@@ -377,32 +383,10 @@ function EditPageContent() {
     }
   };
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.4));
+  const handleZoomIn = () => window.dispatchEvent(new CustomEvent("biodata:zoom-in"));
+  const handleZoomOut = () => window.dispatchEvent(new CustomEvent("biodata:zoom-out"));
 
-  const handleFitToScreen = () => {
-    if (typeof window === "undefined") return;
-    const container = document.getElementById("canvas-container");
-    if (!container) return;
-
-    const A4_W = 595;
-    const A4_H = 842;
-    const isMobile = window.innerWidth < 1024;
-    const padding = isMobile ? 24 : 48; // padding around the A4 page in the view
-
-    const availableWidth = container.clientWidth - padding * 2;
-    const availableHeight = container.clientHeight - padding * 2;
-
-    const fitWidthZoom = availableWidth / A4_W;
-    const fitHeightZoom = availableHeight / A4_H;
-
-    // Minimum zoom to fit both dimensions
-    const fitZoom = Math.min(fitWidthZoom, fitHeightZoom);
-
-    // Limit zoom to a reasonable range
-    setZoom(Math.max(0.3, Math.min(fitZoom, 1.2)));
-    setFitResetKey(k => k + 1);
-  };
+  const handleFitToScreen = () => window.dispatchEvent(new CustomEvent("biodata:fit-screen"));
 
   // Fetch initial template only after store hydration is complete to prevent race conditions
   useEffect(() => {
@@ -485,46 +469,126 @@ function EditPageContent() {
 
   useEffect(() => {
     if (isMounted) {
-      // Trigger fit-to-screen when sidebar state changes (after transition)
-      const timer = setTimeout(handleFitToScreen, 350);
-      return () => clearTimeout(timer);
+      // Intentionally removed auto fit-to-screen on sidebar toggle to prevent resetting user's pan/zoom position
     }
   }, [isRightOpen, isMounted]);
 
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-stone-100/30 flex flex-col">
-        {/* Simple skeleton header */}
-        <header className="h-16 border-b border-stone-200/80 bg-white flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            {/* Mock Go Back button */}
-            <div className="w-24 h-9 bg-stone-100 rounded-full animate-pulse border border-stone-200" />
+      <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#f5f5f0]">
+        {/* ── Header skeleton ─────────────────────────────── */}
+        <header className="h-14 shrink-0 bg-white border-b border-stone-200 flex items-center justify-between px-4 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-20 h-8 bg-stone-200 rounded-full animate-pulse" />
+            <div className="w-px h-6 bg-stone-200" />
+            <div className="w-24 h-6 bg-stone-100 rounded-md animate-pulse" />
           </div>
-          <div className="w-28 h-9 bg-stone-200 rounded-full animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-stone-100 rounded-full animate-pulse" />
+            <div className="w-8 h-8 bg-stone-100 rounded-full animate-pulse" />
+            <div className="w-px h-6 bg-stone-200" />
+            <div className="w-28 h-9 bg-stone-200 rounded-full animate-pulse" />
+          </div>
         </header>
-        {/* Main loading area */}
+
+        {/* ── Body ────────────────────────────────────────── */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Skeleton Sidebar (Left) */}
-          <aside className="w-80 border-r border-stone-200/80 bg-white p-6 hidden lg:flex flex-col gap-6">
-            <div className="h-8 w-32 bg-stone-200 rounded-md animate-pulse" />
-            <div className="h-10 w-full bg-stone-100 rounded-md animate-pulse" />
-            <div className="h-20 w-full bg-stone-100 rounded-md animate-pulse" />
-            <div className="h-10 w-full bg-stone-100 rounded-md animate-pulse" />
-          </aside>
-          {/* Canvas Loading Area */}
-          <main className="flex-1 flex items-center justify-center p-6 bg-stone-50/20">
-            <PreviewLoader />
+
+          {/* Left icon nav skeleton (desktop only) */}
+          <div className="hidden lg:flex w-16 shrink-0 flex-col items-center py-4 gap-3 bg-white border-r border-stone-200">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <div className="w-9 h-9 bg-stone-100 rounded-xl animate-pulse" />
+                <div className="w-10 h-2 bg-stone-100 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+
+          {/* Canvas area */}
+          <main className="flex-1 relative overflow-hidden flex items-center justify-center">
+            {/* Grid background */}
+            <div className="absolute inset-0" style={{
+              backgroundImage: `linear-gradient(to right,rgba(0,0,0,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,0.04) 1px,transparent 1px)`,
+              backgroundSize: "24px 24px",
+              backgroundColor: "#f5f5f0"
+            }} />
+
+            {/* A4 page skeleton */}
+            <div className="relative shadow-2xl rounded-sm overflow-hidden bg-white animate-pulse"
+              style={{ width: 280, height: 396 }}>
+              {/* Frame lines */}
+              <div className="absolute inset-[8px] border border-stone-200 rounded-none" />
+              <div className="absolute inset-[14px] border border-stone-100 rounded-none" />
+
+              {/* Header area */}
+              <div className="absolute top-6 left-0 right-0 flex flex-col items-center gap-2 px-8">
+                <div className="w-3/5 h-2.5 bg-stone-200 rounded" />
+                <div className="w-4/5 h-4 bg-stone-100 rounded" />
+              </div>
+
+              {/* Photo placeholder */}
+              <div className="absolute top-20 right-8 w-16 h-20 bg-stone-100 rounded" />
+
+              {/* Content lines */}
+              <div className="absolute top-20 left-8 right-28 flex flex-col gap-2">
+                {[0.8, 0.65, 0.9, 0.7, 0.75, 0.6, 0.85, 0.7, 0.65].map((w, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <div className="w-12 h-1.5 bg-stone-200 rounded shrink-0" />
+                    <div className="h-1.5 bg-stone-100 rounded" style={{ width: `${w * 100}%` }} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Section 2 lines */}
+              <div className="absolute top-60 left-8 right-8 flex flex-col gap-2">
+                <div className="w-1/3 h-2.5 bg-stone-200 rounded mb-1" />
+                {[0.7, 0.55, 0.8, 0.6].map((w, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <div className="w-12 h-1.5 bg-stone-200 rounded shrink-0" />
+                    <div className="h-1.5 bg-stone-100 rounded" style={{ width: `${w * 100}%` }} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Shine sweep */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite]" />
+            </div>
+
+            {/* Floating zoom bar */}
+            <div className="absolute bottom-5 right-5 flex items-center gap-1 bg-white/90 px-3 py-1.5 rounded-full shadow border border-stone-200 animate-pulse">
+              <div className="w-5 h-5 bg-stone-100 rounded-full" />
+              <div className="w-5 h-5 bg-stone-100 rounded-full" />
+              <div className="w-10 h-3 bg-stone-100 rounded" />
+              <div className="w-5 h-5 bg-stone-100 rounded-full" />
+            </div>
           </main>
-          {/* Skeleton Sidebar (Right) */}
-          <aside className="w-80 border-l border-stone-200/80 bg-white p-6 hidden lg:flex flex-col gap-6">
-            <div className="h-8 w-24 bg-stone-200 rounded-md animate-pulse" />
-            <div className="h-12 w-full bg-stone-100 rounded-md animate-pulse" />
-            <div className="h-12 w-full bg-stone-100 rounded-md animate-pulse" />
+
+          {/* Right panel skeleton (desktop only) */}
+          <aside className="hidden lg:flex w-80 shrink-0 flex-col bg-white border-l border-stone-200">
+            {/* Panel header */}
+            <div className="px-6 py-5 border-b border-stone-100 flex flex-col gap-2">
+              <div className="w-28 h-5 bg-stone-200 rounded-md animate-pulse" />
+              <div className="w-40 h-3 bg-stone-100 rounded animate-pulse" />
+            </div>
+            {/* Panel content */}
+            <div className="flex-1 p-6 flex flex-col gap-4 overflow-hidden">
+              {/* Template grid preview */}
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-2 animate-pulse">
+                    <div className="w-full aspect-[595/842] bg-stone-100 rounded-xl border border-stone-200" />
+                    <div className="h-2.5 bg-stone-100 rounded w-3/4" />
+                    <div className="h-2 bg-stone-50 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </aside>
         </div>
       </div>
     );
   }
+
 
   const handleDownload = async () => {
     const nameField =
@@ -740,10 +804,13 @@ function EditPageContent() {
 
         {/* Canvas Area */}
         <main id="canvas-container" className="flex-1 overflow-hidden relative bg-transparent h-full flex items-center justify-center">
-          {customTemplates.length === 0 || (templateParam && selectedTemplate !== templateParam) ? (
-            <PreviewLoader />
-          ) : (
-            <KonvaPreview scale={zoom} isDesigner={true} resetKey={fitResetKey} />
+          {/* KonvaPreview is ALWAYS mounted to preserve pan/zoom state.
+              The PreviewLoader overlay is shown on top until templates are ready. */}
+          <KonvaPreview isDesigner={true} />
+          {(customTemplates.length === 0 || (templateParam && selectedTemplate !== templateParam)) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-stone-50/80 backdrop-blur-sm z-10">
+              <PreviewLoader />
+            </div>
           )}
 
           {/* Floating Left Toolbar - Desktop only, overlaid on the canvas */}
@@ -799,7 +866,7 @@ function EditPageContent() {
               <Maximize className="w-4 h-4" />
             </button>
             <span className="text-[10px] font-black text-stitch-on-surface w-10 text-center select-none">
-              {Math.round(zoom * 100)}%
+              {Math.round(displayZoom * 100)}%
             </span>
             <button
               onClick={handleZoomIn}

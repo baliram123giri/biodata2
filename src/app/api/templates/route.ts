@@ -9,25 +9,47 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const onlyDefault = searchParams.get("default") === "true";
     const templateId = searchParams.get("id");
+    const limit = parseInt(searchParams.get("limit") || "0") || 0;
+    const page = parseInt(searchParams.get("page") || "1") || 1;
 
     if (onlyDefault) {
-      // Fetch only the default template
-      const dbTemplate = await withRetry(() =>
+      // Fetch the default template first
+      const defaultTemplate = await withRetry(() =>
         prisma.template.findFirst({
           where: { active: true, isDefault: true },
         })
       );
-      
-      // If no default template exists, fallback to the latest active template
-      const templateToMap = dbTemplate || await withRetry(() =>
+
+      // Fallback to latest active if no default is set
+      const primaryTemplate = defaultTemplate || await withRetry(() =>
         prisma.template.findFirst({
           where: { active: true },
           orderBy: { createdAt: "desc" },
         })
       );
 
-      const templates = templateToMap ? [mapDbTemplateToConfig(templateToMap)] : [];
-      return NextResponse.json({ templates });
+      if (!primaryTemplate) {
+        return NextResponse.json({ templates: [] });
+      }
+
+      // If a limit is requested, fill remaining slots with other templates
+      if (limit > 1) {
+        const [others, total] = await Promise.all([
+          withRetry(() =>
+            prisma.template.findMany({
+              where: { active: true, id: { not: primaryTemplate.id } },
+              orderBy: { createdAt: "desc" },
+              take: limit - 1,
+            })
+          ),
+          withRetry(() => prisma.template.count({ where: { active: true } })),
+        ]);
+        const templates = [primaryTemplate, ...others].map(mapDbTemplateToConfig);
+        const hasMore = templates.length < total;
+        return NextResponse.json({ templates, hasMore, total });
+      }
+
+      return NextResponse.json({ templates: [mapDbTemplateToConfig(primaryTemplate)], hasMore: false, total: 1 });
     }
 
     if (templateId) {
@@ -42,20 +64,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ templates });
     }
 
-    // Default: fetch all templates
-    const dbTemplates = await withRetry(() =>
-      prisma.template.findMany({
-        where: { active: true },
-        orderBy: { createdAt: "desc" },
-      })
-    );
+    // Default: fetch all or paginated templates
+    const pageLimit = limit > 0 ? limit : 10;
+    const skip = (page - 1) * pageLimit;
+
+    const [dbTemplates, total] = await Promise.all([
+      withRetry(() =>
+        prisma.template.findMany({
+          where: { active: true },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: pageLimit,
+        })
+      ),
+      withRetry(() => prisma.template.count({ where: { active: true } })),
+    ]);
 
     const templates = dbTemplates.map(mapDbTemplateToConfig);
-
-    return NextResponse.json({ templates });
+    const hasMore = skip + dbTemplates.length < total;
+    return NextResponse.json({ templates, hasMore, total });
   } catch (error: any) {
     console.error("Fetch templates database error, falling back gracefully:", error);
-    // Return a graceful 200 OK with empty templates array so the page/Lighthouse doesn't fail
     return NextResponse.json({ templates: [], error: error.message });
   }
 }
