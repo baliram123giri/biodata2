@@ -19,7 +19,7 @@ const footerLinks = {
     { label: "Contact Us", href: "/contact-us" },
   ],
   resources: [
-    { label: "Biodata Format Guide", href: "/biodata-format" },
+    { label: "Biodata Templates", href: "/biodata-templates" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy-policy" },

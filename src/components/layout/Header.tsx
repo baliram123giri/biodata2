@@ -18,7 +18,7 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/templates", label: "Templates" },
+    { href: "/biodata-templates", label: "Templates" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/faqs", label: "FAQs" },
     { href: "/blog", label: "Blog" },
@@ -31,7 +31,7 @@ export function Header() {
         <Link href="/">
           <Logo />
         </Link>
-        
+
         {/* Right side: Nav + Hamburger */}
         <div className="flex items-center gap-4">
           <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-xs font-medium">
@@ -39,9 +39,8 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors hover:text-primary ${
-                  pathname === link.href ? "text-primary" : "text-muted-foreground"
-                }`}
+                className={`transition-colors hover:text-primary ${pathname === link.href ? "text-primary" : "text-muted-foreground"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -50,7 +49,7 @@ export function Header() {
 
           {/* Mobile Hamburger Menu */}
           <div className="md:hidden">
-             <Sheet open={open} onOpenChange={setOpen}>
+            <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10 px-0">
                   <Menu className="h-5 w-5" />
@@ -71,16 +70,15 @@ export function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setOpen(false)}
-                      className={`text-base font-medium transition-colors hover:text-primary ${
-                        pathname === link.href ? "text-primary" : "text-muted-foreground"
-                      }`}
+                      className={`text-base font-medium transition-colors hover:text-primary ${pathname === link.href ? "text-primary" : "text-muted-foreground"
+                        }`}
                     >
                       {link.label}
                     </Link>
                   ))}
                 </nav>
               </SheetContent>
-             </Sheet>
+            </Sheet>
           </div>
         </div>
       </div>

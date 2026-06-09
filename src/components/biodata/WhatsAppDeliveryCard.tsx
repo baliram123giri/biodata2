@@ -216,7 +216,7 @@ export function WhatsAppDeliveryCard({
     <>
       <div
         className={cn(
-          "bg-white border border-stone-200/80 rounded-[24px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)]",
+          "bg-white border border-stone-200/80 rounded-[24px] p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-left w-full max-w-2xl mx-auto transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)] flex flex-col",
           className
         )}
       >
@@ -252,107 +252,109 @@ export function WhatsAppDeliveryCard({
         </div>
       </div>
 
-      <form onSubmit={handleSend} className="space-y-4">
-        {/* Input Row */}
-        <div className="space-y-1.5">
-          <label htmlFor="whatsapp-number-input" className="text-[10px] font-black tracking-widest text-stone-600 uppercase block">
-            {translateUI("whatsappNumber", currentLang)}
-          </label>
-          <div className="flex gap-2">
-            <div className="relative shrink-0">
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                aria-label="Country Code Select"
-                className="h-11 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm font-bold text-stone-700 focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none pr-8 cursor-pointer select-none"
-              >
-                <option value="+91">IN +91</option>
-                <option value="+1">US +1</option>
-                <option value="+44">UK +44</option>
-                <option value="+971">AE +971</option>
-                <option value="+61">AU +61</option>
-              </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+      <form onSubmit={handleSend} className="space-y-4 flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          {/* Input Row */}
+          <div className="space-y-1.5">
+            <label htmlFor="whatsapp-number-input" className="text-[10px] font-black tracking-widest text-stone-600 uppercase block">
+              {translateUI("whatsappNumber", currentLang)}
+            </label>
+            <div className="flex gap-2">
+              <div className="relative shrink-0">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  aria-label="Country Code Select"
+                  className="h-11 px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm font-bold text-stone-700 focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none pr-8 cursor-pointer select-none"
+                >
+                  <option value="+91">IN +91</option>
+                  <option value="+1">US +1</option>
+                  <option value="+44">UK +44</option>
+                  <option value="+971">AE +971</option>
+                  <option value="+61">AU +61</option>
+                </select>
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1 relative">
+                <input
+                  id="whatsapp-number-input"
+                  type="tel"
+                  placeholder="9999999999"
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
+                    if (status === "error") setStatus("idle");
+                  }}
+                  className="w-full h-11 px-4 py-2 border border-stone-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-stone-300"
+                />
               </div>
             </div>
-            <div className="flex-1 relative">
-              <input
-                id="whatsapp-number-input"
-                type="tel"
-                placeholder="9999999999"
-                value={phoneNumber}
-                onChange={(e) => {
-                  setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
-                  if (status === "error") setStatus("idle");
-                }}
-                className="w-full h-11 px-4 py-2 border border-stone-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-stone-300"
-              />
-            </div>
           </div>
-        </div>
 
-        {/* Checkbox row */}
-        <div className="flex items-start gap-2.5">
-          <Checkbox.Root
-            id="opt-in"
-            checked={optIn}
-            onCheckedChange={(checked) => setOptIn(checked === true)}
-            className="w-4.5 h-4.5 rounded bg-stone-100 border border-stone-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer data-[state=checked]:bg-[#075E54] data-[state=checked]:border-[#075E54] transition-colors mt-0.5"
+          {/* Checkbox row */}
+          <div className="flex items-start gap-2.5">
+            <Checkbox.Root
+              id="opt-in"
+              checked={optIn}
+              onCheckedChange={(checked) => setOptIn(checked === true)}
+              className="w-4.5 h-4.5 rounded bg-stone-100 border border-stone-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer data-[state=checked]:bg-[#075E54] data-[state=checked]:border-[#075E54] transition-colors mt-0.5"
+            >
+              <Checkbox.Indicator>
+                <Check className="w-3 h-3 text-white stroke-[3.5]" />
+              </Checkbox.Indicator>
+            </Checkbox.Root>
+            <label
+              htmlFor="opt-in"
+              className="text-xs font-semibold text-stone-600 leading-normal select-none cursor-pointer"
+            >
+              {translateUI("whatsappConsentLabel", currentLang)}
+            </label>
+          </div>
+
+          {/* Action Button */}
+          <button
+            type="submit"
+            disabled={isLoading || isGenerating}
+            className={cn(
+              "w-full h-11 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] border-0 cursor-pointer relative overflow-hidden",
+              status === "success"
+                ? "bg-[#0b5249]"
+                : "bg-[#075E54] hover:bg-[#054C44] hover:shadow-[#075E54]/20"
+            )}
           >
-            <Checkbox.Indicator>
-              <Check className="w-3 h-3 text-white stroke-[3.5]" />
-            </Checkbox.Indicator>
-          </Checkbox.Root>
-          <label
-            htmlFor="opt-in"
-            className="text-xs font-semibold text-stone-600 leading-normal select-none cursor-pointer"
-          >
-            {translateUI("whatsappConsentLabel", currentLang)}
-          </label>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
+            {status === "generating" ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {translateUI("generatingDelivering", currentLang)}
+              </>
+            ) : status === "success" ? (
+              <>
+                <Check className="w-4 h-4" />
+                {translateUI("pdfDelivered", currentLang)}
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                {translateUI("getBiodataOnWhatsapp", currentLang)}
+              </>
+            )}
+          </button>
+
+          {/* Error message */}
+          {status === "error" && (
+            <p className="text-xs font-semibold text-red-600 text-center animate-pulse">
+              {errorMessage}
+            </p>
+          )}
         </div>
-
-        {/* Action Button */}
-        <button
-          type="submit"
-          disabled={isLoading || isGenerating}
-          className={cn(
-            "w-full h-11 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] border-0 cursor-pointer relative overflow-hidden",
-            status === "success"
-              ? "bg-[#0b5249]"
-              : "bg-[#075E54] hover:bg-[#054C44] hover:shadow-[#075E54]/20"
-          )}
-        >
-          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
-          {status === "generating" ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {translateUI("generatingDelivering", currentLang)}
-            </>
-          ) : status === "success" ? (
-            <>
-              <Check className="w-4 h-4" />
-              {translateUI("pdfDelivered", currentLang)}
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4" />
-              {translateUI("getBiodataOnWhatsapp", currentLang)}
-            </>
-          )}
-        </button>
-
-        {/* Error message */}
-        {status === "error" && (
-          <p className="text-xs font-semibold text-red-600 text-center animate-pulse">
-            {errorMessage}
-          </p>
-        )}
 
         {/* Privacy Notice Banner */}
-        <div className="bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 flex items-start gap-2.5">
+        <div className="bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 flex items-start gap-2.5 mt-4">
           <Lock className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-stone-500 font-semibold leading-normal">
             {translateUI("whatsappPrivacyNotice", currentLang)}

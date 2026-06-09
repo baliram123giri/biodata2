@@ -16,6 +16,7 @@ import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/Down
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
 const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsAppDeliveryCard").then(mod => mod.WhatsAppDeliveryCard));
+const CompanyLogoFeature = dynamic(() => import("@/components/biodata/CompanyLogoFeature").then(mod => mod.CompanyLogoFeature));
 const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
 const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
@@ -58,6 +59,7 @@ const KonvaPreview = dynamic(
   }
 );
 
+
 /**
  * HomeBiodataBuilder - The full biodata creation experience embedded on the homepage.
  * Includes form, live preview, template picker, and download/export actions.
@@ -88,6 +90,8 @@ export function HomeBiodataBuilder() {
   const [pendingDownloadFormat, setPendingDownloadFormat] = useState<DownloadFormat | null>(null);
   const [filename, setFilename] = useState("biodata");
   const [pendingAction, setPendingAction] = useState<"download" | "whatsapp">("download");
+
+
   const pendingWhatsAppRef = useRef<{
     phoneNumber: string;
     countryCode: string;
@@ -605,12 +609,21 @@ export function HomeBiodataBuilder() {
             </div>
           </div>
 
-          {/* Get on WhatsApp Widget (Matching mockup) */}
-          <div className="mt-6 md:mt-32 px-2 sm:px-4 w-full flex justify-center">
-            <WhatsAppDeliveryCard
-              onSubmitWhatsApp={handleSubmitWhatsApp}
-              isGenerating={isGenerating}
-            />
+          {/* Bottom Widgets Grid */}
+          <div className="mt-8 md:mt-24 px-2 sm:px-4 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-6xl mx-auto">
+            {/* Left: Get on WhatsApp Widget */}
+            <div className="flex">
+              <WhatsAppDeliveryCard
+                onSubmitWhatsApp={handleSubmitWhatsApp}
+                isGenerating={isGenerating}
+                className="h-full flex flex-col justify-between"
+              />
+            </div>
+
+            {/* Right: Company Logo Widget */}
+            <div className="flex">
+              <CompanyLogoFeature variant="card" />
+            </div>
           </div>
         </div>
 

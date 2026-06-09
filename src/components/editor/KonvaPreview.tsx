@@ -312,7 +312,7 @@ const GlobalWatermark = React.memo(function GlobalWatermark({ visible = false }:
   );
 });
 
-const BgWatermarkImage = React.memo(function BgWatermarkImage({
+const GraphicBgImage = React.memo(function GraphicBgImage({
   bgConfig,
   isCustom = false
 }: {
@@ -1348,6 +1348,23 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             themeSelectedPalette={theme.selectedPaletteName}
             primaryColor={primaryColor}
           />
+          {templateConfig.frame.type === "image" ? (
+            <ImageFrame
+              config={templateConfig.frame}
+              primaryColor={primaryColor}
+              accentColor={accentColor}
+              defaultPrimary=""
+              defaultAccent=""
+              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
+              bgConfig={templateConfig.bgConfig}
+            />
+          ) : templateConfig.frame.type === "gradient" ? (
+            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
+          ) : templateConfig.frame.type === "custom" ? (
+            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
+          ) : (
+            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
+          )}
           {(() => {
             const isCustomBg = !!theme.bgImageUrl;
             const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
@@ -1367,7 +1384,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             const y = baseTop + yOffset - (baseH * (scale - 1)) / 2;
 
             return (
-              <BgWatermarkImage
+              <GraphicBgImage
                 bgConfig={{
                   url: theme.bgImageUrl || templateConfig.bgConfig?.url,
                   x,
@@ -1380,23 +1397,6 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
               />
             );
           })()}
-          {templateConfig.frame.type === "image" ? (
-            <ImageFrame
-              config={templateConfig.frame}
-              primaryColor={primaryColor}
-              accentColor={accentColor}
-              defaultPrimary=""
-              defaultAccent=""
-              enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
-              bgConfig={templateConfig.bgConfig}
-            />
-          ) : templateConfig.frame.type === "gradient" ? (
-            <GradientFrame config={templateConfig.frame as FrameGradientConfig} primaryColor={primaryColor} />
-          ) : templateConfig.frame.type === "custom" ? (
-            <CustomKonvaFrame componentId={templateConfig.frame.componentId} primaryColor={primaryColor} />
-          ) : (
-            <SvgFrame config={templateConfig.frame as FrameSvgConfig} primaryColor={primaryColor} />
-          )}
 
           {/* Global Watermark (hidden on preview canvas, shown only during image downloads) */}
           <GlobalWatermark visible={false} />

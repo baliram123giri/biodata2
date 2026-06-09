@@ -145,6 +145,7 @@ function EditPageContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [isStoreHydrated, setIsStoreHydrated] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
+  const [isInitialTemplateLoading, setIsInitialTemplateLoading] = useState(true);
 
   // Monitor store hydration
   useEffect(() => {
@@ -391,7 +392,10 @@ function EditPageContent() {
   // Fetch initial template only after store hydration is complete to prevent race conditions
   useEffect(() => {
     if (!isStoreHydrated) return;
-    useBiodataStore.getState().fetchInitialTemplate(templateParam);
+    setIsInitialTemplateLoading(true);
+    useBiodataStore.getState().fetchInitialTemplate(templateParam).finally(() => {
+      setIsInitialTemplateLoading(false);
+    });
   }, [isStoreHydrated, templateParam]);
 
   // Fix hydration issues and layout listening
@@ -807,7 +811,7 @@ function EditPageContent() {
           {/* KonvaPreview is ALWAYS mounted to preserve pan/zoom state.
               The PreviewLoader overlay is shown on top until templates are ready. */}
           <KonvaPreview isDesigner={true} />
-          {(customTemplates.length === 0 || (templateParam && selectedTemplate !== templateParam)) && (
+          {(customTemplates.length === 0 || isInitialTemplateLoading) && (
             <div className="absolute inset-0 flex items-center justify-center bg-stone-50/80 backdrop-blur-sm z-10">
               <PreviewLoader />
             </div>

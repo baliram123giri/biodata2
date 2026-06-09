@@ -292,7 +292,7 @@ export default function HowItWorksPage() {
               <Link href="/edit">Create Biodata</Link>
             </Button>
             <Button size="lg" variant="outline" className="rounded-full border-[#C9A84C] text-[#9B1B30] dark:text-[#E6C97A] hover:bg-[#FBF5E6] dark:hover:bg-[#8A7233]/10 font-bold px-10 py-6 text-base shadow-sm hover:scale-105 transition-transform" asChild>
-              <Link href="/templates">Browse Templates</Link>
+              <Link href="/biodata-templates">Browse Templates</Link>
             </Button>
           </div>
         </div>

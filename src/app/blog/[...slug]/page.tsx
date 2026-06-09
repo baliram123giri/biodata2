@@ -426,7 +426,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
               <Link href="/edit">Start Creating</Link>
             </Button>
             <Button size="lg" variant="outline" className="rounded-full border-[#C9A84C]/50 text-foreground font-bold px-8" asChild>
-              <Link href="/templates">View Themes</Link>
+              <Link href="/biodata-templates">View Themes</Link>
             </Button>
           </div>
         </section>

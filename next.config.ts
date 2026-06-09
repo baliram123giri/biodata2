@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
         destination: "/#builder",
         permanent: false,
       },
+      {
+        source: "/biodata",
+        destination: "/biodata-templates",
+        permanent: true,
+      },
     ];
   },
 };

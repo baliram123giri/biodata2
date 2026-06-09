@@ -86,7 +86,7 @@ export default function Home() {
                 </a>
               </Button>
               <Button size="sm" variant="outline" className="rounded-full text-sm px-7 py-5 w-full sm:w-auto border-[#C9A84C]/50 hover:bg-[#FBF5E6]/40 dark:hover:bg-[#8A7233]/15 font-bold text-foreground transition-all duration-200 cursor-pointer" asChild>
-                <Link href="/templates">View Templates</Link>
+                <Link href="/biodata-templates">View Templates</Link>
               </Button>
             </div>
 
@@ -525,10 +525,10 @@ export default function Home() {
                 Create your biodata free &rarr;
               </a>
               <Link
-                href="/biodata-format"
+                href="/biodata-templates"
                 className="inline-flex items-center text-[#9B1B30] dark:text-[#E6C97A] hover:underline font-extrabold text-[15px] transition-colors"
               >
-                Read our biodata format for marriage guide &rarr;
+                Browse biodata formats &amp; templates &rarr;
               </Link>
             </div>
           </div>
