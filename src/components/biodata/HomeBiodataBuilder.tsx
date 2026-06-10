@@ -197,14 +197,22 @@ export function HomeBiodataBuilder() {
     useBiodataStore.getState().fetchInitialTemplate?.();
 
     const performHomeReset = () => {
+      // Run store/theme resets SYNCHRONOUSLY so the template-color sync effect (which
+      // depends on isHydrated) runs AFTER the reset, not before — preventing a flash
+      // where template colors are applied then immediately overridden by resetTheme().
       // 1. Reset template, layout and stickers in biodata store while preserving form values
       useBiodataStore.getState().resetDesignOnly();
       // 2. Reset custom theme settings (colors, background, fonts, padding, etc.)
       useThemeStore.getState().resetTheme();
-      
-      // 3. Reset form methods to the preserved stored data
-      const currentStoredData = useBiodataStore.getState().formData;
-      methods.reset(currentStoredData);
+
+      // Defer ONLY the form reset by one event loop tick. This ensures any unmount cleanup
+      // from the previous page (e.g., EditPage's watch saving community/mantra to the store)
+      // has fully completed before we read from the store to initialize the form.
+      setTimeout(() => {
+        const currentStoredData = useBiodataStore.getState().formData;
+        methods.reset({ ...defaultBiodataValues, ...currentStoredData });
+        setHasInitialized(true);
+      }, 0);
     };
 
     // Register a listener for when hydration completes
@@ -215,12 +223,7 @@ export function HomeBiodataBuilder() {
     // If store is already hydrated, run reset immediately
     if (useBiodataStore.persist.hasHydrated()) {
       performHomeReset();
-    } else {
-      const currentStoredData = useBiodataStore.getState().formData;
-      methods.reset(currentStoredData || defaultBiodataValues);
     }
-
-    setHasInitialized(true);
 
     return () => unsub();
   }, [methods]);
@@ -269,18 +272,23 @@ export function HomeBiodataBuilder() {
   }, [storedTemplate, customTemplates, isHydrated, theme]);
 
   useEffect(() => {
+    if (!hasInitialized) return;
+
     let timer: NodeJS.Timeout;
-    const subscription = methods.watch((value) => {
+    const subscription = methods.watch(() => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (value) setFormData(value as BiodataFormValues);
+        const currentValues = methods.getValues();
+        setFormData(currentValues);
       }, 400);
     });
     return () => {
       subscription.unsubscribe();
+      const currentValues = methods.getValues();
+      setFormData(currentValues);
       clearTimeout(timer);
     };
-  }, [methods, setFormData]);
+  }, [methods, setFormData, hasInitialized]);
 
   const currentLang = useWatch({ control: methods.control, name: "language" }) || "English";
   const t = translations[currentLang] || translations["English"];

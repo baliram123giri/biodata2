@@ -12,6 +12,7 @@ export const FieldSchema = z.object({
 
 export const biodataSchema = z.object({
   language: z.string().optional(),
+  community: z.string().optional(),
   mantra: z.string().default("॥ श्री गणेशाय नमः ॥"),
   title: z.string().default("Biodata"),
   personalDetails: z.array(FieldSchema),

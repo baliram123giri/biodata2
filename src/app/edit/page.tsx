@@ -101,6 +101,9 @@ function EditPageContent() {
     mode: "onBlur",
   });
   
+  console.log("=== EditPageContent Render ===");
+  console.log("isMounted:", typeof window !== "undefined" ? "yes" : "no", "formData community:", formData?.community);
+
   const searchParams = useSearchParams();
   const templateParam = searchParams.get('template');
 
@@ -185,29 +188,42 @@ function EditPageContent() {
 
   // AI Photo Generator states removed (migrated to BiodataForm)
 
-  // Sync store data to form ONCE when mounted/hydrated
+  // Sync store data to form ONCE when mounted/hydrated.
+  // IMPORTANT: Read from useBiodataStore.getState() directly (not reactive formData) to avoid
+  // a race condition where the reactive snapshot is captured BEFORE the HomeBiodataBuilder's
+  // unmount cleanup has saved the user's community/mantra/title selections to the store.
+  // The setTimeout(0) yields to the event loop, ensuring all React unmount cleanups complete first.
   useEffect(() => {
-    if (isMounted && isStoreHydrated && !hasInitializedForm && formData) {
-      methods.reset(formData);
+    if (!isMounted || !isStoreHydrated || hasInitializedForm) return;
+
+    const timer = setTimeout(() => {
+      // Read the LATEST store state at the time of initialization, not the reactive snapshot
+      const latestFormData = useBiodataStore.getState().formData;
+      methods.reset({ ...defaultBiodataValues, ...latestFormData });
       setHasInitializedForm(true);
-    }
-  }, [isMounted, isStoreHydrated, hasInitializedForm, formData, methods]);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [isMounted, isStoreHydrated, hasInitializedForm, methods]);
 
   useEffect(() => {
+    if (!hasInitializedForm) return;
+
     let timer: NodeJS.Timeout;
-    const subscription = methods.watch((value) => {
+    const subscription = methods.watch(() => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (value) {
-          setFormData(value as BiodataFormValues);
-        }
+        const currentValues = methods.getValues();
+        setFormData(currentValues);
       }, 400);
     });
     return () => {
       subscription.unsubscribe();
+      const currentValues = methods.getValues();
+      setFormData(currentValues);
       clearTimeout(timer);
     };
-  }, [methods, setFormData]);
+  }, [methods, setFormData, hasInitializedForm]);
 
   const { handleDownload: triggerDownload, sendWhatsAppDelivery, isGenerating } = useDownloadBiodata();
   const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep, paymentIdInfo, setPaymentStep, setIsProcessing } = useRazorpayPayment();

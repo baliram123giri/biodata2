@@ -381,32 +381,41 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const watchPhoto = useWatch({ control, name: "photo" });
   const currentLang = watchLang || "English";
 
+  const { addSticker, removeSticker, formData, setFormData: setStoredFormData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
+    addSticker: s.addSticker,
+    removeSticker: s.removeSticker,
+    formData: s.formData,
+    setFormData: s.setFormData,
+    selectedTemplate: s.selectedTemplate,
+    customTemplates: s.customTemplates,
+  })));
+
   const personalDetails = useWatch({ control, name: "personalDetails" }) || [];
   const religionField = personalDetails.find((f: any) => f.id === "religion");
   const religionValue = religionField?.value || "";
 
-  // Map religion value to community selection
-  const [selectedCommunity, setSelectedCommunity] = useState<string>(() => {
-    if (["Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(religionValue)) {
-      return religionValue;
-    }
-    // If empty but has gotra and rashi fields, default to Hindu
-    const hasGotra = personalDetails.some((f: any) => f.id === "gotra");
-    const hasRashi = personalDetails.some((f: any) => f.id === "rashi");
-    if (hasGotra && hasRashi) {
-      return "Hindu";
-    }
-    return "General";
-  });
-
-  useEffect(() => {
-    if (religionValue && ["Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(religionValue)) {
-      setSelectedCommunity(religionValue);
-    }
-  }, [religionValue]);
+  // Community: read from Zustand store (persisted, survives page navigation) as authoritative source.
+  // useWatch catches live user changes inside the form before debounce saves back to store.
+  const watchCommunity = useWatch({ control, name: "community" });
+  const storedCommunity = formData?.community;
+  const selectedCommunity = (
+    // Prefer the live form value if it's a known valid community value
+    (watchCommunity && ["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(watchCommunity))
+      ? watchCommunity
+      // Fall back to the store's persisted value (reliable across page navigation)
+      : (storedCommunity && ["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(storedCommunity))
+        ? storedCommunity
+        // Fall back to the religion field's value
+        : (["Hindu", "Muslim", "Sikh", "Christian", "Jain", "General"].includes(religionValue)
+          ? religionValue
+          : "General")
+  );
 
   const handleCommunityChange = async (community: string) => {
-    setSelectedCommunity(community);
+    setValue("community", community);
+    // Immediately persist to store — don't wait for the debounced watch subscription.
+    // This ensures the value survives navigation before the 400ms debounce fires.
+    setStoredFormData({ community });
 
     // Get current field values to preserve them
     const currentPersonal = getValues("personalDetails") || [];
@@ -472,6 +481,9 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
                      COMMUNITY_HEADER_DEFAULTS.General.English;
     setValue("mantra", defaults.mantra);
     setValue("title", defaults.title);
+    // Immediately persist mantra + title to store — don't wait for the 400ms debounce.
+    // This ensures the header text survives navigation to the edit page.
+    setStoredFormData({ mantra: defaults.mantra, title: defaults.title });
 
     // 4. Fill Header Details: Mantra Sign/Sticker
     try {
@@ -484,8 +496,9 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
         }
       }
 
-      // Remove existing mantra sticker if any
-      const existingMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
+      // Read live store state (not stale closure) to find existing mantra sticker
+      const liveStickers = useBiodataStore.getState().formData.stickers || [];
+      const existingMantraSticker = liveStickers.find((s: any) => s.isMantra);
       if (existingMantraSticker) {
         removeSticker(existingMantraSticker.id);
       }
@@ -508,13 +521,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   };
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
-  const { addSticker, removeSticker, formData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
-    addSticker: s.addSticker,
-    removeSticker: s.removeSticker,
-    formData: s.formData,
-    selectedTemplate: s.selectedTemplate,
-    customTemplates: s.customTemplates,
-  })));
   const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
 
   const templateConfig = customTemplates.find((t: any) => t.id === selectedTemplate) || TEMPLATE_CONFIGS[selectedTemplate] || TEMPLATE_CONFIGS["royal"];
@@ -607,6 +613,8 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
     setValue("language", newLang);
+    // Immediately persist language to store — don't wait for the 400ms debounce.
+    setStoredFormData({ language: newLang });
     const baseT = translations[newLang];
     if (!baseT) return;
     const t = { ...baseT, ...(LOCAL_TRANSLATIONS[newLang] || LOCAL_TRANSLATIONS["English"]) };

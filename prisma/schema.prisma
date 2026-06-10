@@ -87,7 +87,8 @@ model Template {
   mantraSignPlacement    String   @default("both")
   mantraSignVertical     String   @default("top")
   language               String   @default("English")
-  religion               String?  @default("Hindu")
+  religion               String?  @default("General")
+  gender                 String   @default("both")
   active                 Boolean  @default(true)
   // Pricing
   isPremium              Boolean  @default(false)

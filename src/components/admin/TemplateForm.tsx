@@ -139,6 +139,7 @@ interface Template {
   previewPhotoUrl?: string | null;
   rawInput?: any;
   religion?: string | null;
+  gender?: string | null;
 }
 
 interface TemplateFormProps {
@@ -308,7 +309,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
   const [isAiFilling, setIsAiFilling] = React.useState(false);
-  const [aiGender, setAiGender] = React.useState<"male" | "female">("male");
+  const [aiGender, setAiGender] = React.useState<"male" | "female" | "both">("male");
   const [aiReligion, setAiReligion] = React.useState("Hindu");
   const [dbBackgrounds, setDbBackgrounds] = React.useState<any[]>([]);
   
@@ -598,10 +599,11 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
     setIsAiFilling(true);
     const toastId = toast.loading("🤖 AI is generating realistic biodata...", { duration: 60000 });
     try {
+      const fillGender = aiGender === "both" ? "male" : aiGender;
       const res = await fetch("/api/ai-fill-biodata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gender: aiGender, religion: aiReligion, language: methods.getValues("language") || formState.language || "English" }),
+        body: JSON.stringify({ gender: fillGender, religion: aiReligion, language: methods.getValues("language") || formState.language || "English" }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "AI generation failed");
@@ -893,6 +895,12 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         comboPrice: (template as any).comboPrice !== null && (template as any).comboPrice !== undefined ? String((template as any).comboPrice) : "",
         comboDiscountPrice: (template as any).comboDiscountPrice !== null && (template as any).comboDiscountPrice !== undefined ? String((template as any).comboDiscountPrice) : "",
       });
+      if ((template as any).gender) {
+        setAiGender((template as any).gender as "male" | "female" | "both");
+      }
+      if (template.religion) {
+        setAiReligion(template.religion);
+      }
     }
   }, [template]);
 
@@ -954,7 +962,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         titleShape: formState.titleShape,
         mantraSignPlacement: formState.mantraSignPlacement,
         mantraSignVertical: formState.mantraSignVertical,
-        religion: adminAiReligion,
+        religion: aiReligion,
+        gender: aiGender,
         rawInput: methods.getValues(),
         // Pricing
         isPremium: (formState as any).isPremium === true,
@@ -1623,12 +1632,13 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                           <Sparkles className="w-3 h-3 text-violet-500 shrink-0" />
                           <select
                             value={aiGender}
-                            onChange={e => setAiGender(e.target.value as "male" | "female")}
+                            onChange={e => setAiGender(e.target.value as "male" | "female" | "both")}
                             className="text-[10px] bg-transparent border-0 outline-none cursor-pointer font-semibold text-violet-600 dark:text-violet-400 pr-1"
                             title="Gender"
                           >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
+                            <option value="both">Both</option>
                           </select>
                           <span className="text-muted-foreground/50 text-[10px]">·</span>
                           <select

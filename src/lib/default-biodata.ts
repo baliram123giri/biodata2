@@ -2,7 +2,8 @@ import { type BiodataFormValues } from "@/types/biodata";
 
 export const defaultBiodataValues: BiodataFormValues = {
   language: "English",
-  mantra: "|| Shree Ganeshay Namah ||",
+  community: "General",
+  mantra: "",
   title: "Biodata",
   personalDetails: [
     { id: "fullName", label: "Full Name", value: "", type: "text", isDefault: true },
@@ -19,13 +20,6 @@ export const defaultBiodataValues: BiodataFormValues = {
     { id: "bloodGroup", label: "Blood Group", value: "", type: "select", options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], isDefault: true },
     { id: "complexion", label: "Complexion", value: "", type: "select", options: ["Fair", "Very Fair", "Wheatish", "Wheatish Brown", "Dark"], isDefault: true },
     { id: "religion", label: "Religion", value: "General", type: "select", options: ["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
-    { id: "caste", label: "Caste", value: "", type: "text", isDefault: true },
-    { id: "gotra", label: "Gotra", value: "", type: "select", options: [
-      "Agastya", "Angirasa", "Atri", "Bharadwaja", "Bhrigu", "Gautama", "Jamadagni", "Kashyapa", "Shandilya", "Vashishta", "Vishvamitra", "Gargya", "Kaushika", "Vatsa", "Mudgala", "Parashara", "Upamanyu", "Harita", "Other"
-    ], isDefault: true },
-    { id: "rashi", label: "Rashi (Zodiac)", value: "", type: "select", options: ["Mesh (Aries)", "Vrishabh (Taurus)", "Mithun (Gemini)", "Kark (Cancer)", "Singh (Leo)", "Kanya (Virgo)", "Tula (Libra)", "Vrishchik (Scorpio)", "Dhanu (Sagittarius)", "Makar (Capricorn)", "Kumbh (Aquarius)", "Meen (Pisces)", "Other"], isDefault: true },
-    { id: "nakshatra", label: "Nakshatra", value: "", type: "select", options: ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati", "Other"], isDefault: true },
-    { id: "manglik", label: "Manglik", value: "", type: "select", options: ["No", "Yes", "Partial (Anshik)", "Don't Know", "Other"], isDefault: true },
   ],
   educationDetails: [
     { id: "education", label: "Highest Education", value: "", type: "select", options: ["10th", "12th", "Diploma", "B.A.", "B.Sc.", "B.Com", "B.E. / B.Tech", "BCA", "BBA", "M.A.", "M.Sc.", "M.Com", "M.E. / M.Tech", "MCA", "MBA", "MBBS", "Ph.D.", "CA", "Other"], isDefault: true },

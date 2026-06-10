@@ -62,7 +62,7 @@ export function PriceModal({
 
   const [availableCoupons, setAvailableCoupons] = useState<{ id: string; code: string; discountType: string; discountValue: number }[]>([]);
   const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<"combo" | "pdf" | "jpg" | "png">("combo");
+  const [selectedFormat, setSelectedFormat] = useState<"combo" | "pdf" | "jpg" | "png">("pdf");
 
   const getSelectedPrice = () => {
     if (selectedFormat === "combo") return formatComboPrice;
@@ -76,7 +76,7 @@ export function PriceModal({
       setCouponCode("");
       setAppliedCoupon(null);
       setCouponError(null);
-      setSelectedFormat("combo");
+      setSelectedFormat("pdf");
 
       const fetchActiveCoupons = async () => {
         setIsLoadingCoupons(true);
@@ -352,63 +352,6 @@ export function PriceModal({
           )}
               {/* STACKED LIST: Format Selections */}
           <div className="flex flex-col gap-3 shrink-0">
-            {/* Combo Pack Selection */}
-            <button
-              type="button"
-              onClick={() => setSelectedFormat("combo")}
-              className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
-                selectedFormat === "combo"
-                  ? "bg-gradient-saffron/10 border-secondary shadow-[0_4px_20px_rgba(201,168,76,0.15)] ring-1 ring-secondary/30"
-                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
-              )}
-            >
-              {/* Dynamic Shine Beam */}
-              {selectedFormat === "combo" && (
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
-              )}
-
-              {/* Radio Indicator */}
-              <div className="shrink-0 relative z-10">
-                {selectedFormat === "combo" ? (
-                  <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center bg-primary">
-                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0 relative z-10">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-black text-foreground">{translateUI("comboPackTitle", currentLang)}</span>
-                  <span className="bg-primary text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
-                    <Sparkles className="w-2 h-2 fill-white" /> Popular
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("pdfJpgPngCombo", currentLang)}</span>
-              </div>
-
-              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
-                {isPremium ? (
-                  <>
-                    {formatComboOriginalPrice && (
-                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
-                        {currencySymbol}{formatComboOriginalPrice.toFixed(2)}
-                      </span>
-                    )}
-                    <span className="text-sm sm:text-base font-black text-primary mt-1">
-                      {currencySymbol}{formatComboPrice.toFixed(2)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                    FREE
-                  </span>
-                )}
-              </div>
-            </button>
-
             {/* PDF Selection */}
             <button
               type="button"
@@ -540,6 +483,63 @@ export function PriceModal({
                     )}
                     <span className="text-sm sm:text-base font-black text-purple-600 dark:text-purple-500 mt-1">
                       {currencySymbol}{formatPngPrice.toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="bg-emerald-555 text-emerald-700 dark:text-emerald-450 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    FREE
+                  </span>
+                )}
+              </div>
+            </button>
+
+            {/* Combo Pack Selection — last, as the best-value upsell */}
+            <button
+              type="button"
+              onClick={() => setSelectedFormat("combo")}
+              className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden select-none cursor-pointer",
+                selectedFormat === "combo"
+                  ? "bg-gradient-saffron/10 border-secondary shadow-[0_4px_20px_rgba(201,168,76,0.15)] ring-1 ring-secondary/30"
+                  : "bg-card border-border/80 hover:bg-stone-50 dark:hover:bg-stone-900/40"
+              )}
+            >
+              {/* Dynamic Shine Beam */}
+              {selectedFormat === "combo" && (
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
+              )}
+
+              {/* Radio Indicator */}
+              <div className="shrink-0 relative z-10">
+                {selectedFormat === "combo" ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center bg-primary">
+                    <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 dark:border-stone-700" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-black text-foreground">{translateUI("comboPackTitle", currentLang)}</span>
+                  <span className="bg-primary text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
+                    <Sparkles className="w-2 h-2 fill-white" /> Popular
+                  </span>
+                </div>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold block mt-0.5">{translateUI("pdfJpgPngCombo", currentLang)}</span>
+              </div>
+
+              <div className="text-right leading-none shrink-0 flex flex-col items-end relative z-10">
+                {isPremium ? (
+                  <>
+                    {formatComboOriginalPrice && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 line-through">
+                        {currencySymbol}{formatComboOriginalPrice.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base font-black text-primary mt-1">
+                      {currencySymbol}{formatComboPrice.toFixed(2)}
                     </span>
                   </>
                 ) : (

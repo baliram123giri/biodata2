@@ -180,31 +180,13 @@ export function SampleCarousel() {
                       </div>
 
                       {/* Details Area */}
-                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-[#9B1B30] dark:text-[#E6C97A] bg-[#FFFBF8] dark:bg-[#1A0A0E] px-2.5 py-1 rounded-md border border-[#C9A84C]/30 inline-block">
-                            {sample.community}
-                          </span>
-                          <h3 className="text-lg font-bold text-stone-900 dark:text-white pt-1">
-                            {sample.title}
-                          </h3>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {sample.description}
-                          </p>
-                        </div>
-
-                        <div className="pt-2 border-t border-stone-100 dark:border-stone-850 flex items-center justify-between">
-                          <button
-                            onClick={() => {
-                              setSelectedImage(sample.src);
-                              setSelectedTitle(sample.title);
-                            }}
-                            className="text-xs font-bold text-[#9B1B30] dark:text-[#E6C97A] hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View Full Size
-                          </button>
-                        </div>
+                      <div className="pt-5 px-5 pb-[10px] space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#9B1B30] dark:text-[#E6C97A] bg-[#FFFBF8] dark:bg-[#1A0A0E] px-2.5 py-1 rounded-md border border-[#C9A84C]/30 inline-block">
+                          {sample.community}
+                        </span>
+                        <h3 className="text-lg font-bold text-stone-900 dark:text-white pt-1">
+                          {sample.title}
+                        </h3>
                       </div>
                     </div>
                   </CarouselItem>

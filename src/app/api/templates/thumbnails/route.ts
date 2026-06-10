@@ -14,6 +14,7 @@ export async function GET() {
           thumbnailUrl: true,
           language: true,
           religion: true,
+          gender: true,
           isPremium: true,
           price: true,
           discountPrice: true,

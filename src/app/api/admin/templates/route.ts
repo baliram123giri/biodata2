@@ -144,6 +144,7 @@ export async function POST(req: Request) {
       rawInput,
       religion,
       isDefault,
+      gender,
     } = body;
 
     if (!name || !defaultPrimary || !defaultSecondary || !defaultAccent || !frameType) {
@@ -229,7 +230,8 @@ export async function POST(req: Request) {
         thumbnailUrl,
         previewPhotoUrl,
         rawInput: rawInput || undefined,
-        religion: religion || "Hindu",
+        religion: religion || "General",
+        gender: gender || "both",
         bgConfig: bgConfigData || undefined,
         language: language || "English",
         detailsLayout: detailsLayout || "classic",

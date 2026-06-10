@@ -16,6 +16,7 @@ interface ThumbnailTemplate {
   thumbnailUrl?: string;
   language?: string;
   religion?: string | null;
+  gender?: string | null;
   isPremium?: boolean;
   price?: number | null;
   discountPrice?: number | null;
@@ -25,6 +26,8 @@ interface ThumbnailTemplate {
 
 const getTemplateGender = (name: string): "boy" | "girl" | "both" => {
   const lowerName = name.toLowerCase();
+  
+  // Explicit Girl templates (Crimson, Rose, Ruby, Garnet, Marathi Vivah Parichay, Shubh Vivah, Royal Gold Hindi)
   if (
     lowerName.includes("girl") ||
     lowerName.includes("bride") ||
@@ -33,21 +36,49 @@ const getTemplateGender = (name: string): "boy" | "girl" | "both" => {
     lowerName.includes("rose") ||
     lowerName.includes("pink") ||
     lowerName.includes("floral") ||
-    lowerName.includes("crimson")
+    lowerName.includes("crimson") ||
+    lowerName.includes("marathi vivah parichay") ||
+    lowerName.includes("shubh vivah") ||
+    lowerName.includes("royal gold hindi") ||
+    lowerName.includes("garnet")
   ) {
     return "girl";
   }
+
+  // Explicit Boy templates (Blue, Peacock, Neelambari, Islamic/Muslim, Marathi Vivah, Traditional Hindi Shaadi)
   if (
     lowerName.includes("boy") ||
     lowerName.includes("groom") ||
     lowerName.includes("male") ||
     lowerName.includes("blue") ||
     lowerName.includes("peacock") ||
-    lowerName.includes("neelambari")
+    lowerName.includes("neelambari") ||
+    lowerName.includes("islamic") ||
+    lowerName.includes("muslim") ||
+    lowerName.includes("मराठी विवाह") ||
+    lowerName.includes("traditional hindi shaadi")
   ) {
     return "boy";
   }
+
   return "both";
+};
+
+const getGender = (t: ThumbnailTemplate): "boy" | "girl" | "both" => {
+  if (t.gender) {
+    const g = t.gender.toLowerCase();
+    if (g === "male" || g === "boy") return "boy";
+    if (g === "female" || g === "girl") return "girl";
+    return "both";
+  }
+  return getTemplateGender(t.name);
+};
+
+const getNormalizedReligion = (religion: string | null | undefined): string => {
+  if (!religion || religion.trim().toLowerCase() === "general") {
+    return "General";
+  }
+  return religion.trim();
 };
 
 // Global in-memory cache to persist data across page navigation without refetching
@@ -150,9 +181,7 @@ export function ThumbnailsGrid() {
   const religionsList = useMemo(() => {
     const rels = new Set<string>();
     templates.forEach((t) => {
-      if (t.religion) {
-        rels.add(t.religion);
-      }
+      rels.add(getNormalizedReligion(t.religion));
     });
     return Array.from(rels);
   }, [templates]);
@@ -184,18 +213,16 @@ export function ThumbnailsGrid() {
 
       // 4. Gender / Format-For filter (multi-select)
       if (selectedGenders.length > 0) {
-        const tplGender = getTemplateGender(tpl.name);
-        if (selectedGenders.includes("boy") && !selectedGenders.includes("girl") && tplGender === "girl") {
-          return false;
-        }
-        if (selectedGenders.includes("girl") && !selectedGenders.includes("boy") && tplGender === "boy") {
+        const tplGender = getGender(tpl);
+        if (tplGender !== "both" && !selectedGenders.includes(tplGender)) {
           return false;
         }
       }
 
       // 5. Religion / Community filter (multi-select)
       if (selectedReligions.length > 0) {
-        if (!tpl.religion || !selectedReligions.includes(tpl.religion)) {
+        const tplReligion = getNormalizedReligion(tpl.religion);
+        if (!selectedReligions.includes(tplReligion)) {
           return false;
         }
       }
@@ -285,8 +312,8 @@ export function ThumbnailsGrid() {
             <div className={cn("overflow-hidden transition-all duration-300 ease-in-out px-1", openSections.gender ? "max-h-48 opacity-100 pb-4" : "max-h-0 opacity-0")}>
               <div className="flex flex-col gap-1">
                 {[
-                  { id: "boy", label: "Groom / Boy", count: templates.filter((t) => getTemplateGender(t.name) === "boy" || getTemplateGender(t.name) === "both").length },
-                  { id: "girl", label: "Bride / Girl", count: templates.filter((t) => getTemplateGender(t.name) === "girl" || getTemplateGender(t.name) === "both").length },
+                  { id: "boy", label: "Groom / Boy", count: templates.filter((t) => getGender(t) === "boy" || getGender(t) === "both").length },
+                  { id: "girl", label: "Bride / Girl", count: templates.filter((t) => getGender(t) === "girl" || getGender(t) === "both").length },
                 ].map((item) => {
                   const isChecked = selectedGenders.includes(item.id);
                   return (
@@ -331,7 +358,7 @@ export function ThumbnailsGrid() {
                 <div className="flex flex-col gap-1 max-h-60 overflow-y-auto pr-1">
                   {religionsList.map((rel) => {
                     const isChecked = selectedReligions.includes(rel);
-                    const count = templates.filter((t) => t.religion === rel).length;
+                    const count = templates.filter((t) => getNormalizedReligion(t.religion) === rel).length;
                     return (
                       <div
                         key={rel}

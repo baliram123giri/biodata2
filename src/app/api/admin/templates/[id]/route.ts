@@ -132,6 +132,7 @@ export async function PATCH(
       "mantraSignPlacement",
       "mantraSignVertical",
       "religion",
+      "gender",
       "rawInput",
     ];
 

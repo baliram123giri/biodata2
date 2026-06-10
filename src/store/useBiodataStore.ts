@@ -95,6 +95,14 @@ export const useBiodataStore = create<BiodataState>()(
             // Preserve layout and stickers as they are managed independently in the store
             layout: state.formData.layout,
             stickers: state.formData.stickers,
+            // Protect community and language: never overwrite a valid stored value with empty/undefined.
+            // react-hook-form doesn't register these as DOM fields, so getValues() can return them
+            // as empty after a form reset, causing the persisted selection to be erased.
+            community: (data.community && data.community !== "") ? data.community : state.formData.community,
+            language: (data.language && data.language !== "") ? data.language : state.formData.language,
+            // Protect mantra: prevent undefined (missing key from getValues()) from overwriting
+            // a saved community-specific mantra. An explicit empty string IS allowed (user cleared it).
+            mantra: (data.mantra !== undefined) ? data.mantra : state.formData.mantra,
           }
         })),
         updateField: (section, id, value) => set((state) => {
@@ -356,6 +364,16 @@ export const useBiodataStore = create<BiodataState>()(
       partialize: (state) => ({
         formData: state.formData,
       }),
+      merge: (persistedState: any, currentState: any) => {
+        return {
+          ...currentState,
+          ...persistedState,
+          formData: {
+            ...currentState.formData,
+            ...persistedState?.formData,
+          }
+        };
+      }
     }
   )
 );
