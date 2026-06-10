@@ -38,22 +38,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const dynamicRoutes = posts.flatMap((post) => {
       const lastMod = post.updatedAt ? new Date(post.updatedAt) : new Date();
-      const rawLang = post.language || "English";
-      
-      // Map post.language to the exact BCP 47 code
-      let langCode = "en";
-      const normalized = rawLang.toLowerCase();
-      if (normalized.includes("marathi")) {
-        langCode = "mr";
-      } else if (normalized.includes("hindi")) {
-        langCode = "hi";
-      } else if (normalized.includes("gujarati")) {
-        langCode = "gu";
-      }
 
       const routes = [
         {
-          url: `${baseUrl}/blog/${langCode}/${post.slug}`,
+          url: `${baseUrl}/blog/${post.slug}`,
           lastModified: lastMod,
           changeFrequency: 'weekly' as const,
           priority: 0.7,

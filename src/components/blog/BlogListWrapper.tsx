@@ -25,12 +25,13 @@ interface BlogPost {
 
 interface BlogListWrapperProps {
   posts: BlogPost[];
+  initialLanguage?: string;
 }
 
-export function BlogListWrapper({ posts }: BlogListWrapperProps) {
+export function BlogListWrapper({ posts, initialLanguage }: BlogListWrapperProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedLanguage, setSelectedLanguage] = useState("All");
+  const [selectedLanguage, setSelectedLanguage] = useState(initialLanguage || "All");
 
   const topics = ["All", "Biodata Tips", "Cultural Guide", "Style & Grooming"];
   const languages = ["All", "English", "Marathi (मराठी)", "Hindi (हिंदी)", "Gujarati (ગુજરાતી)"];
@@ -185,23 +186,7 @@ export function BlogListWrapper({ posts }: BlogListWrapperProps) {
         >
           <AnimatePresence mode="popLayout">
             {filteredPosts.map((post) => {
-              const rawLang = post.language || "";
-              const normalized = rawLang.toLowerCase();
-              let postLangCode = "en";
-              if (normalized.includes("marathi")) {
-                postLangCode = "mr";
-              } else if (normalized.includes("hindi")) {
-                postLangCode = "hi";
-              } else if (normalized.includes("gujarati")) {
-                postLangCode = "gu";
-              } else {
-                // Fallback check on category
-                const cat = post.category.toLowerCase();
-                if (cat.includes("marathi")) postLangCode = "mr";
-                else if (cat.includes("hindi")) postLangCode = "hi";
-                else if (cat.includes("gujarati")) postLangCode = "gu";
-              }
-              const postUrl = `/blog/${postLangCode}/${post.slug}`;
+              const postUrl = `/blog/${post.slug}`;
 
               return (
                 <motion.div

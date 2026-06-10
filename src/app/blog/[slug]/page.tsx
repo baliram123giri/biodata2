@@ -10,71 +10,22 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ShareButton } from "@/components/blog/ShareButton";
 
 interface BlogPostPageProps {
-  params: Promise<{ slug: string[] }>;
-}
-
-const langMap: Record<string, string> = {
-  eng: "English",
-  en: "English",
-  hi: "Hindi",
-  mr: "Marathi",
-  gu: "Gujarati",
-};
-
-const codeMap: Record<string, string> = {
-  "English": "en",
-  "Hindi": "hi",
-  "Marathi": "mr",
-  "Gujarati": "gu",
-};
-
-/**
- * Utility helper to parse the optional language prefix and the actual blog slug.
- * Supports:
- * - /blog/slug-name            (length = 1) -> langCode = null, actualSlug = slug-name
- * - /blog/hi/slug-name         (length = 2) -> langCode = hi, actualSlug = slug-name
- * - /blog/mr/slug-name         (length = 2) -> langCode = mr, actualSlug = slug-name
- */
-async function parseSlugAndLang(paramsPromise: Promise<{ slug: string[] }>) {
-  const { slug } = await paramsPromise;
-  
-  let langCode: string | null = null;
-  let actualSlug = "";
-
-  if (slug && slug.length >= 2) {
-    langCode = slug[0]; // e.g. "eng", "hi", "mr"
-    actualSlug = slug[1];
-  } else if (slug && slug.length === 1) {
-    actualSlug = slug[0];
-  }
-
-  return { langCode, actualSlug };
+  params: Promise<{ slug: string }>;
 }
 
 /**
  * Generate static paths for dynamic blog pages at build time.
- * Pre-renders both base URLs and language-prefixed URLs (en, eng, hi, mr, gu) to guarantee static file performance.
+ * Pre-renders base URLs to guarantee static file performance.
  */
 export async function generateStaticParams() {
   try {
     const posts = await prisma.blogPost.findMany({
-      select: { slug: true, language: true }
+      select: { slug: true }
     });
     
-    const params: { slug: string[] }[] = [];
-    
-    posts.forEach((post) => {
-      // 1. Base route: /blog/slug-name
-      params.push({ slug: [post.slug] });
-      
-      // 2. Localized routes for all supported languages
-      const languages = ["en", "eng", "hi", "mr", "gu"];
-      languages.forEach((lang) => {
-        params.push({ slug: [lang, post.slug] });
-      });
-    });
-    
-    return params;
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
   } catch (error) {
     console.error("Error in generateStaticParams:", error);
     return [];
@@ -83,15 +34,15 @@ export async function generateStaticParams() {
 
 /**
  * Dynamic metadata generator for premium crawler targeting.
- * Maps localized alternates, open graph settings, and canonical URLs.
+ * Maps open graph settings and canonical URLs.
  */
 export async function generateMetadata(
   props: BlogPostPageProps
 ): Promise<Metadata> {
-  const { langCode, actualSlug } = await parseSlugAndLang(props.params);
+  const { slug } = await props.params;
   
   const post = await prisma.blogPost.findUnique({
-    where: { slug: actualSlug }
+    where: { slug: slug }
   });
 
   if (!post) {
@@ -100,8 +51,7 @@ export async function generateMetadata(
     };
   }
 
-  const currentLangCode = langCode || codeMap[post.language] || "en";
-  const canonicalUrl = `https://biodata99.com/blog/${currentLangCode}/${post.slug}`;
+  const canonicalUrl = `https://biodata99.com/blog/${post.slug}`;
   const imageUrl = post.thumbnailUrl || "https://biodata99.com/og-image.jpg";
 
   return {
@@ -118,20 +68,13 @@ export async function generateMetadata(
     ],
     alternates: {
       canonical: canonicalUrl,
-      languages: {
-        'x-default': `https://biodata99.com/blog/${post.slug}`,
-        'en': `https://biodata99.com/blog/en/${post.slug}`,
-        'hi': `https://biodata99.com/blog/hi/${post.slug}`,
-        'mr': `https://biodata99.com/blog/mr/${post.slug}`,
-        'gu': `https://biodata99.com/blog/gu/${post.slug}`,
-      }
     },
     openGraph: {
       title: post.title,
       description: post.description,
       url: canonicalUrl,
       siteName: "Biodata99",
-      locale: currentLangCode === "hi" ? "hi_IN" : currentLangCode === "mr" ? "mr_IN" : "en_IN",
+      locale: "en_IN",
       type: "article",
       images: [
         {
@@ -157,10 +100,10 @@ export async function generateMetadata(
 }
 
 export default async function BlogPostPage(props: BlogPostPageProps) {
-  const { langCode, actualSlug } = await parseSlugAndLang(props.params);
+  const { slug } = await props.params;
   
   const post = await prisma.blogPost.findUnique({
-    where: { slug: actualSlug }
+    where: { slug: slug }
   });
 
   if (!post) {
@@ -228,17 +171,11 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
   const breadcrumbItems = [
     { name: "Home", item: "https://biodata99.com" },
     { name: "Blog", item: "https://biodata99.com/blog" },
+    {
+      name: post.title,
+      item: `https://biodata99.com/blog/${post.slug}`
+    }
   ];
-
-  if (langCode) {
-    const langLabel = langMap[langCode] || langCode.toUpperCase();
-    breadcrumbItems.push({ name: langLabel, item: `https://biodata99.com/blog?lang=${langCode}` });
-  }
-
-  breadcrumbItems.push({
-    name: post.title,
-    item: `https://biodata99.com/blog/${langCode ? `${langCode}/` : ""}${post.slug}`
-  });
 
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
 
@@ -290,9 +227,9 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[#FBF5E6] dark:bg-[#8A7233]/25 text-[#8A7233] dark:text-[#E6C97A] border border-[#C9A84C]/20 w-fit">
               {post.category}
             </span>
-            {langCode && (
+            {post.language && (
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[#9B1B30]/10 dark:bg-[#9B1B30]/30 text-[#9B1B30] dark:text-[#FFAAB4] border border-[#9B1B30]/20 w-fit">
-                {langMap[langCode] || langCode.toUpperCase()}
+                {post.language}
               </span>
             )}
           </div>
@@ -319,7 +256,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
 
             {/* Social Share Button (Radix-UI Popover) */}
             <ShareButton
-              url={`https://biodata99.com/blog/${langCode ? `${langCode}/` : ""}${post.slug}`}
+              url={`https://biodata99.com/blog/${post.slug}`}
               title={post.title}
             />
           </div>
@@ -333,7 +270,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
               alt={`Thumbnail banner image for the article: ${post.title}`}
               fill
               sizes="(max-width: 768px) 100vw, 800px"
-              priority={true} // Priority loading on the main detail cover page for LCP optimization
+              priority={true}
               className="object-cover"
             />
           </div>
@@ -359,14 +296,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedPosts.map((relatedPost) => {
-                const relRawLang = relatedPost.language || "English";
-                let relLangCode = "en";
-                const relNorm = relRawLang.toLowerCase();
-                if (relNorm.includes("marathi")) relLangCode = "mr";
-                else if (relNorm.includes("hindi")) relLangCode = "hi";
-                else if (relNorm.includes("gujarati")) relLangCode = "gu";
-
-                const relUrl = `/blog/${relLangCode}/${relatedPost.slug}`;
+                const relUrl = `/blog/${relatedPost.slug}`;
 
                 return (
                   <article

@@ -32,6 +32,11 @@ const nextConfig: NextConfig = {
         destination: "/biodata-templates",
         permanent: true,
       },
+      {
+        source: "/blog/:lang(en|eng|hi|mr|gu)/:slug",
+        destination: "/blog/:slug",
+        permanent: true,
+      },
     ];
   },
 };
