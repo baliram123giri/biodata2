@@ -108,6 +108,9 @@ export default function RootLayout({
       suppressHydrationWarning
       data-scroll-behavior="smooth"
     >
+      <head>
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="ipvfSRsOf49Lu1SY3qaOTw" async></script>
+      </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <JsonLd schema={webApplicationSchema} />
         <QueryProvider>
