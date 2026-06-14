@@ -109,10 +109,32 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const bgColor = (theme.selectedPaletteName !== null && theme.selectedPaletteName !== undefined && (!theme.bgColors || theme.bgColors.length <= 1) && !hasTemplateGradient)
     ? getLightBgColor(primary)
     : (config.frame as any).bgColor || "#ffffff";
-  const padLeft = theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
-  const padRight = theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : config.defaultPadding);
-  const padTop = theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (config.defaultYPadding !== undefined ? config.defaultYPadding : padLeft));
-  const padBottom = theme.paddingBottom !== undefined ? theme.paddingBottom : (theme.paddingY !== undefined ? theme.paddingY : padLeft);
+  const padLeft = theme.paddingLeft !== undefined
+    ? theme.paddingLeft
+    : (config.defaultPaddingLeft !== undefined
+        ? config.defaultPaddingLeft
+        : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
+  const padRight = theme.paddingRight !== undefined
+    ? theme.paddingRight
+    : (config.defaultPaddingRight !== undefined
+        ? config.defaultPaddingRight
+        : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
+  const padTop = theme.paddingTop !== undefined
+    ? theme.paddingTop
+    : (config.defaultPaddingTop !== undefined
+        ? config.defaultPaddingTop
+        : (theme.paddingY !== undefined
+            ? theme.paddingY
+            : (config.defaultYPadding !== undefined
+                ? config.defaultYPadding
+                : padLeft)));
+  const padBottom = theme.paddingBottom !== undefined
+    ? theme.paddingBottom
+    : (theme.paddingY !== undefined
+        ? theme.paddingY
+        : (config.defaultYPadding !== undefined
+            ? config.defaultYPadding
+            : padLeft));
   const padding = padLeft;
   const paddingY = padTop;
   const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 9;
@@ -206,7 +228,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const calculateLayout = (fSize: number) => {
     // When a mantra sticker is present it occupies ~50px above the mantra text.
     // Reserve that space in the layout so sections don't collide with the sticker.
-    const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
+    const mantraSticker = data.stickers?.find((s: any) => s.isMantra === true || (s.isMantra !== false && s.y < 120));
     const MANTRA_STICKER_EXTRA = mantraSticker ? 50 : 0;
     let cursorY = paddingY + 20 + MANTRA_STICKER_EXTRA;
     const headerItems: any[] = [];
@@ -237,14 +259,14 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       const secIdx = sectionKeys.indexOf(sec);
       const secKey = `sec-${secIdx}`;
       const lookupKey = sec.key || secKey;
-      const secFontSize = fSize;
+      const secFontSize = fSize + 1;
       const secLineSpacing = secFontSize * 0.5 + 2;
 
       const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(secFontSize * 1.4) + secLineSpacing + 16;
+      cursorY += Math.round(fSize * 1.4) + secLineSpacing + 16;
       const fieldRows: any[] = [];
 
       let i = 0;
@@ -573,14 +595,17 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
     }) : null;
   })();
 
+  const isCustomBg = !!theme?.bgImageUrl;
+  const renderGraphicOnTop = isJpgFrame || isCustomBg;
+
   return React.createElement(Document, {},
     React.createElement(Page, { size: "A4", style: styles.page as any },
       React.createElement(View, { style: styles.container as any, wrap: false },
         ...([
           renderPDFBackground(),
-          !isJpgFrame ? bgGraphicElement : null,
+          !renderGraphicOnTop ? bgGraphicElement : null,
           frameElement,
-          isJpgFrame ? bgGraphicElement : null,
+          renderGraphicOnTop ? bgGraphicElement : null,
 
           WATERMARK_CONFIG.isEnabled ? React.createElement(View, {
             style: {
@@ -724,7 +749,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   }
                 }
                 if (item.type === 'mantra') {
-                  const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
+                  const mantraSticker = data.stickers?.find((s: any) => s.isMantra === true || (s.isMantra !== false && s.y < 120));
                   if (mantraSticker) {
                     const imgW = 45;
                     const imgH = 45;
@@ -816,6 +841,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
             const titleColor = style.titleColor || primary;
             const fieldColor = style.fieldColor || secondary;
             const fSize = currentFontSize;
+            const detailsFontSize = fSize + 1;
             const fontStyle = style.fontStyle || "bold";
             const textTransform = style.textTransform || "none";
             const applyTransform = (rawText: any) => {
@@ -833,7 +859,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               // Modern Boxed Card Background Rendering
               detailsLayout === "modern-boxed" ? (() => {
                 const lastField = sec.fields[sec.fields.length - 1];
-                const boxHeight = lastField ? (lastField.y + fSize * 1.45 - sec.titleY + 12) : 50;
+                const boxHeight = lastField ? (lastField.y + detailsFontSize * 1.45 - sec.titleY + 12) : 50;
                 return React.createElement(Svg, {
                   key: `card-${si}`,
                   style: {
@@ -926,7 +952,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         left: colX + offset.x,
                         width: f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20),
                         textAlign: align,
-                        fontSize: fSize,
+                        fontSize: detailsFontSize,
                         fontFamily: getFontForText(fullText, fontFamily),
                         fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
                         color: fieldColor,
@@ -947,7 +973,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         top: absFieldY,
                         left: colX + offset.x,
                         width: lblW,
-                        fontSize: fSize,
+                        fontSize: detailsFontSize,
                         fontFamily: getFontForText(f.displayLabel, fontFamily),
                         fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
                         color: fieldColor,
@@ -966,7 +992,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         top: absFieldY,
                         left: colonX + offset.x,
                         width: 15,
-                        fontSize: fSize,
+                        fontSize: detailsFontSize,
                         fontFamily: fontFamily,
                         color: fieldColor,
                         lineHeight: 1.1
@@ -981,7 +1007,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       position: 'absolute',
                       top: absFieldY,
                       left: valX + offset.x,
-                      width: f.valueW + (f.logoUrl ? (fSize + 4) : 0),
+                      width: f.valueW + (f.logoUrl ? (detailsFontSize + 4) : 0),
                       flexDirection: 'row',
                       alignItems: 'flex-start'
                     } as any
@@ -999,14 +1025,14 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         }
                         return React.createElement(Image, {
                           src: resolvedSrc,
-                          style: [styles.logo, { width: fSize, height: fSize, marginTop: fSize * 0.05, marginRight: 4 }] as any
+                          style: [styles.logo, { width: detailsFontSize, height: detailsFontSize, marginTop: detailsFontSize * 0.05, marginRight: 4 }] as any
                         });
                       })() : null,
                       React.createElement(Text, {
                         style: [
                           styles.value,
                           {
-                            fontSize: fSize,
+                            fontSize: detailsFontSize,
                             fontFamily: getFontForText(f.displayValue, fontFamily),
                             color: fieldColor,
                             width: f.valueW,
@@ -1022,7 +1048,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                     key: `div-${si}-${fi}`,
                     height: 1,
                     width: f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20),
-                    style: { position: 'absolute', top: absFieldY + fSize * 1.35 + 2, left: colX + offset.x } as any
+                    style: { position: 'absolute', top: absFieldY + detailsFontSize * 1.35 + 2, left: colX + offset.x } as any
                   },
                     React.createElement(Path, {
                       d: `M 0 0 L ${f.isHalf ? f.halfW : (A4_W - padLeft - padRight - 20)} 0`,
@@ -1035,7 +1061,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               })
             ].filter(Boolean);
           }),
-          (data.stickers || []).filter((s: any) => !s.isMantra && !(s.y < 120)).map((sticker: any, i: number) => {
+          (data.stickers || []).filter((s: any) => !(s.isMantra === true || (s.isMantra !== false && s.y < 120))).map((sticker: any, i: number) => {
             const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
             let resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
             if (resolvedSrc) {

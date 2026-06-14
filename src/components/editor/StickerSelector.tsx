@@ -148,6 +148,7 @@ export const StickerSelector = React.memo(function StickerSelector({ onSelect }:
       y: 100,
       scaleX: 0.8,
       scaleY: 0.8,
+      isMantra: false,
     });
     if (onSelect) {
       onSelect();

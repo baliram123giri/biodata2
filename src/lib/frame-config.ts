@@ -78,6 +78,9 @@ export interface TemplateConfig {
   defaultAccent: string;
   defaultPadding: number;
   defaultYPadding?: number;
+  defaultPaddingTop?: number;
+  defaultPaddingRight?: number;
+  defaultPaddingLeft?: number;
   photo: {
     x: number;
     y: number;
@@ -288,6 +291,9 @@ export function mapDbTemplateToConfig(dbTpl: any): TemplateConfig {
     defaultAccent: dbTpl.defaultAccent,
     defaultPadding: dbTpl.defaultPadding,
     defaultYPadding: dbTpl.defaultYPadding ?? undefined,
+    defaultPaddingTop: dbTpl.defaultPaddingTop ?? undefined,
+    defaultPaddingRight: dbTpl.defaultPaddingRight ?? undefined,
+    defaultPaddingLeft: dbTpl.defaultPaddingLeft ?? undefined,
     photo: {
       x: dbTpl.photoX,
       y: dbTpl.photoY,

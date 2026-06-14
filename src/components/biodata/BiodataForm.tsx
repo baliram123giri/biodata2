@@ -484,40 +484,6 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
     // Immediately persist mantra + title to store — don't wait for the 400ms debounce.
     // This ensures the header text survives navigation to the edit page.
     setStoredFormData({ mantra: defaults.mantra, title: defaults.title });
-
-    // 4. Fill Header Details: Mantra Sign/Sticker
-    try {
-      let stickersToSearch = mantraStickers || [];
-      if (stickersToSearch.length === 0) {
-        const res = await fetch(`/api/stickers?type=Mantra&limit=100`);
-        if (res.ok) {
-          const data = await res.json();
-          stickersToSearch = data.stickers || [];
-        }
-      }
-
-      // Read live store state (not stale closure) to find existing mantra sticker
-      const liveStickers = useBiodataStore.getState().formData.stickers || [];
-      const existingMantraSticker = liveStickers.find((s: any) => s.isMantra);
-      if (existingMantraSticker) {
-        removeSticker(existingMantraSticker.id);
-      }
-
-      // Add new mantra sticker if found for community
-      const bestSticker = findBestMantraSticker(stickersToSearch, community);
-      if (bestSticker) {
-        addSticker({
-          type: bestSticker.url,
-          x: 250,
-          y: 50,
-          scaleX: 1,
-          scaleY: 1,
-          isMantra: true
-        });
-      }
-    } catch (err) {
-      console.error("Failed to automatically update community sticker:", err);
-    }
   };
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);

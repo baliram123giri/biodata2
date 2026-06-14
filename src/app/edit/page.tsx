@@ -113,6 +113,9 @@ function EditPageContent() {
   const themeHistory = useStore(useThemeStore.temporal, (state) => state);
 
   const activeTemplate = customTemplates.find((t) => t.id === selectedTemplate) || getTemplateConfig(selectedTemplate);
+  const defaultPaddingLeft = activeTemplate?.defaultPaddingLeft !== undefined ? activeTemplate.defaultPaddingLeft : (activeTemplate?.defaultPadding ?? 60);
+  const defaultPaddingRight = activeTemplate?.defaultPaddingRight !== undefined ? activeTemplate.defaultPaddingRight : (activeTemplate?.defaultPadding ?? 60);
+  const defaultPaddingTop = activeTemplate?.defaultPaddingTop !== undefined ? activeTemplate.defaultPaddingTop : (activeTemplate?.defaultYPadding !== undefined ? activeTemplate.defaultYPadding : defaultPaddingLeft);
   const canUndo = biodataHistory.pastStates.length > 0 || themeHistory.pastStates.length > 0;
   const canRedo = biodataHistory.futureStates.length > 0 || themeHistory.futureStates.length > 0;
   const currentLang = methods.watch("language") || formData.language || "English";
@@ -438,7 +441,7 @@ function EditPageContent() {
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
     if (!isMounted) return;
-    const config = getTemplateConfig(selectedTemplate);
+    const config = activeTemplate;
     if (!config) return;
 
     const configKey = `${selectedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;
@@ -476,7 +479,7 @@ function EditPageContent() {
       // Reset any manual padding or photo transformation overrides so template defaults apply
       theme.resetOverrides();
     }
-  }, [selectedTemplate, customTemplates, isMounted, theme]);
+  }, [selectedTemplate, customTemplates, isMounted, activeTemplate]);
 
   useEffect(() => {
     if (isMounted) {
@@ -1270,11 +1273,11 @@ function EditPageContent() {
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("topPadding", currentLang)}</Label>
                           <span className="text-[10px] font-bold text-stitch-primary">
-                            {theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding))}px
+                            {theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : defaultPaddingTop)}px
                           </span>
                         </div>
                         <Slider
-                          value={[theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : (getTemplateConfig(useBiodataStore.getState().selectedTemplate)?.defaultYPadding ?? theme.padding))]}
+                          value={[theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : defaultPaddingTop)]}
                           onValueChange={([v]) => theme.setPaddingTop(v)}
                           min={20}
                           max={200}
@@ -1286,10 +1289,10 @@ function EditPageContent() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("leftPadding", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingLeft !== undefined ? theme.paddingLeft : theme.padding}px</span>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : defaultPaddingLeft)}px</span>
                         </div>
                         <Slider
-                          value={[theme.paddingLeft !== undefined ? theme.paddingLeft : theme.padding]}
+                          value={[theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : defaultPaddingLeft)]}
                           onValueChange={([v]) => theme.setPaddingLeft(v)}
                           min={20}
                           max={150}
@@ -1300,10 +1303,10 @@ function EditPageContent() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("rightPadding", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingRight !== undefined ? theme.paddingRight : theme.padding}px</span>
+                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : defaultPaddingRight)}px</span>
                         </div>
                         <Slider
-                          value={[theme.paddingRight !== undefined ? theme.paddingRight : theme.padding]}
+                          value={[theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : defaultPaddingRight)]}
                           onValueChange={([v]) => theme.setPaddingRight(v)}
                           min={20}
                           max={150}

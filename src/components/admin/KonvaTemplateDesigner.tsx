@@ -339,6 +339,16 @@ export function KonvaTemplateDesigner({
     formState.enableSvgTint ? formState.defaultAccent : ""
   );
 
+  const isJpgFrame = formState.frameType === "image" &&
+    (frameImageSrc ?
+      (typeof frameImageSrc === "string" ?
+        (frameImageSrc.toLowerCase().includes(".jpg") || frameImageSrc.toLowerCase().includes(".jpeg"))
+        : (frameImageSrc instanceof File ?
+            (frameImageSrc.name.toLowerCase().endsWith(".jpg") || frameImageSrc.name.toLowerCase().endsWith(".jpeg"))
+            : false
+          )
+      ) : false);
+
   // Resolve selected font key → CSS family name for Konva Text nodes
   const fontFamily = getKonvaFontFamily(formState.defaultFontFamily || "noto");
 
@@ -1458,42 +1468,61 @@ export function KonvaTemplateDesigner({
               />
             )}
 
-            {watermarkImage && (
-              <KonvaImage
-                id="watermark"
-                ref={bgRef}
-                image={watermarkImage}
-                x={parseFloat(formState.bgImageX) || 0}
-                y={parseFloat(formState.bgImageY) || 0}
-                width={parseFloat(formState.bgImageWidth) || 595}
-                height={parseFloat(formState.bgImageHeight) || 842}
-                opacity={parseFloat(formState.bgImageOpacity) ?? 0.15}
-                draggable={selectedIds.includes("watermark")}
-                listening={selectedIds.includes("watermark")}
-                onDragStart={handleDragStart}
-                onDragEnd={handleBgDragEnd}
-                onTransformEnd={handleBgTransformEnd}
-                onMouseEnter={() => handleSetCursor('move')}
-                onMouseLeave={() => handleSetCursor('default')}
-              />
-            )}
-            {formState.frameType === "image" && frameImage && (
-              <KonvaImage 
-                id="frame"
-                image={frameImage} 
-                x={parseFloat(formState.frameImageX) || 0}
-                y={parseFloat(formState.frameImageY) || 0}
-                width={parseFloat(formState.frameImageWidth) || A4_W} 
-                height={parseFloat(formState.frameImageHeight) || A4_H} 
-                draggable={selectedIds.includes("frame")}
-                listening={selectedIds.includes("frame")}
-                onDragStart={handleDragStart}
-                onDragEnd={handleFrameDragEnd}
-                onTransformEnd={handleFrameTransformEnd}
-                onMouseEnter={() => handleSetCursor('move')}
-                onMouseLeave={() => handleSetCursor('default')}
-              />
-            )}
+            {(() => {
+              const watermarkElement = watermarkImage && (
+                <KonvaImage
+                  id="watermark"
+                  ref={bgRef}
+                  image={watermarkImage}
+                  x={parseFloat(formState.bgImageX) || 0}
+                  y={parseFloat(formState.bgImageY) || 0}
+                  width={parseFloat(formState.bgImageWidth) || 595}
+                  height={parseFloat(formState.bgImageHeight) || 842}
+                  opacity={parseFloat(formState.bgImageOpacity) ?? 0.15}
+                  draggable={selectedIds.includes("watermark")}
+                  listening={selectedIds.includes("watermark")}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleBgDragEnd}
+                  onTransformEnd={handleBgTransformEnd}
+                  onMouseEnter={() => handleSetCursor('move')}
+                  onMouseLeave={() => handleSetCursor('default')}
+                />
+              );
+
+              const frameElement = formState.frameType === "image" && frameImage && (
+                <KonvaImage 
+                  id="frame"
+                  image={frameImage} 
+                  x={parseFloat(formState.frameImageX) || 0}
+                  y={parseFloat(formState.frameImageY) || 0}
+                  width={parseFloat(formState.frameImageWidth) || A4_W} 
+                  height={parseFloat(formState.frameImageHeight) || A4_H} 
+                  draggable={selectedIds.includes("frame")}
+                  listening={selectedIds.includes("frame")}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleFrameDragEnd}
+                  onTransformEnd={handleFrameTransformEnd}
+                  onMouseEnter={() => handleSetCursor('move')}
+                  onMouseLeave={() => handleSetCursor('default')}
+                />
+              );
+
+              if (isJpgFrame) {
+                return (
+                  <>
+                    {frameElement}
+                    {watermarkElement}
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    {watermarkElement}
+                    {frameElement}
+                  </>
+                );
+              }
+            })()}
 <Group listening={false}>
             {formState.frameType === "svg" && (
               <Group>
