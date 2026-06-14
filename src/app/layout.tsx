@@ -27,6 +27,7 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 import { Header } from "@/components/layout/Header";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Footer } from "@/components/layout/Footer";
 import { FooterReviews } from "@/components/layout/FooterReviews";
 import { ClientLayoutProviders } from "@/components/layout/ClientLayoutProviders";
@@ -117,6 +118,7 @@ export default function RootLayout({
           <ClientLayoutProviders>
             <Header />
             <main className="flex-1">
+              <Breadcrumbs />
               {children}
             </main>
             <Footer>
