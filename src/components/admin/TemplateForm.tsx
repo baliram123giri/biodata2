@@ -872,8 +872,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         language: template.language || "English",
         detailsLayout: template.detailsLayout || "classic",
         titleShape: template.titleShape || "simple",
-        mantraSignPlacement: (template as any).mantraSignPlacement || "both",
-        mantraSignVertical: (template as any).mantraSignVertical || "top",
         sectionOffsets: bgConf?.sectionOffsets || "{}",
         sectionStyles: bgConf?.sectionStyles || "{}",
         // Pricing
@@ -3782,12 +3780,16 @@ function TemplateSvgPreview({
   }, [t, propSections, formState.language]);
 
   const layout = React.useMemo(() => {
-    let cursorY = paddingTop + 20;
+    const MANTRA_STICKER_EXTRA = mantraSignUrl ? 50 : 0;
+    let cursorY = paddingTop + 20 + MANTRA_STICKER_EXTRA;
     const baseFontSize = getNum(formState.defaultFontSize, 9);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
-    cursorY += baseFontSize * 2.8; // Title
+    if (title) {
+      cursorY += baseFontSize * 2.8; // Title
+    }
+
 
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
@@ -3892,34 +3894,9 @@ function TemplateSvgPreview({
     });
 
     return { sectionLayouts, fSize: baseFontSize };
-  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
+  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles, title, mantraSignUrl]);
 
-  const mantraGeometry = React.useMemo(() => {
-    if (!mantraSignUrl) return null;
-    const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
-    const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
-    const align = sectionStyles["header"]?.textAlign || "center";
-    const imgW = 45;
-    const gap = 7;
-    
-    if (align === "left") {
-      return {
-        leftX: paddingLeft,
-        rightX: paddingLeft + textWidth + gap * 2 + imgW,
-      };
-    } else if (align === "right") {
-      return {
-        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
-        rightX: A4_W - paddingRight,
-      };
-    } else {
-      const halfW = textWidth / 2;
-      return {
-        leftX: A4_W / 2 - halfW - gap - imgW,
-        rightX: A4_W / 2 + halfW + gap + imgW,
-      };
-    }
-  }, [mantra, mantraSignUrl, layout.fSize, currentLang, sectionStyles, paddingLeft, paddingRight]);
+
 
   const headerOffset = sectionOffsets["header"] || { x: 0, y: 0 };
 
@@ -4175,20 +4152,17 @@ function TemplateSvgPreview({
       <g transform={`translate(${headerOffset.x}, ${headerOffset.y})`}>
         {(() => {
           const align = sectionStyles["header"]?.textAlign || "center";
-          const hasMantraSticker = !!mantraSignUrl;
-          const gap = 7;
-          const imgW = 45;
           const textX = align === "left"
-            ? paddingLeft + (hasMantraSticker ? (imgW + gap) : 0)
+            ? paddingLeft
             : align === "right"
-              ? A4_W - paddingRight - (hasMantraSticker ? (imgW + gap) : 0)
+              ? A4_W - paddingRight
               : A4_W / 2;
           const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
 
           return (
             <text
               x={textX}
-              y={paddingTop + 10 + layout.fSize * 1.2}
+              y={paddingTop + 10 + (mantraSignUrl ? 50 : 0) + layout.fSize * 1.2}
               fill={primaryColor}
               fontSize={layout.fSize * 1.2}
               fontWeight="bold"
@@ -4200,56 +4174,21 @@ function TemplateSvgPreview({
           );
         })()}
         
-        {mantraSignUrl && mantraGeometry && (() => {
-          const placement = formState.mantraSignPlacement || "both";
-          const vertical = formState.mantraSignVertical || "top";
-          const signY = vertical === "middle" ? A4_H / 2 - 22 : paddingTop + 4;
-
-          // top-center: single sign centered above the mantra text
-          if (placement === "top-center") {
-            return (
-              <image
-                x={(A4_W - 45) / 2}
-                y={signY - 50}
-                width="45"
-                height="45"
-                href={mantraSignUrl}
-              />
-            );
-          }
-
-          const showLeft = placement === "both" || placement === "left";
-          const showRight = placement === "both" || placement === "right";
-          return (
-            <>
-              {showLeft && (
-                <image
-                  x={mantraGeometry.leftX}
-                  y={signY}
-                  width="45"
-                  height="45"
-                  href={mantraSignUrl}
-                />
-              )}
-              {showRight && (
-                <image
-                  x={-mantraGeometry.rightX}
-                  y={signY}
-                  width="45"
-                  height="45"
-                  href={mantraSignUrl}
-                  transform="scale(-1, 1)"
-                />
-              )}
-            </>
-          );
-        })()}
+        {mantraSignUrl && (
+          <image
+            x={(A4_W - 45) / 2}
+            y={paddingTop + 10}
+            width="45"
+            height="45"
+            href={mantraSignUrl}
+          />
+        )}
         
         {/* Title Rendering */}
-        {(() => {
-          const titleY = paddingTop + 10 + layout.fSize * 2;
+        {title && (() => {
+          const titleY = paddingTop + 10 + (mantraSignUrl ? 50 : 0) + layout.fSize * 2;
           const titleHeight = layout.fSize * 2;
-          const titleVal = title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
+          const titleVal = title;
           const align = sectionStyles["header"]?.textAlign || "center";
           const textX = align === "left" ? paddingLeft : align === "right" ? A4_W - paddingRight : A4_W / 2;
           const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";

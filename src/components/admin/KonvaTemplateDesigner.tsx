@@ -823,12 +823,16 @@ export function KonvaTemplateDesigner({
 
   // Layout math calculations mirrored exactly from KonvaPreview.tsx
   const layout = useMemo(() => {
-    let cursorY = paddingTop + 20;
+    const MANTRA_STICKER_EXTRA = mantraSignUrl ? 50 : 0;
+    let cursorY = paddingTop + 20 + MANTRA_STICKER_EXTRA;
     const baseFontSize = getNum(formState.defaultFontSize, 9);
     
     // Header mantra & document title space offset
     cursorY += baseFontSize * 2; // Mantra
-    cursorY += baseFontSize * 2.8; // Title
+    if (title) {
+      cursorY += baseFontSize * 2.8; // Title
+    }
+
 
     const LABEL_WIDTH = 130;
     const COLON_WIDTH = 20;
@@ -939,37 +943,12 @@ export function KonvaTemplateDesigner({
     });
 
     return { sectionLayouts, fSize: baseFontSize };
-  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles]);
+  }, [sections, paddingTop, paddingLeft, paddingRight, formState.defaultFontSize, formState.detailsLayout, px, py, ph, sectionStyles, title, mantraSignUrl]);
 
   const resolvedMantraSignUrl = getClientImageUrl(mantraSignUrl);
   const [signImage] = useImage(resolvedMantraSignUrl || "", resolvedMantraSignUrl?.startsWith("data:") ? undefined : "anonymous");
 
-  const mantraGeometry = useMemo(() => {
-    if (!mantraSignUrl) return null;
-    const textVal = mantra || (currentLang === "हिंदी" ? "॥ श्री गणेशाय नमः ॥" : "|| Shree Ganeshay Namah ||");
-    const textWidth = textVal.length * (layout.fSize * 1.2 * 0.5);
-    const align = sectionStyles["header"]?.textAlign || "center";
-    const imgW = 45;
-    const gap = 7;
-    
-    if (align === "left") {
-      return {
-        leftX: paddingLeft,
-        rightX: paddingLeft + textWidth + gap * 2 + imgW,
-      };
-    } else if (align === "right") {
-      return {
-        leftX: A4_W - paddingRight - textWidth - gap * 2 - imgW,
-        rightX: A4_W - paddingRight,
-      };
-    } else {
-      const halfW = textWidth / 2;
-      return {
-        leftX: A4_W / 2 - halfW - gap - imgW,
-        rightX: A4_W / 2 + halfW + gap + imgW,
-      };
-    }
-  }, [mantra, mantraSignUrl, layout.fSize, currentLang, sectionStyles, paddingLeft, paddingRight]);
+
 
   const isSectionId = useCallback((id: string) => {
     return id.startsWith("sec-") || ["personal", "educationSec", "family", "contact", "header"].includes(id);
@@ -1678,13 +1657,10 @@ export function KonvaTemplateDesigner({
                   )}
 
                     {/* Header Mantra */}
-                    <Group y={paddingTop + 10}>
+                    <Group y={paddingTop + 10 + (mantraSignUrl ? 50 : 0)}>
                       {(() => {
-                        const hasMantraSticker = !!mantraSignUrl;
-                        const gap = 7;
-                        const imgW = 45;
-                        const textX = paddingLeft + (hasMantraSticker ? (imgW + gap) : 0);
-                        const textWidth = A4_W - paddingLeft - paddingRight - (hasMantraSticker ? (imgW + gap) * 2 : 0);
+                        const textX = paddingLeft;
+                        const textWidth = A4_W - paddingLeft - paddingRight;
                         return (
                           <Text
                             x={textX}
@@ -1699,62 +1675,25 @@ export function KonvaTemplateDesigner({
                           />
                         );
                       })()}
-                      {signImage && mantraGeometry && (() => {
-                        const placement = formState.mantraSignPlacement || "both";
-                        const vertical = formState.mantraSignVertical || "top";
-                        const signY = vertical === "middle"
-                          ? (A4_H / 2) - paddingTop - 10 - 22
-                          : -6;
-
-                        // top-center: single sign centered above mantra row
-                        if (placement === "top-center") {
-                          return (
-                            <KonvaImage
-                              image={signImage}
-                              x={(A4_W - 45) / 2}
-                              y={signY - 50}
-                              width={45}
-                              height={45}
-                            />
-                          );
-                        }
-
-                        const showLeft = placement === "both" || placement === "left";
-                        const showRight = placement === "both" || placement === "right";
-                        return (
-                          <>
-                            {showLeft && (
-                              <KonvaImage
-                                image={signImage}
-                                x={mantraGeometry.leftX}
-                                y={signY}
-                                width={45}
-                                height={45}
-                              />
-                            )}
-                            {showRight && (
-                              <KonvaImage
-                                image={signImage}
-                                x={mantraGeometry.rightX}
-                                y={signY}
-                                width={45}
-                                height={45}
-                                scaleX={-1}
-                              />
-                            )}
-                          </>
-                        );
-                      })()}
+                      {signImage && (
+                        <KonvaImage
+                          image={signImage}
+                          x={(A4_W - 45) / 2}
+                          y={-50}
+                          width={45}
+                          height={45}
+                        />
+                      )}
                     </Group>
-
-                    {/* Document Title "BIODATA" */}
-                    {(() => {
-                      const titleY = paddingTop + 10 + layout.fSize * 2;
+ 
+                    {/* Document Title */}
+                    {title && (() => {
+                      const titleY = paddingTop + 10 + (mantraSignUrl ? 50 : 0) + layout.fSize * 2;
                       const titleHeight = layout.fSize * 2;
                       const align = sectionStyles["header"]?.textAlign || "center";
 
                       if (formState.titleShape === "ribbon") {
-                        const titleVal = formState.title || "BIODATA";
+                        const titleVal = title;
                         const ribbonW = Math.min(
                           Math.max(titleVal.length * layout.fSize * 1.05 + 60, 180),
                           A4_W - paddingLeft - paddingRight
@@ -1778,7 +1717,7 @@ export function KonvaTemplateDesigner({
                             <Text
                               x={ribbonX}
                               y={ribbonY + (ribbonH - titleHeight) / 2}
-                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              text={title}
                               fontSize={layout.fSize * 1.8}
                               fontFamily={fontFamily}
                               fontStyle="bold"
@@ -1800,7 +1739,7 @@ export function KonvaTemplateDesigner({
                             <Text
                               x={paddingLeft}
                               y={titleY}
-                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              text={title}
                               fontSize={layout.fSize * 2}
                               fontFamily={fontFamily}
                               fontStyle="bold"
@@ -1816,7 +1755,7 @@ export function KonvaTemplateDesigner({
                             <Text
                               x={paddingLeft}
                               y={titleY}
-                              text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                              text={title}
                               fontSize={layout.fSize * 2}
                               fontFamily={fontFamily}
                               fontStyle="bold"
@@ -1836,7 +1775,7 @@ export function KonvaTemplateDesigner({
                           <Text
                             x={paddingLeft}
                             y={titleY}
-                            text={title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA")}
+                            text={title}
                             fontSize={layout.fSize * 2.2}
                             fontFamily={fontFamily}
                             fontStyle="bold"
