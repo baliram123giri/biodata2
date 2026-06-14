@@ -204,14 +204,18 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
 
   // ── Layout Algorithm (with Dynamic Scaling) ────────────────────
   const calculateLayout = (fSize: number) => {
-    let cursorY = paddingY + 20;
+    // When a mantra sticker is present it occupies ~50px above the mantra text.
+    // Reserve that space in the layout so sections don't collide with the sticker.
+    const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
+    const MANTRA_STICKER_EXTRA = mantraSticker ? 50 : 0;
+    let cursorY = paddingY + 20 + MANTRA_STICKER_EXTRA;
     const headerItems: any[] = [];
     if (data.mantra) {
-      headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10, fontSize: fSize * 1.2, font: getFontForText(data.mantra, fontFamily) });
+      headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10 + MANTRA_STICKER_EXTRA, fontSize: fSize * 1.2, font: getFontForText(data.mantra, fontFamily) });
       cursorY += fSize * 2;
     }
     if (data.title) {
-      headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: getFontForText(data.title, fontFamily) });
+      headerItems.push({ type: 'title', text: data.title, y: paddingY + 10 + MANTRA_STICKER_EXTRA + (data.mantra ? fSize * 2 : 0), fontSize: fSize * 2, font: getFontForText(data.title, fontFamily) });
       cursorY += fSize * 2.8;
     }
 
@@ -1031,7 +1035,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
               })
             ].filter(Boolean);
           }),
-          (data.stickers || []).filter((s: any) => !s.isMantra).map((sticker: any, i: number) => {
+          (data.stickers || []).filter((s: any) => !s.isMantra && !(s.y < 120)).map((sticker: any, i: number) => {
             const asset = STICKER_ASSETS.find(a => a.id === sticker.type);
             let resolvedSrc = sticker.resolvedUrl || (asset && asset.url);
             if (resolvedSrc) {

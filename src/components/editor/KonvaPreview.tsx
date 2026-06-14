@@ -676,7 +676,12 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
   const [fontTick, setFontTick] = useState(0);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   const [isPhotoSelected, setIsPhotoSelected] = useState(false);
-  const mantraSticker = formData.stickers?.find(s => s.isMantra);
+  // A sticker is considered the "header mantra sticker" if it is explicitly flagged
+  // (isMantra: true) OR if it sits in the header zone (y < 120) — for legacy templates
+  // that were saved before the isMantra field was introduced.
+  const isMantraSticker = (s: { isMantra?: boolean; y: number }) =>
+    s.isMantra === true || s.y < 120;
+  const mantraSticker = formData.stickers?.find(isMantraSticker);
   const transformerRef = useRef<Konva.Transformer>(null);
   const photoTransformerRef = useRef<Konva.Transformer>(null);
   const photoGroupRef = useRef<Konva.Group>(null);
@@ -1115,7 +1120,11 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
   const layout = useMemo(() => {
     const calculateForSize = (fSize: number) => {
-      let cursorY = paddingY + 20; // Extra room for Mantra
+      // When a mantra sticker is present it renders 50px above the mantra text
+      // (scaleY 0.45 × 100px = 45px tall, positioned at y:-50 relative to the mantra group).
+      // We must reserve that vertical space so sections start below the full header block.
+      const MANTRA_STICKER_EXTRA = mantraSticker ? 50 : 0;
+      let cursorY = paddingY + 20 + MANTRA_STICKER_EXTRA; // Extra room for Mantra (+ sticker when present)
 
       // 1. Calculate Mantra & Title Height
       if (formData.mantra) cursorY += fSize * 2;
@@ -1225,7 +1234,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
     let bestSize = baseFontSize;
     let finalLayout = calculateForSize(bestSize);
     return { ...finalLayout, fSize: bestSize };
-  }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
+  }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout, mantraSticker]);
 
 
 
@@ -1847,7 +1856,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             )}
 
             {/* Stickers Rendering */}
-            {formData.stickers?.filter(s => !s.isMantra).map((sticker) => (
+            {formData.stickers?.filter(s => !isMantraSticker(s)).map((sticker) => (
               <StickerItem
                 key={sticker.id}
                 sticker={sticker}

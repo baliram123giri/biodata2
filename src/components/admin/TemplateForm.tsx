@@ -121,8 +121,6 @@ interface Template {
   language?: string | null;
   detailsLayout?: string | null;
   titleShape?: string | null;
-  mantraSignPlacement?: string | null;
-  mantraSignVertical?: string | null;
   isPremium?: boolean | null;
   isDefault?: boolean | null;
   price?: number | null;
@@ -233,8 +231,6 @@ const initialFormState = {
   language: "English",
   detailsLayout: "classic",
   titleShape: "simple",
-  mantraSignPlacement: "both",
-  mantraSignVertical: "top",
   imageFrameOffset: "0",
   frameImageX: "0",
   frameImageY: "0",
@@ -960,8 +956,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
         language: formState.language,
         detailsLayout: formState.detailsLayout,
         titleShape: formState.titleShape,
-        mantraSignPlacement: formState.mantraSignPlacement,
-        mantraSignVertical: formState.mantraSignVertical,
         religion: aiReligion,
         gender: aiGender,
         rawInput: methods.getValues(),
@@ -1406,7 +1400,8 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                 Customize Design Settings
               </p>
             </div>
-            
+
+
             <div className="flex-1 overflow-y-auto p-6 pt-4 custom-scrollbar">
 
                   {/* Tab 1: General Info */}
@@ -1554,40 +1549,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
                             <SelectItem value="ornament" className="cursor-pointer hover:bg-muted py-2 px-3 text-sm">Ornamental Floral Ends</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-
-                      {/* ─── Mantra Sign Settings Card ─── */}
-                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-extrabold text-primary uppercase tracking-widest">Mantra Sign Settings</span>
-                          <span className="text-[10px] text-muted-foreground">(Admin Only)</span>
-                        </div>
-
-                        {/* Count / Placement */}
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-muted-foreground">Sign Count & Sides</Label>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {[
-                              { value: "both", label: "Both Sides", icon: "⟨⚛⟩" },
-                              { value: "left", label: "Left Only", icon: "⚛ ·" },
-                              { value: "right", label: "Right Only", icon: "· ⚛" },
-                              { value: "top-center", label: "Top Center", icon: "↑⚛" },
-                            ].map(opt => (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setFormState({ ...formState, mantraSignPlacement: opt.value })}
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer
-                                  ${(formState.mantraSignPlacement || "both") === opt.value
-                                    ? "border-primary bg-primary/10 text-primary shadow"
-                                    : "border-border bg-background text-muted-foreground hover:border-primary/40"}`}
-                              >
-                                <span className="text-base">{opt.icon}</span>
-                                <span>{opt.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </div>
 
                       <div className="space-y-1.5 flex flex-col">
