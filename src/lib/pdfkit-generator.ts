@@ -722,40 +722,21 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                 if (item.type === 'mantra') {
                   const mantraSticker = data.stickers?.find((s: any) => s.isMantra);
                   if (mantraSticker) {
-                    // Use the wider of mantra text or title text so stickers clear both
-                    const mantraTextWidth = item.text ? String(item.text).length * (item.fontSize * 0.5) : 0;
-                    const titleItem = layout.headerItems.find((h: any) => h.type === 'title');
-                    const titleTextWidth = titleItem?.text ? String(titleItem.text).length * (titleItem.fontSize * 0.55) : 0;
-                    const textWidth = Math.max(mantraTextWidth, titleTextWidth);
-                    const halfW = textWidth / 2;
-                    const gap = 10;
                     const imgW = 45;
                     const imgH = 45;
-
-                    let leftStickerX, rightStickerX;
-                    if (align === "left") {
-                      leftStickerX = padLeft;
-                      rightStickerX = padLeft + imgW + gap + textWidth + gap;
-                    } else if (align === "right") {
-                      leftStickerX = A4_W - padRight - imgW - gap - textWidth - gap - imgW;
-                      rightStickerX = A4_W - padRight - imgW;
-                    } else {
-                      leftStickerX = A4_W / 2 - halfW - gap - imgW;
-                      rightStickerX = A4_W / 2 + halfW + gap;
-                    }
-
                     const parsedSvg = mantraSticker.svgContent ? parseSvgContent(mantraSticker.svgContent) : null;
-                    const placement = config.mantraSignPlacement || "both";
-                    const showLeft = placement === "both" || placement === "left";
-                    const showRight = placement === "both" || placement === "right";
+
+                    // Sticker always rendered centered above the mantra text
+                    const stickerX = (A4_W - imgW) / 2;
+                    const stickerY = item.y - imgH - 6;
 
                     return React.createElement(View, { key: i, style: { position: 'absolute', top: item.y, left: 0, width: A4_W, height: Math.max(item.fontSize, imgH) } as any },
                       React.createElement(Text, {
                         style: {
                           position: 'absolute',
                           top: 0,
-                          left: padLeft + imgW + gap,
-                          width: A4_W - padLeft - padRight - (imgW + gap) * 2,
+                          left: padLeft,
+                          width: A4_W - padLeft - padRight,
                           textAlign: align,
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -764,72 +745,37 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         } as any
                       }, item.text ? String(item.text) : ""),
 
-                      React.createElement(React.Fragment, null,
-                        showLeft && (parsedSvg ? (
-                          React.createElement(View, {
-                            style: {
-                              position: 'absolute',
-                              top: -6,
-                              left: leftStickerX,
-                              width: imgW,
-                              height: imgH
-                            } as any
-                          },
-                            React.createElement(Svg, { viewBox: parsedSvg.viewBox, width: '100%', height: '100%' },
-                              parsedSvg.paths.map((p: any, idx: number) =>
-                                React.createElement(Path, {
-                                  key: idx,
-                                  d: p.d,
-                                  fill: primary
-                                })
-                              )
+                      parsedSvg ? (
+                        React.createElement(View, {
+                          style: {
+                            position: 'absolute',
+                            top: stickerY - item.y,
+                            left: stickerX,
+                            width: imgW,
+                            height: imgH
+                          } as any
+                        },
+                          React.createElement(Svg, { viewBox: parsedSvg.viewBox, width: '100%', height: '100%' },
+                            parsedSvg.paths.map((p: any, idx: number) =>
+                              React.createElement(Path, {
+                                key: idx,
+                                d: p.d,
+                                fill: primary
+                              })
                             )
                           )
-                        ) : (
-                          React.createElement(Image, {
-                            src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
-                            style: {
-                              position: 'absolute',
-                              top: -6,
-                              left: leftStickerX,
-                              width: imgW,
-                              height: imgH
-                            } as any
-                          })
-                        )),
-                        showRight && (parsedSvg ? (
-                          React.createElement(View, {
-                            style: {
-                              position: 'absolute',
-                              top: -6,
-                              left: rightStickerX,
-                              width: imgW,
-                              height: imgH
-                            } as any
-                          },
-                            React.createElement(Svg, { viewBox: parsedSvg.viewBox, width: '100%', height: '100%', style: { transform: 'scaleX(-1)' } as any },
-                              parsedSvg.paths.map((p: any, idx: number) =>
-                                React.createElement(Path, {
-                                  key: idx,
-                                  d: p.d,
-                                  fill: primary
-                                })
-                              )
-                            )
-                          )
-                        ) : (
-                          React.createElement(Image, {
-                            src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
-                            style: {
-                              position: 'absolute',
-                              top: -6,
-                              left: rightStickerX,
-                              width: imgW,
-                              height: imgH,
-                              transform: 'scaleX(-1)'
-                            } as any
-                          })
-                        ))
+                        )
+                      ) : (
+                        React.createElement(Image, {
+                          src: getAbsoluteLocalPath(mantraSticker.resolvedUrl || mantraSticker.type) || (mantraSticker.resolvedUrl || mantraSticker.type),
+                          style: {
+                            position: 'absolute',
+                            top: stickerY - item.y,
+                            left: stickerX,
+                            width: imgW,
+                            height: imgH
+                          } as any
+                        })
                       )
                     );
                   }

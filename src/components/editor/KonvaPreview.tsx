@@ -1227,42 +1227,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, paddingY, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout]);
 
-  const mantraGeometry = useMemo(() => {
-    if (!mantraSticker) return null;
 
-    // RTL/Arabic/Urdu glyphs render narrower than Latin — use a tighter multiplier
-    const lang = formData.language || "English";
-    const isRTL = lang === "اردو";
-    const mantraCharW = isRTL ? 0.32 : 0.5;
-    const titleCharW  = isRTL ? 0.38 : 0.55;
-
-    // Use the wider of mantra text or title text so stickers clear both lines
-    const mantraWidth = formData.mantra ? formData.mantra.length * (layout.fSize * 1.2 * mantraCharW) : 0;
-    const titleWidth  = formData.title  ? formData.title.length  * (layout.fSize * 2   * titleCharW)  : 0;
-    const textWidth   = Math.max(mantraWidth, titleWidth);
-
-    const align = sectionStyles["header"]?.textAlign || "center";
-    const gap = 10;
-    const imgW = 45; // 100 * 0.45
-
-    if (align === "left") {
-      return {
-        leftX:  paddingLeft,
-        rightX: paddingLeft + textWidth + gap * 2 + imgW,
-      };
-    } else if (align === "right") {
-      return {
-        leftX:  A4_W - paddingRight - textWidth - gap * 2 - imgW,
-        rightX: A4_W - paddingRight,
-      };
-    } else {
-      const halfW = textWidth / 2;
-      return {
-        leftX:  A4_W / 2 - halfW - gap - imgW,
-        rightX: A4_W / 2 + halfW + gap + imgW,
-      };
-    }
-  }, [formData.mantra, formData.title, formData.language, mantraSticker, layout.fSize, sectionStyles, paddingLeft, paddingRight]);
 
   const handleAlign = (type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedStickers.length < 2) return;
@@ -1488,71 +1453,29 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                 <Group x={headerOffset.x} y={headerOffset.y}>
                   {/* Mantra Rendering */}
                   <Group y={paddingY + 10}>
-                    {formData.mantra && (() => {
-                      const hasMantraSticker = !!mantraSticker;
-                      const gap = 10;
-                      const imgW = 45;
-                      const textX = paddingLeft + (hasMantraSticker ? (imgW + gap) : 0);
-                      const textWidth = A4_W - paddingLeft - paddingRight - (hasMantraSticker ? (imgW + gap) * 2 : 0);
-                      return (
-                        <Text
-                          x={textX}
-                          y={0}
-                          text={formData.mantra}
-                          fontSize={layout.fSize * 1.2}
-                          fontFamily={fontFamily}
-                          fontStyle="bold"
-                          fill={primaryColor}
-                          align={sectionStyles["header"]?.textAlign || "center"}
-                          width={textWidth}
-                        />
-                      );
-                    })()}
-                    {mantraSticker && mantraGeometry && (() => {
-                      const placement = templateConfig.mantraSignPlacement || "both";
-                      const vertical = templateConfig.mantraSignVertical || "top";
-                      const signY = vertical === "middle"
-                        ? (A4_H / 2) - (paddingY + 10) - 22
-                        : -6;
-
-                      // top-center: single sign centered above the mantra row
-                      if (placement === "top-center") {
-                        return (
-                          <StickerItem
-                            sticker={{ ...mantraSticker, id: "mantra-sign-top", x: (A4_W - 45) / 2, y: signY - 50, scaleX: 0.45, scaleY: 0.45 }}
-                            color={primaryColor}
-                            isDesigner={false}
-                            isSelected={false}
-                            onClick={() => { }}
-                          />
-                        );
-                      }
-
-                      const showLeft = placement === "both" || placement === "left";
-                      const showRight = placement === "both" || placement === "right";
-                      return (
-                        <>
-                          {showLeft && (
-                            <StickerItem
-                              sticker={{ ...mantraSticker, id: "mantra-sign-left", x: mantraGeometry.leftX, y: signY, scaleX: 0.45, scaleY: 0.45 }}
-                              color={primaryColor}
-                              isDesigner={false}
-                              isSelected={false}
-                              onClick={() => { }}
-                            />
-                          )}
-                          {showRight && (
-                            <StickerItem
-                              sticker={{ ...mantraSticker, id: "mantra-sign-right", x: mantraGeometry.rightX, y: signY, scaleX: -0.45, scaleY: 0.45 }}
-                              color={primaryColor}
-                              isDesigner={false}
-                              isSelected={false}
-                              onClick={() => { }}
-                            />
-                          )}
-                        </>
-                      );
-                    })()}
+                    {/* Sticker: always centered above the mantra text */}
+                    {mantraSticker && (
+                      <StickerItem
+                        sticker={{ ...mantraSticker, id: "mantra-sign-top", x: (A4_W - 45) / 2, y: -50, scaleX: 0.45, scaleY: 0.45 }}
+                        color={primaryColor}
+                        isDesigner={false}
+                        isSelected={false}
+                        onClick={() => { }}
+                      />
+                    )}
+                    {formData.mantra && (
+                      <Text
+                        x={paddingLeft}
+                        y={0}
+                        text={formData.mantra}
+                        fontSize={layout.fSize * 1.2}
+                        fontFamily={fontFamily}
+                        fontStyle="bold"
+                        fill={primaryColor}
+                        align={sectionStyles["header"]?.textAlign || "center"}
+                        width={A4_W - paddingLeft - paddingRight}
+                      />
+                    )}
                   </Group>
 
                   {/* Title Rendering */}
