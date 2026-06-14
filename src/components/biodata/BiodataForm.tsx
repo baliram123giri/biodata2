@@ -510,6 +510,27 @@ export function BiodataForm({
     setStoredFormData({ mantra: defaults.mantra, title: defaults.title });
   };
 
+  // Automatically initialize community-specific fields if the current fields are missing.
+  // This is especially needed when loading landing pages (like /muslim-biodata-format) where the
+  // community selector is hidden (hideCommunityAndReligion={true}) but we want the specific fields
+  // (like sect, namaz) to populate automatically on load.
+  useEffect(() => {
+    if (selectedCommunity && selectedCommunity !== "General") {
+      const specFields = COMMUNITY_FIELDS[selectedCommunity] || [];
+      const hasSpecificField = personalDetails.some((f: any) => {
+        return specFields.some(spec => spec.id !== "religion" && spec.id !== "caste" && f.id === spec.id);
+      });
+      
+      if (!hasSpecificField) {
+        const timer = setTimeout(() => {
+          handleCommunityChange(selectedCommunity);
+        }, 50);
+        return () => clearTimeout(timer);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCommunity, personalDetails.length]);
+
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
   const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);
 

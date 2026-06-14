@@ -4,6 +4,103 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, CheckCircle2, Briefcase, Moon, Compass, BookOpen, Users, Globe } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BiodataBuilderSection } from "./BiodataBuilderSection";
+import { generateFaqSchema } from "@/lib/seo-schemas";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+const muslimHowToSchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "HowTo" as const,
+  "name": "How to Make a Muslim Marriage Biodata",
+  "description": "Learn how to create a beautiful Muslim matrimonial biodata with Islamic header symbols in 7 simple steps.",
+  "step": [
+    {
+      "@type": "HowToStep" as const,
+      "position": 1,
+      "name": "Choose a Muslim Biodata Format",
+      "text": "Select an Islamic biodata template. It should match your style. Also, consider your preferences when choosing one."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 2,
+      "name": "Upload Your Photo & Select Islamic Header Elements",
+      "text": "Add a passport-size photo and personalise your biodata with beautiful Islamic header designs such as 786, Bismillah, crescent moon, stars, and other decorative Islamic symbols."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 3,
+      "name": "Add Personal Information",
+      "text": "Enter your name, age, date of birth, height, and contact details."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 4,
+      "name": "Enter Family Details",
+      "text": "Provide information about your parents, siblings, family background, and values."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 5,
+      "name": "Add Education & Career Information",
+      "text": "Enter your educational qualifications, profession, workplace, and career achievements."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 6,
+      "name": "Customise colours & Design with Editor Studio",
+      "text": "Modify background colours, text colours, fonts, stickers, and layout elements to create a biodata that reflects your personality."
+    },
+    {
+      "@type": "HowToStep" as const,
+      "position": 7,
+      "name": "Preview & Download PDF",
+      "text": "Review your biodata, make final adjustments, and download a high-quality PDF ready to share with family and matrimonial prospects."
+    }
+  ]
+};
+
+const muslimFaqs = [
+  {
+    q: "How do I make a Muslim biodata for marriage?",
+    a: "Choose a template, upload your photo, add your details, customise the design, and download your biodata PDF."
+  },
+  {
+    q: "What should be included in a Muslim marriage biodata?",
+    a: "Personal details, family information, education, profession, photograph, and partner preferences."
+  },
+  {
+    q: "How can I create a Muslim girl's biodata online?",
+    a: "Select a template, add personal and family details, upload a photo, and download the PDF."
+  },
+  {
+    q: "How can I create a Muslim boy's biodata online?",
+    a: "Choose a biodata format, enter your information, customise the design, and download instantly."
+  },
+  {
+    q: "Can I create a Muslim biodata for free?",
+    a: "Yes, you can create and customise your Muslim biodata online for free. Also, there are some premium templates"
+  },
+  {
+    q: "Can I add 786, Bismillah, or Islamic symbols to my biodata?",
+    a: "Yes, you can add 786, Bismillah, crescent moon symbols, stars, and other Islamic header designs to your biodata. We have specially designed these elements to help you create a more beautiful, personalised, and impressive Muslim marriage biodata."
+  },
+  {
+    q: "Can I customise colours, backgrounds, and stickers?",
+    a: "Yes, you can personalise templates with different colours, backgrounds, text styles, and stickers."
+  },
+  {
+    q: "Is this suitable for Sunni, Shia, and Bohra communities?",
+    a: "Yes, our Muslim biodata templates are suitable for Sunni, Shia, Bohra, and other Muslim communities."
+  },
+  {
+    q: "Can I download my Muslim biodata as a PDF?",
+    a: "Yes, you can download your completed biodata as a high-quality PDF, JPEG, and PNG"
+  },
+  {
+    q: "Do I need design skills to create a Muslim biodata?",
+    a: "No, simply choose a template, fill in your details, and customise it with a few clicks."
+  }
+];
+
 
 export const metadata: Metadata = {
   title: {
@@ -190,7 +287,7 @@ export default function MuslimBiodataFormatPage() {
               {/* Left Card */}
               <div className="w-[30%] aspect-[595/842] rounded-xl overflow-hidden border border-[#D4AF37]/25 shadow-md bg-white rotate-[-6deg] translate-y-4 hover:rotate-0 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer z-10">
                 <img 
-                  src="https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333386/biodata/hero_slides/rslwwcxq7e8hdcsz0vbk.png" 
+                  src="https://biodata99.com/uploads/biodata/thumbnails/b28b8e39-994c-4f96-9977-7d23fc1adc44.webp" 
                   alt="Premium marriage biodata format left preview"
                   className="w-full h-full object-cover"
                   loading="eager"
@@ -200,7 +297,7 @@ export default function MuslimBiodataFormatPage() {
               {/* Center Card */}
               <div className="w-[34%] aspect-[595/842] rounded-xl overflow-hidden border-2 border-[#D4AF37] shadow-[0_15px_40px_rgba(15,76,58,0.15)] bg-white z-10 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer">
                 <img 
-                  src="https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333327/biodata/hero_slides/umpd0mqssairpwfzpytk.png" 
+                  src="https://biodata99.com/uploads/biodata/thumbnails/1c0be22d-0657-4329-bcb1-2adf2096d659.webp" 
                   alt="Featured Premium Islamic Gold Marriage Biodata Template"
                   className="w-full h-full object-cover"
                   loading="eager"
@@ -210,7 +307,7 @@ export default function MuslimBiodataFormatPage() {
               {/* Right Card */}
               <div className="w-[30%] aspect-[595/842] rounded-xl overflow-hidden border border-[#D4AF37]/25 shadow-md bg-white rotate-[6deg] translate-y-4 hover:rotate-0 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer z-10">
                 <img 
-                  src="https://res.cloudinary.com/dhlyinfwd/image/upload/w_300,c_scale,q_auto,f_auto/v1780333404/biodata/hero_slides/vwqpwpwy72u2xnnwlc0x.png" 
+                  src="https://biodata99.com/uploads/biodata/thumbnails/5e8750b0-d87d-40b3-ac88-70919b2e3c81.webp" 
                   alt="Premium marriage biodata format right preview"
                   className="w-full h-full object-cover"
                   loading="eager"
@@ -492,48 +589,7 @@ export default function MuslimBiodataFormatPage() {
 
           <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 md:p-8 shadow-sm">
             <Accordion type="multiple" defaultValue={["muslim-faq-0"]} className="w-full space-y-2">
-              {[
-                {
-                  q: "How do I make a Muslim biodata for marriage?",
-                  a: "Choose a template, upload your photo, add your details, customise the design, and download your biodata PDF."
-                },
-                {
-                  q: "What should be included in a Muslim marriage biodata?",
-                  a: "Personal details, family information, education, profession, photograph, and partner preferences."
-                },
-                {
-                  q: "How can I create a Muslim girl's biodata online?",
-                  a: "Select a template, add personal and family details, upload a photo, and download the PDF."
-                },
-                {
-                  q: "How can I create a Muslim boy's biodata online?",
-                  a: "Choose a biodata format, enter your information, customise the design, and download instantly."
-                },
-                {
-                  q: "Can I create a Muslim biodata for free?",
-                  a: "Yes, you can create and customise your Muslim biodata online for free. Also, there are some premium templates"
-                },
-                {
-                  q: "Can I add 786, Bismillah, or Islamic symbols to my biodata?",
-                  a: "Yes, you can add 786, Bismillah, crescent moon symbols, stars, and other Islamic header designs to your biodata. We have specially designed these elements to help you create a more beautiful, personalised, and impressive Muslim marriage biodata."
-                },
-                {
-                  q: "Can I customise colours, backgrounds, and stickers?",
-                  a: "Yes, you can personalise templates with different colours, backgrounds, text styles, and stickers."
-                },
-                {
-                  q: "Is this suitable for Sunni, Shia, and Bohra communities?",
-                  a: "Yes, our Muslim biodata templates are suitable for Sunni, Shia, Bohra, and other Muslim communities."
-                },
-                {
-                  q: "Can I download my Muslim biodata as a PDF?",
-                  a: "Yes, you can download your completed biodata as a high-quality PDF, JPEG, and PNG"
-                },
-                {
-                  q: "Do I need design skills to create a Muslim biodata?",
-                  a: "No, simply choose a template, fill in your details, and customise it with a few clicks."
-                },
-              ].map((faq, idx) => (
+              {muslimFaqs.map((faq, idx) => (
                 <AccordionItem key={idx} value={`muslim-faq-${idx}`} className="border-b border-[#D4AF37]/20 py-1">
                   <AccordionTrigger className="text-sm md:text-base font-bold text-left text-stone-900 hover:text-[#0F4C3A] hover:no-underline py-4">
                     {faq.q}
@@ -548,6 +604,9 @@ export default function MuslimBiodataFormatPage() {
         </div>
       </div>
 
+      {/* Structured Data (HowTo & FAQ Schema) for Search Crawlers */}
+      <JsonLd schema={muslimHowToSchema} />
+      <JsonLd schema={generateFaqSchema(muslimFaqs)} />
     </div>
   );
 }
