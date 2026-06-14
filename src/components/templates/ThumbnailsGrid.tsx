@@ -493,13 +493,13 @@ export function ThumbnailsGrid() {
               {filteredTemplates.map((tpl) => (
                 <div
                   key={tpl.id}
-                  className="border border-[#C9A84C]/25 bg-card overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group rounded-none aspect-[1/1.414] relative w-full"
+                  className="border border-[#C9A84C]/25 bg-card overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group rounded-none relative w-full flex flex-col"
                 >
                   {/* Hidden template name for SEO and accessibility */}
                   <h2 className="sr-only">{tpl.name}</h2>
 
                   {/* Thumbnail Container */}
-                  <div className="w-full h-full relative overflow-hidden flex items-center justify-center select-none bg-muted/5 rounded-none">
+                  <div className="w-full aspect-[1/1.414] relative overflow-hidden flex items-center justify-center select-none bg-muted/5 rounded-none">
                     {tpl.thumbnailUrl ? (
                       <Image
                         src={tpl.thumbnailUrl.includes("res.cloudinary.com") && tpl.thumbnailUrl.includes("/image/upload/")
@@ -532,7 +532,7 @@ export function ThumbnailsGrid() {
                     </span>
 
                     {/* Hover Quick Actions */}
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center p-3">
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex flex-col justify-center items-center p-3">
                       <Button
                         size="sm"
                         className="rounded-full bg-gradient-primary border-0 text-white font-bold text-xs px-5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all"
@@ -543,6 +543,25 @@ export function ThumbnailsGrid() {
                         </Link>
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Mobile-only CTA Footer */}
+                  <div className="p-3 flex flex-col gap-2 bg-white dark:bg-stone-900 border-t border-stone-100 dark:border-stone-800 md:hidden mt-auto">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-foreground truncate max-w-[70%]">{tpl.name}</span>
+                      <span className="text-[10px] font-black text-primary">
+                        {tpl.isPremium ? "Premium" : "Free"}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full rounded-xl bg-gradient-primary border-0 text-white font-bold text-xs py-1.5 shadow-sm active:scale-95 transition-all"
+                      asChild
+                    >
+                      <Link href={`/edit?template=${tpl.id}`}>
+                        Customize
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               ))}
