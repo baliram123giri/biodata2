@@ -103,7 +103,7 @@ export async function FooterReviews() {
   return (
     <div className="flex flex-col gap-2 mt-2.5 w-fit">
       {/* Subtitle */}
-      <span className="text-[11px] font-semibold text-slate-400 tracking-wide">
+      <span className="text-[11px] font-semibold text-slate-300 tracking-wide">
         Trusted by Indian families
       </span>
 
@@ -117,7 +117,7 @@ export async function FooterReviews() {
                   {googleStars}
                 </div>
                 <span className="text-xs font-bold text-slate-200">
-                  {googleAvg} <span className="text-slate-400 font-normal">· {googleCount}+ reviews</span>
+                  {googleAvg} <span className="text-slate-300 font-normal">· {googleCount}+ reviews</span>
                 </span>
               </div>
             </FooterReviewsTooltip>
@@ -149,7 +149,7 @@ export async function FooterReviews() {
                 />
               </svg>
               <span>See Google reviews</span>
-              <ExternalLink className="w-3 h-3 text-slate-400" />
+              <ExternalLink className="w-3 h-3 text-slate-300" />
             </a>
           </div>
         )}
@@ -163,7 +163,7 @@ export async function FooterReviews() {
                   {trustpilotStars}
                 </div>
                 <span className="text-xs font-bold text-slate-200">
-                  {trustpilotAvg} <span className="text-slate-400 font-normal">· {trustpilotCount}+ reviews</span>
+                  {trustpilotAvg} <span className="text-slate-300 font-normal">· {trustpilotCount}+ reviews</span>
                 </span>
               </div>
             </FooterReviewsTooltip>
@@ -180,7 +180,7 @@ export async function FooterReviews() {
                 <path d="M24 9.624H14.83L12 1l-2.83 8.624H0l7.41 5.378L4.58 23L12 17.624L19.42 23l-2.83-8.998z" />
               </svg>
               <span>See Trustpilot reviews</span>
-              <ExternalLink className="w-3 h-3 text-slate-400" />
+              <ExternalLink className="w-3 h-3 text-slate-300" />
             </a>
           </div>
         )}

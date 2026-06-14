@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { translateUI } from "@/lib/translations";
+import { getReligionTheme } from "@/lib/religionThemes";
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface FeedbackModalProps {
   pngDiscountPrice?: number | null;
   comboPrice?: number | null;
   comboDiscountPrice?: number | null;
+  religion?: string | null;
 }
 
 export function FeedbackModal({
@@ -42,12 +44,14 @@ export function FeedbackModal({
   onSubmit,
   onSkip,
   downloadFormat = "pdf",
+  religion = null,
 }: FeedbackModalProps) {
   const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [filename, setFilename] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
+  const theme = getReligionTheme(religion);
 
   useEffect(() => {
     if (isOpen) {
@@ -75,7 +79,13 @@ export function FeedbackModal({
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="max-w-[95%] sm:max-w-md max-h-[90vh] md:max-h-[85vh] flex flex-col bg-background/95 backdrop-blur-xl border-0 ring-1 ring-border/50 shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl overflow-hidden p-0 gap-0"
       >
-        <div className="bg-gradient-primary py-5 px-6 text-white relative overflow-hidden flex items-center gap-4 border-b border-primary/20 shadow-sm shrink-0">
+        <div 
+          className={cn(
+            "py-5 px-6 text-white relative overflow-hidden flex items-center gap-4 shrink-0 shadow-sm",
+            theme ? "border-transparent" : "bg-gradient-primary border-primary/20"
+          )}
+          style={theme ? { backgroundColor: theme.primary, borderBottomColor: theme.secondaryLight } : undefined}
+        >
           <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
  
@@ -181,7 +191,16 @@ export function FeedbackModal({
           <div className="flex flex-col gap-3 mt-4">
             <Button
               type="submit"
-              className="w-full py-6 rounded-2xl bg-gradient-to-r from-[#9B1B30] to-[#BC2C3D] hover:from-[#7A1323] hover:to-[#9B1B30] text-[#E6C97A] font-extrabold uppercase tracking-wider shadow-lg shadow-[#9B1B30]/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border border-[#E6C97A]/20 cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2"
+              className={cn(
+                "w-full py-6 rounded-2xl font-extrabold uppercase tracking-wider transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 border cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2",
+                !theme && "bg-gradient-to-r from-[#9B1B30] to-[#BC2C3D] hover:from-[#7A1323] hover:to-[#9B1B30] text-[#E6C97A] shadow-[#9B1B30]/30 border-[#E6C97A]/20"
+              )}
+              style={theme ? {
+                backgroundColor: theme.primary,
+                color: "#ffffff",
+                boxShadow: `0 8px 30px ${theme.shadowColor}`,
+                borderColor: "transparent"
+              } : undefined}
             >
               <Sparkles className="w-4 h-4" />
               Submit Feedback

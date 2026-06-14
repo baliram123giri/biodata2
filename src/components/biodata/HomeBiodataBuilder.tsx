@@ -20,6 +20,7 @@ const CompanyLogoFeature = dynamic(() => import("@/components/biodata/CompanyLog
 const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
 const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
+import { getReligionTheme } from "@/lib/religionThemes";
 
 
 import {
@@ -60,11 +61,25 @@ const KonvaPreview = dynamic(
 );
 
 
+interface HomeBiodataBuilderProps {
+  defaultCommunity?: string;
+  defaultReligion?: string;
+  defaultTitle?: string;
+  defaultTemplateId?: string;
+  hideCommunityAndReligion?: boolean;
+}
+
 /**
  * HomeBiodataBuilder - The full biodata creation experience embedded on the homepage.
  * Includes form, live preview, template picker, and download/export actions.
  */
-export function HomeBiodataBuilder() {
+export function HomeBiodataBuilder({
+  defaultCommunity,
+  defaultReligion,
+  defaultTitle,
+  defaultTemplateId,
+  hideCommunityAndReligion = false,
+}: HomeBiodataBuilderProps = {}) {
   const {
     formData: storedData,
     selectedTemplate: storedTemplate,
@@ -82,6 +97,9 @@ export function HomeBiodataBuilder() {
   const { handleDownload: triggerDownload, sendWhatsAppDelivery, isGenerating } = useDownloadBiodata();
   const { startPayment, SandboxModal, isProcessing: isPaymentProcessing, paymentStep, paymentIdInfo, setPaymentStep, setIsProcessing } = useRazorpayPayment();
   const [isHydrated, setIsHydrated] = useState(false);
+
+  const isMuslimPage = defaultReligion === "Muslim";
+  const religionTheme = getReligionTheme(defaultReligion);
 
 
   // Rating & Feedback Modal states
@@ -194,7 +212,7 @@ export function HomeBiodataBuilder() {
     setIsHydrated(true);
 
     // Load dynamic templates from database on initial page load
-    useBiodataStore.getState().fetchInitialTemplate?.();
+    useBiodataStore.getState().fetchInitialTemplate?.(defaultTemplateId);
 
     const performHomeReset = () => {
       // Run store/theme resets SYNCHRONOUSLY so the template-color sync effect (which
@@ -202,6 +220,9 @@ export function HomeBiodataBuilder() {
       // where template colors are applied then immediately overridden by resetTheme().
       // 1. Reset template, layout and stickers in biodata store while preserving form values
       useBiodataStore.getState().resetDesignOnly();
+      if (defaultTemplateId) {
+        useBiodataStore.getState().setSelectedTemplate(defaultTemplateId);
+      }
       // 2. Reset custom theme settings (colors, background, fonts, padding, etc.)
       useThemeStore.getState().resetTheme();
 
@@ -210,7 +231,22 @@ export function HomeBiodataBuilder() {
       // has fully completed before we read from the store to initialize the form.
       setTimeout(() => {
         const currentStoredData = useBiodataStore.getState().formData;
-        methods.reset({ ...defaultBiodataValues, ...currentStoredData });
+        
+        const mergedDefaults = { ...defaultBiodataValues };
+        if (defaultCommunity) {
+          mergedDefaults.community = defaultCommunity;
+        }
+        if (defaultTitle) {
+          mergedDefaults.title = defaultTitle;
+        }
+        if (defaultReligion) {
+          const religionField = mergedDefaults.personalDetails?.find(f => f.id === "religion");
+          if (religionField) {
+            religionField.value = defaultReligion;
+          }
+        }
+
+        methods.reset({ ...mergedDefaults, ...currentStoredData });
         setHasInitialized(true);
       }, 0);
     };
@@ -226,7 +262,7 @@ export function HomeBiodataBuilder() {
     }
 
     return () => unsub();
-  }, [methods]);
+  }, [methods, defaultTemplateId, defaultCommunity, defaultTitle, defaultReligion]);
 
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
@@ -295,7 +331,23 @@ export function HomeBiodataBuilder() {
 
   const handleReset = () => {
     resetFormDataOnly();
-    methods.reset(defaultBiodataValues);
+    const mergedDefaults = { ...defaultBiodataValues };
+    if (defaultCommunity) {
+      mergedDefaults.community = defaultCommunity;
+    }
+    if (defaultTitle) {
+      mergedDefaults.title = defaultTitle;
+    }
+    if (defaultReligion) {
+      const religionField = mergedDefaults.personalDetails?.find(f => f.id === "religion");
+      if (religionField) {
+        religionField.value = defaultReligion;
+      }
+    }
+    if (defaultTemplateId) {
+      setSelectedTemplate(defaultTemplateId);
+    }
+    methods.reset(mergedDefaults);
     setShowResetDialog(false);
   };
 
@@ -450,6 +502,55 @@ export function HomeBiodataBuilder() {
         .animate-gentle-float {
           animation: gentle-float 4s ease-in-out infinite;
         }
+        ${religionTheme ? `
+          .mobile-toolbar-btn:hover {
+            color: ${religionTheme.primary} !important;
+          }
+          .mobile-toolbar-btn:hover svg {
+            color: ${religionTheme.primary} !important;
+          }
+          .mobile-toolbar-btn-icon {
+            transition: color 0.2s ease-in-out;
+          }
+          .mobile-toolbar-btn:hover .mobile-toolbar-btn-icon {
+            color: ${religionTheme.primary} !important;
+          }
+          .hover\\:text-primary:hover {
+            color: ${religionTheme.primary} !important;
+          }
+          .group:hover .group-hover\\:text-primary {
+            color: ${religionTheme.primary} !important;
+          }
+          .hover\\:bg-primary:hover {
+            background-color: ${religionTheme.primary} !important;
+          }
+          .group:hover .group-hover\\:bg-primary {
+            background-color: ${religionTheme.primary} !important;
+          }
+          
+          /* Form Input Focus Overrides */
+          input:focus, select:focus, textarea:focus {
+            border-color: ${religionTheme.primary} !important;
+            --tw-ring-color: ${religionTheme.primary}33 !important;
+            box-shadow: 0 0 0 2px ${religionTheme.primary}33 !important;
+          }
+          input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: none !important;
+            border-color: ${religionTheme.primary} !important;
+            box-shadow: 0 0 0 2px ${religionTheme.primary}33 !important;
+          }
+          .focus-visible\\:ring-primary\\/20:focus-visible {
+            --tw-ring-color: ${religionTheme.primary}33 !important;
+            box-shadow: 0 0 0 2px ${religionTheme.primary}33 !important;
+          }
+          .focus\\:border-primary:focus {
+            border-color: ${religionTheme.primary} !important;
+          }
+          .focus\\:ring-primary\\/20:focus {
+            --tw-ring-color: ${religionTheme.primary}33 !important;
+            box-shadow: 0 0 0 2px ${religionTheme.primary}33 !important;
+          }
+        ` : ''}
       `}} />
 
       {/* Desktop Floating Sticky Template Trigger - only visible when builder section is in view */}
@@ -515,7 +616,7 @@ export function HomeBiodataBuilder() {
               </div>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto p-6 pt-4">
-              <TemplateSelector />
+              <TemplateSelector religion={defaultReligion} />
             </div>
           </SheetContent>
         </Sheet>
@@ -525,14 +626,35 @@ export function HomeBiodataBuilder() {
         {/* Section Header */}
         <div className="container mx-auto max-w-[1400px] mb-10">
           <div className="flex flex-col items-center text-center gap-4 mb-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
+            <div 
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold",
+                religionTheme ? "" : "bg-primary/10 text-primary"
+              )}
+              style={religionTheme ? { backgroundColor: religionTheme.primaryLight, color: religionTheme.primary } : undefined}
+            >
               <Wand2 className="w-4 h-4" />
               Start Building Now
             </div>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
-              Create Your Biodata <span className="text-gradient-primary">Right Here</span>
+              Create Your Biodata <span 
+                className={cn(!religionTheme && "text-gradient-primary")}
+                style={religionTheme ? {
+                  backgroundImage: `linear-gradient(to right, ${religionTheme.primary}, ${religionTheme.secondary})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  color: "transparent"
+                } : undefined}
+              >Right Here</span>
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground font-semibold max-w-2xl">
+            <p 
+              className={cn(
+                "text-base md:text-lg font-semibold max-w-2xl",
+                religionTheme ? "" : "text-muted-foreground"
+              )}
+              style={religionTheme?.descriptionColor ? { color: religionTheme.descriptionColor } : undefined}
+            >
               Fill in your details below, pick a template, and download your professional marriage biodata - all without leaving this page.
             </p>
           </div>
@@ -545,7 +667,7 @@ export function HomeBiodataBuilder() {
 
             {/* Form Side */}
             <div className="md:col-span-6 flex flex-col w-full md:premium-gold-border md:p-8 md:shadow-xl p-0 shadow-none bg-transparent">
-              <BiodataForm hideSliders />
+              <BiodataForm hideSliders hideCommunityAndReligion={hideCommunityAndReligion} />
             </div>
 
             {/* Mobile Preview - shown AFTER the form on small screens (mobile only) */}
@@ -554,7 +676,12 @@ export function HomeBiodataBuilder() {
               <Button
                 onClick={handleNavigateToEdit}
                 disabled={isNavigating}
-                className="w-full rounded-full bg-gradient-primary transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0 disabled:opacity-70"
+                className={cn(
+                  "w-full rounded-full transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0 disabled:opacity-70",
+                  isMuslimPage 
+                    ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
+                    : "bg-gradient-primary"
+                )}
               >
                 {isNavigating ? (
                   <>
@@ -580,7 +707,12 @@ export function HomeBiodataBuilder() {
                   <Button
                     onClick={handleNavigateToEdit}
                     disabled={isNavigating}
-                    className="rounded-full bg-gradient-primary transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0 disabled:opacity-70"
+                    className={cn(
+                      "rounded-full transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0 disabled:opacity-70",
+                      isMuslimPage 
+                        ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
+                        : "bg-gradient-primary"
+                    )}
                   >
                     {isNavigating ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -596,21 +728,32 @@ export function HomeBiodataBuilder() {
                     isGenerating={isGenerating}
                     labels={{ download: "Download", downloadPdf: "Download PDF", generating: "Generating..." }}
                     variant="compact"
-                    className="rounded-full bg-gradient-primary transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0"
+                    className={cn(
+                      "rounded-full transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0",
+                      isMuslimPage 
+                        ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
+                        : "bg-gradient-primary"
+                    )}
                     isPremium={activeTemplate?.isPremium}
                     price={activeTemplate?.price}
                     discountPrice={activeTemplate?.discountPrice}
                     currency={activeTemplate?.currency}
+                    isMuslimPage={isMuslimPage}
                   />
 
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-full h-11 border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white"
+                    className={cn(
+                      "rounded-full h-11 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white",
+                      isMuslimPage 
+                        ? "border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 text-[#0F4C3A] hover:text-[#0A3327]" 
+                        : "border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700"
+                    )}
                     onClick={() => setShowResetDialog(true)}
                     disabled={isGenerating}
                   >
-                    <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-500" /> Reset
+                    <RotateCcw className={cn("w-3.5 h-3.5 mr-1", isMuslimPage ? "text-[#0F4C3A]" : "text-rose-500")} /> Reset
                   </Button>
                 </div>
               </div>
@@ -630,17 +773,20 @@ export function HomeBiodataBuilder() {
 
             {/* Right: Company Logo Widget */}
             <div className="flex">
-              <CompanyLogoFeature variant="card" />
+              <CompanyLogoFeature variant="card" religion={defaultReligion} />
             </div>
           </div>
         </div>
 
         {/* Mobile Sticky Bottom Bar */}
         {showMobileBar && (
-          <div className={cn(
-            "lg:hidden fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/40 backdrop-blur-2xl border border-white/50 py-2 sm:py-2.5 px-2.5 sm:px-4 rounded-3xl z-40 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 flex items-center justify-between gap-2",
-            isMobileDrawerOpen ? "opacity-0 pointer-events-none translate-y-10" : "animate-in slide-in-from-bottom"
-          )}>
+          <div 
+            className={cn(
+              "lg:hidden fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/70 backdrop-blur-2xl border py-2 sm:py-2.5 px-2.5 sm:px-4 rounded-3xl z-40 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.5),_0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 flex items-center justify-between gap-2",
+              isMobileDrawerOpen ? "opacity-0 pointer-events-none translate-y-10" : "animate-in slide-in-from-bottom"
+            )}
+            style={religionTheme ? { borderColor: `${religionTheme.primary}25` } : { borderColor: "rgba(255, 255, 255, 0.5)" }}
+          >
 
             {/* Left Icons Grid */}
             <div className="flex items-center justify-around flex-1 pr-1 sm:pr-2 border-r border-muted-foreground/10">
@@ -648,8 +794,8 @@ export function HomeBiodataBuilder() {
               {/* Templates Option */}
               <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
                 <SheetTrigger asChild>
-                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14">
-                    <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary" />
+                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14 mobile-toolbar-btn">
+                    <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary mobile-toolbar-btn-icon" />
                     <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
                   </button>
                 </SheetTrigger>
@@ -666,33 +812,32 @@ export function HomeBiodataBuilder() {
                     </div>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto p-6 pt-4">
-                    <TemplateSelector />
+                    <TemplateSelector religion={defaultReligion} />
                   </div>
                 </SheetContent>
               </Sheet>
-
               {/* Preview Option */}
               <button
                 onClick={() => {
                   const el = document.getElementById('mobile-preview-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
-                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11"
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11 mobile-toolbar-btn"
               >
-                <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 mobile-toolbar-btn-icon" />
                 <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("preview", currentLang)}</span>
               </button>
-
+ 
               {/* Designer Option */}
               <button
                 onClick={handleNavigateToEdit}
                 disabled={isNavigating}
-                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50"
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50 mobile-toolbar-btn"
               >
                 {isNavigating ? (
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mobile-toolbar-btn-icon" />
                 ) : (
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mobile-toolbar-btn-icon" />
                 )}
                 <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("design", currentLang)}</span>
               </button>
@@ -702,7 +847,10 @@ export function HomeBiodataBuilder() {
               <button
                 onClick={() => setShowResetDialog(true)}
                 disabled={isGenerating}
-                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50"
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 sm:gap-1 active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50 text-muted-foreground",
+                  isMuslimPage ? "hover:text-[#0F4C3A]" : "hover:text-destructive"
+                )}
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-[8px] sm:text-[9px] font-bold tracking-tight">{translateUI("reset", currentLang)}</span>
@@ -716,10 +864,17 @@ export function HomeBiodataBuilder() {
               isGenerating={isGenerating}
               labels={{ download: "Download", generating: "Generating..." }}
               variant="compact"
+              className={cn(
+                "rounded-full transition-all h-10 sm:h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0",
+                isMuslimPage 
+                  ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-md shadow-[#0F4C3A]/15" 
+                  : "bg-gradient-primary"
+              )}
               isPremium={activeTemplate?.isPremium}
               price={activeTemplate?.price}
               discountPrice={activeTemplate?.discountPrice}
               currency={activeTemplate?.currency}
+              isMuslimPage={isMuslimPage}
             />
 
           </div>
@@ -738,7 +893,12 @@ export function HomeBiodataBuilder() {
               <Button variant="outline" onClick={() => setShowResetDialog(false)} className="rounded-full">Cancel</Button>
               <Button
                 onClick={handleReset}
-                className="relative overflow-hidden rounded-full bg-gradient-primary border-0"
+                className={cn(
+                  "relative overflow-hidden rounded-full border-0",
+                  isMuslimPage 
+                    ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-md" 
+                    : "bg-gradient-primary"
+                )}
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
                 <span className="relative">Yes, Reset</span>
@@ -765,12 +925,14 @@ export function HomeBiodataBuilder() {
           pngDiscountPrice={activeTemplate?.pngDiscountPrice}
           comboPrice={(activeTemplate as any)?.comboPrice}
           comboDiscountPrice={(activeTemplate as any)?.comboDiscountPrice}
+          religion={isMuslimPage ? "Muslim" : null}
         />
         <PriceModal
           isOpen={isPriceModalOpen}
           onOpenChange={handlePriceModalOpenChange}
           isPremium={activeTemplate?.isPremium}
           isGenerating={isGenerating}
+          religion={isMuslimPage ? "Muslim" : null}
           onSelectFormat={async (format, couponCode) => {
             const currentData = {
               ...useBiodataStore.getState().formData,

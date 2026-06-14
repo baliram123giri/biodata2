@@ -37,6 +37,7 @@ interface DownloadDropdownProps {
   pngDiscountPrice?: number | null;
   comboPrice?: number | null;
   comboDiscountPrice?: number | null;
+  isMuslimPage?: boolean;
 }
 
 /**
@@ -53,6 +54,7 @@ export function DownloadDropdown({
   price = null,
   discountPrice = null,
   currency = "INR",
+  isMuslimPage = false,
 }: DownloadDropdownProps) {
   const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const currencySymbol = getCurrencySymbol(currency);
@@ -72,7 +74,10 @@ export function DownloadDropdown({
         onClick={handleButtonClick}
         disabled={isGenerating}
         className={cn(
-          "relative overflow-hidden rounded-2xl shadow-lg bg-gradient-primary font-bold text-xs h-10 px-4 flex items-center gap-1.5 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0 text-white",
+          "relative overflow-hidden rounded-2xl shadow-lg font-bold text-xs h-10 px-4 flex items-center gap-1.5 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-0 text-white",
+          isMuslimPage 
+            ? "bg-[#0F4C3A] hover:bg-[#0D4333] shadow-[#0F4C3A]/20" 
+            : "bg-gradient-primary",
           className
         )}
       >
@@ -111,7 +116,10 @@ export function DownloadDropdown({
       onClick={handleButtonClick}
       disabled={isGenerating}
       className={cn(
-        "relative overflow-hidden bg-gradient-primary text-[10px] md:text-xs font-bold md:font-semibold h-8 md:h-9 px-3 md:px-6 flex items-center gap-1 md:gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-full md:rounded-md border-0 text-white",
+        "relative overflow-hidden text-[10px] md:text-xs font-bold md:font-semibold h-8 md:h-9 px-3 md:px-6 flex items-center gap-1 md:gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-full md:rounded-md border-0 text-white",
+        isMuslimPage 
+          ? "bg-[#0F4C3A] hover:bg-[#0D4333]" 
+          : "bg-gradient-primary",
         className
       )}
     >

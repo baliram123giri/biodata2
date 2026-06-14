@@ -20,6 +20,7 @@ const footerLinks = {
   ],
   resources: [
     { label: "Biodata Templates", href: "/biodata-templates" },
+    { label: "Muslim Matrimonial Format", href: "/muslim-biodata-format" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy-policy" },
@@ -56,6 +57,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
   const isEditorPage = pathname === "/edit";
   const isAdminPage = pathname?.startsWith("/admin");
+  const isMuslimPage = pathname === "/muslim-biodata-format";
 
   if (isEditorPage || isAdminPage) return null;
 
@@ -64,12 +66,12 @@ export function Footer({ children }: { children?: React.ReactNode }) {
       {/* Top Wave Divider */}
       <div className="w-full overflow-hidden leading-none">
         <svg viewBox="0 0 1440 60" className="w-full block" preserveAspectRatio="none" style={{ height: 20 }}>
-          <path d="M0,40 C360,0 1080,80 1440,20 L1440,60 L0,60 Z" fill="#0f172a" />
+          <path d="M0,40 C360,0 1080,80 1440,20 L1440,60 L0,60 Z" fill={isMuslimPage ? "#0F4C3A" : "#0f172a"} />
         </svg>
       </div>
 
       {/* Main Footer Body */}
-      <div className="bg-[#0f172a] text-white">
+      <div className={`transition-colors duration-300 ${isMuslimPage ? "bg-[#0F4C3A] text-[#FAF8F3]" : "bg-[#0f172a] text-white"}`}>
         {/* Main Grid */}
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
@@ -77,7 +79,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
             {/* Brand Column */}
             <div className="md:col-span-4 flex flex-col gap-3">
               <Logo iconClassName="h-8 md:h-10" disableShine />
-              <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
+              <p className={`text-xs leading-relaxed max-w-xs ${isMuslimPage ? "text-[#F5E6B8]/80" : "text-slate-400"}`}>
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
               </p>
 
@@ -92,7 +94,11 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all duration-200"
+                    className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                      isMuslimPage
+                        ? "bg-white/5 hover:bg-[#D4AF37]/20 border-white/10 hover:border-[#D4AF37]/45 text-[#F5E6B8] hover:text-[#D4AF37]"
+                        : "bg-white/5 hover:bg-cyan-500/20 border-white/10 hover:border-cyan-500/40 text-slate-400 hover:text-cyan-400"
+                    }`}
                   >
                     <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                       <path d={svgPath} />
@@ -103,14 +109,14 @@ export function Footer({ children }: { children?: React.ReactNode }) {
 
               {/* Trust badge */}
               <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1 w-fit mt-1">
-                <Shield className="w-3 h-3 text-green-400" />
-                <span className="text-[10px] font-bold text-slate-300 tracking-wide">100% Free &amp; Secure</span>
+                <Shield className={`w-3 h-3 ${isMuslimPage ? "text-[#D4AF37]" : "text-green-400"}`} />
+                <span className={`text-[10px] font-bold tracking-wide ${isMuslimPage ? "text-[#FAF8F3]/90" : "text-slate-300"}`}>100% Free &amp; Secure</span>
               </div>
             </div>
 
             {/* Company Links */}
             <div className="md:col-span-2">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
+              <h3 className={`text-xs font-bold uppercase tracking-widest mb-3 ${isMuslimPage ? "text-[#D4AF37]" : "text-white"}`}>
                 Company
               </h3>
               <ul className="space-y-2">
@@ -118,9 +124,15 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
-                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                      className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
+                        isMuslimPage
+                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          : "text-slate-400 hover:text-cyan-400"
+                      }`}
                     >
-                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      <ArrowRight className={`w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200 ${
+                        isMuslimPage ? "text-[#D4AF37]" : "text-cyan-400"
+                      }`} />
                       {label}
                     </Link>
                   </li>
@@ -130,7 +142,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
 
             {/* Resources Links */}
             <div className="md:col-span-3">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
+              <h3 className={`text-xs font-bold uppercase tracking-widest mb-3 ${isMuslimPage ? "text-[#D4AF37]" : "text-white"}`}>
                 Resources
               </h3>
               <ul className="space-y-2">
@@ -138,9 +150,15 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
-                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                      className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
+                        isMuslimPage
+                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          : "text-slate-400 hover:text-cyan-400"
+                      }`}
                     >
-                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      <ArrowRight className={`w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200 ${
+                        isMuslimPage ? "text-[#D4AF37]" : "text-cyan-400"
+                      }`} />
                       {label}
                     </Link>
                   </li>
@@ -150,7 +168,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
 
             {/* Legal Links */}
             <div className="md:col-span-3">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-3">
+              <h3 className={`text-xs font-bold uppercase tracking-widest mb-3 ${isMuslimPage ? "text-[#D4AF37]" : "text-white"}`}>
                 Legal
               </h3>
               <ul className="space-y-2">
@@ -158,9 +176,15 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
-                      className="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors duration-200"
+                      className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
+                        isMuslimPage
+                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          : "text-slate-400 hover:text-cyan-400"
+                      }`}
                     >
-                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                      <ArrowRight className={`w-2.5 h-2.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200 ${
+                        isMuslimPage ? "text-[#D4AF37]" : "text-cyan-400"
+                      }`} />
                       {label}
                     </Link>
                   </li>
@@ -168,19 +192,21 @@ export function Footer({ children }: { children?: React.ReactNode }) {
               </ul>
 
               {/* Contact email */}
-              <div className="mt-4 flex items-center gap-1.5 text-slate-400 group">
-                <Mail className="w-3 h-3 text-cyan-400 shrink-0" />
+              <div className={`mt-4 flex items-center gap-1.5 group ${isMuslimPage ? "text-[#FAF8F3]/85" : "text-slate-400"}`}>
+                <Mail className={`w-3 h-3 shrink-0 ${isMuslimPage ? "text-[#D4AF37]" : "text-cyan-400"}`} />
                 <a
                   href="mailto:support@biodata99.com"
-                  className="text-[11px] hover:text-cyan-400 transition-colors"
+                  className={`text-[11px] transition-colors ${
+                    isMuslimPage ? "hover:text-[#D4AF37]" : "hover:text-cyan-400"
+                  }`}
                 >
                   support@biodata99.com
                 </a>
               </div>
 
               {/* Location */}
-              <div className="mt-2 flex items-center gap-1.5 text-slate-400">
-                <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+              <div className={`mt-2 flex items-center gap-1.5 ${isMuslimPage ? "text-[#FAF8F3]/85" : "text-slate-400"}`}>
+                <MapPin className={`w-3 h-3 shrink-0 ${isMuslimPage ? "text-[#D4AF37]" : "text-cyan-400"}`} />
                 <span className="text-[11px]">Maharashtra, India</span>
               </div>
             </div>
@@ -188,12 +214,12 @@ export function Footer({ children }: { children?: React.ReactNode }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/8">
+        <div className={`border-t ${isMuslimPage ? "border-white/10" : "border-white/8"}`}>
           <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-[11px] text-slate-400 text-center sm:text-left" suppressHydrationWarning>
+            <p className={`text-[11px] text-center sm:text-left ${isMuslimPage ? "text-[#FAF8F3]/70" : "text-slate-400"}`} suppressHydrationWarning>
               © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
             </p>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1">
+            <p className={`text-[11px] flex items-center gap-1 ${isMuslimPage ? "text-[#FAF8F3]/70" : "text-slate-400"}`}>
               Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for Happy Marriages
               <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400 ml-0.5" />
             </p>

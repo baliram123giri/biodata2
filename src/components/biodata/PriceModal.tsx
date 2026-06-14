@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { translateUI } from "@/lib/translations";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { getReligionTheme } from "@/lib/religionThemes";
 
 function getCurrencySymbol(currency?: string | null) {
   if (currency === "USD") return "$";
@@ -32,6 +33,7 @@ interface PriceModalProps {
   pngDiscountPrice?: number | null;
   comboPrice?: number | null;
   comboDiscountPrice?: number | null;
+  religion?: string | null;
 }
 
 export function PriceModal({
@@ -51,9 +53,11 @@ export function PriceModal({
   pngDiscountPrice = null,
   comboPrice = null,
   comboDiscountPrice = null,
+  religion = null,
 }: PriceModalProps) {
   const currentLang = useBiodataStore(state => state.formData?.language) || "English";
   const currencySymbol = getCurrencySymbol(currency);
+  const theme = getReligionTheme(religion);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountType: string; discountValue: number } | null>(null);
@@ -192,10 +196,16 @@ export function PriceModal({
         onOpenAutoFocus={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl [&>button]:text-white [&>button]:focus:ring-primary [&>button]:opacity-90 ring-1 ring-border/50"
+        className="max-w-[95%] sm:max-w-md p-0 flex flex-col gap-0 max-h-[90vh] md:max-h-[85vh] overflow-hidden border-0 bg-background/95 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(0,0,0,0.4)] rounded-3xl ring-1 ring-border/50"
       >
         {/* Compact Header Banner with Shine */}
-        <div className="bg-gradient-primary py-5 px-6 text-white relative select-none flex items-center gap-4 border-b border-primary/20 shrink-0 overflow-hidden shadow-sm">
+        <div 
+          className={cn(
+            "py-5 px-6 text-white relative select-none flex items-center gap-4 border-b shrink-0 overflow-hidden shadow-sm",
+            theme ? "border-transparent" : "bg-gradient-primary border-primary/20"
+          )}
+          style={theme ? { backgroundColor: theme.primary, borderBottomColor: theme.secondaryLight } : undefined}
+        >
           {/* Shine Sweep animation across header */}
           <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-1/2 h-full animate-shine pointer-events-none z-0" />
           
@@ -512,7 +522,13 @@ export function PriceModal({
               {/* Radio Indicator */}
               <div className="shrink-0 relative z-10">
                 {selectedFormat === "combo" ? (
-                  <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center bg-primary">
+                  <div 
+                    className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      !theme && "border-primary bg-primary"
+                    )}
+                    style={theme ? { borderColor: theme.primary, backgroundColor: theme.primary } : undefined}
+                  >
                     <Check className="w-3.5 h-3.5 text-white stroke-[3.5px]" />
                   </div>
                 ) : (
@@ -523,7 +539,13 @@ export function PriceModal({
               <div className="flex-1 min-w-0 relative z-10">
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm font-black text-foreground">{translateUI("comboPackTitle", currentLang)}</span>
-                  <span className="bg-primary text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse">
+                  <span 
+                    className={cn(
+                      "text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse",
+                      !theme && "bg-primary"
+                    )}
+                    style={theme ? { backgroundColor: theme.primary } : undefined}
+                  >
                     <Sparkles className="w-2 h-2 fill-white" /> Popular
                   </span>
                 </div>
@@ -538,7 +560,13 @@ export function PriceModal({
                         {currencySymbol}{formatComboOriginalPrice.toFixed(2)}
                       </span>
                     )}
-                    <span className="text-sm sm:text-base font-black text-primary mt-1">
+                    <span 
+                      className={cn(
+                        "text-sm sm:text-base font-black mt-1",
+                        !theme && "text-primary"
+                      )}
+                      style={theme ? { color: theme.primary } : undefined}
+                    >
                       {currencySymbol}{formatComboPrice.toFixed(2)}
                     </span>
                   </>
@@ -559,10 +587,16 @@ export function PriceModal({
               onClick={() => onSelectFormat(selectedFormat, appliedCoupon?.code || undefined)}
               className={cn(
                 "w-full relative overflow-hidden text-white text-xs sm:text-sm font-black uppercase tracking-wider py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 border-0 cursor-pointer active:scale-[0.99] select-none shadow-lg disabled:opacity-50 disabled:cursor-not-allowed",
-                isPremium
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-[0_8px_30px_rgba(16,185,129,0.25)]"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-[0_8px_30px_rgba(37,99,235,0.25)]"
+                !theme && (
+                  isPremium
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-[0_8px_30px_rgba(16,185,129,0.25)]"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-[0_8px_30px_rgba(37,99,235,0.25)]"
+                )
               )}
+              style={theme ? {
+                background: `linear-gradient(to right, ${theme.gradientStart}, ${theme.gradientEnd})`,
+                boxShadow: `0 8px 30px ${theme.shadowColor}`
+              } : undefined}
             >
               {/* Shine highlight animation on payment button */}
               {!isGenerating && (

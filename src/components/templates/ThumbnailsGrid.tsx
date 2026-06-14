@@ -89,7 +89,7 @@ let cachedSelectedPrices: string[] = [];
 let cachedSelectedGenders: string[] = [];
 let cachedSelectedReligions: string[] = [];
 
-export function ThumbnailsGrid() {
+export function ThumbnailsGrid({ defaultReligion }: { defaultReligion?: string } = {}) {
   const [templates, setTemplates] = useState<ThumbnailTemplate[]>(() => cachedTemplates || []);
   const [loading, setLoading] = useState(() => !cachedTemplates);
 
@@ -98,7 +98,9 @@ export function ThumbnailsGrid() {
   const [selectedLangs, setSelectedLangs] = useState<string[]>(() => cachedSelectedLangs);
   const [selectedPrices, setSelectedPrices] = useState<string[]>(() => cachedSelectedPrices);
   const [selectedGenders, setSelectedGenders] = useState<string[]>(() => cachedSelectedGenders);
-  const [selectedReligions, setSelectedReligions] = useState<string[]>(() => cachedSelectedReligions);
+  const [selectedReligions, setSelectedReligions] = useState<string[]>(() => 
+    defaultReligion ? [defaultReligion] : cachedSelectedReligions
+  );
 
   // Sync state changes to global cache
   useEffect(() => {

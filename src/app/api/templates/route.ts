@@ -11,24 +11,38 @@ export async function GET(req: NextRequest) {
     const templateId = searchParams.get("id");
     const limit = parseInt(searchParams.get("limit") || "0") || 0;
     const page = parseInt(searchParams.get("page") || "1") || 1;
+    const religion = searchParams.get("religion");
 
     if (onlyDefault) {
-      // Fetch the default template first
+      const whereClause: any = { active: true };
+      if (religion) {
+        whereClause.religion = { equals: religion, mode: "insensitive" };
+      }
+
+      // Fetch the default template first matching the religion
       const defaultTemplate = await withRetry(() =>
         prisma.template.findFirst({
-          where: { active: true, isDefault: true },
+          where: { ...whereClause, isDefault: true },
         })
       );
 
-      // Fallback to latest active if no default is set
+      // Fallback to latest active matching religion if no default is set
       const primaryTemplate = defaultTemplate || await withRetry(() =>
+        prisma.template.findFirst({
+          where: whereClause,
+          orderBy: { createdAt: "desc" },
+        })
+      );
+
+      // Fallback to any active template if none matched religion
+      const finalPrimaryTemplate = primaryTemplate || await withRetry(() =>
         prisma.template.findFirst({
           where: { active: true },
           orderBy: { createdAt: "desc" },
         })
       );
 
-      if (!primaryTemplate) {
+      if (!finalPrimaryTemplate) {
         return NextResponse.json({ templates: [] });
       }
 
@@ -37,19 +51,19 @@ export async function GET(req: NextRequest) {
         const [others, total] = await Promise.all([
           withRetry(() =>
             prisma.template.findMany({
-              where: { active: true, id: { not: primaryTemplate.id } },
+              where: { ...whereClause, id: { not: finalPrimaryTemplate.id } },
               orderBy: { createdAt: "desc" },
               take: limit - 1,
             })
           ),
-          withRetry(() => prisma.template.count({ where: { active: true } })),
+          withRetry(() => prisma.template.count({ where: whereClause })),
         ]);
-        const templates = [primaryTemplate, ...others].map(mapDbTemplateToConfig);
+        const templates = [finalPrimaryTemplate, ...others].map(mapDbTemplateToConfig);
         const hasMore = templates.length < total;
         return NextResponse.json({ templates, hasMore, total });
       }
 
-      return NextResponse.json({ templates: [mapDbTemplateToConfig(primaryTemplate)], hasMore: false, total: 1 });
+      return NextResponse.json({ templates: [mapDbTemplateToConfig(finalPrimaryTemplate)], hasMore: false, total: 1 });
     }
 
     if (templateId) {
@@ -68,16 +82,21 @@ export async function GET(req: NextRequest) {
     const pageLimit = limit > 0 ? limit : 10;
     const skip = (page - 1) * pageLimit;
 
+    const whereClause: any = { active: true };
+    if (religion) {
+      whereClause.religion = { equals: religion, mode: "insensitive" };
+    }
+
     const [dbTemplates, total] = await Promise.all([
       withRetry(() =>
         prisma.template.findMany({
-          where: { active: true },
+          where: whereClause,
           orderBy: { createdAt: "desc" },
           skip,
           take: pageLimit,
         })
       ),
-      withRetry(() => prisma.template.count({ where: { active: true } })),
+      withRetry(() => prisma.template.count({ where: whereClause })),
     ]);
 
     const templates = dbTemplates.map(mapDbTemplateToConfig);

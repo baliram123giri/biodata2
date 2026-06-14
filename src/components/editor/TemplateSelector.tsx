@@ -155,7 +155,13 @@ const TemplateCard = React.memo(function TemplateCard({
   );
 });
 
-export const TemplateSelector = React.memo(function TemplateSelector({ onSelect }: { onSelect?: () => void }) {
+export const TemplateSelector = React.memo(function TemplateSelector({ 
+  onSelect,
+  religion
+}: { 
+  onSelect?: () => void;
+  religion?: string;
+}) {
   const selectedTemplate = useBiodataStore(s => s.selectedTemplate);
   const setSelectedTemplate = useBiodataStore(s => s.setSelectedTemplate);
   const customTemplates = useBiodataStore(s => s.customTemplates);
@@ -177,11 +183,11 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   React.useEffect(() => {
     if (!hasLoadedAllTemplates) {
       setIsLoading(true);
-      fetchCustomTemplates().finally(() => {
+      fetchCustomTemplates(religion).finally(() => {
         setIsLoading(false);
       });
     }
-  }, [fetchCustomTemplates, hasLoadedAllTemplates]);
+  }, [fetchCustomTemplates, hasLoadedAllTemplates, religion]);
 
   // IntersectionObserver: fetch next page when sentinel enters viewport
   React.useEffect(() => {
@@ -190,14 +196,14 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMoreTemplates && !isFetchingMoreTemplates) {
-          fetchMoreTemplates();
+          fetchMoreTemplates(religion);
         }
       },
       { threshold: 0.1 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMoreTemplates, isFetchingMoreTemplates, fetchMoreTemplates]);
+  }, [hasMoreTemplates, isFetchingMoreTemplates, fetchMoreTemplates, religion]);
 
   const langFilter = useBiodataStore(s => s.langFilter);
   const priceFilter = useBiodataStore(s => s.priceFilter);
@@ -225,6 +231,11 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
   const filteredTemplates = React.useMemo(() => {
     let result = templates;
 
+    // Apply religion filter
+    if (religion) {
+      result = result.filter((t) => t.religion?.toLowerCase() === religion.toLowerCase());
+    }
+
     // Apply language filter
     if (languagesList.length > 1 && deferredLangFilter !== "all") {
       result = result.filter((t) => !t.language || t.language === deferredLangFilter);
@@ -238,7 +249,7 @@ export const TemplateSelector = React.memo(function TemplateSelector({ onSelect 
     }
 
     return result;
-  }, [templates, deferredLangFilter, deferredPriceFilter, languagesList]);
+  }, [templates, deferredLangFilter, deferredPriceFilter, languagesList, religion]);
 
   const SkeletonCard = () => (
     <div className="flex flex-col gap-2 animate-pulse select-none">

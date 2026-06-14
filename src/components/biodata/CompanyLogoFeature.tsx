@@ -3,13 +3,16 @@ import { cn } from "@/lib/utils";
 import { Globe, Zap, Briefcase, HelpCircle, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CompanyLogoPreview } from "./CompanyLogoPreview";
+import { getReligionTheme } from "@/lib/religionThemes";
 
 interface CompanyLogoFeatureProps {
   variant?: "card" | "banner";
   className?: string;
+  religion?: string | null;
 }
 
-export function CompanyLogoFeature({ variant = "card", className }: CompanyLogoFeatureProps) {
+export function CompanyLogoFeature({ variant = "card", className, religion = null }: CompanyLogoFeatureProps) {
+  const theme = getReligionTheme(religion);
   if (variant === "banner") {
     return (
       <div className={cn(
@@ -18,13 +21,19 @@ export function CompanyLogoFeature({ variant = "card", className }: CompanyLogoF
       )}>
         {/* Soft glow background */}
         <div className="absolute top-0 right-0 w-[250px] h-[250px] rounded-full bg-[#E6C97A]/10 blur-[60px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
-        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] rounded-full bg-[#9B1B30]/5 blur-[60px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] rounded-full bg-primary/5 blur-[60px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Text description */}
           <div className="lg:col-span-7 space-y-4 text-left">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#9B1B30]/10 text-[#9B1B30] dark:bg-[#E6C97A]/10 dark:text-[#E6C97A] border border-[#9B1B30]/20 dark:border-[#E6C97A]/30">
+              <span 
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                  theme ? "" : "bg-[#9B1B30]/10 text-[#9B1B30] border border-[#9B1B30]/20 dark:bg-[#E6C97A]/10 dark:text-[#E6C97A] dark:border-[#E6C97A]/30"
+                )}
+                style={theme ? { backgroundColor: theme.primaryLight, color: theme.primary, borderColor: `${theme.primary}25` } : undefined}
+              >
                 ⭐ Exclusive Feature
               </span>
               <TooltipProvider>
@@ -46,10 +55,22 @@ export function CompanyLogoFeature({ variant = "card", className }: CompanyLogoF
             </div>
             
             <h3 className="text-2xl font-black text-foreground tracking-tight leading-tight">
-              🏢 Company Logo: <span className="text-gradient-primary">Auto Search &amp; Display on your Biodata</span>
+              🏢 Company Logo: <span 
+                className={cn(!theme && "text-gradient-primary")}
+                style={theme ? {
+                  backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  color: "transparent"
+                } : undefined}
+              >Auto Search &amp; Display on your Biodata</span>
             </h3>
             <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">
-              A unique feature exclusively on <span className="font-bold text-[#9B1B30] dark:text-[#E6C97A]">biodata99.com</span>: search your company name and your official logo appears automatically on your biodata:
+              A unique feature exclusively on <span 
+                className={cn("font-bold", !theme && "text-[#9B1B30] dark:text-[#E6C97A]")}
+                style={theme ? { color: theme.primary } : undefined}
+              >biodata99.com</span>: search your company name and your official logo appears automatically on your biodata:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -122,7 +143,13 @@ export function CompanyLogoFeature({ variant = "card", className }: CompanyLogoF
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#9B1B30]/10 text-[#9B1B30] dark:bg-[#E6C97A]/10 dark:text-[#E6C97A] border border-[#9B1B30]/20 dark:border-[#E6C97A]/30">
+                <span 
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
+                    theme ? "" : "bg-[#9B1B30]/10 text-[#9B1B30] border border-[#9B1B30]/20 dark:bg-[#E6C97A]/10 dark:text-[#E6C97A] dark:border-[#E6C97A]/30"
+                  )}
+                  style={theme ? { backgroundColor: theme.primaryLight, color: theme.primary, borderColor: `${theme.primary}25` } : undefined}
+                >
                   ⭐ Exclusive Feature
                 </span>
                 <TooltipProvider>
@@ -143,7 +170,16 @@ export function CompanyLogoFeature({ variant = "card", className }: CompanyLogoF
                 </TooltipProvider>
               </div>
               <h3 className="text-lg font-black text-[#062B36] dark:text-white tracking-tight">
-                Company Logo: <span className="text-gradient-primary">Auto Search &amp; Display</span>
+                Company Logo: <span 
+                  className={cn(!theme && "text-gradient-primary")}
+                  style={theme ? {
+                    backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    color: "transparent"
+                  } : undefined}
+                >Auto Search &amp; Display</span>
               </h3>
             </div>
           </div>

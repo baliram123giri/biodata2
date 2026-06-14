@@ -40,7 +40,7 @@ const COMMUNITY_FIELDS: Record<string, any[]> = {
   ],
   Muslim: [
     { id: "religion", label: "Religion", value: "Muslim", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
-    { id: "sect", label: "Sect", value: "", type: "select", options: ["Sunni", "Shia", "Other"], isDefault: true },
+    { id: "sect", label: "Sect", value: "", type: "select", options: ["Sunni", "Shia", "Bohra", "Ahmadiyya", "Other"], isDefault: true },
     { id: "caste", label: "Caste/Sub-Caste", value: "", type: "text", isDefault: true },
     { id: "namaz", label: "Namaz / Prayer", value: "", type: "select", options: ["5 Times Daily", "Only Friday", "Occasionally", "Other"], isDefault: true },
   ],
@@ -375,11 +375,35 @@ const LOCAL_UI_TRANSLATIONS: Record<string, Record<string, string>> = {
   }
 };
 
-export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: boolean; hideSliders?: boolean } = {}) {
+export function BiodataForm({ 
+  asDiv = false, 
+  hideSliders = false,
+  hideCommunityAndReligion = false
+}: { 
+  asDiv?: boolean; 
+  hideSliders?: boolean;
+  hideCommunityAndReligion?: boolean;
+} = {}) {
   const { register, setValue, getValues, control } = useFormContext<BiodataFormValues>();
   const watchLang = useWatch({ control, name: "language" });
   const watchPhoto = useWatch({ control, name: "photo" });
   const currentLang = watchLang || "English";
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const communityParam = searchParams.get("community");
+      if (communityParam && ["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].includes(communityParam)) {
+        const currentComm = getValues("community");
+        if (currentComm !== communityParam) {
+          // Wrap in a tiny timeout to ensure react-hook-form is fully ready
+          setTimeout(() => {
+            handleCommunityChange(communityParam);
+          }, 50);
+        }
+      }
+    }
+  }, []);
 
   const { addSticker, removeSticker, formData, setFormData: setStoredFormData, selectedTemplate, customTemplates } = useBiodataStore(useShallow(s => ({
     addSticker: s.addSticker,
@@ -494,12 +518,18 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   const defaultBorderSize = templateConfig?.photo?.showBorder !== false ? 2 : 0;
 
   const { data: mantraStickers, isLoading: isLoadingMantras } = useQuery({
-    queryKey: ["mantraStickers"],
+    queryKey: ["mantraStickers", selectedCommunity, hideCommunityAndReligion],
     queryFn: async () => {
-      const res = await fetch(`/api/stickers?type=Mantra&limit=100`);
+      const targetReligion = hideCommunityAndReligion ? "Muslim" : (selectedCommunity !== "General" ? selectedCommunity : "");
+      const url = `/api/stickers?type=Mantra&limit=100${targetReligion ? `&religion=${targetReligion}` : ""}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load mantras");
       const data = await res.json();
-      return (data.stickers || []) as { id: string; name: string; url: string }[];
+      let stickers = (data.stickers || []) as { id: string; name: string; url: string; religion?: string }[];
+      if (hideCommunityAndReligion) {
+        stickers = stickers.filter(s => s.religion?.toLowerCase() === "muslim");
+      }
+      return stickers;
     },
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
     gcTime: 1000 * 60 * 60,    // Keep garbage collection time at 1 hour
@@ -646,33 +676,35 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
         </div>
 
         {/* Community Selector */}
-        <div className="group relative bg-gradient-to-br from-card to-card/95 p-4 rounded-2xl border border-border/80 hover:border-primary/40 flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
-              <Users className="w-5 h-5" />
+        {!hideCommunityAndReligion && (
+          <div className="group relative bg-gradient-to-br from-card to-card/95 p-4 rounded-2xl border border-border/80 hover:border-primary/40 flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-foreground leading-tight">
+                  {LOCAL_UI_TRANSLATIONS[currentLang]?.communityLabel || LOCAL_UI_TRANSLATIONS["English"].communityLabel}
+                </span>
+                <span className="text-[11px] text-muted-foreground mt-0.5">
+                  {LOCAL_UI_TRANSLATIONS[currentLang]?.commDesc || LOCAL_UI_TRANSLATIONS["English"].commDesc}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-foreground leading-tight">
-                {LOCAL_UI_TRANSLATIONS[currentLang]?.communityLabel || LOCAL_UI_TRANSLATIONS["English"].communityLabel}
-              </span>
-              <span className="text-[11px] text-muted-foreground mt-0.5">
-                {LOCAL_UI_TRANSLATIONS[currentLang]?.commDesc || LOCAL_UI_TRANSLATIONS["English"].commDesc}
-              </span>
-            </div>
+            <Select value={selectedCommunity} onValueChange={handleCommunityChange}>
+              <SelectTrigger className="w-[160px] bg-background/50 border-border/60 rounded-xl focus:ring-primary hover:bg-background/80 transition-colors" aria-label="Select Community">
+                <SelectValue placeholder={LOCAL_UI_TRANSLATIONS[currentLang]?.communityPlaceholder || LOCAL_UI_TRANSLATIONS["English"].communityPlaceholder} />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/80">
+                {["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].map(comm => (
+                  <SelectItem key={comm} value={comm} className="focus:bg-primary/10 rounded-lg">
+                    {LOCAL_UI_TRANSLATIONS[currentLang]?.[comm] || LOCAL_UI_TRANSLATIONS["English"][comm]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={selectedCommunity} onValueChange={handleCommunityChange}>
-            <SelectTrigger className="w-[160px] bg-background/50 border-border/60 rounded-xl focus:ring-primary hover:bg-background/80 transition-colors" aria-label="Select Community">
-              <SelectValue placeholder={LOCAL_UI_TRANSLATIONS[currentLang]?.communityPlaceholder || LOCAL_UI_TRANSLATIONS["English"].communityPlaceholder} />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-border/80">
-              {["General", "Hindu", "Muslim", "Sikh", "Christian", "Jain"].map(comm => (
-                <SelectItem key={comm} value={comm} className="focus:bg-primary/10 rounded-lg">
-                  {LOCAL_UI_TRANSLATIONS[currentLang]?.[comm] || LOCAL_UI_TRANSLATIONS["English"][comm]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        )}
       </div>
 
       <p className="privacy-note">
@@ -798,7 +830,7 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
           </AccordionContent>
         </AccordionItem>
 
-        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} />
+        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} hideCommunityAndReligion={hideCommunityAndReligion} />
         <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
         <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
         <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
@@ -876,7 +908,19 @@ export function BiodataForm({ asDiv = false, hideSliders = false }: { asDiv?: bo
   );
 }
 
-const FieldSection = memo(function FieldSection({ name, title, currentLang, icon }: { name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails", title: string, currentLang: string, icon: React.ReactNode }) {
+const FieldSection = memo(function FieldSection({ 
+  name, 
+  title, 
+  currentLang, 
+  icon,
+  hideCommunityAndReligion = false
+}: { 
+  name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails"; 
+  title: string; 
+  currentLang: string; 
+  icon: React.ReactNode;
+  hideCommunityAndReligion?: boolean;
+}) {
   const { control, register } = useFormContext<BiodataFormValues>();
   const { fields, append, remove, swap, update } = useFieldArray({
     control,
@@ -918,7 +962,8 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
       <AccordionContent className="space-y-4 pt-2 overflow-hidden">
         <div className="grid grid-cols-1 gap-x-6 gap-y-4">
           {fields.map((field, index) => {
-            if (field.type === "hidden") {
+            const isReligion = field.id === "religion" || field.label?.trim().toLowerCase() === "religion" || field.label?.trim() === "धर्म";
+            if (field.type === "hidden" || (isReligion && hideCommunityAndReligion)) {
               return (
                 <input
                   key={field.id}
@@ -979,9 +1024,10 @@ const FieldSection = memo(function FieldSection({ name, title, currentLang, icon
                         "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)",
                         "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
                       ];
-                      const liveOptions = (watchedOptions[index] as string[] | undefined) 
-                        || field.options 
-                        || (isParentOccupation ? parentOccupationOptions : []);
+                      const watched = watchedOptions[index] as string[] | undefined;
+                      const liveOptions = (watched && watched.length > 0 ? watched : undefined)
+                        ?? field.options
+                        ?? (isParentOccupation ? parentOccupationOptions : []);
                       return (
                         <Select onValueChange={(val) => {
                           if (val === "Other") {

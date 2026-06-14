@@ -6,24 +6,32 @@ import "./globals.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const notoSerif = Noto_Serif({
   variable: "--font-noto-serif",
   subsets: ["latin"],
   weight: ["400", "700"],
+  display: "swap",
+  preload: false,
 });
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   weight: ["400", "700"],
+  display: "swap",
+  preload: false,
 });
 
 const notoDevanagari = Noto_Sans_Devanagari({
   variable: "--font-noto-sans-devanagari",
   subsets: ["devanagari", "latin"],
   weight: ["400", "700"],
+  display: "swap",
+  preload: false,
 });
 
 import { Header } from "@/components/layout/Header";
@@ -110,6 +118,10 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
     >
       <head>
+        {/* DNS prefetch + preconnect for Google Fonts CDN */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <script src="https://analytics.ahrefs.com/analytics.js" data-key="ipvfSRsOf49Lu1SY3qaOTw" async></script>
       </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>

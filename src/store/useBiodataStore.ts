@@ -50,9 +50,9 @@ interface BiodataState {
   removeSticker: (id: string) => void;
   setSelectedTemplate: (templateId: string) => void;
   setCustomTemplates: (templates: TemplateConfig[]) => void;
-  fetchCustomTemplates: () => Promise<void>;
-  fetchMoreTemplates: () => Promise<void>;
-  fetchInitialTemplate: (templateId?: string | null) => Promise<void>;
+  fetchCustomTemplates: (religion?: string) => Promise<void>;
+  fetchMoreTemplates: (religion?: string) => Promise<void>;
+  fetchInitialTemplate: (templateId?: string | null, religion?: string) => Promise<void>;
   fetchCustomStickers: () => Promise<void>;
   langFilter: string;
   priceFilter: "all" | "free" | "premium";
@@ -151,14 +151,17 @@ export const useBiodataStore = create<BiodataState>()(
         })),
         setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
         setCustomTemplates: (templates) => set({ customTemplates: templates }),
-        fetchCustomTemplates: async () => {
+        fetchCustomTemplates: async (religion) => {
           const state = useBiodataStore.getState();
           // If we already loaded the list of templates (not just a single template by ID), skip fetching page 1 again
           if (state.hasLoadedAllTemplates && state.customTemplates.length > 1) {
             return;
           }
           try {
-            const res = await fetch("/api/templates?page=1&limit=10");
+            const url = religion
+              ? `/api/templates?page=1&limit=10&religion=${encodeURIComponent(religion)}`
+              : "/api/templates?page=1&limit=10";
+            const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
@@ -189,13 +192,16 @@ export const useBiodataStore = create<BiodataState>()(
             console.error("Store failed to fetch templates:", err);
           }
         },
-        fetchMoreTemplates: async () => {
+        fetchMoreTemplates: async (religion) => {
           const state = useBiodataStore.getState();
           if (state.isFetchingMoreTemplates || !state.hasMoreTemplates) return;
           set({ isFetchingMoreTemplates: true });
           try {
             const nextPage = state.templatePage + 1;
-            const res = await fetch(`/api/templates?page=${nextPage}&limit=10`);
+            const url = religion
+              ? `/api/templates?page=${nextPage}&limit=10&religion=${encodeURIComponent(religion)}`
+              : `/api/templates?page=${nextPage}&limit=10`;
+            const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
@@ -221,7 +227,7 @@ export const useBiodataStore = create<BiodataState>()(
             set({ isFetchingMoreTemplates: false });
           }
         },
-        fetchInitialTemplate: async (templateId) => {
+        fetchInitialTemplate: async (templateId, religion) => {
           try {
             const currentSelected = useBiodataStore.getState().selectedTemplate;
             // If a specific template is requested via URL param, use that; otherwise keep existing selection
@@ -243,9 +249,12 @@ export const useBiodataStore = create<BiodataState>()(
             }
 
             // Fetch 10 templates on initial load: default first + 9 more
-            const url = templateId
-              ? `/api/templates?id=${templateId}`
-              : "/api/templates?default=true&limit=10";
+            let url = "/api/templates?default=true&limit=10";
+            if (templateId) {
+              url = `/api/templates?id=${templateId}`;
+            } else if (religion) {
+              url = `/api/templates?default=true&limit=10&religion=${encodeURIComponent(religion)}`;
+            }
             const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
@@ -373,7 +382,8 @@ export const useBiodataStore = create<BiodataState>()(
             ...persistedState?.formData,
           }
         };
-      }
+      },
+      version: 2,
     }
   )
 );
