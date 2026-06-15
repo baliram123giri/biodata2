@@ -6,6 +6,45 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { BiodataBuilderSection } from "./BiodataBuilderSection";
 import { generateFaqSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { TemplateCarousel } from "@/components/home/TemplateCarousel";
+
+const MUSLIM_SAMPLES = [
+  {
+    id: "m1",
+    src: "/content/muslim-biodata/previews/emerald_nikah.webp",
+    title: "Emerald Nikah Gold",
+    community: "Muslim / Islamic",
+    description: "A gorgeous green design with golden Islamic minaret and border detailing."
+  },
+  {
+    id: "m2",
+    src: "/content/muslim-biodata/previews/golden_minaret.webp",
+    title: "Golden Minaret Premium",
+    community: "Muslim / Islamic",
+    description: "A rich cream-toned template featuring elegant golden minarets at the top."
+  },
+  {
+    id: "m3",
+    src: "/content/muslim-biodata/previews/heritage_islamic.webp",
+    title: "Heritage Islamic Green",
+    community: "Muslim / Islamic",
+    description: "Traditional Islamic green matrimonial design with calligraphic header motifs."
+  },
+  {
+    id: "m4",
+    src: "/content/muslim-biodata/previews/muslim_royal_green.webp",
+    title: "Muslim Royal Green",
+    community: "Muslim / Islamic",
+    description: "A majestic royal green theme with detailed gold border lines and Bismillah header."
+  },
+  {
+    id: "m5",
+    src: "/content/muslim-biodata/previews/muslim_classic_gold.webp",
+    title: "Muslim Classic Gold",
+    community: "Muslim / Islamic",
+    description: "A classic warm gold template highlighting clean borders and crescent moon detailing."
+  }
+];
 
 const muslimHowToSchema = {
   "@context": "https://schema.org" as const,
@@ -338,6 +377,16 @@ export default function MuslimBiodataFormatPage() {
           hideCommunityAndReligion={true}
         />
       </section>
+
+      {/* Muslim Templates Gallery Carousel */}
+      <TemplateCarousel
+        samples={MUSLIM_SAMPLES}
+        title="Premium Muslim Biodata Templates"
+        subtitle="Choose from our curated collection of Islamic marriage biodata designs. Click any template to zoom in and check its high-quality print preview."
+        badgeText="Muslim Previews"
+        themePrimary="#0F4C3A"
+        themeAccent="#D4AF37"
+      />
 
       {/* Dedicated Space for Body Content below Hero */}
       <div className="container mx-auto max-w-6xl relative z-10 py-6 px-4">

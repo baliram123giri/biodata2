@@ -474,13 +474,15 @@ export default function Home() {
 
             {/* Paragraph 3 — what it includes */}
             <p>
-              A standard marriage biodata covers personal details like name,
-              date of birth, height, and complexion - along with education,
-              occupation, family background, and partner preferences. Hindu
-              families usually include rashi, nakshatra, gotra, and manglik
-              status. Muslim biodatas often include sect and family values.
-              NRI profiles typically add residency status and country of
-              settlement.
+              When we talk about a marriage biodata it is like a profile that has all the basic details about the person. This includes things like their name, date of birth how tall they&apos;re what they look like. It also has information about their education what they do for work their family and what they are looking for in a partner. For people from Hindu families their marriage biodata usually includes details too such as their rashi, nakshatra, gotra and whether they are manglik or not.
+            </p>
+
+            <p>
+              For families the marriage biodata often has details about what sect they belong to and their family values.
+            </p>
+
+            <p>
+              If we are talking about NRI marriage biodatas they typically have information, like their residency status and the country where they live.
             </p>
 
             {/* H3 Heading 2 */}

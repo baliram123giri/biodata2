@@ -423,7 +423,7 @@ function EditPageContent() {
 
     if (window.innerWidth < 1024) {
       setIsLeftOpen(false);
-      setIsRightOpen(!!templateParam);
+      setIsRightOpen(!!templateParam || !!searchParams.get('tab'));
     }
 
     // Disable browser pull-to-refresh on this page
@@ -437,6 +437,17 @@ function EditPageContent() {
       document.documentElement.style.overscrollBehaviorY = originalHtmlStyle;
     };
   }, []);
+
+  // Handle initial tab selection from query parameters
+  useEffect(() => {
+    if (!isMounted) return;
+    const tabParam = searchParams.get('tab');
+    const validTabs = ["templates", "fields", "theme", "spacing", "photo", "graphics", "whatsapp"];
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam as any);
+      setIsRightOpen(true);
+    }
+  }, [isMounted, searchParams]);
 
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
@@ -753,7 +764,41 @@ function EditPageContent() {
                   <DialogClose asChild onClick={() => {
                     useBiodataStore.getState().resetDesignOnly();
                     useThemeStore.getState().resetTheme();
+                    
+                    const config = activeTemplate;
+                    if (config) {
+                      let bgColors: string[] = ["#ffffff"];
+                      if (config.bgGradientColors && config.bgGradientColors.length > 0) {
+                        bgColors = config.bgGradientColors;
+                      } else if (config.frame?.type === "gradient") {
+                        bgColors = config.frame.gradientColors;
+                      } else if (config.frame?.bgColor) {
+                        bgColors = [config.frame.bgColor];
+                      }
+
+                      useThemeStore.getState().setPalette({
+                        name: "None",
+                        primary: config.defaultPrimary,
+                        secondary: config.defaultSecondary,
+                        accent: config.defaultAccent || "",
+                        bgColors: bgColors,
+                      });
+
+                      if (config.defaultPadding !== undefined && config.defaultPadding !== null) {
+                        useThemeStore.getState().setPadding(config.defaultPadding);
+                      }
+                      useThemeStore.getState().setPaddingY(
+                        config.defaultYPadding !== null && config.defaultYPadding !== undefined 
+                          ? config.defaultYPadding 
+                          : undefined
+                      );
+                      
+                      useThemeStore.getState().setFontSize(config.fontSize || 9);
+                      useThemeStore.getState().resetOverrides();
+                    }
+                    
                     methods.reset(useBiodataStore.getState().formData);
+                    prevTemplateRef.current = `${selectedTemplate}_${config?.defaultPrimary}_${config?.defaultSecondary}_${config?.defaultAccent}`;
                   }}>
                     <Button className="relative overflow-hidden bg-gradient-primary text-white border-0 w-full sm:w-28 rounded-xl font-bold shadow-sm">
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-1/2 h-full animate-shine pointer-events-none" />
@@ -988,7 +1033,27 @@ function EditPageContent() {
                             return (
                               <button
                                 onClick={() => {
-                                  theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                                  const config = activeTemplate;
+                                  if (config) {
+                                    let bgColors: string[] = ["#ffffff"];
+                                    if (config.bgGradientColors && config.bgGradientColors.length > 0) {
+                                      bgColors = config.bgGradientColors;
+                                    } else if (config.frame?.type === "gradient") {
+                                      bgColors = config.frame.gradientColors;
+                                    } else if (config.frame?.bgColor) {
+                                      bgColors = [config.frame.bgColor];
+                                    }
+
+                                    theme.setPalette({
+                                      name: "None",
+                                      primary: config.defaultPrimary,
+                                      secondary: config.defaultSecondary,
+                                      accent: config.defaultAccent || "",
+                                      bgColors: bgColors,
+                                    });
+                                  } else {
+                                    theme.setPalette({ name: "None", primary: "#800000", secondary: "#333333", accent: "#D4AF37" });
+                                  }
                                 }}
                                 className={cn(
                                   "group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all hover:shadow-md",

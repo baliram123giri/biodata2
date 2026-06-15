@@ -161,9 +161,18 @@ export function HomeBiodataBuilder({
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleNavigateToEdit = () => {
+  const handleNavigateToEdit = (tab?: string) => {
     setIsNavigating(true);
-    router.push("/edit");
+    const query = tab ? `?tab=${tab}` : "";
+    router.push(`/edit${query}`);
+  };
+
+  const handleOpenTemplatesDrawer = () => {
+    if (window.innerWidth < 1024) {
+      setIsMobileDrawerOpen(true);
+    } else {
+      setIsDrawerOpen(true);
+    }
   };
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
@@ -678,7 +687,7 @@ export function HomeBiodataBuilder({
             <div id="mobile-preview-section" className="md:hidden w-full flex flex-col gap-4 items-center pt-2 pb-2">
               <EmbeddedPreviewSection storedTemplate={storedTemplate} control={methods.control} />
               <Button
-                onClick={handleNavigateToEdit}
+                onClick={() => handleNavigateToEdit()}
                 disabled={isNavigating}
                 className={cn(
                   "w-full rounded-full transition-all flex items-center justify-center gap-2 h-11 text-sm font-bold border-0 disabled:opacity-70",
@@ -708,32 +717,13 @@ export function HomeBiodataBuilder({
                 <EmbeddedPreviewSection storedTemplate={storedTemplate} control={methods.control} />
 
                 <div className="flex gap-3 items-center justify-center w-fit mx-auto mt-2">
-                  <Button
-                    onClick={handleNavigateToEdit}
-                    disabled={isNavigating}
-                    className={cn(
-                      "rounded-full transition-all flex gap-1.5 h-11 text-xs sm:text-sm font-bold items-center justify-center px-4 shrink-0 border-0 disabled:opacity-70",
-                      isMuslimPage 
-                        ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
-                        : "bg-gradient-primary"
-                    )}
-                  >
-                    {isNavigating ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5" />
-                    )}
-                    <span>{isNavigating ? translateUI("loading", currentLang) : translateUI("editInDesigner", currentLang)}</span>
-                    {!isNavigating && <ArrowRight className="w-3.5 h-3.5" />}
-                  </Button>
-
                   <DownloadDropdown
                     onDownload={handleDownload}
                     isGenerating={isGenerating}
                     labels={{ download: "Download", downloadPdf: "Download PDF", generating: "Generating..." }}
                     variant="compact"
                     className={cn(
-                      "rounded-full transition-all h-11 font-bold text-xs sm:text-sm px-4 shrink-0 border-0",
+                      "rounded-full transition-all h-9 font-bold text-[11px] px-3 shrink-0 border-0",
                       isMuslimPage 
                         ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
                         : "bg-gradient-primary"
@@ -746,10 +736,43 @@ export function HomeBiodataBuilder({
                   />
 
                   <Button
+                    onClick={() => handleNavigateToEdit()}
+                    disabled={isNavigating}
+                    className={cn(
+                      "rounded-full transition-all flex gap-1 h-9 text-[11px] font-bold items-center justify-center px-3 shrink-0 border-0 disabled:opacity-70",
+                      isMuslimPage 
+                        ? "bg-[#0F4C3A] hover:bg-[#0D4333] text-white shadow-lg shadow-[#0F4C3A]/20" 
+                        : "bg-gradient-primary"
+                    )}
+                  >
+                    {isNavigating ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3" />
+                    )}
+                    <span>{isNavigating ? translateUI("loading", currentLang) : translateUI("editInDesigner", currentLang)}</span>
+                    {!isNavigating && <ArrowRight className="w-3.5 h-3.5" />}
+                  </Button>
+
+                  <Button
+                    onClick={handleOpenTemplatesDrawer}
+                    variant="outline"
+                    className={cn(
+                      "rounded-full transition-all flex gap-1 h-9 text-[11px] font-bold items-center justify-center px-3 shrink-0 bg-white",
+                      isMuslimPage 
+                        ? "border-[#0F4C3A]/40 hover:bg-[#0F4C3A]/5 text-[#0F4C3A] hover:text-[#0A3327]" 
+                        : "border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700"
+                    )}
+                  >
+                    <LayoutDashboard className="w-3 h-3" />
+                    <span>Choose Template</span>
+                  </Button>
+
+                  <Button
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "rounded-full h-11 font-bold text-xs sm:text-sm px-4 shrink-0 transition-colors bg-white",
+                      "rounded-full h-9 font-bold text-[11px] px-3 shrink-0 transition-colors bg-white",
                       isMuslimPage 
                         ? "border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 text-[#0F4C3A] hover:text-[#0A3327]" 
                         : "border border-rose-200 hover:bg-rose-50/50 text-rose-600 hover:text-rose-700"
@@ -757,7 +780,7 @@ export function HomeBiodataBuilder({
                     onClick={() => setShowResetDialog(true)}
                     disabled={isGenerating}
                   >
-                    <RotateCcw className={cn("w-3.5 h-3.5 mr-1", isMuslimPage ? "text-[#0F4C3A]" : "text-rose-500")} /> Reset
+                    <RotateCcw className={cn("w-3 h-3 mr-1", isMuslimPage ? "text-[#0F4C3A]" : "text-rose-500")} /> Reset
                   </Button>
                 </div>
               </div>
@@ -834,7 +857,7 @@ export function HomeBiodataBuilder({
  
               {/* Designer Option */}
               <button
-                onClick={handleNavigateToEdit}
+                onClick={() => handleNavigateToEdit()}
                 disabled={isNavigating}
                 className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-9 sm:w-11 disabled:opacity-50 mobile-toolbar-btn"
               >
