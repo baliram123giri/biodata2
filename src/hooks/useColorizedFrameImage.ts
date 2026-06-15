@@ -3,7 +3,35 @@ import { tintSvg } from '@/lib/frame-config';
 import { getClientImageUrl } from '@/lib/utils';
 
 // Client-side in-memory cache for raw SVG text templates
-const svgCache: Record<string, string> = {};
+export const svgCache: Record<string, string> = {};
+
+// Client-side in-memory cache for colorized HTMLImageElements to avoid reload/flicker
+export const colorizedImageCache: Record<string, HTMLImageElement> = {};
+
+export async function preloadSvg(url: string) {
+  if (!url || svgCache[url]) return;
+  try {
+    const resolvedUrl = getClientImageUrl(url);
+    const isSvg = resolvedUrl.toLowerCase().includes('.svg') || resolvedUrl.startsWith('data:image/svg+xml');
+    if (!isSvg) return;
+
+    if (resolvedUrl.startsWith('data:image/svg+xml;base64,')) {
+      const base64Content = resolvedUrl.split(',')[1];
+      svgCache[resolvedUrl] = atob(base64Content);
+    } else if (resolvedUrl.startsWith('data:image/svg+xml;utf8,')) {
+      svgCache[resolvedUrl] = decodeURIComponent(resolvedUrl.split('utf8,')[1]);
+    } else if (resolvedUrl.startsWith('data:image/svg+xml,')) {
+      svgCache[resolvedUrl] = decodeURIComponent(resolvedUrl.split(',')[1]);
+    } else {
+      const res = await fetch(resolvedUrl);
+      if (res.ok) {
+        svgCache[resolvedUrl] = await res.text();
+      }
+    }
+  } catch (e) {
+    console.error("Error preloading SVG:", e);
+  }
+}
 
 export function useColorizedFrameImage(
   src: string | null,
@@ -12,7 +40,13 @@ export function useColorizedFrameImage(
   originalAccent: string,
   newAccent: string
 ) {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const cacheKey = src ? `${src}_${newPrimary}_${newAccent}` : '';
+  const [image, setImage] = useState<HTMLImageElement | null>(() => {
+    if (cacheKey && colorizedImageCache[cacheKey]) {
+      return colorizedImageCache[cacheKey];
+    }
+    return null;
+  });
 
   useEffect(() => {
     if (!src) {
@@ -21,6 +55,13 @@ export function useColorizedFrameImage(
     }
 
     const resolvedSrc = getClientImageUrl(src);
+    const currentCacheKey = `${resolvedSrc}_${newPrimary}_${newAccent}`;
+
+    // If already cached in memory, use it immediately
+    if (colorizedImageCache[currentCacheKey]) {
+      setImage(colorizedImageCache[currentCacheKey]);
+      return;
+    }
 
     // Check if the source is an SVG
     const isSvg = resolvedSrc.toLowerCase().includes('.svg') || resolvedSrc.startsWith('data:image/svg+xml');
@@ -31,7 +72,10 @@ export function useColorizedFrameImage(
       if (!resolvedSrc.startsWith('data:')) {
         img.crossOrigin = 'anonymous';
       }
-      img.onload = () => setImage(img);
+      img.onload = () => {
+        colorizedImageCache[currentCacheKey] = img;
+        setImage(img);
+      };
       img.onerror = () => setImage(null);
       img.src = resolvedSrc;
       return;
@@ -64,15 +108,18 @@ export function useColorizedFrameImage(
         if (!isMounted) return;
 
         // Apply dynamic color tinting
-        const tintedSvg = tintSvg(svgText, originalPrimary, newPrimary, originalAccent, newAccent);
+        const colorized = tintSvg(svgText, originalPrimary, newPrimary, originalAccent, newAccent);
 
         // Convert the tinted SVG XML code to a data URL
-        const tintedDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(tintedSvg);
+        const tintedDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(colorized);
 
         const img = new window.Image();
         // Do NOT set crossOrigin on data URLs as it causes load failures in some browsers
         img.onload = () => {
-          if (isMounted) setImage(img);
+          if (isMounted) {
+            colorizedImageCache[currentCacheKey] = img;
+            setImage(img);
+          }
         };
         img.onerror = (e) => {
           console.error("Failed to load image from tinted data URL:", e);
@@ -87,7 +134,10 @@ export function useColorizedFrameImage(
           img.crossOrigin = 'anonymous';
         }
         img.onload = () => {
-          if (isMounted) setImage(img);
+          if (isMounted) {
+            colorizedImageCache[currentCacheKey] = img;
+            setImage(img);
+          }
         };
         img.onerror = (e) => {
           console.error("Failed to load fallback original SVG:", e);

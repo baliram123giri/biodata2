@@ -5,6 +5,7 @@ import { type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { type TemplateConfig, getTemplateConfig, registerDynamicTemplates } from "@/lib/frame-config";
+import { preloadSvg } from "@/hooks/useColorizedFrameImage";
 
 interface LayoutPosition {
   x: number;
@@ -171,16 +172,27 @@ export const useBiodataStore = create<BiodataState>()(
                     const img = new window.Image();
                     img.src = tpl.thumbnailUrl;
                   }
+                  if (tpl.frame?.urlTemplate) {
+                    preloadSvg(tpl.frame.urlTemplate);
+                  }
                 });
               }
               set((state) => {
                 const currentSelected = state.selectedTemplate;
-                // Only auto-select default if nothing is currently selected
                 const needsSelection = !currentSelected;
                 const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
                 const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
+
+                const existingTemplates = state.customTemplates || [];
+                const mergedTemplates = [...existingTemplates];
+                data.templates.forEach((newTpl: any) => {
+                  if (!mergedTemplates.some((t) => t.id === newTpl.id)) {
+                    mergedTemplates.push(newTpl);
+                  }
+                });
+
                 return {
-                  customTemplates: data.templates,
+                  customTemplates: mergedTemplates,
                   hasLoadedAllTemplates: true,
                   hasMoreTemplates: data.hasMore ?? false,
                   templatePage: 1,
@@ -210,6 +222,9 @@ export const useBiodataStore = create<BiodataState>()(
                   if (tpl.thumbnailUrl) {
                     const img = new window.Image();
                     img.src = tpl.thumbnailUrl;
+                  }
+                  if (tpl.frame?.urlTemplate) {
+                    preloadSvg(tpl.frame.urlTemplate);
                   }
                 });
               }
@@ -264,6 +279,9 @@ export const useBiodataStore = create<BiodataState>()(
                   if (tpl.thumbnailUrl) {
                     const img = new window.Image();
                     img.src = tpl.thumbnailUrl;
+                  }
+                  if (tpl.frame?.urlTemplate) {
+                    preloadSvg(tpl.frame.urlTemplate);
                   }
                 });
               }

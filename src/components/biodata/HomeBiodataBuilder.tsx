@@ -233,20 +233,24 @@ export function HomeBiodataBuilder({
         const currentStoredData = useBiodataStore.getState().formData;
         
         const mergedDefaults = { ...defaultBiodataValues };
+        const finalData = { ...mergedDefaults, ...currentStoredData };
+
         if (defaultCommunity) {
-          mergedDefaults.community = defaultCommunity;
+          finalData.community = defaultCommunity;
         }
         if (defaultTitle) {
-          mergedDefaults.title = defaultTitle;
+          finalData.title = defaultTitle;
         }
         if (defaultReligion) {
-          const religionField = mergedDefaults.personalDetails?.find(f => f.id === "religion");
-          if (religionField) {
-            religionField.value = defaultReligion;
+          if (finalData.personalDetails) {
+            finalData.personalDetails = finalData.personalDetails.map(f => 
+              f.id === "religion" ? { ...f, value: defaultReligion } : f
+            );
           }
         }
 
-        methods.reset({ ...mergedDefaults, ...currentStoredData });
+        methods.reset(finalData);
+        useBiodataStore.getState().setFormData(finalData);
         setHasInitialized(true);
       }, 0);
     };
@@ -267,7 +271,7 @@ export function HomeBiodataBuilder({
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
     if (!isHydrated) return;
-    const config = getTemplateConfig(storedTemplate);
+    const config = customTemplates.find((t) => t.id === storedTemplate) || getTemplateConfig(storedTemplate);
     if (!config) return;
 
     const configKey = `${storedTemplate}_${config.defaultPrimary}_${config.defaultSecondary}_${config.defaultAccent}`;

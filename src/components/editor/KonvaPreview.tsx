@@ -468,10 +468,19 @@ const ImageFrame = React.memo(function ImageFrame({
     enableSvgTint ? accentColor : ""
   );
 
-  const x = bgConfig?.frameImageX !== undefined ? parseFloat(bgConfig.frameImageX) || 0 : 0;
-  const y = bgConfig?.frameImageY !== undefined ? parseFloat(bgConfig.frameImageY) || 0 : 0;
-  const w = bgConfig?.frameImageWidth !== undefined ? parseFloat(bgConfig.frameImageWidth) || A4_W : A4_W;
-  const h = bgConfig?.frameImageHeight !== undefined ? parseFloat(bgConfig.frameImageHeight) || A4_H : A4_H;
+  const offset = bgConfig?.imageFrameOffset ? parseInt(bgConfig.imageFrameOffset) || 0 : 0;
+  const fallbackX = -offset;
+  const fallbackY = -offset;
+  const fallbackW = A4_W + (offset * 2);
+  const fallbackH = A4_H + (offset * 2);
+
+  const isDefault = (bgConfig?.frameImageX === "0" || bgConfig?.frameImageX == null) &&
+    (bgConfig?.frameImageY === "0" || bgConfig?.frameImageY == null);
+
+  const x = isDefault && offset !== 0 ? fallbackX : (bgConfig?.frameImageX !== undefined ? parseFloat(bgConfig.frameImageX) || fallbackX : fallbackX);
+  const y = isDefault && offset !== 0 ? fallbackY : (bgConfig?.frameImageY !== undefined ? parseFloat(bgConfig.frameImageY) || fallbackY : fallbackY);
+  const w = isDefault && offset !== 0 ? fallbackW : (bgConfig?.frameImageWidth !== undefined ? parseFloat(bgConfig.frameImageWidth) || fallbackW : fallbackW);
+  const h = isDefault && offset !== 0 ? fallbackH : (bgConfig?.frameImageHeight !== undefined ? parseFloat(bgConfig.frameImageHeight) || fallbackH : fallbackH);
 
   return (
     <Group>
@@ -781,11 +790,18 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
       const entry = entries[0];
       if (!entry) return;
       const { width, height } = entry.contentRect;
-      if (width > 0 && height > 0) setStageSize({ width, height });
+      if (width > 0 && height > 0) {
+        setStageSize({ width, height });
+        if (!isDesigner) {
+          const fitScale = Math.min(width / A4_W, height / A4_H);
+          setScale(fitScale);
+          setStagePos({ x: (width - A4_W * fitScale) / 2, y: (height - A4_H * fitScale) / 2 });
+        }
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [isDesigner]);
 
   // ── Zoom/Fit event listeners ─────────────────────────────────────
   useEffect(() => {

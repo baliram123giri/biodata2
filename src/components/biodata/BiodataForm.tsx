@@ -955,12 +955,7 @@ const FieldSection = memo(function FieldSection({
     name: labelNames
   });
 
-  // Watch ONLY the options of the fields to prevent typing in values from causing re-renders
-  const optionNames = React.useMemo(() => fields.map((_, idx) => `${name}.${idx}.options` as const), [fields.length, name]);
-  const watchedOptions = useWatch({
-    control,
-    name: optionNames
-  });
+
 
   const [dialogState, setDialogState] = useState<{ isOpen: boolean; index: number; options: string[]; label: string } | null>(null);
   const [customInput, setCustomInput] = useState("");
@@ -1045,9 +1040,7 @@ const FieldSection = memo(function FieldSection({
                         "Self Employed", "Banker", "CA / Accountant", "Lawyer", "Engineer (Non-IT)",
                         "Defense / Police", "Private Job", "Retired", "Homemaker", "Not Working", "Other"
                       ];
-                      const watched = watchedOptions[index] as string[] | undefined;
-                      const liveOptions = (watched && watched.length > 0 ? watched : undefined)
-                        ?? field.options
+                      const liveOptions = field.options
                         ?? (isParentOccupation ? parentOccupationOptions : []);
                       return (
                         <Select onValueChange={(val) => {
