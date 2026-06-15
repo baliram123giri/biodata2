@@ -122,7 +122,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <script src="https://analytics.ahrefs.com/analytics.js" data-key="WvSbQze2aQcZ6p5Ri2mS5A" async></script>
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="prQTV5ELV3fWNLluY7y07A" async></script>
       </head>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <JsonLd schema={webApplicationSchema} />
