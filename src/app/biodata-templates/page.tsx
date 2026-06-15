@@ -381,7 +381,7 @@ export default async function BiodataTemplatesPage() {
                 </p>
               </div>
 
-              <Accordion type="single" collapsible defaultValue="faq-1" className="w-full">
+              <Accordion type="multiple" defaultValue={["faq-1"]} className="w-full">
                 {templatesPageFaqSchema.mainEntity.map((faq, index) => (
                   <AccordionItem key={index} value={`faq-${index + 1}`} className="border-stone-100 dark:border-stone-800">
                     <AccordionTrigger className="text-xs sm:text-sm font-bold text-foreground hover:no-underline hover:text-[#C9A84C] py-3 text-left">

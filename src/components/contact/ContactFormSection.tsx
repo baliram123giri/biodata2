@@ -411,7 +411,7 @@ export function ContactFormSection() {
           Frequently Asked Questions
         </h2>
         <Card className="border border-[#C9A84C]/25 rounded-2xl p-6 md:p-8 bg-card shadow-sm">
-          <Accordion type="single" collapsible className="w-full space-y-2">
+          <Accordion type="multiple" className="w-full space-y-2">
             {faqs.map((faq, idx) => (
               <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">
                 <AccordionTrigger className="text-base font-black text-left text-foreground hover:text-primary hover:no-underline py-4">

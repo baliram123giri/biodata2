@@ -70,7 +70,7 @@ export default function FAQsPage() {
         {/* Radix Accordion FAQ list */}
         <div className="bg-card border border-[#C9A84C]/25 rounded-2xl p-6 md:p-8 shadow-md">
           <h2 className="sr-only">Answers to Common Questions</h2>
-          <Accordion type="single" collapsible className="w-full space-y-2">
+          <Accordion type="multiple" className="w-full space-y-2">
             {faqsList.map((faq, idx) => (
               <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">
                 <AccordionTrigger className="text-base font-black text-left text-foreground hover:text-primary hover:no-underline py-4">

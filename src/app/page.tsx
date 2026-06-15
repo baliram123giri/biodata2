@@ -408,7 +408,7 @@ export default function Home() {
 
           {/* Radix Accordion FAQ list */}
           <div className="bg-card border border-[#C9A84C]/20 dark:border-stone-850 rounded-2xl p-6 md:p-8 shadow-md">
-            <Accordion type="single" collapsible defaultValue="faq-0" className="w-full space-y-2">
+            <Accordion type="multiple" defaultValue={["faq-0"]} className="w-full space-y-2">
               {homepageFaqs.map((faq, idx) => (
                 <AccordionItem key={idx} value={`faq-${idx}`} className="border-b border-border/40 py-2">
                   <AccordionTrigger className="text-base font-black text-left text-stone-900 dark:text-white hover:text-primary hover:no-underline py-4">

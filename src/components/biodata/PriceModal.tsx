@@ -225,7 +225,7 @@ export function PriceModal({
         {/* Scrollable Container */}
         <div className="p-5 sm:p-6 pb-8 sm:pb-12 flex-1 overflow-y-auto flex flex-col gap-4">
           {isPremium && (isLoadingCoupons || availableCoupons.length > 0 || appliedCoupon) && (
-            <Accordion type="single" collapsible className="w-full shrink-0 border-0">
+            <Accordion type="multiple" className="w-full shrink-0 border-0">
               <AccordionItem value="coupons-offers" className="border-0 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] border border-emerald-500/25 rounded-3xl overflow-hidden shadow-xs">
                 <AccordionTrigger className="hover:no-underline px-4 py-3.5 flex items-center justify-between transition-all border-0 [&[data-state=open]>svg]:rotate-180">
                   <div className="flex items-center gap-2">

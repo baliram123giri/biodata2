@@ -199,7 +199,7 @@ export default function AboutUsPage() {
             What Drives Biodata99
           </h2>
 
-          <Accordion type="single" defaultValue="pillar-1" collapsible className="w-full space-y-2">
+          <Accordion type="multiple" defaultValue={["pillar-1"]} className="w-full space-y-2">
             <AccordionItem value="pillar-1" className="border-b border-border/40 py-2">
               <AccordionTrigger className="text-lg font-black text-left text-foreground hover:text-[#9B1B30] dark:hover:text-[#C9A84C] hover:no-underline py-4">
                 🎨 Inspired by Culture, Perfected by Design
