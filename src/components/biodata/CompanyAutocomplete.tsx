@@ -132,7 +132,7 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
       </PopoverTrigger>
       <PopoverContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="w-[var(--radix-popover-trigger-width)] p-1 bg-popover text-popover-foreground rounded-lg border shadow-md max-h-72 overflow-hidden flex flex-col z-[9999]"
+        className="w-[var(--radix-popover-trigger-width)] p-1 bg-popover text-popover-foreground rounded-lg border shadow-md max-h-72 overflow-hidden flex flex-col z-[9999] focus:outline-none focus-visible:outline-none"
         align="start"
       >
         {/* Branded search box input */}
@@ -144,7 +144,8 @@ export function CompanyAutocomplete({ value, logo, onChange, placeholder }: { va
               placeholder="Search companies..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full text-sm bg-transparent outline-none border-none focus:ring-0 p-0 text-foreground"
+              className="w-full text-sm bg-transparent !border-0 !border-none focus:!border-0 focus:!border-none focus:ring-0 focus:ring-offset-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-foreground shadow-none focus:shadow-none"
+              style={{ border: "none", outline: "none", boxShadow: "none" }}
             />
           </div>
         </div>

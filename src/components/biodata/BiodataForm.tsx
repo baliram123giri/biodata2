@@ -567,6 +567,28 @@ export function BiodataForm({
     staleTime: 1000 * 60 * 30,
   });
 
+  const filteredMantras = React.useMemo(() => {
+    if (!dbMantras) return [];
+    if (!selectedCommunity || selectedCommunity === "General") return dbMantras;
+    return dbMantras.filter(m => m.religion?.toLowerCase() === selectedCommunity.toLowerCase());
+  }, [dbMantras, selectedCommunity]);
+
+  const mantraPlaceholder = React.useMemo(() => {
+    if (selectedCommunity === "Muslim") {
+      return "e.g. Bismillah-ir-Rahman-ir-Rahim";
+    }
+    if (selectedCommunity === "Sikh") {
+      return "e.g. Ek Onkar Satgur Prasad";
+    }
+    if (selectedCommunity === "Christian") {
+      return "e.g. Praise the Lord";
+    }
+    if (selectedCommunity === "Jain") {
+      return "e.g. Jai Jinendra";
+    }
+    return "e.g. Shree Ganeshay Namah";
+  }, [selectedCommunity]);
+
   // One-time cleanup: remove any stray non-standard occupation/profession fields
   // from familyDetails that may have been added by a previous session
   useEffect(() => {
@@ -636,15 +658,13 @@ export function BiodataForm({
     if (!baseT) return;
     const t = { ...baseT, ...(LOCAL_TRANSLATIONS[newLang] || LOCAL_TRANSLATIONS["English"]) };
 
-    // Translate main titles if they match standard
-    const currentMantra = getValues("mantra");
-    const currentTitle = getValues("title");
-
-    // Check if they are standard (or just overwrite them if default)
-    // For simplicity, we just safely overwrite if it's currently a default mantra of ANY language
-    // But it's safer to just set it always to the language's default
-    setValue("mantra", t.mantra);
-    setValue("title", t.title);
+    // Look up default mantra & title based on selectedCommunity and the new language
+    const communityKey = (selectedCommunity && COMMUNITY_HEADER_DEFAULTS[selectedCommunity]) ? selectedCommunity : "General";
+    const communityDefaults = COMMUNITY_HEADER_DEFAULTS[communityKey]?.[newLang] || 
+                              COMMUNITY_HEADER_DEFAULTS[communityKey]?.English || 
+                              { mantra: "", title: "Biodata" };
+    setValue("mantra", communityDefaults.mantra);
+    setValue("title", communityDefaults.title);
 
     // Translate default fields
     (["personalDetails", "educationDetails", "familyDetails", "contactDetails"] as const).forEach(section => {
@@ -834,8 +854,8 @@ export function BiodataForm({
                         <MantraAutocomplete
                           value={field.value}
                           onChange={field.onChange}
-                          placeholder="e.g. Shree Ganeshay Namah"
-                          mantras={dbMantras || []}
+                          placeholder={mantraPlaceholder}
+                          mantras={filteredMantras}
                         />
                       )}
                     />

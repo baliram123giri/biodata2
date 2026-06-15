@@ -5,7 +5,7 @@ import { type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { type TemplateConfig, getTemplateConfig, registerDynamicTemplates } from "@/lib/frame-config";
-import { preloadSvg } from "@/hooks/useColorizedFrameImage";
+import { preloadSvg, preloadFrameImage } from "@/hooks/useColorizedFrameImage";
 
 interface LayoutPosition {
   x: number;
@@ -260,6 +260,17 @@ export const useBiodataStore = create<BiodataState>()(
               if (templateId) {
                 set({ selectedTemplate: templateId });
               }
+              // Preload target template's frame image to avoid blank flash on screen entry
+              const targetTpl = targetId ? loaded.find((t) => t.id === targetId) : loaded[0];
+              if (targetTpl && targetTpl.frame?.type === "image" && targetTpl.frame.urlTemplate) {
+                await preloadFrameImage(
+                  targetTpl.frame.urlTemplate,
+                  targetTpl.defaultPrimary,
+                  targetTpl.defaultPrimary,
+                  targetTpl.defaultAccent || "",
+                  targetTpl.defaultAccent || ""
+                );
+              }
               return;
             }
 
@@ -274,13 +285,33 @@ export const useBiodataStore = create<BiodataState>()(
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
+              
+              // Find the template that will actually be selected
+              const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
+              const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
+              const newSelectedId = templateId ? templateId : (currentSelected || fallbackTemplateId);
+              
+              const targetTpl = data.templates.find((t: any) => t.id === newSelectedId);
+
+              // Preload target template's frame image first so it renders instantly
+              if (targetTpl && targetTpl.frame?.type === "image" && targetTpl.frame.urlTemplate) {
+                await preloadFrameImage(
+                  targetTpl.frame.urlTemplate,
+                  targetTpl.defaultPrimary,
+                  targetTpl.defaultPrimary,
+                  targetTpl.defaultAccent || "",
+                  targetTpl.defaultAccent || ""
+                );
+              }
+
+              // Also preload thumbnails asynchronously
               if (typeof window !== "undefined") {
                 data.templates.forEach((tpl: any) => {
                   if (tpl.thumbnailUrl) {
                     const img = new window.Image();
                     img.src = tpl.thumbnailUrl;
                   }
-                  if (tpl.frame?.urlTemplate) {
+                  if (tpl.frame?.urlTemplate && tpl.id !== newSelectedId) {
                     preloadSvg(tpl.frame.urlTemplate);
                   }
                 });

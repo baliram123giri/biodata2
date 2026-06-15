@@ -46,9 +46,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 export const metadata: Metadata = {
   metadataBase: new URL('https://biodata99.com'),
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/apple-touch-icon.png",
   },
   title: {
     default: "Free Online Biodata Maker for Marriage | biodata99.com",

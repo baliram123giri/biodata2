@@ -156,3 +156,63 @@ export function useColorizedFrameImage(
   return image;
 }
 
+export function preloadFrameImage(
+  src: string | null | undefined,
+  originalPrimary: string,
+  newPrimary: string,
+  originalAccent: string,
+  newAccent: string
+): Promise<HTMLImageElement | null> {
+  if (!src) return Promise.resolve(null);
+  const resolvedSrc = getClientImageUrl(src);
+  const currentCacheKey = `${resolvedSrc}_${newPrimary}_${newAccent}`;
+
+  if (colorizedImageCache[currentCacheKey]) {
+    return Promise.resolve(colorizedImageCache[currentCacheKey]);
+  }
+
+  const isSvg = resolvedSrc.toLowerCase().includes('.svg') || resolvedSrc.startsWith('data:image/svg+xml');
+
+  return new Promise((resolve) => {
+    if (!isSvg) {
+      const img = new window.Image();
+      if (!resolvedSrc.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
+      img.onload = () => {
+        colorizedImageCache[currentCacheKey] = img;
+        resolve(img);
+      };
+      img.onerror = () => {
+        resolve(null);
+      };
+      img.src = resolvedSrc;
+      return;
+    }
+
+    preloadSvg(resolvedSrc).then(() => {
+      const svgText = svgCache[resolvedSrc];
+      if (!svgText) {
+        resolve(null);
+        return;
+      }
+      try {
+        const colorized = tintSvg(svgText, originalPrimary, newPrimary, originalAccent, newAccent);
+        const tintedDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(colorized);
+        const img = new window.Image();
+        img.onload = () => {
+          colorizedImageCache[currentCacheKey] = img;
+          resolve(img);
+        };
+        img.onerror = () => {
+          resolve(null);
+        };
+        img.src = tintedDataUrl;
+      } catch (err) {
+        console.error("Error preloading colorized SVG:", err);
+        resolve(null);
+      }
+    });
+  });
+}
+

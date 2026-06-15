@@ -698,6 +698,14 @@ function EditPageContent() {
   };
 
 
+  if (!isMounted || !isStoreHydrated || isInitialTemplateLoading) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-stone-50 dark:bg-stone-950 z-50">
+        <PreviewLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col bg-stitch-surface font-sans selection:bg-stitch-primary-container selection:text-stitch-on-primary-container">
       <h1 className="sr-only">Biodata Maker & Matrimonial Profile Creator Studio</h1>

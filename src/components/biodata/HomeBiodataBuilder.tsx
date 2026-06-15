@@ -31,7 +31,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 import { translations, translateUI } from "@/lib/translations";
 import { useBiodataStore } from "@/store/useBiodataStore";
@@ -210,9 +210,27 @@ export function HomeBiodataBuilder({
     };
   }, []);
 
+  const initialDefaultValues = useMemo(() => {
+    const base = { ...defaultBiodataValues };
+    if (defaultCommunity) {
+      base.community = defaultCommunity;
+    }
+    if (defaultTitle) {
+      base.title = defaultTitle;
+    }
+    if (defaultReligion) {
+      if (base.personalDetails) {
+        base.personalDetails = base.personalDetails.map(f => 
+          f.id === "religion" ? { ...f, value: defaultReligion } : f
+        );
+      }
+    }
+    return base;
+  }, [defaultCommunity, defaultTitle, defaultReligion]);
+
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
-    defaultValues: defaultBiodataValues,
+    defaultValues: initialDefaultValues,
     mode: "onBlur",
   });
 

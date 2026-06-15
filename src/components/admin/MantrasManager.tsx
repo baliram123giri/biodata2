@@ -24,6 +24,25 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const COMMUNITY_OPTIONS = [
+  "Hindu",
+  "Muslim",
+  "Sikh",
+  "Christian",
+  "Jain",
+  "Buddhist",
+  "Parsi",
+  "Secular",
+  "Other"
+];
 
 type Mantra = {
   id: string;
@@ -235,7 +254,18 @@ export function MantrasManager() {
               <form onSubmit={handleAdd} className="space-y-4 py-4">
                 <div className="space-y-1.5">
                   <Label>Religion/Community *</Label>
-                  <Input value={religion} onChange={e => setReligion(e.target.value)} placeholder="e.g. Hindu (General)" required />
+                  <Select value={religion} onValueChange={setReligion}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Religion/Community" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMUNITY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt} className="cursor-pointer">
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Mantra Text (English) *</Label>
@@ -272,7 +302,18 @@ export function MantrasManager() {
             <form onSubmit={handleEdit} className="space-y-4 py-4">
               <div className="space-y-1.5">
                 <Label>Religion/Community *</Label>
-                <Input value={religion} onChange={e => setReligion(e.target.value)} required />
+                <Select value={religion} onValueChange={setReligion}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Religion/Community" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMUNITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt} className="cursor-pointer">
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Mantra Text (English) *</Label>
