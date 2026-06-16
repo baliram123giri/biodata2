@@ -248,21 +248,21 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.45);
+  background: rgba(155, 27, 48, 0.8);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 168, 76, 0.7);
+  background: rgba(155, 27, 48, 0.95);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 168, 76, 0.45) rgba(155, 27, 48, 0.04);
+  scrollbar-color: rgba(155, 27, 48, 0.8) rgba(155, 27, 48, 0.04);
 }
 
 /* ─────────────────────────────────────────────

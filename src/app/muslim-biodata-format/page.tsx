@@ -1,8 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, CheckCircle2, Briefcase, Moon, Compass, BookOpen, Users, Globe } from "lucide-react";
+import {
+  ArrowDown,
+  CheckCircle2,
+  Briefcase,
+  Moon,
+  Compass,
+  BookOpen,
+  Users,
+  Globe,
+  FileDown,
+  Download,
+  Languages
+} from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
 import { BiodataBuilderSection } from "./BiodataBuilderSection";
 import { generateFaqSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -156,10 +169,11 @@ export const metadata: Metadata = {
   },
 };
 
+
 export default function MuslimBiodataFormatPage() {
   return (
-    <div 
-      className="min-h-screen text-[#1F2937] pb-16 relative overflow-x-clip font-sans"
+    <div
+      className="min-h-screen text-[#1F2937] pb-16 relative font-sans"
       style={{
         '--theme-primary': '#0F4C3A',
         '--theme-secondary': '#D4AF37',
@@ -169,7 +183,8 @@ export default function MuslimBiodataFormatPage() {
       } as React.CSSProperties}
     >
       {/* Override global body background and brand buttons with Muslim theme colors */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         :root, body, html body {
           background: #FAF8F3 !important;
           --ring: #0F4C3A !important;
@@ -256,15 +271,15 @@ export default function MuslimBiodataFormatPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#FAF8F3] to-[#FAF6ED] pt-4 pb-8 md:pt-6 md:pb-12 px-4 border-b border-[#D4AF37]/15">
-        
+
         {/* Grid Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(rgba(212,175,55,0.08)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
         <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative z-10 w-full min-w-0">
-          
+
           {/* Left Text Column */}
           <div className="w-full lg:flex-1 text-center lg:text-left space-y-4 md:space-y-6 min-w-0">
-            
+
             {/* Tagline Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/45 bg-[#0F4C3A]/5 px-4.5 py-1.5 text-xs font-bold text-[#0F4C3A] backdrop-blur-sm shadow-xs">
               <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
@@ -273,20 +288,20 @@ export default function MuslimBiodataFormatPage() {
 
             {/* Headline */}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-[#0F4C3A] leading-[1.12] font-sans">
-              Muslim marriage <span className="text-[#D4AF37]">biodata format</span>
+              Muslim marriage <span className="text-[#92400E]">biodata format</span>
             </h1>
 
             {/* Description Paragraph */}
-            <p className="text-stone-600 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
+            <p className="text-stone-700 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
               Creating a professional Muslim biodata in just a few minutes is totally doable! This format is perfect for individuals from Sunni, Shia, Bohra, and all other Muslim communities.
             </p>
 
             {/* Call to Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
               <Button size="lg" className="rounded-full text-sm px-8 py-6 w-full sm:w-auto bg-[#0F4C3A] hover:bg-[#0A3327] text-white border-0 font-bold tracking-wide shadow-xl shadow-[#0F4C3A]/15 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer" asChild>
-                <a href="#builder">
+                <a href="#builder" aria-label="Create Muslim Biodata — scroll to builder">
                   Create Muslim Biodata
-                  <ArrowDown className="w-4 h-4 ml-2" />
+                  <ArrowDown className="w-4 h-4 ml-2" aria-hidden="true" />
                 </a>
               </Button>
               <Button size="lg" variant="outline" className="rounded-full text-sm px-8 py-6 w-full sm:w-auto border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 text-[#0F4C3A] font-bold hover:border-[#D4AF37] transition-all duration-200 cursor-pointer" asChild>
@@ -296,15 +311,15 @@ export default function MuslimBiodataFormatPage() {
 
             {/* Features Row */}
             <div className="hidden md:block pt-4">
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 text-xs font-bold text-stone-650">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 text-xs font-bold text-stone-750">
                 {[
                   "Sunni & Shia designs",
                   "Islamic symbols",
                   "Download free PDF",
                   "With photo option"
                 ].map((feature) => (
-                  <div key={feature} className="flex items-center gap-1.5 bg-white/60 border border-[#D4AF37]/20 rounded-full px-4 py-1.5 shadow-3xs">
-                    <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                  <div key={feature} className="flex items-center gap-1.5 bg-white border border-[#D4AF37]/20 rounded-full px-4 py-1.5 shadow-3xs">
+                    <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0" aria-hidden="true" />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -315,41 +330,51 @@ export default function MuslimBiodataFormatPage() {
 
           {/* Right Column: Pure CSS Overlapping Templates Showcase */}
           <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 relative flex items-center justify-center py-6">
-            
+
             {/* Soft radial glow backgrounds */}
             <div className="absolute w-72 h-72 rounded-full bg-[#D4AF37]/10 blur-3xl pointer-events-none" />
             <div className="absolute w-72 h-72 rounded-full bg-[#0F4C3A]/8 blur-3xl pointer-events-none -translate-x-12 translate-y-12" />
 
             {/* CSS Stack Container */}
             <div className="flex items-center justify-center gap-2 md:gap-3.5 w-full select-none">
-              
+
               {/* Left Card */}
               <div className="w-[30%] aspect-[595/842] rounded-xl overflow-hidden border border-[#D4AF37]/25 shadow-md bg-white rotate-[-6deg] translate-y-4 hover:rotate-0 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer z-10">
-                <img 
-                  src="https://biodata99.com/uploads/biodata/thumbnails/b28b8e39-994c-4f96-9977-7d23fc1adc44.webp" 
-                  alt="Premium marriage biodata format left preview"
+                <img
+                  src="https://biodata99.com/uploads/biodata/thumbnails/b28b8e39-994c-4f96-9977-7d23fc1adc44.webp"
+                  alt="Muslim marriage biodata template preview"
                   className="w-full h-full object-cover"
+                  width={178}
+                  height={252}
                   loading="eager"
+                  decoding="async"
                 />
               </div>
 
-              {/* Center Card */}
+              {/* Center Card — LCP element */}
               <div className="w-[34%] aspect-[595/842] rounded-xl overflow-hidden border-2 border-[#D4AF37] shadow-[0_15px_40px_rgba(15,76,58,0.15)] bg-white z-10 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer">
-                <img 
-                  src="https://biodata99.com/uploads/biodata/thumbnails/1c0be22d-0657-4329-bcb1-2adf2096d659.webp" 
+                <img
+                  src="https://biodata99.com/uploads/biodata/thumbnails/1c0be22d-0657-4329-bcb1-2adf2096d659.webp"
                   alt="Featured Premium Islamic Gold Marriage Biodata Template"
                   className="w-full h-full object-cover"
+                  width={202}
+                  height={286}
                   loading="eager"
+                  fetchPriority="high"
+                  decoding="sync"
                 />
               </div>
 
               {/* Right Card */}
               <div className="w-[30%] aspect-[595/842] rounded-xl overflow-hidden border border-[#D4AF37]/25 shadow-md bg-white rotate-[6deg] translate-y-4 hover:rotate-0 hover:scale-110 hover:-translate-y-4 hover:z-20 transition-all duration-300 ease-out cursor-pointer z-10">
-                <img 
-                  src="https://biodata99.com/uploads/biodata/thumbnails/5e8750b0-d87d-40b3-ac88-70919b2e3c81.webp" 
-                  alt="Premium marriage biodata format right preview"
+                <img
+                  src="https://biodata99.com/uploads/biodata/thumbnails/5e8750b0-d87d-40b3-ac88-70919b2e3c81.webp"
+                  alt="Islamic green Muslim marriage biodata template preview"
                   className="w-full h-full object-cover"
+                  width={178}
+                  height={252}
                   loading="eager"
+                  decoding="async"
                 />
               </div>
 
@@ -359,8 +384,8 @@ export default function MuslimBiodataFormatPage() {
         </div>
 
         {/* Elegant Curved Wave Divider */}
-        <div className="absolute bottom-0 left-0 right-0 h-12 overflow-hidden pointer-events-none">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[120%] h-full text-[#FAF8F3] fill-current">
+        <div className="absolute bottom-0 left-0 right-0 h-12 overflow-hidden pointer-events-none" aria-hidden="true">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[120%] h-full text-[#FAF8F3] fill-current" role="presentation">
             <path d="M0,30 C150,90 350,120 600,90 C850,60 1050,100 1200,40 L1200,120 L0,120 Z" fill="#D4AF37" opacity="0.08" />
             <path d="M0,50 C150,100 350,130 600,100 C850,70 1050,110 1200,60 L1200,120 L0,120 Z" fill="#FAF8F3" />
           </svg>
@@ -405,11 +430,11 @@ export default function MuslimBiodataFormatPage() {
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <span 
+                <span
                   key={item.name}
                   className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border ${item.border} ${item.bg} ${item.text} font-bold text-xs md:text-sm transition-all shadow-xs group cursor-default hover:scale-105 active:scale-95`}
                 >
-                  <Icon className={`w-4 h-4 ${item.iconColor} transition-transform group-hover:rotate-12 duration-200`} />
+                  <Icon className={`w-4 h-4 ${item.iconColor} transition-transform group-hover:rotate-12 duration-200`} aria-hidden="true" />
                   <span>{item.name}</span>
                 </span>
               );
@@ -430,51 +455,51 @@ export default function MuslimBiodataFormatPage() {
             {/* Feature 1 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4">
               <h3 className="text-lg font-bold text-[#0F4C3A]">1. Islamic Biodata Header Designs</h3>
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
+              <p className="text-xs text-stone-700 font-semibold leading-relaxed">
                 Add Islamic design elements such as 786 Bismillah, a crescent moon, stars, and decorative patterns.
               </p>
               <div className="space-y-2 pt-2 border-t border-stone-100">
-                <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">You can include things, like</p>
-                <ul className="list-disc pl-4 text-xs text-stone-600 font-medium space-y-1">
+                <p className="text-[11px] font-bold text-stone-650 uppercase tracking-wider">You can include things, like</p>
+                <ul className="list-disc pl-4 text-xs text-stone-700 font-medium space-y-1">
                   <li>A 786 symbol</li>
                   <li>A Bismillah phrase</li>
                   <li>A crescent moon icon</li>
                   <li>Stars and</li>
                   <li>Decorative motifs</li>
                 </ul>
-                <p className="text-xs text-stone-600 font-semibold mt-1">to give it a touch.</p>
+                <p className="text-xs text-stone-700 font-semibold mt-1">to give it a touch.</p>
               </div>
             </div>
 
             {/* Feature 2 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4">
               <h3 className="text-lg font-bold text-[#0F4C3A]">2. Custom Muslim Biodata Templates</h3>
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
+              <p className="text-xs text-stone-700 font-semibold leading-relaxed">
                 Edit the layouts, change the colours, pick backgrounds and choose text styles to make your marriage biodata.
               </p>
               <div className="space-y-2 pt-2 border-t border-stone-100">
-                <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">You can change how it looks by</p>
-                <ul className="list-disc pl-4 text-xs text-stone-600 font-medium space-y-1">
+                <p className="text-[11px] font-bold text-stone-650 uppercase tracking-wider">You can change how it looks by</p>
+                <ul className="list-disc pl-4 text-xs text-stone-700 font-medium space-y-1">
                   <li>picking a layout</li>
                   <li>selecting colours</li>
                   <li>choosing backgrounds</li>
                   <li>and text styles</li>
                 </ul>
-                <p className="text-xs text-stone-600 font-semibold mt-1">This way, you can create a marriage biodata that&apos;s just right for you.</p>
+                <p className="text-xs text-stone-700 font-semibold mt-1">This way, you can create a marriage biodata that&apos;s just right for you.</p>
               </div>
             </div>
 
             {/* Feature 3 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4">
               <h3 className="text-lg font-bold text-[#0F4C3A]">3. Muslim Biodata with Photo</h3>
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
+              <p className="text-xs text-stone-700 font-semibold leading-relaxed">
                 Upload your passport photo to your biodata template.
               </p>
               <div className="space-y-2 pt-2 border-t border-stone-100">
-                <p className="text-xs text-stone-600 font-semibold">
+                <p className="text-xs text-stone-700 font-semibold">
                   Make sure it is the size for a passport picture.
                 </p>
-                <p className="text-xs text-stone-600 font-semibold">
+                <p className="text-xs text-stone-700 font-semibold">
                   Place it in the spot in your template.
                 </p>
               </div>
@@ -483,7 +508,7 @@ export default function MuslimBiodataFormatPage() {
             {/* Feature 4 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4 md:col-span-2 lg:col-span-1 lg:max-w-none">
               <h3 className="text-lg font-bold text-[#0F4C3A]">4. Free Muslim Biodata PDF Download</h3>
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
+              <p className="text-xs text-stone-700 font-semibold leading-relaxed">
                 You can make your marriage biodata change it the way you like and then save it as a PDF file. This marriage biodata will be in a format that you can easily download. You can customise your marriage biodata and download it in PDF format.
               </p>
             </div>
@@ -491,166 +516,342 @@ export default function MuslimBiodataFormatPage() {
             {/* Feature 5 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4 md:col-span-2 lg:col-span-2 lg:max-w-none">
               <h3 className="text-lg font-bold text-[#0F4C3A]">5. Sunni, Shia & Bohra Friendly Designs</h3>
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
+              <p className="text-xs text-stone-700 font-semibold leading-relaxed">
                 There are templates and customisation options that are really good for many different Muslim communities. These Muslim communities are very diverse. It is nice that there are templates and customisation options that are suitable for them.
               </p>
             </div>
           </div>
         </div>
 
-        {/* How to Make a Muslim Biodata Section */}
-        <div className="mt-10 border-t border-[#D4AF37]/15 pt-8 space-y-6">
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
-              How to Make a Muslim Biodata for Marriage
+        {/* Word Download Section */}
+        <section className="mt-10  md:mt-32 border-t border-[#D4AF37]/25 pt-16 md:pt-24 space-y-8">
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center mt-10 gap-1.5 rounded-full border border-[#D4AF37]/30 bg-[#0F4C3A]/5 px-3.5 py-1.5 text-xs font-bold text-[#0F4C3A]">
+              <Languages className="w-3.5 h-3.5" />
+              Editable Word Templates
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
+              Muslim Girl Marriage Biodata Format in Word
+              <span className="block text-lg md:text-xl font-semibold text-[#0F4C3A] mt-1"> (Free Word DOCX Editable Template)</span>
             </h2>
-            <div className="w-12 h-1 bg-[#D4AF37] mx-auto rounded-full" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
-            {[
-              {
-                step: "Step 1",
-                title: "Choose a Muslim Biodata Format",
-                desc: "Select an Islamic biodata template. It should match your style. Also, consider your preferences when choosing one.",
-              },
-              {
-                step: "Step 2",
-                title: "Upload Your Photo & Select Islamic Header Elements",
-                desc: "Add a passport-size photo and personalise your biodata with beautiful Islamic header designs such as 786, Bismillah, crescent moon, stars, and other decorative Islamic symbols.",
-              },
-              {
-                step: "Step 3",
-                title: "Add Personal Information",
-                desc: "Enter your name, age, date of birth, height, and contact details.",
-              },
-              {
-                step: "Step 4",
-                title: "Enter Family Details",
-                desc: "Provide information about your parents, siblings, family background, and values.",
-              },
-              {
-                step: "Step 5",
-                title: "Add Education & Career Information",
-                desc: "Enter your educational qualifications, profession, workplace, and career achievements.",
-              },
-              {
-                step: "Step 6",
-                title: "Customise colours & Design with Editor Studio",
-                desc: "Modify background colours, text colours, fonts, stickers, and layout elements to create a biodata that reflects your personality.",
-              },
-              {
-                step: "Step 7",
-                title: "Preview & Download PDF",
-                desc: "Review your biodata, make final adjustments, and download a high-quality PDF ready to share with family and matrimonial prospects.",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex gap-4 bg-white border border-[#D4AF37]/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="shrink-0 w-9 h-9 rounded-full bg-[#0F4C3A] text-white flex items-center justify-center font-black text-sm">
-                  {i + 1}
-                </div>
-                <div className="space-y-1 min-w-0">
-                  <p className="text-[10px] font-black text-[#92400E] uppercase tracking-widest">{item.step}</p>
-                  <h3 className="text-sm font-bold text-stone-900 leading-snug">{item.title}</h3>
-                  <p className="text-xs text-stone-600 font-semibold leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Why Choose Biodata99 Section */}
-        <div className="mt-10 border-t border-[#D4AF37]/15 pt-8 space-y-8">
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
-              Why Choose Biodata99 for Your Muslim Biodata?
-            </h2>
-            <div className="w-12 h-1 bg-[#D4AF37] mx-auto rounded-full" />
-          </div>
-
-          {/* Intro paragraphs */}
-          <div className="max-w-3xl mx-auto space-y-4 text-center">
-            <p className="text-sm text-stone-600 font-semibold leading-relaxed">
-              Making a Muslim biodata for marriage should be easy. A lot of people waste a lot of time looking for the right Muslim biodata format or template. This is why we made Biodata99.
-            </p>
-            <p className="text-sm text-stone-600 font-semibold leading-relaxed">
-              We did not just make any templates. We made a collection of Muslim biodata templates just for Muslim marriage profiles. If you are making a biodata for a boy or a Muslim girl, you will find templates that are made by professionals. You can change these templates to suit what you like about Muslim biodata.
+            <p className="text-stone-700 text-xs md:text-sm font-semibold leading-relaxed">
+              Get free Muslim Girl Marriage Biodata Word (DOCX) templates in English, Urdu, and Hindi. Download, edit, and easily customise the format to create a professional marriage biodata in your preferred language.
             </p>
           </div>
 
-          {/* Feature cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-            {[
-              {
-                title: "Designed for Muslim Marriage Biodata",
-                body: "Our Muslim biodata maker is built to help you create a professional marriage biodata quickly. All templates are suitable for Sunni, Shia, Bohra, and other Muslim communities.",
-              },
-              {
-                title: "Personalise Every Template",
-                body: "Every Muslim biodata template is fully customizable. You can change colours, backgrounds, text styles, and add beautiful Islamic header elements such as 786, Bismillah, crescent moon symbols, stars, and decorative stickers to make your biodata more personal and visually appealing.",
-              },
-              {
-                title: "Live Biodata Preview",
-                body: "As you enter your information, you can instantly see your Muslim biodata update on the screen. The live preview helps you review your profile, photo, and design before downloading the final PDF.",
-              },
-              {
-                title: "Smart Company Search",
-                body: "Adding professional details is easier with our smart company search feature. Simply search for your company while filling in your biodata, and the company name and logo will automatically appear in the preview and final PDF, giving your profile a more professional look.",
-              },
-              {
-                title: "Easy to Use for Everyone",
-                body: "You don't need any design experience. Simply choose a Muslim biodata format, upload your photo, enter your details, customise the design, and download your biodata PDF in minutes.",
-              },
-              {
-                title: "Reusable for Boys and Girls",
-                body: "All Muslim biodata templates can be customised and reused for both boys and girls, helping families create multiple biodata profiles without starting from scratch.",
-              },
-              {
-                title: "Professional PDF Download",
-                body: "Once you're satisfied with your design, download a high-quality Muslim marriage biodata PDF that's ready to share with family members and matrimonial prospects.",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-white border border-[#D4AF37]/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-5 rounded-full bg-[#0F4C3A] shrink-0" />
-                  <h3 className="text-sm font-bold text-stone-900 leading-snug">{item.title}</h3>
-                </div>
-                <p className="text-xs text-stone-600 font-semibold leading-relaxed pl-3.5">{item.body}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
+            {/* Left Column: Download Cards (5 cols on desktop) — sticky */}
+            <div
+              className="lg:col-span-5 flex flex-col gap-4"
+              style={{ position: 'sticky', top: '6rem', alignSelf: 'flex-start' }}
+            >
+              <div className="text-xs font-bold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-2">
+                <FileDown className="w-4 h-4 text-[#D4AF37]" aria-hidden="true" />
+                Choose Your Language & Download
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* FAQ Section */}
-        <div className="mt-10 border-t border-[#D4AF37]/15 pt-8 space-y-6">
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
-              Frequently Asked Questions
-            </h2>
-            <div className="w-12 h-1 bg-[#D4AF37] mx-auto rounded-full" />
-          </div>
+              {[
+                {
+                  lang: "English Version",
+                  subtitle: "Standard English Matrimonial Template",
+                  native: "English",
+                  filename: "Fatima Zahra Khan_English.docx",
+                  downloadName: "Muslim_Girl_Marriage_Biodata_Format_English.docx",
+                  desc: "Perfect for global use and broad matrimonial platforms."
+                },
+                {
+                  lang: "Urdu Version",
+                  subtitle: "Traditional Islamic Urdu Script Template",
+                  native: "اردو فارمیٹ",
+                  filename: "Fatima Zahra Khan_Urdu.docx",
+                  downloadName: "Muslim_Girl_Marriage_Biodata_Format_Urdu.docx",
+                  desc: "Ideal for family circles and traditional proposals in Urdu."
+                },
+                {
+                  lang: "Hindi Version",
+                  subtitle: "Devanagari Hindi Script Template",
+                  native: "हिंदी फॉर्मेट",
+                  filename: "Fatima Zahra Khan_Hindi.docx",
+                  downloadName: "Muslim_Girl_Marriage_Biodata_Format_Hindi.docx",
+                  desc: "Great for regional matching and easy reading in Hindi."
+                }
+              ].map((card, idx) => (
+                <Card key={idx} className="border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 bg-white hover:shadow-md transition-all duration-200 flex flex-col items-start justify-between p-4.5 gap-4 rounded-2xl relative overflow-hidden group">
+                  {/* Subtle hover gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/2 to-[#0F4C3A]/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-          <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 md:p-8 shadow-sm">
-            <Accordion type="multiple" defaultValue={["muslim-faq-0"]} className="w-full space-y-2">
-              {muslimFaqs.map((faq, idx) => (
-                <AccordionItem key={idx} value={`muslim-faq-${idx}`} className="border-b border-[#D4AF37]/20 py-1">
-                  <AccordionTrigger className="text-sm md:text-base font-bold text-left text-stone-900 hover:text-[#0F4C3A] hover:no-underline py-4">
-                    {faq.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-xs md:text-sm text-stone-600 font-semibold leading-relaxed pt-1 pb-4">
-                    {faq.a}
-                  </AccordionContent>
-                </AccordionItem>
+                  <div className="flex items-start gap-3 w-full">
+                    <div className="p-1.5 rounded-xl border border-stone-200 bg-stone-50 shrink-0 flex items-center justify-center" aria-hidden="true">
+                      <img
+                        src="/icons/Microsoft_Office_Word_Logo_128px.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="w-9 h-9 object-contain"
+                        width={36}
+                        height={36}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-bold text-stone-900 text-xs md:text-sm leading-none">{card.lang}</h3>
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#0F4C3A]/5 text-[#0F4C3A] border border-[#0F4C3A]/10 leading-none">
+                          {card.native}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-[#0F4C3A] leading-snug">{card.subtitle}</p>
+                      <p className="text-[11.5px] text-stone-700 font-medium leading-normal">{card.desc}</p>
+                      <div className="flex items-center gap-1.5 text-[9px] text-stone-600 font-semibold pt-0.5" aria-label={`${card.lang} template, DOCX format, 1.65 MB`}>
+                        <span>DOCX format</span>
+                        <span aria-hidden="true">•</span>
+                        <span>1.65 MB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button asChild className="w-full rounded-full font-bold text-xs py-4.5 px-5 bg-[#0F4C3A] hover:bg-[#0A3327] text-white transition-all shadow-sm group-hover:translate-x-0.5 cursor-pointer">
+                    <a
+                      href={`/content/muslim-biodata/WordFiles/${card.filename}`}
+                      download={card.downloadName}
+                      aria-label={`Download ${card.lang} Muslim marriage biodata Word template (DOCX)`}
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                      Download Template
+                    </a>
+                  </Button>
+                </Card>
               ))}
-            </Accordion>
+            </div>
+
+            {/* Right Column: Details & Features + Guides + FAQs (7 cols on desktop) */}
+            <div className="lg:col-span-7 flex flex-col gap-10">
+              
+              {/* Template Details & Features */}
+              <div className="flex flex-col gap-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                  Template Details & Features
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* What's Included Card */}
+                  <Card className="border border-[#D4AF37]/25 bg-white p-5 rounded-2xl flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0F4C3A] mb-3.5 flex items-center gap-2">
+                        <span className="w-1.5 h-4 rounded-full bg-[#D4AF37]" />
+                        What&apos;s Included
+                      </h3>
+                      <ul className="space-y-2.5">
+                        {[
+                          "Personal Information Section",
+                          "Education & Career Details",
+                          "Family Background",
+                          "Religious Information",
+                          "Partner Preferences",
+                          "Passport Size Photo Space",
+                          "Fully Editable Word (DOCX) Format"
+                        ].map((item, index) => (
+                          <li key={index} className="flex items-start gap-2.5 text-xs font-bold text-stone-700">
+                            <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                            <span className="leading-tight">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mt-5 pt-3 border-t border-[#D4AF37]/10 text-center">
+                      <p className="text-[11px] font-semibold text-stone-600">
+                        Standard A4 print layout ready.
+                      </p>
+                    </div>
+                  </Card>
+
+                  {/* Why It Works Card */}
+                  <Card className="border border-[#D4AF37]/25 bg-white p-5 rounded-2xl flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0F4C3A] mb-3.5 flex items-center gap-2">
+                        <span className="w-1.5 h-4 rounded-full bg-[#0F4C3A]" />
+                        Why This Format Works
+                      </h3>
+                      <ul className="space-y-2.5">
+                        {[
+                          "Clean and professional design",
+                          "Easy to edit in Microsoft Word",
+                          "Suitable for matrimonial and family introductions",
+                          "Available in English, Urdu, and Hindi",
+                          "Free instant download",
+                          "Mobile and desktop friendly"
+                        ].map((item, index) => (
+                          <li key={index} className="flex items-start gap-2.5 text-xs font-bold text-stone-700">
+                            <CheckCircle2 className="w-4 h-4 text-[#0F4C3A] shrink-0 mt-0.5" />
+                            <span className="leading-tight">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mt-5 pt-3 border-t border-[#D4AF37]/10 text-center">
+                      <p className="text-[11px] font-semibold text-stone-600">
+                        Created by design & matchmaking experts.
+                      </p>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              {/* How to Make a Muslim Biodata Section */}
+              <div className="border-t border-[#D4AF37]/15 pt-8 space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
+                    How to Make a Muslim Biodata for Marriage
+                  </h2>
+                  <div className="w-12 h-1 bg-[#D4AF37] rounded-full" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    {
+                      step: "Step 1",
+                      title: "Choose a Muslim Biodata Format",
+                      desc: "Select an Islamic biodata template. It should match your style. Also, consider your preferences when choosing one.",
+                    },
+                    {
+                      step: "Step 2",
+                      title: "Upload Your Photo & Select Islamic Header Elements",
+                      desc: "Add a passport-size photo and personalise your biodata with beautiful Islamic header designs such as 786, Bismillah, crescent moon, stars, and other decorative Islamic symbols.",
+                    },
+                    {
+                      step: "Step 3",
+                      title: "Add Personal Information",
+                      desc: "Enter your name, age, date of birth, height, and contact details.",
+                    },
+                    {
+                      step: "Step 4",
+                      title: "Enter Family Details",
+                      desc: "Provide information about your parents, siblings, family background, and values.",
+                    },
+                    {
+                      step: "Step 5",
+                      title: "Add Education & Career Information",
+                      desc: "Enter your educational qualifications, profession, workplace, and career achievements.",
+                    },
+                    {
+                      step: "Step 6",
+                      title: "Customise colours & Design with Editor Studio",
+                      desc: "Modify background colours, text colours, fonts, stickers, and layout elements to create a biodata that reflects your personality.",
+                    },
+                    {
+                      step: "Step 7",
+                      title: "Preview & Download PDF",
+                      desc: "Review your biodata, make final adjustments, and download a high-quality PDF ready to share with family and matrimonial prospects.",
+                    },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex gap-4 bg-white border border-[#D4AF37]/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <div className="shrink-0 w-9 h-9 rounded-full bg-[#0F4C3A] text-white flex items-center justify-center font-black text-sm">
+                        {i + 1}
+                      </div>
+                      <div className="space-y-1 min-w-0">
+                        <p className="text-[10px] font-black text-[#92400E] uppercase tracking-widest">{item.step}</p>
+                        <h3 className="text-sm font-bold text-stone-900 leading-snug">{item.title}</h3>
+                        <p className="text-xs text-stone-700 font-semibold leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Why Choose Biodata99 Section */}
+              <div className="border-t border-[#D4AF37]/15 pt-8 space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
+                    Why Choose Biodata99 for Your Muslim Biodata?
+                  </h2>
+                  <div className="w-12 h-1 bg-[#D4AF37] rounded-full" />
+                </div>
+
+                <div className="space-y-4 text-stone-700 text-xs md:text-sm font-semibold leading-relaxed">
+                  <p>
+                    Making a Muslim biodata for marriage should be easy. A lot of people waste a lot of time looking for the right Muslim biodata format or template. This is why we made Biodata99.
+                  </p>
+                  <p>
+                    We did not just make any templates. We made a collection of Muslim biodata templates just for Muslim marriage profiles. If you are making a biodata for a boy or a Muslim girl, you will find templates that are made by professionals. You can change these templates to suit what you like about Muslim biodata.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    {
+                      title: "Designed for Muslim Marriage Biodata",
+                      body: "Our Muslim biodata maker is built to help you create a professional marriage biodata quickly. All templates are suitable for Sunni, Shia, Bohra, and other Muslim communities.",
+                    },
+                    {
+                      title: "Personalise Every Template",
+                      body: "Every Muslim biodata template is fully customizable. You can change colours, backgrounds, text styles, and add beautiful Islamic header elements such as 786, Bismillah, crescent moon symbols, stars, and decorative stickers to make your biodata more personal and visually appealing.",
+                    },
+                    {
+                      title: "Live Biodata Preview",
+                      body: "As you enter your information, you can instantly see your Muslim biodata update on the screen. The live preview helps you review your profile, photo, and design before downloading the final PDF.",
+                    },
+                    {
+                      title: "Smart Company Search",
+                      body: "Adding professional details is easier with our smart company search feature. Simply search for your company while filling in your biodata, and the company name and logo will automatically appear in the preview and final PDF, giving your profile a more professional look.",
+                    },
+                    {
+                      title: "Easy to Use for Everyone",
+                      body: "You don't need any design experience. Simply choose a Muslim biodata format, upload your photo, enter your details, customise the design, and download your biodata PDF in minutes.",
+                    },
+                    {
+                      title: "Reusable for Boys and Girls",
+                      body: "All Muslim biodata templates can be customised and reused for both boys and girls, helping families create multiple biodata profiles without starting from scratch.",
+                    },
+                    {
+                      title: "Professional PDF Download",
+                      body: "Once you're satisfied with your design, download a high-quality Muslim marriage biodata PDF that's ready to share with family members and matrimonial prospects.",
+                    },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-[#D4AF37]/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all space-y-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-5 rounded-full bg-[#0F4C3A] shrink-0" />
+                        <h3 className="text-sm font-bold text-stone-900 leading-snug">{item.title}</h3>
+                      </div>
+                      <p className="text-xs text-stone-700 font-semibold leading-relaxed pl-3.5">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* FAQ Section */}
+              <div className="border-t border-[#D4AF37]/15 pt-8 space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
+                    Frequently Asked Questions
+                  </h2>
+                  <div className="w-12 h-1 bg-[#D4AF37] rounded-full" />
+                </div>
+
+                <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-5 md:p-6 shadow-sm">
+                  <Accordion type="multiple" defaultValue={["muslim-faq-0"]} className="w-full space-y-2">
+                    {muslimFaqs.map((faq, idx) => (
+                      <AccordionItem key={idx} value={`muslim-faq-${idx}`} className="border-b border-[#D4AF37]/20 py-1">
+                        <AccordionTrigger className="text-sm md:text-base font-bold text-left text-stone-900 hover:text-[#0F4C3A] hover:no-underline py-4">
+                          {faq.q}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs md:text-sm text-stone-700 font-semibold leading-relaxed pt-1 pb-4">
+                          {faq.a}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Structured Data (HowTo & FAQ Schema) for Search Crawlers */}
