@@ -28,8 +28,10 @@ const Toaster = dynamicImport(
 function ScreenshotProtection() {
   const [showWarning, setShowWarning] = useState(false);
   const [isScreenShielded, setIsScreenShielded] = useState(false);
+  const [isDisabled] = useState(true); // Disable screenshot capture prevention logic for now
 
   useEffect(() => {
+    if (isDisabled) return;
     if (process.env.NODE_ENV === "development") return;
 
     // Robust check if on mobile/tablet device (strictly checks touch-based mobile and iPads, excluding desktop windows)
@@ -213,6 +215,7 @@ function ScreenshotProtection() {
     };
   }, []);
 
+  if (isDisabled) return null;
   if (process.env.NODE_ENV === "development") return null;
 
   return (
