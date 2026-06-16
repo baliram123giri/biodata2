@@ -235,34 +235,30 @@
 }
 
 /* ─────────────────────────────────────────────
-   SCROLLBAR - Rose Gold accent
-───────────────────────────────────────────── */
+   SCROLLBAR - Muslim Green & Gold theme
+   ───────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
+  display: block;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(155, 27, 48, 0.04);
-  border-radius: 9999px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(155, 27, 48, 0.8);
+  background: #D4AF37;
   border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 27, 48, 0.95);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: #B59730;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(155, 27, 48, 0.8) rgba(155, 27, 48, 0.04);
+  scrollbar-color: #D4AF37 transparent;
 }
 
 /* ─────────────────────────────────────────────
