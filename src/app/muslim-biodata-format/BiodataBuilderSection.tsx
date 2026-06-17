@@ -1,11 +1,6 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-const HomeBiodataBuilder = dynamic(
-  () =>
-    import("@/components/biodata/HomeBiodataBuilder").then((m) => m.HomeBiodataBuilder)
-);
+import { HomeBiodataBuilder } from "@/components/biodata/HomeBiodataBuilder";
 
 interface Props {
   defaultCommunity: string;

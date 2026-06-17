@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiCache } from "@/lib/api-cache";
-import { HERO_SLIDES_CACHE_KEY } from "../route";
+const HERO_SLIDES_CACHE_KEY = "admin:hero-slides";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { uploadToVPS, deleteFromVPS } from "@/lib/vps-upload";

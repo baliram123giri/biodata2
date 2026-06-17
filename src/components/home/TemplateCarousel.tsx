@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Sparkles, ZoomIn } from "lucide-react";
 import {
@@ -44,76 +44,55 @@ export function TemplateCarousel({
   themePrimary = "#9B1B30",
   themeAccent = "#C9A84C",
 }: TemplateCarouselProps) {
-  const [mounted, setMounted] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<string>("");
   const [api, setApi] = useState<CarouselApi>();
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = React.useRef<HTMLElement>(null);
 
-  React.useEffect(() => {
-    if (!api) return;
-    const interval = setInterval(() => {
-      api.scrollNext();
-    }, 4000); // auto-slide every 4 seconds
-
-    return () => clearInterval(interval);
-  }, [api]);
-
-  React.useEffect(() => {
-    setMounted(true);
+  // Observe section visibility – only starts autoplay when carousel is on screen
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  if (!mounted) {
-    return (
-      <section className="py-16 bg-[#FFFBF8] dark:bg-[#1A0A0E] overflow-hidden relative border-t border-border/30">
-        <div className="w-full px-4 md:px-12 relative z-10">
-          <div className="text-center mb-12 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
-              {title}
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto leading-relaxed font-semibold">
-              {subtitle}
-            </p>
-          </div>
-          <div className="flex gap-6 overflow-x-auto pb-4 justify-start md:justify-center">
-            {samples.map((sample) => (
-              <div 
-                key={sample.id} 
-                className="w-64 md:w-72 border border-border/40 rounded-2xl bg-stone-100 dark:bg-stone-900 overflow-hidden shrink-0 flex flex-col"
-              >
-                <div className="relative aspect-[595/842] w-full">
-                  <Image
-                    src={sample.src}
-                    alt={sample.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 300px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="pt-5 px-5 pb-[10px] space-y-1 bg-white dark:bg-stone-900 border-t border-border/10 shrink-0">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border inline-block text-primary bg-primary/10">
-                    {sample.community}
-                  </span>
-                  <h3 className="text-base font-bold text-stone-900 dark:text-white pt-1">
-                    {sample.title}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Autoplay – only fires when section is scrolled into view
+  useEffect(() => {
+    if (!api || !isVisible) return;
+    const interval = setInterval(() => {
+      api.scrollNext();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [api, isVisible]);
+
+  // Capture and restore scroll position to prevent any hydration-related jump
+  useEffect(() => {
+    const saved = window.scrollY;
+    return () => {
+      if (Math.abs(window.scrollY - saved) > 5) {
+        window.scrollTo({ top: saved, behavior: "instant" });
+      }
+    };
+  }, []);
 
   return (
     <TooltipProvider>
-      <section className="py-16 bg-[#FFFBF8] dark:bg-[#1A0A0E] overflow-hidden relative border-t border-border/30">
+      <section
+        ref={sectionRef}
+        className="py-16 bg-[#FFFBF8] dark:bg-[#1A0A0E] overflow-hidden relative border-t border-border/30"
+      >
         {/* Glow background effects */}
-        <div 
+        <div
           className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-3xl pointer-events-none -z-10 opacity-10"
           style={{ backgroundColor: themeAccent }}
         />
-        <div 
+        <div
           className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-3xl pointer-events-none -z-10 opacity-10"
           style={{ backgroundColor: themePrimary }}
         />
@@ -121,12 +100,12 @@ export function TemplateCarousel({
         <div className="w-full px-4 md:px-12 relative z-10">
           {/* Header */}
           <div className="text-center mb-12 space-y-4">
-            <div 
+            <div
               className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-full border text-xs font-black backdrop-blur-sm"
-              style={{ 
+              style={{
                 borderColor: `${themeAccent}45`,
                 backgroundColor: `${themeAccent}10`,
-                color: themePrimary 
+                color: themePrimary,
               }}
             >
               <Sparkles className="w-3.5 h-3.5" style={{ color: themeAccent }} />
@@ -147,6 +126,7 @@ export function TemplateCarousel({
               opts={{
                 align: "start",
                 loop: true,
+                watchFocus: false,
               }}
               className="w-full"
             >
@@ -156,7 +136,7 @@ export function TemplateCarousel({
                     key={sample.id}
                     className="pl-4 md:pl-6 basis-[85%] sm:basis-1/2 md:basis-1/3"
                   >
-                    <div 
+                    <div
                       className="group flex flex-col h-full bg-card border rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                       style={{ borderColor: `${themeAccent}30` }}
                     >
@@ -173,6 +153,7 @@ export function TemplateCarousel({
                           src={sample.src}
                           alt={sample.title}
                           fill
+                          unoptimized
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
                           quality={75}
                           priority={index < 2}
@@ -189,12 +170,12 @@ export function TemplateCarousel({
 
                       {/* Details Area */}
                       <div className="pt-5 px-5 pb-[10px] space-y-1">
-                        <span 
+                        <span
                           className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border inline-block"
-                          style={{ 
+                          style={{
                             borderColor: `${themeAccent}40`,
                             backgroundColor: `${themeAccent}10`,
-                            color: themePrimary 
+                            color: themePrimary,
                           }}
                         >
                           {sample.community}
@@ -209,16 +190,31 @@ export function TemplateCarousel({
               </CarouselContent>
 
               {/* Navigation Controls */}
-              <CarouselPrevious className="hidden md:flex absolute -left-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 shadow-md" style={{ borderColor: `${themeAccent}45` }} />
-              <CarouselNext className="hidden md:flex absolute -right-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 shadow-md" style={{ borderColor: `${themeAccent}45` }} />
+              <CarouselPrevious
+                className="hidden md:flex absolute -left-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 shadow-md"
+                style={{ borderColor: `${themeAccent}45` }}
+              />
+              <CarouselNext
+                className="hidden md:flex absolute -right-12 top-1/2 -translate-y-1/2 bg-white/95 dark:bg-stone-900/95 hover:bg-white dark:hover:bg-stone-900 shadow-md"
+                style={{ borderColor: `${themeAccent}45` }}
+              />
             </Carousel>
           </div>
         </div>
 
         {/* Zoom Dialog Modal (Using Radix Dialog) */}
-        <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-          <DialogContent className="max-w-xl sm:max-w-2xl bg-white dark:bg-stone-950 p-3 sm:p-5 rounded-2xl overflow-hidden shadow-2xl" style={{ borderColor: `${themeAccent}40` }}>
-            <DialogTitle className="text-xl font-bold text-stone-900 dark:text-white px-2 py-1 border-b flex items-center gap-2" style={{ borderBottomColor: `${themeAccent}25` }}>
+        <Dialog
+          open={!!selectedImage}
+          onOpenChange={(open) => !open && setSelectedImage(null)}
+        >
+          <DialogContent
+            className="max-w-xl sm:max-w-2xl bg-white dark:bg-stone-950 p-3 sm:p-5 rounded-2xl overflow-hidden shadow-2xl"
+            style={{ borderColor: `${themeAccent}40` }}
+          >
+            <DialogTitle
+              className="text-xl font-bold text-stone-900 dark:text-white px-2 py-1 border-b flex items-center gap-2"
+              style={{ borderBottomColor: `${themeAccent}25` }}
+            >
               <Sparkles className="w-4 h-4" style={{ color: themeAccent }} />
               {selectedTitle} - Print Quality Preview
             </DialogTitle>
@@ -231,6 +227,7 @@ export function TemplateCarousel({
                   src={selectedImage}
                   alt={selectedTitle}
                   fill
+                  unoptimized
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 90vw, 650px"
                   quality={75}
                   priority

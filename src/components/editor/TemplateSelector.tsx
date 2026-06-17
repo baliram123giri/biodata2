@@ -75,6 +75,7 @@ const TemplateCard = React.memo(function TemplateCard({
             src={tpl.thumbnailUrl}
             alt={`Matrimonial design template: ${tpl.name}`}
             fill
+            unoptimized
             sizes="(max-width: 768px) 100vw, 30vw"
             className={cn(
               "absolute object-contain select-none pointer-events-none group-hover:scale-[1.03] transition-transform duration-300 ease-out",

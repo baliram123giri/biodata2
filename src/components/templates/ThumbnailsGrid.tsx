@@ -510,6 +510,7 @@ export function ThumbnailsGrid({ defaultReligion }: { defaultReligion?: string }
                         }
                         alt={`Matrimonial biodata format ${tpl.name}`}
                         fill
+                        unoptimized
                         sizes="(max-width: 768px) 50vw, 25vw"
                         className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03] !rounded-none"
                         loading="lazy"

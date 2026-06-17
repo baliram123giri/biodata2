@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { uploadToVPS } from "@/lib/vps-upload";
 
-export const HERO_SLIDES_CACHE_KEY = "admin:hero-slides";
+const HERO_SLIDES_CACHE_KEY = "admin:hero-slides";
 
 async function getSessionUser() {
   const session = await getServerSession(authOptions);

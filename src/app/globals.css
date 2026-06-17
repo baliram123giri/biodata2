@@ -656,3 +656,11 @@ textarea::placeholder,
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
+/* Fix Radix UI Dialog layout shift & page scroll position jump */
+body[data-scroll-locked] {
+  overflow: visible !important;
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+}
+
+

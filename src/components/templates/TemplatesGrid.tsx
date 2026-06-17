@@ -228,6 +228,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                       }
                       alt={`Matrimonial biodata template ${tpl.name} thumbnail preview`}
                       fill
+                      unoptimized
                       sizes="(max-width: 768px) 100vw, 30vw"
                       className="object-cover object-center transition-transform duration-500"
                       loading="lazy"
@@ -354,6 +355,7 @@ export function TemplatesGrid({ initialTemplates }: { initialTemplates?: any[] }
                       }
                       alt={`Matrimonial biodata template ${selectedTpl.name} detailed preview`}
                       fill
+                      unoptimized
                       sizes="(max-width: 768px) 110px, 200px"
                       className="object-contain"
                       loading="lazy"

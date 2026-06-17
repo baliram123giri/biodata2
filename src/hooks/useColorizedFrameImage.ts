@@ -63,6 +63,9 @@ export function useColorizedFrameImage(
       return;
     }
 
+    // Reset to null to indicate loading state for uncached items
+    setImage(null);
+
     // Check if the source is an SVG
     const isSvg = resolvedSrc.toLowerCase().includes('.svg') || resolvedSrc.startsWith('data:image/svg+xml');
 

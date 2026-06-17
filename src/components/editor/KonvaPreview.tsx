@@ -23,6 +23,7 @@ import type { BiodataFormValues } from "@/types/biodata";
 import useImage from "use-image";
 import Konva from "konva";
 import { useColorizedFrameImage } from "@/hooks/useColorizedFrameImage";
+import { PreviewLoader } from "@/components/biodata/PreviewLoader";
 
 if (typeof window !== "undefined") {
   // Force high-DPI crystal clear canvas rendering on all monitors and devices
@@ -442,31 +443,12 @@ const PageBackground = React.memo(function PageBackground({
 });
 
 const ImageFrame = React.memo(function ImageFrame({
-  config,
-  primaryColor,
-  accentColor,
-  defaultPrimary,
-  defaultAccent,
-  enableSvgTint = true,
+  image,
   bgConfig
 }: {
-  config: FrameImageConfig;
-  primaryColor: string;
-  accentColor: string;
-  defaultPrimary: string;
-  defaultAccent: string;
-  enableSvgTint?: boolean;
+  image: HTMLImageElement | null;
   bgConfig?: BgConfig;
 }) {
-  const frameUrl = getFrameImageUrl(config, primaryColor);
-  const resolvedFrameUrl = getClientImageUrl(frameUrl);
-  const image = useColorizedFrameImage(
-    resolvedFrameUrl,
-    defaultPrimary,
-    enableSvgTint ? primaryColor : "",
-    defaultAccent,
-    enableSvgTint ? accentColor : ""
-  );
 
   const offset = bgConfig?.imageFrameOffset ? parseInt(bgConfig.imageFrameOffset) || 0 : 0;
   const fallbackX = -offset;
@@ -674,6 +656,22 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
   const formData = liveFormData ? { ...liveFormData, stickers: storeFormData.stickers } : storeFormData;
   const selectedTemplate = templateId || storeTemplate;
   const templateConfig = customTemplates.find((t) => t.id === selectedTemplate) || getTemplateConfig(selectedTemplate);
+
+  // Call useColorizedFrameImage to load the frame image at the top level
+  const frameConfig = templateConfig?.frame?.type === "image" ? templateConfig.frame : null;
+  const frameUrl = frameConfig ? getFrameImageUrl(frameConfig, theme.primaryColor) : null;
+  const resolvedFrameUrl = frameUrl ? getClientImageUrl(frameUrl) : null;
+  const enableSvgTint = templateConfig?.bgConfig?.enableSvgTint !== false;
+
+  const frameImage = useColorizedFrameImage(
+    resolvedFrameUrl,
+    "",
+    enableSvgTint ? theme.primaryColor : "",
+    "",
+    enableSvgTint ? theme.accentColor : ""
+  );
+
+  const isFrameLoading = templateConfig?.frame?.type === "image" && !frameImage;
 
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1385,12 +1383,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
               <>
                 {templateConfig.frame.type === "image" ? (
                   <ImageFrame
-                    config={templateConfig.frame}
-                    primaryColor={primaryColor}
-                    accentColor={accentColor}
-                    defaultPrimary=""
-                    defaultAccent=""
-                    enableSvgTint={templateConfig.bgConfig?.enableSvgTint !== false}
+                    image={frameImage}
                     bgConfig={templateConfig.bgConfig}
                   />
                 ) : templateConfig.frame.type === "gradient" ? (
@@ -1990,6 +1983,11 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
               </button>
             </div>
           )}
+        </div>
+      )}
+      {isFrameLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-50/80 backdrop-blur-sm z-30 transition-opacity duration-300 pointer-events-auto">
+          <PreviewLoader />
         </div>
       )}
     </div>

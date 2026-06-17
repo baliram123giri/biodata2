@@ -4,9 +4,8 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
+import { BiodataForm, COMMUNITY_FIELDS, COMMUNITY_HEADER_DEFAULTS } from "@/components/biodata/BiodataForm";
 import dynamic from "next/dynamic";
-const BiodataForm = dynamic(() => import("@/components/biodata/BiodataForm").then(mod => mod.BiodataForm));
-
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
 import { cn } from "@/lib/utils";
@@ -15,8 +14,8 @@ import { Download, RotateCcw, Sparkles, LayoutDashboard, ArrowRight, Loader2, X,
 import { DownloadDropdown, type DownloadFormat } from "@/components/biodata/DownloadDropdown";
 import { useRouter } from "next/navigation";
 import { useDownloadBiodata, generateJpgDataUrl } from "@/hooks/useDownloadBiodata";
-const WhatsAppDeliveryCard = dynamic(() => import("@/components/biodata/WhatsAppDeliveryCard").then(mod => mod.WhatsAppDeliveryCard));
-const CompanyLogoFeature = dynamic(() => import("@/components/biodata/CompanyLogoFeature").then(mod => mod.CompanyLogoFeature));
+import { WhatsAppDeliveryCard } from "@/components/biodata/WhatsAppDeliveryCard";
+import { CompanyLogoFeature } from "@/components/biodata/CompanyLogoFeature";
 const FeedbackModal = dynamic(() => import("./FeedbackModal").then(mod => mod.FeedbackModal));
 const PriceModal = dynamic(() => import("./PriceModal").then(mod => mod.PriceModal));
 import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
@@ -38,13 +37,7 @@ import { useBiodataStore } from "@/store/useBiodataStore";
 import { useThemeStore } from "@/store/useThemeStore";
 
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { CustomDrawer, CustomDrawerHeader, CustomDrawerTitle } from "@/components/ui/custom-drawer";
 const TemplateSelector = dynamic(() => import("@/components/editor/TemplateSelector").then(mod => mod.TemplateSelector));
 import { TemplateFilter } from "@/components/editor/TemplateFilter";
 import { getTemplateConfig, getFrameImageUrl } from "@/lib/frame-config";
@@ -218,15 +211,53 @@ export function HomeBiodataBuilder({
     if (defaultTitle) {
       base.title = defaultTitle;
     }
-    if (defaultReligion) {
+
+    if (defaultCommunity && COMMUNITY_FIELDS[defaultCommunity]) {
+      const standardIds = ["fullName", "dateOfBirth", "timeOfBirth", "placeOfBirth", "height", "maritalStatus", "bloodGroup", "complexion"];
+      const newPersonal: any[] = [];
+      
+      // Add standard fields
+      defaultBiodataValues.personalDetails.forEach(f => {
+        if (standardIds.includes(f.id)) {
+          newPersonal.push({ ...f });
+        }
+      });
+      
+      // Add community specific fields
+      const specFields = COMMUNITY_FIELDS[defaultCommunity];
+      specFields.forEach(f => {
+        let val = f.value || "";
+        if (f.id === "religion" && defaultReligion) {
+          val = defaultReligion;
+        }
+        newPersonal.push({
+          ...f,
+          value: val
+        });
+      });
+      
+      base.personalDetails = newPersonal;
+    } else if (defaultReligion) {
       if (base.personalDetails) {
         base.personalDetails = base.personalDetails.map(f => 
           f.id === "religion" ? { ...f, value: defaultReligion } : f
         );
       }
     }
+
+    if (defaultCommunity && COMMUNITY_HEADER_DEFAULTS[defaultCommunity]) {
+      const defaults = COMMUNITY_HEADER_DEFAULTS[defaultCommunity]?.[base.language || "English"] || 
+                       COMMUNITY_HEADER_DEFAULTS[defaultCommunity]?.English || 
+                       { mantra: "", title: "Biodata" };
+      base.mantra = defaults.mantra;
+      if (!defaultTitle) {
+        base.title = defaults.title;
+      }
+    }
+
     return base;
   }, [defaultCommunity, defaultTitle, defaultReligion]);
+
 
   const methods = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataSchema) as any,
@@ -589,69 +620,69 @@ export function HomeBiodataBuilder({
         "hidden lg:flex fixed right-0 top-1/2 z-40 animate-gentle-float transition-all duration-500",
         isBuilderVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
       )}>
-        <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <SheetTrigger asChild>
-            <button
-              className="premium-gold-docked-tab group flex flex-col items-center gap-3 p-4 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-20 text-center select-none active:scale-95 cursor-pointer"
-            >
-              <div className="p-2 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <LayoutDashboard className="w-5 h-5" />
-              </div>
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          className="premium-gold-docked-tab group flex flex-col items-center gap-3 p-4 border-0 shadow-[-4px_4px_20px_rgba(252,224,104,0.3)] hover:shadow-[-6px_6px_28px_rgba(252,224,104,0.45)] hover:-translate-x-1 transition-all duration-300 w-20 text-center select-none active:scale-95 cursor-pointer"
+        >
+          <div className="p-2 rounded-full bg-stone-100/80 text-stone-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+            <LayoutDashboard className="w-5 h-5" />
+          </div>
 
-              <div className="w-12 h-16 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
-                {activeTemplate.thumbnailUrl ? (
-                  <Image
-                    src={activeTemplate.thumbnailUrl}
-                    alt={`Matrimonial template ${activeTemplate.name} thumbnail selection`}
-                    fill
-                    sizes="48px"
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-                    loading="lazy"
-                  />
-                ) : currentTemplate.frame.type === "image" ? (
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
-                      backgroundColor: currentTemplate.frame.bgColor
-                    }}
-                  />
-                ) : currentTemplate.frame.type === "gradient" ? (
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
-                  />
-                ) : (
-                  <div
-                    className="absolute inset-0"
-                    style={{ backgroundColor: currentTemplate.defaultPrimary }}
-                  />
-                )}
-              </div>
+          <div className="w-12 h-16 rounded-md shadow-sm border border-stone-200/70 overflow-hidden relative mx-auto group-hover:ring-2 group-hover:ring-primary/30 transition-all shrink-0">
+            {activeTemplate.thumbnailUrl ? (
+              <Image
+                src={activeTemplate.thumbnailUrl}
+                alt={`Matrimonial template ${activeTemplate.name} thumbnail selection`}
+                fill
+                unoptimized
+                sizes="48px"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                loading="lazy"
+              />
+            ) : currentTemplate.frame.type === "image" ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${getFrameImageUrl(currentTemplate.frame, currentTemplate.defaultPrimary)})`,
+                  backgroundColor: currentTemplate.frame.bgColor
+                }}
+              />
+            ) : currentTemplate.frame.type === "gradient" ? (
+              <div
+                className="absolute inset-0"
+                style={{ background: `linear-gradient(135deg, ${currentTemplate.frame.gradientColors.join(", ")})` }}
+              />
+            ) : (
+              <div
+                className="absolute inset-0"
+                style={{ backgroundColor: currentTemplate.defaultPrimary }}
+              />
+            )}
+          </div>
 
-              <span className="text-[10px] font-black text-stone-500 uppercase tracking-wider group-hover:text-primary transition-colors mt-0.5 leading-none">
-                Templates
-              </span>
-            </button>
-          </SheetTrigger>
-          <SheetContent side="right" aria-describedby={undefined} className="w-80 sm:max-w-sm flex flex-col h-full p-0 gap-0">
-            <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
-              <div className="flex items-center justify-between w-full pr-6">
-                <SheetTitle className="flex items-center gap-2">
-                  <LayoutDashboard className="w-5 h-5 text-primary" />
-                  {translateUI("pickTemplate", currentLang)}
-                </SheetTitle>
-                <div className="flex items-center gap-2">
-                  <TemplateFilter />
-                </div>
-              </div>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto p-6 pt-4">
-              <TemplateSelector religion={defaultReligion} />
-            </div>
-          </SheetContent>
-        </Sheet>
+          <span className="text-[10px] font-black text-stone-500 uppercase tracking-wider group-hover:text-primary transition-colors mt-0.5 leading-none">
+            Templates
+          </span>
+        </button>
       </div>
+
+      {/* Desktop custom drawer – renders at document.body via portal, never locks scroll */}
+      <CustomDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} side="right">
+        <CustomDrawerHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
+          <div className="flex items-center justify-between w-full pr-6">
+            <CustomDrawerTitle className="flex items-center gap-2">
+              <LayoutDashboard className="w-5 h-5 text-primary" />
+              {translateUI("pickTemplate", currentLang)}
+            </CustomDrawerTitle>
+            <div className="flex items-center gap-2">
+              <TemplateFilter />
+            </div>
+          </div>
+        </CustomDrawerHeader>
+        <div className="flex-1 overflow-y-auto p-6 pt-4">
+          <TemplateSelector religion={defaultReligion} onSelect={() => setIsDrawerOpen(false)} />
+        </div>
+      </CustomDrawer>
 
       <section ref={builderRef} id="builder" className="py-8 md:py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
         {/* Section Header */}
@@ -837,30 +868,31 @@ export function HomeBiodataBuilder({
             <div className="flex items-center justify-around flex-1 pr-1 sm:pr-2 border-r border-muted-foreground/10">
 
               {/* Templates Option */}
-              <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-                <SheetTrigger asChild>
-                  <button className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14 mobile-toolbar-btn">
-                    <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary mobile-toolbar-btn-icon" />
-                    <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="bottom" aria-describedby={undefined} className="h-[80vh] flex flex-col p-0 gap-0 rounded-t-3xl">
-                  <SheetHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
-                    <div className="flex items-center justify-between w-full pr-6">
-                      <SheetTitle className="flex items-center gap-2">
-                        <LayoutDashboard className="w-5 h-5 text-primary" />
-                        {translateUI("pickTemplate", currentLang)}
-                      </SheetTitle>
-                      <div className="flex items-center gap-2">
-                        <TemplateFilter />
-                      </div>
+              <button
+                onClick={() => setIsMobileDrawerOpen(true)}
+                className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-muted-foreground hover:text-primary active:scale-95 transition-all w-12 sm:w-14 mobile-toolbar-btn"
+              >
+                <LayoutDashboard className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-muted-foreground group-hover:text-primary mobile-toolbar-btn-icon" />
+                <span className="text-[9.5px] sm:text-[10.5px] font-bold tracking-tight">{translateUI("templates", currentLang)}</span>
+              </button>
+
+              {/* Mobile custom drawer – renders at document.body via portal, never locks scroll */}
+              <CustomDrawer open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen} side="bottom">
+                <CustomDrawerHeader className="p-6 pb-4 border-b border-stone-100 dark:border-stone-900/50">
+                  <div className="flex items-center justify-between w-full pr-6">
+                    <CustomDrawerTitle className="flex items-center gap-2">
+                      <LayoutDashboard className="w-5 h-5 text-primary" />
+                      {translateUI("pickTemplate", currentLang)}
+                    </CustomDrawerTitle>
+                    <div className="flex items-center gap-2">
+                      <TemplateFilter />
                     </div>
-                  </SheetHeader>
-                  <div className="flex-1 overflow-y-auto p-6 pt-4">
-                    <TemplateSelector religion={defaultReligion} />
                   </div>
-                </SheetContent>
-              </Sheet>
+                </CustomDrawerHeader>
+                <div className="flex-1 overflow-y-auto p-6 pt-4">
+                  <TemplateSelector religion={defaultReligion} onSelect={() => setIsMobileDrawerOpen(false)} />
+                </div>
+              </CustomDrawer>
               {/* Preview Option */}
               <button
                 onClick={() => {

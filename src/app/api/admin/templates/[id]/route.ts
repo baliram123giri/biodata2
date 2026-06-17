@@ -9,7 +9,7 @@ import { uploadToVPS, deleteFromVPS } from "@/lib/vps-upload";
 import fs from "fs";
 import path from "path";
 
-export const BgConfigSchema = z.object({
+const BgConfigSchema = z.object({
   url: z.string().optional().nullable(),
   file: z.string().optional().nullable(),
   x: z.number().default(0),

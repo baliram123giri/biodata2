@@ -36,10 +36,10 @@ export function Header() {
     >
       <div className="container flex h-12 md:h-14 items-center justify-between mx-auto px-4">
         {/* Left side: Logo */}
-        <Link href="/">
+        <Link href="/" prefetch={false}>
           <Logo />
         </Link>
-
+ 
         {/* Right side: Nav + Hamburger */}
         <div className="flex items-center gap-4">
           <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-xs font-medium">
@@ -47,6 +47,7 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={false}
                 className={`transition-colors font-semibold ${
                   isMuslimPage
                     ? pathname === link.href
@@ -61,7 +62,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-
+ 
           {/* Mobile Hamburger Menu */}
           <div className="md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
@@ -71,10 +72,10 @@ export function Header() {
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className={`w-[280px] ${isMuslimPage ? "bg-[#FAF8F3] border-[#D4AF37]/25 text-[#1F2937]" : ""}`}>
+              <SheetContent side="right" className={`w-[280px] ${isMuslimPage ? "bg-[#FAF8F3]" : ""}`}>
                 <SheetHeader className="mb-6 text-left">
                   <SheetTitle>
-                    <Link href="/" onClick={() => setOpen(false)}>
+                    <Link href="/" prefetch={false} onClick={() => setOpen(false)}>
                       <Logo />
                     </Link>
                   </SheetTitle>
@@ -84,6 +85,7 @@ export function Header() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      prefetch={false}
                       onClick={() => setOpen(false)}
                       className={`text-base font-semibold transition-colors ${
                         isMuslimPage

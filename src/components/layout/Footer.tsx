@@ -125,6 +125,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
+                      prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
                           ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
@@ -151,6 +152,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
+                      prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
                           ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
@@ -177,6 +179,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                   <li key={label}>
                     <Link
                       href={href}
+                      prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
                           ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"

@@ -27,7 +27,7 @@ import { Slider } from "@/components/ui/slider";
 import { TEMPLATE_CONFIGS } from "@/lib/frame-config";
 import { cn } from "@/lib/utils";
 
-const COMMUNITY_FIELDS: Record<string, any[]> = {
+export const COMMUNITY_FIELDS: Record<string, any[]> = {
   Hindu: [
     { id: "religion", label: "Religion", value: "Hindu", type: "select", options: ["Hindu", "Muslim", "Sikh", "Christian", "Jain", "Buddhist", "Parsi", "Other"], isDefault: true },
     { id: "caste", label: "Caste", value: "", type: "text", isDefault: true },
@@ -66,7 +66,7 @@ const COMMUNITY_FIELDS: Record<string, any[]> = {
   ]
 };
 
-const COMMUNITY_HEADER_DEFAULTS: Record<string, Record<string, { mantra: string; title: string }>> = {
+export const COMMUNITY_HEADER_DEFAULTS: Record<string, Record<string, { mantra: string; title: string }>> = {
   Hindu: {
     English: { mantra: "|| Shree Ganeshay Namah ||", title: "Marriage Biodata" },
     हिंदी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "शादी का बायोडाटा" },

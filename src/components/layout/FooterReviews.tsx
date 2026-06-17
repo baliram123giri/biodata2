@@ -3,6 +3,50 @@ import { Star, ExternalLink } from "lucide-react";
 import { prisma, withRetry } from "@/lib/prisma";
 import { FooterReviewsTooltip } from "./FooterReviewsTooltip";
 
+import { unstable_cache } from "next/cache";
+
+const getCachedReviewSettings = unstable_cache(
+  async () => {
+    if (!prisma || !(prisma as any).reviewSettings) {
+      console.warn("[FooterReviews] prisma.reviewSettings is undefined. Returning null.");
+      return null;
+    }
+    
+    // Read only: query the DB without transaction/write overhead
+    let settings = await withRetry(() =>
+      (prisma as any).reviewSettings.findUnique({
+        where: { id: "global" },
+      })
+    );
+    
+    // Create lazily if it does not exist (runs once per cache lifetime)
+    if (!settings) {
+      try {
+        settings = await withRetry(() =>
+          (prisma as any).reviewSettings.create({
+            data: {
+              id: "global",
+              googleEnabled: true,
+              googleRating: 4.9,
+              googleCount: 524,
+              googleUrl: "https://share.google/T4eEjxMJkqDKaFWGN",
+              trustpilotEnabled: true,
+              trustpilotRating: 4.8,
+              trustpilotCount: 320,
+              trustpilotUrl: "https://www.trustpilot.com/review/biodata99.com",
+            },
+          })
+        );
+      } catch (err) {
+        console.error("Failed to initialize default review settings in cache worker:", err);
+      }
+    }
+    return settings;
+  },
+  ["footer-review-settings-cache-v1"],
+  { revalidate: 3600, tags: ["footer-reviews"] }
+);
+
 export async function FooterReviews() {
   let googleEnabled = true;
   let googleCount = 524;
@@ -15,37 +59,17 @@ export async function FooterReviews() {
   let trustpilotUrl = "https://www.trustpilot.com/review/biodata99.com";
 
   try {
-    if (prisma && (prisma as any).reviewSettings) {
-      const settings: any = await withRetry(() =>
-        (prisma as any).reviewSettings.upsert({
-          where: { id: "global" },
-          update: {},
-          create: {
-            id: "global",
-            googleEnabled: true,
-            googleRating: 4.9,
-            googleCount: 524,
-            googleUrl: "https://share.google/T4eEjxMJkqDKaFWGN",
-            trustpilotEnabled: true,
-            trustpilotRating: 4.8,
-            trustpilotCount: 320,
-            trustpilotUrl: "https://www.trustpilot.com/review/biodata99.com",
-          },
-        })
-      );
-      if (settings) {
-        googleEnabled = settings.googleEnabled;
-        googleCount = settings.googleCount;
-        googleAvg = settings.googleRating;
-        googleUrl = settings.googleUrl;
+    const settings: any = await getCachedReviewSettings();
+    if (settings) {
+      googleEnabled = settings.googleEnabled;
+      googleCount = settings.googleCount;
+      googleAvg = settings.googleRating;
+      googleUrl = settings.googleUrl;
 
-        trustpilotEnabled = settings.trustpilotEnabled;
-        trustpilotCount = settings.trustpilotCount;
-        trustpilotAvg = settings.trustpilotRating;
-        trustpilotUrl = settings.trustpilotUrl;
-      }
-    } else {
-      console.warn("[FooterReviews] prisma.reviewSettings is undefined. Using default static reviews values.");
+      trustpilotEnabled = settings.trustpilotEnabled;
+      trustpilotCount = settings.trustpilotCount;
+      trustpilotAvg = settings.trustpilotRating;
+      trustpilotUrl = settings.trustpilotUrl;
     }
   } catch (error) {
     console.error("Failed to fetch review settings for footer reviews:", error);

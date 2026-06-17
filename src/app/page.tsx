@@ -11,10 +11,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { SampleCarousel } from "@/components/home/SampleCarousel";
-
-const HomeBiodataBuilder = dynamic(
-  () => import("@/components/biodata/HomeBiodataBuilder").then(mod => mod.HomeBiodataBuilder)
-);
+import { HomeBiodataBuilderSection } from "@/components/home/HomeBiodataBuilderSection";
 
 export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
@@ -191,7 +188,7 @@ export default function Home() {
           BIODATA BUILDER - Full create experience embedded on homepage
           ═══════════════════════════════════════════════════════════════════ */}
       <div id="builder" className="scroll-mt-4" />
-      <HomeBiodataBuilder />
+      <HomeBiodataBuilderSection />
 
       {/* Features Section */}
       <section className="py-10 md:py-20 px-4">
