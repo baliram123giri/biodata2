@@ -85,7 +85,7 @@ export function TemplateCarousel({
     <TooltipProvider>
       <section
         ref={sectionRef}
-        className="py-16 bg-[#FFFBF8] dark:bg-[#1A0A0E] overflow-hidden relative border-t border-border/30"
+        className="py-10 bg-[#FFFBF8] dark:bg-[#1A0A0E] overflow-hidden relative border-t border-border/30"
       >
         {/* Glow background effects */}
         <div

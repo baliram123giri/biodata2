@@ -78,7 +78,7 @@ export default async function BiodataTemplatesPage() {
             </h2>
             <div className="text-sm text-stone-650 dark:text-stone-300 max-w-3xl mx-auto space-y-4 leading-relaxed font-medium">
               <p>
-                Your marriage biodata is more than just a document. It's your first introduction to a potential life partner and their family. That's why <span className="font-bold text-[#9B1B30] dark:text-[#E6C97A]">biodata99.com</span> gives you complete creative control to customize every element of your biodata, making it truly yours.
+                Your marriage biodata is more than just a document. It's your first introduction to a potential life partner and their family. That's why <span className="font-bold text-[#9B1B30] dark:text-[#E6C97A]">biodata99.com</span> gives you complete creative control to customize every element of your biodata, making it truly yours. We also provide dedicated tools such as our <Link href="/marathi-biodata-maker" className="text-[#9B1B30] dark:text-[#E6C97A] underline hover:no-underline font-extrabold">Marathi Biodata Maker</Link> and specialized <Link href="/muslim-biodata-format" className="text-[#9B1B30] dark:text-[#E6C97A] underline hover:no-underline font-extrabold">Muslim Biodata formats</Link> tailored for different cultural expectations.
               </p>
               <p>
                 Whether you prefer a traditional look with religious motifs or a modern minimalist design, our easy-to-use editing tools let you adjust every detail with no design skills needed.

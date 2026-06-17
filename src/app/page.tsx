@@ -99,9 +99,9 @@ export default function Home() {
                 <div className="flex items-center flex-nowrap">
                   {[
                     { name: "हिंदी", lang: "Hindi" },
-                    { name: "मराठी", lang: "Marathi" },
+                    { name: "मराठी", lang: "Marathi", href: "/marathi-biodata-maker" },
                     { name: "ગુજરાતી", lang: "Gujarati" },
-                    { name: "ਪੰਜਾਬੀ", lang: "Punjabi" },
+                    { name: "ਪੰਜਾਬी", lang: "Punjabi" },
                     { name: "বাংলা", lang: "Bengali" },
                     { name: "தமிழ்", lang: "Tamil" },
                     { name: "తెలుగు", lang: "Telugu" },
@@ -111,9 +111,18 @@ export default function Home() {
                   ].map((langObj, index) => (
                     <span key={langObj.lang} className="inline-flex items-center text-xs font-bold text-stone-750 dark:text-stone-300 whitespace-nowrap">
                       {index > 0 && <span className="text-[#C9A84C]/50 font-normal select-none mx-2">·</span>}
-                      <span className="hover:text-primary dark:hover:text-[#E6C97A] transition-colors cursor-default">
-                        {langObj.name}
-                      </span>
+                      {langObj.href ? (
+                        <Link
+                          href={langObj.href}
+                          className="text-[#C2410C] dark:text-[#E6C97A] hover:text-[#9B1B30] dark:hover:text-white font-extrabold underline decoration-solid decoration-[#C2410C]/50 dark:decoration-[#E6C97A]/50 decoration-2 underline-offset-4 transition-colors cursor-pointer"
+                        >
+                          {langObj.name}
+                        </Link>
+                      ) : (
+                        <span className="hover:text-primary dark:hover:text-[#E6C97A] transition-colors cursor-default">
+                          {langObj.name}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>
@@ -142,10 +151,31 @@ export default function Home() {
               {/* Community formats line (SEO + user signal) */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 text-[11px] font-extrabold">
                 <span className="text-[#8A7233] dark:text-[#E6C97A] uppercase tracking-wider text-[9px] mr-1 shrink-0">Formats:</span>
-                {["Hindu", "Muslim", "Christian", "Sikh", "Jain", "NRI"].map((community) => (
-                  <span key={community} className="px-2.5 py-1 border border-stone-200/50 dark:border-stone-800/80 bg-white/50 dark:bg-stone-900/50 text-stone-600 dark:text-stone-400 rounded-none text-[10px] tracking-wide hover:text-[#C9A84C] hover:border-[#C9A84C]/45 transition-colors cursor-default shadow-2xs">
-                    {community}
-                  </span>
+                {[
+                  { name: "Hindu" },
+                  { name: "Muslim", href: "/muslim-biodata-format" },
+                  { name: "Marathi", href: "/marathi-biodata-maker" },
+                  { name: "Christian" },
+                  { name: "Sikh" },
+                  { name: "Jain" },
+                  { name: "NRI" }
+                ].map((community) => (
+                  community.href ? (
+                    <Link
+                      key={community.name}
+                      href={community.href}
+                      className="px-2.5 py-1 border border-stone-200/50 dark:border-stone-850/85 bg-white/50 dark:bg-stone-900/50 text-stone-600 dark:text-stone-400 rounded-none text-[10px] tracking-wide hover:text-primary dark:hover:text-[#E6C97A] hover:border-[#C9A84C]/45 transition-colors cursor-pointer shadow-2xs font-extrabold"
+                    >
+                      {community.name}
+                    </Link>
+                  ) : (
+                    <span
+                      key={community.name}
+                      className="px-2.5 py-1 border border-stone-200/50 dark:border-stone-850/85 bg-white/50 dark:bg-stone-900/50 text-stone-600 dark:text-stone-400 rounded-none text-[10px] tracking-wide hover:text-[#C9A84C] hover:border-[#C9A84C]/45 transition-colors cursor-default shadow-2xs"
+                    >
+                      {community.name}
+                    </span>
+                  )
                 ))}
               </div>
             </div>
@@ -191,7 +221,7 @@ export default function Home() {
       <HomeBiodataBuilderSection />
 
       {/* Features Section */}
-      <section className="py-10 md:py-20 px-4">
+      <section className="py-8 md:py-12 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-8 md:mb-16 space-y-4">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
@@ -241,7 +271,7 @@ export default function Home() {
       <SampleCarousel />
 
       {/* Who Is This For Section */}
-      <section id="who-is-this-for" aria-label="Who is this for" className="py-12 md:py-16 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
+      <section id="who-is-this-for" aria-label="Who is this for" className="py-8 md:py-12 px-4 border-t border-border/30 bg-white dark:bg-[#150709]">
         <div className="container mx-auto max-w-6xl">
           {/* Section Header */}
           <div className="space-y-2 mb-8 md:mb-10 text-left">
@@ -350,8 +380,113 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════════════════════════
+          FEATURED FORMATS SHOWCASE SECTION
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section id="featured-formats" aria-label="Featured biodata formats" className="py-8 md:py-12 px-4 border-t border-border/30 bg-[#FFFDF9] dark:bg-[#150709] relative overflow-hidden">
+        {/* Background Decorative Patterns */}
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(201,168,76,0.03)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+
+        <div className="container mx-auto max-w-5xl relative z-10">
+          {/* Section Header */}
+          <div className="text-center space-y-3 mb-10 max-w-2xl mx-auto">
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#C9A84C] block font-sans">
+              SPECIALIZED DESIGNS
+            </span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight font-sans">
+              Explore Biodata Templates by Style &amp; Community
+            </h2>
+            <p className="text-sm text-stone-550 dark:text-stone-400 leading-relaxed font-medium">
+              Discover professionally designed marriage biodata templates tailored to different communities, languages, and cultural traditions.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Card 1: Muslim Biodata */}
+            <div className="group relative rounded-3xl border border-[#D4AF37]/25 bg-white dark:bg-[#1A0A0E]/30 p-8 flex flex-col justify-between hover:border-[#D4AF37]/50 hover:shadow-[0_15px_30px_rgba(15,76,58,0.05)] transition-all duration-300 overflow-hidden min-h-[300px]">
+              {/* Subtle thematic green background glow on hover */}
+              <div className="absolute -right-20 -top-20 w-48 h-48 rounded-full bg-[#0F4C3A]/5 blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+              
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0F4C3A]/10 border border-[#D4AF37]/35 flex items-center justify-center text-[#0F4C3A] dark:text-[#E6C97A] shrink-0 font-sans text-xl">
+                    🕌
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#D4AF37] block">COMMUNITY EDITION</span>
+                    <h3 className="text-lg font-black text-stone-950 dark:text-white tracking-tight">Muslim Marriage Biodata</h3>
+                  </div>
+                </div>
+
+                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed font-medium">
+                  Professional Muslim marriage biodata templates with a modern Islamic touch.
+                </p>
+
+                <ul className="space-y-2 pt-2 pb-4">
+                  {["Traditional Islamic Headings", "Custom Mosque & Crescent Stickers", "Elegant Green & Gold Palettes"].map((feat) => (
+                    <li key={feat} className="flex items-center gap-2 text-[11px] text-stone-500 dark:text-stone-400 font-bold">
+                      <span className="text-[#0F4C3A] dark:text-[#E6C97A]">✦</span>
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-6 relative z-10">
+                <Button className="w-full rounded-2xl bg-[#0F4C3A] hover:bg-[#0c3e2f] text-white border-0 py-5 font-bold tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer" asChild>
+                  <Link href="/muslim-biodata-format" className="flex items-center justify-center gap-2">
+                    Explore Muslim Formats
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Card 2: Marathi Biodata */}
+            <div className="group relative rounded-3xl border border-[#EAB308]/25 bg-white dark:bg-[#1A0A0E]/30 p-8 flex flex-col justify-between hover:border-[#EAB308]/50 hover:shadow-[0_15px_30px_rgba(194,65,12,0.05)] transition-all duration-300 overflow-hidden min-h-[300px]">
+              {/* Subtle thematic saffron background glow on hover */}
+              <div className="absolute -right-20 -top-20 w-48 h-48 rounded-full bg-[#C2410C]/5 blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#C2410C]/10 border border-[#EAB308]/35 flex items-center justify-center text-[#C2410C] dark:text-[#E6C97A] shrink-0 font-sans text-xl">
+                    🚩
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#C2410C] block">REGIONAL EDITION</span>
+                    <h3 className="text-lg font-black text-stone-950 dark:text-white tracking-tight">विवाह बायोडाटा मराठी</h3>
+                  </div>
+                </div>
+
+                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed font-medium">
+                  Create a Marathi marriage biodata with traditional Maharashtrian designs, Kundali details, and Marathi language support.
+                </p>
+
+                <ul className="space-y-2 pt-2 pb-4">
+                  {["Marathi Language Input Support", "Ganpati & Mangal Ashtaka (गणपती, मंगलाष्टक) Symbols", "Dedicated Horoscope & Gotra (पत्रिका, गोत्र) Fields"].map((feat) => (
+                    <li key={feat} className="flex items-center gap-2 text-[11px] text-stone-500 dark:text-stone-400 font-bold">
+                      <span className="text-[#C2410C] dark:text-[#E6C97A]">✦</span>
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-6 relative z-10">
+                <Button className="w-full rounded-2xl bg-[#C2410C] hover:bg-[#a8380a] text-white border-0 py-5 font-bold tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer" asChild>
+                  <Link href="/marathi-biodata-maker" className="flex items-center justify-center gap-2">
+                    Create Marathi Biodata
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Steps Section */}
-      <section className="py-12 md:py-24 bg-muted relative px-4 overflow-hidden">
+      <section className="py-8 md:py-12 bg-muted relative px-4 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
 
           {/* Header */}
@@ -386,7 +521,7 @@ export default function Home() {
       </section>
 
       {/* Homepage FAQ Section */}
-      <section id="faq" aria-label="Frequently Asked Questions" className="py-12 md:py-20 px-4 border-t border-border/30 bg-background relative overflow-hidden">
+      <section id="faq" aria-label="Frequently Asked Questions" className="py-8 md:py-12 px-4 border-t border-border/30 bg-background relative overflow-hidden">
         <div className="container mx-auto max-w-4xl space-y-10 relative z-10">
 
           {/* Header Title */}
@@ -432,7 +567,7 @@ export default function Home() {
       <section
         aria-label="What is a marriage biodata"
         id="what-is-biodata"
-        className="pt-8 pb-16 md:pt-12 md:pb-20 px-4 border-t border-border/30 bg-[#FFFBF8] dark:bg-[#150709] relative overflow-hidden"
+        className="pt-6 pb-10 md:pt-8 md:pb-12 px-4 border-t border-border/30 bg-[#FFFBF8] dark:bg-[#150709] relative overflow-hidden"
       >
         <div className="container mx-auto max-w-6xl space-y-6 relative z-10 text-stone-700 dark:text-stone-300">
           {/* Label */}

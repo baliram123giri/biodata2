@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/edit', changeFrequency: 'daily' as const, priority: 0.9 },
     { path: '/biodata-templates', changeFrequency: 'monthly' as const, priority: 0.8 },
     { path: '/muslim-biodata-format', changeFrequency: 'daily' as const, priority: 0.85 },
+    { path: '/marathi-biodata-maker', changeFrequency: 'daily' as const, priority: 0.85 },
     { path: '/how-it-works', changeFrequency: 'monthly' as const, priority: 0.7 },
     { path: '/faqs', changeFrequency: 'monthly' as const, priority: 0.7 },
     { path: '/about-us', changeFrequency: 'monthly' as const, priority: 0.7 },

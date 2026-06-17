@@ -685,7 +685,7 @@ export default function MuslimBiodataFormatPage() {
                 </div>
                 <div className="mt-5 pt-3 border-t border-[#D4AF37]/10 text-center">
                   <p className="text-[11px] font-semibold text-stone-600">
-                    Created by design & matchmaking experts.
+                    Created by design & matchmaking experts. Looking for regional styles? Try our <Link href="/marathi-biodata-maker" className="text-[#0F4C3A] underline font-extrabold hover:text-[#D4AF37]">Marathi Biodata Maker</Link>.
                   </p>
                 </div>
               </Card>

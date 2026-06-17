@@ -54,12 +54,35 @@ const KonvaPreview = dynamic(
 );
 
 
+const resolveLanguageKey = (lang?: string) => {
+  if (!lang) return undefined;
+  const mapping: Record<string, string> = {
+    "Marathi": "मराठी",
+    "Hindi": "हिंदी",
+    "Gujarati": "ગુજરાતી",
+    "Bengali": "বাংলা",
+    "Tamil": "தமிழ்",
+    "Telugu": "తెలుగు",
+    "Kannada": "ಕನ್ನಡ",
+    "Punjabi": "ਪੰਜਾਬੀ",
+    "Urdu": "اردو",
+    "marathi": "मराठी",
+    "hindi": "हिंदी",
+  };
+  return mapping[lang] || lang;
+};
+
 interface HomeBiodataBuilderProps {
   defaultCommunity?: string;
   defaultReligion?: string;
   defaultTitle?: string;
   defaultTemplateId?: string;
   hideCommunityAndReligion?: boolean;
+  builderTitle?: string;
+  builderSubtitle?: React.ReactNode;
+  defaultLanguage?: string;
+  forceLanguage?: string;
+  hideHeader?: boolean;
 }
 
 /**
@@ -72,6 +95,11 @@ export function HomeBiodataBuilder({
   defaultTitle,
   defaultTemplateId,
   hideCommunityAndReligion = false,
+  builderTitle,
+  builderSubtitle,
+  defaultLanguage,
+  forceLanguage,
+  hideHeader = false,
 }: HomeBiodataBuilderProps = {}) {
   const {
     formData: storedData,
@@ -205,6 +233,10 @@ export function HomeBiodataBuilder({
 
   const initialDefaultValues = useMemo(() => {
     const base = { ...defaultBiodataValues };
+    const resolvedLang = resolveLanguageKey(defaultLanguage);
+    if (resolvedLang) {
+      base.language = resolvedLang;
+    }
     if (defaultCommunity) {
       base.community = defaultCommunity;
     }
@@ -256,7 +288,7 @@ export function HomeBiodataBuilder({
     }
 
     return base;
-  }, [defaultCommunity, defaultTitle, defaultReligion]);
+  }, [defaultCommunity, defaultTitle, defaultReligion, defaultLanguage]);
 
 
   const methods = useForm<BiodataFormValues>({
@@ -293,6 +325,10 @@ export function HomeBiodataBuilder({
         const mergedDefaults = { ...defaultBiodataValues };
         const finalData = { ...mergedDefaults, ...currentStoredData };
 
+        const resolvedLang = resolveLanguageKey(forceLanguage || defaultLanguage);
+        if (resolvedLang) {
+          finalData.language = resolvedLang;
+        }
         if (defaultCommunity) {
           finalData.community = defaultCommunity;
         }
@@ -324,7 +360,7 @@ export function HomeBiodataBuilder({
     }
 
     return () => unsub();
-  }, [methods, defaultTemplateId, defaultCommunity, defaultTitle, defaultReligion]);
+  }, [methods, defaultTemplateId, defaultCommunity, defaultTitle, defaultReligion, defaultLanguage, forceLanguage]);
 
   // Synchronize theme padding and palette with selected template defaults from database
   useEffect(() => {
@@ -661,7 +697,7 @@ export function HomeBiodataBuilder({
           </div>
 
           <span className="text-[10px] font-black text-stone-500 uppercase tracking-wider group-hover:text-primary transition-colors mt-0.5 leading-none">
-            Templates
+            {currentLang === "Marathi" ? "नमुने" : "Templates"}
           </span>
         </button>
       </div>
@@ -684,43 +720,54 @@ export function HomeBiodataBuilder({
         </div>
       </CustomDrawer>
 
-      <section ref={builderRef} id="builder" className="py-8 md:py-16 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
+      <section ref={builderRef} id="builder" className="py-6 md:py-10 px-4 bg-gradient-to-b from-background via-accent/30 to-background scroll-mt-20">
         {/* Section Header */}
-        <div className="container mx-auto max-w-[1400px] mb-10">
-          <div className="flex flex-col items-center text-center gap-4 mb-8">
-            <div 
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold",
-                religionTheme ? "" : "bg-primary/10 text-primary"
-              )}
-              style={religionTheme ? { backgroundColor: religionTheme.primaryLight, color: religionTheme.primary } : undefined}
-            >
-              <Wand2 className="w-4 h-4" />
-              Start Building Now
+        {!hideHeader && (
+          <div className="container mx-auto max-w-[1400px] mb-10">
+            <div className="flex flex-col items-center text-center gap-4 mb-8">
+              <div 
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold",
+                  religionTheme ? "" : "bg-primary/10 text-primary"
+                )}
+                style={religionTheme ? { backgroundColor: religionTheme.primaryLight, color: religionTheme.primary } : undefined}
+              >
+                <Wand2 className="w-4 h-4" />
+                {currentLang === "Marathi" ? "आत्ताच बनवायला सुरुवात करा" : "Start Building Now"}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
+                {builderTitle ? (
+                  builderTitle
+                ) : (
+                  <>
+                    Create Your Biodata{" "}
+                    <span 
+                      className={cn(!religionTheme && "text-gradient-primary")}
+                      style={religionTheme ? {
+                        backgroundImage: `linear-gradient(to right, ${religionTheme.primary}, ${religionTheme.secondary})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        color: "transparent"
+                      } : undefined}
+                    >
+                      Right Here
+                    </span>
+                  </>
+                )}
+              </h2>
+              <p 
+                className={cn(
+                  "text-base md:text-lg font-semibold max-w-2xl",
+                  religionTheme ? "" : "text-muted-foreground"
+                )}
+                style={religionTheme?.descriptionColor ? { color: religionTheme.descriptionColor } : undefined}
+              >
+                {builderSubtitle || "Fill in your details below, pick a template, and download your professional marriage biodata - all without leaving this page."}
+              </p>
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-sans">
-              Create Your Biodata <span 
-                className={cn(!religionTheme && "text-gradient-primary")}
-                style={religionTheme ? {
-                  backgroundImage: `linear-gradient(to right, ${religionTheme.primary}, ${religionTheme.secondary})`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  color: "transparent"
-                } : undefined}
-              >Right Here</span>
-            </h2>
-            <p 
-              className={cn(
-                "text-base md:text-lg font-semibold max-w-2xl",
-                religionTheme ? "" : "text-muted-foreground"
-              )}
-              style={religionTheme?.descriptionColor ? { color: religionTheme.descriptionColor } : undefined}
-            >
-              Fill in your details below, pick a template, and download your professional marriage biodata - all without leaving this page.
-            </p>
           </div>
-        </div>
+        )}
 
         {/* Builder Content */}
         <div className="container mx-auto max-w-6xl">
@@ -814,7 +861,7 @@ export function HomeBiodataBuilder({
                     )}
                   >
                     <LayoutDashboard className="w-3 h-3" />
-                    <span>Choose Template</span>
+                    <span>{currentLang === "Marathi" ? "टेम्पलेट निवडा" : "Choose Template"}</span>
                   </Button>
 
                   <Button
@@ -829,7 +876,7 @@ export function HomeBiodataBuilder({
                     onClick={() => setShowResetDialog(true)}
                     disabled={isGenerating}
                   >
-                    <RotateCcw className={cn("w-3 h-3 mr-1", isMuslimPage ? "text-[#0F4C3A]" : "text-rose-500")} /> Reset
+                    <RotateCcw className={cn("w-3 h-3 mr-1", isMuslimPage ? "text-[#0F4C3A]" : "text-rose-500")} /> {currentLang === "Marathi" ? "रीसेट करा" : "Reset"}
                   </Button>
                 </div>
               </div>

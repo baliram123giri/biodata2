@@ -70,7 +70,7 @@ export const COMMUNITY_HEADER_DEFAULTS: Record<string, Record<string, { mantra: 
   Hindu: {
     English: { mantra: "|| Shree Ganeshay Namah ||", title: "Marriage Biodata" },
     हिंदी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "शादी का बायोडाटा" },
-    मराठी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "लग्नाचा बायोडाटा" },
+    मराठी: { mantra: "॥ श्री गणेशाय नमः ॥", title: "परिचय पत्र" },
     ગુજરાતી: { mantra: "॥ શ્રી ગણેશાય નમઃ ॥", title: "લગ્નનો બાયોડેટા" },
     বাংলা: { mantra: "॥ শ্রী গণেশায় নমঃ ॥", title: "বিবাহের বায়োডাটা" },
     தமிழ்: { mantra: "॥ ஸ்ரீ கணேசாய நமஃ ॥", title: "திருமண பயோடேட்டா" },
