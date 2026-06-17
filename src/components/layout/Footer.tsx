@@ -11,7 +11,6 @@ import {
   Shield,
   Star,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const footerLinks = {
@@ -216,37 +215,11 @@ export function Footer({ children }: { children?: React.ReactNode }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className={`border-t ${isMuslimPage ? "border-white/10" : "border-white/8"} py-4`}>
-          <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              {/* PostYourStartup Badge */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href="https://postyourstartup.co/startup/biodata99?ref=badge"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transition-transform hover:scale-105 duration-200 block shrink-0"
-                  >
-                    <img
-                      src="https://postyourstartup.co/api/badge/biodata99?theme=light"
-                      alt="Featured on PostYourStartup"
-                      width={120}
-                      height={31}
-                      className="rounded shadow-sm"
-                    />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Featured on PostYourStartup!</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <p className={`text-[11px] text-center sm:text-left ${isMuslimPage ? "text-[#FAF8F3]/70" : "text-slate-400"}`} suppressHydrationWarning>
-                © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
-              </p>
-            </div>
-
+        <div className={`border-t ${isMuslimPage ? "border-white/10" : "border-white/8"}`}>
+          <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className={`text-[11px] text-center sm:text-left ${isMuslimPage ? "text-[#FAF8F3]/70" : "text-slate-400"}`} suppressHydrationWarning>
+              © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
+            </p>
             <p className={`text-[11px] flex items-center gap-1 ${isMuslimPage ? "text-[#FAF8F3]/70" : "text-slate-400"}`}>
               Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for Happy Marriages
               <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400 ml-0.5" />
