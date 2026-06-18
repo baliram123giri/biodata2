@@ -366,7 +366,7 @@ export default async function BiodataTemplatesPage() {
             <div className="bg-[#FBF5E6]/40 dark:bg-stone-900/30 border border-[#C9A84C]/20 rounded-2xl p-5 max-w-3xl mx-auto shadow-xs text-center flex items-center justify-center gap-3">
               <span className="text-2xl shrink-0">💡</span>
               <p className="text-xs md:text-sm font-bold text-stone-750 dark:text-stone-300 leading-relaxed text-left">
-                <strong className="text-[#9B1B30] dark:text-[#E6C97A]">Pro Tip:</strong> Use the <strong>Undo / Redo</strong> buttons at the top of the editor to reverse any change. Made a mess? Hit <strong>Reset</strong> to restore the template to its original state, your form details stay safe!
+                <strong className="text-[#9B1B30] dark:text-[#E6C97A]">Pro Tip:</strong> Made a mess? Hit <strong>Reset</strong> to restore the template to its original state, your form details stay safe!
               </p>
             </div>
 

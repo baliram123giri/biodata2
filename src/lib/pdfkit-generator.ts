@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { Font, renderToBuffer, Document, Page, View, Text, Image, StyleSheet, Svg, Path, G, Rect, LinearGradient, RadialGradient, Stop, Defs, Circle } from '@react-pdf/renderer';
-import { getPDFFontFamily } from './pdf-fonts';
+import { getPDFFontFamily, registerPDFFonts } from './pdf-fonts';
 import { translations } from './translations';
 import { processPDFField } from './pdf-data-utils';
 import { getTemplateConfig, getFrameImageUrl, tintSvg } from './frame-config';
@@ -22,62 +22,20 @@ const A4_H = 841;
 const FONT_BASE_URL = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf';
 
 // ── FONT REGISTRATION ──────────────────────────────────────────────
-const registerFonts = () => {
-  Font.register({
-    family: 'Inter',
-    fonts: [
-      { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf', fontWeight: 400 },
-      { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fMZhrib2Bg-4.ttf', fontWeight: 700 },
-    ]
-  });
-  Font.register({
-    family: 'Playfair',
-    fonts: [
-      { src: 'https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQ.ttf', fontWeight: 400 },
-      { src: 'https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf', fontWeight: 700 },
-    ]
-  });
-
-  Font.register({
-    family: 'Noto Serif',
-    fonts: [
-      { src: `${FONT_BASE_URL}/NotoSerif/NotoSerif-Regular.ttf`, fontWeight: 400 },
-      { src: `${FONT_BASE_URL}/NotoSerif/NotoSerif-Bold.ttf`, fontWeight: 700 },
-    ]
-  });
-
-  const registerNoto = (name: string) => {
-    Font.register({
-      family: `Noto Sans ${name}`,
-      fonts: [
-        { src: `${FONT_BASE_URL}/NotoSans${name}/NotoSans${name}-Regular.ttf`, fontWeight: 400 },
-        { src: `${FONT_BASE_URL}/NotoSans${name}/NotoSans${name}-Bold.ttf`, fontWeight: 700 },
-      ]
-    });
-  };
-
-  registerNoto('Devanagari');
-  registerNoto('Gujarati');
-  registerNoto('Bengali');
-  registerNoto('Tamil');
-  registerNoto('Telugu');
-  registerNoto('Kannada');
-  registerNoto('Gurmukhi');
-  registerNoto('Arabic');
-};
-
-registerFonts();
+registerPDFFonts();
 
 export function getFontForText(text: string, fallbackFont: string): string {
   if (!text) return fallbackFont;
-  if (/[\u0900-\u097F]/.test(text)) return 'Noto Sans Devanagari';
-  if (/[\u0A80-\u0AFF]/.test(text)) return 'Noto Sans Gujarati';
-  if (/[\u0980-\u09FF]/.test(text)) return 'Noto Sans Bengali';
-  if (/[\u0B80-\u0BFF]/.test(text)) return 'Noto Sans Tamil';
-  if (/[\u0C00-\u0C7F]/.test(text)) return 'Noto Sans Telugu';
-  if (/[\u0C80-\u0CFF]/.test(text)) return 'Noto Sans Kannada';
-  if (/[\u0A00-\u0A7F]/.test(text)) return 'Noto Sans Gurmukhi';
-  if (/[\u0600-\u06FF]/.test(text)) return 'Noto Sans Arabic';
+  // Strip dandas (which are technically Devanagari block characters but used across regional scripts) before testing
+  const testText = text.replace(/[\u0964\u0965]/g, '');
+  if (/[\u0A80-\u0AFF]/.test(testText)) return 'Noto Sans Gujarati';
+  if (/[\u0980-\u09FF]/.test(testText)) return 'Noto Sans Bengali';
+  if (/[\u0B80-\u0BFF]/.test(testText)) return 'Noto Sans Tamil';
+  if (/[\u0C00-\u0C7F]/.test(testText)) return 'Noto Sans Telugu';
+  if (/[\u0C80-\u0CFF]/.test(testText)) return 'Noto Sans Kannada';
+  if (/[\u0A00-\u0A7F]/.test(testText)) return 'Noto Sans Gurmukhi';
+  if (/[\u0600-\u06FF]/.test(testText)) return 'Noto Sans Arabic';
+  if (/[\u0900-\u097F]/.test(testText)) return 'Noto Sans Devanagari';
   return fallbackFont;
 }
 // ── EXACT LAYOUT COMPONENT ──────────────────────────────────────────
@@ -112,29 +70,29 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
   const padLeft = theme.paddingLeft !== undefined
     ? theme.paddingLeft
     : (config.defaultPaddingLeft !== undefined
-        ? config.defaultPaddingLeft
-        : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
+      ? config.defaultPaddingLeft
+      : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
   const padRight = theme.paddingRight !== undefined
     ? theme.paddingRight
     : (config.defaultPaddingRight !== undefined
-        ? config.defaultPaddingRight
-        : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
+      ? config.defaultPaddingRight
+      : (theme.padding !== undefined ? theme.padding : (config.defaultPadding ?? 60)));
   const padTop = theme.paddingTop !== undefined
     ? theme.paddingTop
     : (config.defaultPaddingTop !== undefined
-        ? config.defaultPaddingTop
-        : (theme.paddingY !== undefined
-            ? theme.paddingY
-            : (config.defaultYPadding !== undefined
-                ? config.defaultYPadding
-                : padLeft)));
+      ? config.defaultPaddingTop
+      : (theme.paddingY !== undefined
+        ? theme.paddingY
+        : (config.defaultYPadding !== undefined
+          ? config.defaultYPadding
+          : padLeft)));
   const padBottom = theme.paddingBottom !== undefined
     ? theme.paddingBottom
     : (theme.paddingY !== undefined
-        ? theme.paddingY
-        : (config.defaultYPadding !== undefined
-            ? config.defaultYPadding
-            : padLeft));
+      ? theme.paddingY
+      : (config.defaultYPadding !== undefined
+        ? config.defaultYPadding
+        : padLeft));
   const padding = padLeft;
   const paddingY = padTop;
   const initialFontSize = theme.fontSize || config.bgConfig?.fontSize || 9;
@@ -230,7 +188,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
     // Reserve that space in the layout so sections don't collide with the sticker.
     const mantraSticker = data.stickers?.find((s: any) => s.isMantra === true || (s.isMantra !== false && s.y < 120));
     const MANTRA_STICKER_EXTRA = mantraSticker ? 50 : 0;
-    let cursorY = paddingY + 20 + MANTRA_STICKER_EXTRA;
+    let cursorY = paddingY + 20 * (fSize / initialFontSize) + MANTRA_STICKER_EXTRA;
     const headerItems: any[] = [];
     if (data.mantra) {
       headerItems.push({ type: 'mantra', text: data.mantra, y: paddingY + 10 + MANTRA_STICKER_EXTRA, fontSize: fSize * 1.2, font: getFontForText(data.mantra, fontFamily) });
@@ -241,8 +199,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       cursorY += fSize * 2.8;
     }
 
-    const LABEL_WIDTH = 130;
-    const COLON_WIDTH = 20;
+
     const LINE_SPACING = fSize * 0.5 + 2;
     const contentWidth = A4_W - padLeft - padRight - 10;
     const standardHalfW = (contentWidth - 12) / 2;
@@ -255,6 +212,26 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       { key: 'contact', fields: data.contactDetails, label: t.contact || "Contact Details" }
     ];
 
+    const getVisualLength = (str: string) => {
+      if (!str) return 0;
+      return str.replace(/[\u0901-\u0903\u093c\u093e-\u094d\u0951-\u0954\u0962\u0963]/g, "").length;
+    };
+
+    let maxDocLabelLen = 0;
+    for (const sec of sectionKeys) {
+      const fields = sec.fields?.map((f: any) => processPDFField(f, sec.fields, data, t)).filter((f: any) => !f.shouldSkip && f.displayValue && f.displayValue !== "Not Specified") || [];
+      for (const f of fields) {
+        const lblLen = getVisualLength(String(f.displayLabel || ""));
+        if (lblLen > maxDocLabelLen) {
+          maxDocLabelLen = lblLen;
+        }
+      }
+    }
+
+    const detailsFontSize = fSize + 1;
+    const LABEL_WIDTH = Math.max(80, Math.min(130, maxDocLabelLen * detailsFontSize * 0.70));
+    const COLON_WIDTH = 20;
+
     for (const sec of sectionKeys) {
       const secIdx = sectionKeys.indexOf(sec);
       const secKey = `sec-${secIdx}`;
@@ -266,7 +243,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       if (fields.length === 0) continue;
 
       const titleY = cursorY;
-      cursorY += Math.round(fSize * 1.4) + secLineSpacing + 16;
+      cursorY += Math.round(fSize * 1.4) + secLineSpacing + 12; // Constant extra padding for headings instead of scaling space
       const fieldRows: any[] = [];
 
       let i = 0;
@@ -322,9 +299,14 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
           if (f1.logoUrl) {
             valueW -= (secFontSize + 4);
           }
-          const valW = valText.length * secFontSize * 0.6;
-          const lines = Math.ceil(valW / valueW) || 1;
-          const rowHeight = Math.max(secFontSize, lines * secFontSize * 1.1);
+          const lblText = String(f1.displayLabel || "");
+          const lblLines = Math.ceil((getVisualLength(lblText) * secFontSize * 0.65) / unpairedLabelW) || 1;
+          const valLines = valText.split(/\r\n|\r|\n/).reduce((acc, segment) => {
+            const segmentW = getVisualLength(segment) * secFontSize * 0.6;
+            return acc + (Math.ceil(segmentW / valueW) || 1);
+          }, 0) || 1;
+          const lines = Math.max(lblLines, valLines);
+          const rowHeight = Math.max(secFontSize, lines * secFontSize * 1.5);
 
           fieldRows.push({
             ...f1,
@@ -341,13 +323,33 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       }
 
       sectionLayouts.push({ key: sec.key, title: sec.label, titleY, fields: fieldRows });
-      cursorY += secFontSize * 1.5;
+      cursorY += secFontSize * 1.1;
     }
     return { headerItems, sectionLayouts, totalHeight: cursorY };
   };
 
   let currentFontSize = initialFontSize;
   let layout = calculateLayout(currentFontSize);
+  const maxAllowedHeight = A4_H - 25;
+
+  // Automatically adjust font size and spacing to ensure everything fits on a single page
+  if (layout.totalHeight > maxAllowedHeight) {
+    while (layout.totalHeight > maxAllowedHeight && currentFontSize > 6.5) {
+      currentFontSize -= 0.25;
+      layout = calculateLayout(currentFontSize);
+    }
+  } else {
+    // Expand font size to fill the page if there is space!
+    while (layout.totalHeight < maxAllowedHeight && currentFontSize < 12.5) {
+      currentFontSize += 0.25;
+      const nextLayout = calculateLayout(currentFontSize);
+      if (nextLayout.totalHeight > maxAllowedHeight) {
+        currentFontSize -= 0.25;
+        break;
+      }
+      layout = nextLayout;
+    }
+  }
 
   const hasPhoto = !!data.photo;
   const pCornerRadius = theme.photoCornerRadius !== undefined ? theme.photoCornerRadius : (config.photo?.cornerRadius ?? 8);
@@ -429,14 +431,15 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
       flex: 1,
       fontSize: currentFontSize,
       fontFamily: fontFamily,
+      fontWeight: 'bold',
       color: secondary,
-      lineHeight: 1.1
+      lineHeight: 1.5
     },
     logo: { width: 14, height: 14, marginRight: 4 }
   });
 
   const isJpgFrame = config.frame.type === 'image' &&
-    (config.frame.urlTemplate ? 
+    (config.frame.urlTemplate ?
       (config.frame.urlTemplate.toLowerCase().includes('.jpg') || config.frame.urlTemplate.toLowerCase().includes('.jpeg'))
       : false);
 
@@ -699,8 +702,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       React.createElement(Text, {
                         style: {
                           position: 'absolute',
-                          left: padLeft,
-                          width: A4_W - padLeft - padRight,
+                          left: 30,
+                          width: A4_W - 60,
                           textAlign: 'center',
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -736,8 +739,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                       React.createElement(Text, {
                         style: {
                           position: 'absolute',
-                          left: padLeft,
-                          width: A4_W - padLeft - padRight,
+                          left: 30,
+                          width: A4_W - 60,
                           textAlign: 'center',
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -764,8 +767,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         style: {
                           position: 'absolute',
                           top: 0,
-                          left: padLeft,
-                          width: A4_W - padLeft - padRight,
+                          left: 30,
+                          width: A4_W - 60,
                           textAlign: align,
                           fontSize: item.fontSize,
                           fontFamily: item.font,
@@ -816,8 +819,8 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                   style: {
                     position: 'absolute',
                     top: item.y,
-                    left: padLeft,
-                    width: A4_W - padLeft - padRight,
+                    left: 30,
+                    width: A4_W - 60,
                     textAlign: align,
                     fontSize: item.fontSize,
                     fontFamily: item.font,
@@ -956,7 +959,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         fontFamily: getFontForText(fullText, fontFamily),
                         fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
                         color: fieldColor,
-                        lineHeight: 1.1
+                        lineHeight: 1.5
                       } as any
                     }, fullText)
                   ];
@@ -977,7 +980,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         fontFamily: getFontForText(f.displayLabel, fontFamily),
                         fontWeight: fontStyle === 'bold' ? 'bold' : 'normal',
                         color: fieldColor,
-                        lineHeight: 1.1
+                        lineHeight: 1.5
                       }
                     ] as any
                   }, applyTransform(f.displayLabel)),
@@ -995,7 +998,7 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                         fontSize: detailsFontSize,
                         fontFamily: fontFamily,
                         color: fieldColor,
-                        lineHeight: 1.1
+                        lineHeight: 1.5
                       }
                     ] as any
                   }, ":"),
@@ -1034,9 +1037,10 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
                           {
                             fontSize: detailsFontSize,
                             fontFamily: getFontForText(f.displayValue, fontFamily),
+                            fontWeight: 'bold',
                             color: fieldColor,
                             width: f.valueW,
-                            lineHeight: 1.1
+                            lineHeight: 1.5
                           }
                         ] as any
                       }, applyTransform(f.displayValue))
@@ -1118,19 +1122,19 @@ function isSameDomain(url: string): boolean {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname;
-    
+
     // Check environment variables
     const uploadBaseUrl = process.env.UPLOAD_BASE_URL;
     const nextAuthUrl = process.env.NEXTAUTH_URL;
-    
+
     const domains = ["biodata99.com", "localhost", "127.0.0.1"];
     if (uploadBaseUrl) {
-      try { domains.push(new URL(uploadBaseUrl).hostname); } catch(e) {}
+      try { domains.push(new URL(uploadBaseUrl).hostname); } catch (e) { }
     }
     if (nextAuthUrl) {
-      try { domains.push(new URL(nextAuthUrl).hostname); } catch(e) {}
+      try { domains.push(new URL(nextAuthUrl).hostname); } catch (e) { }
     }
-    
+
     return domains.some(d => hostname === d || hostname.endsWith("." + d));
   } catch (e) {
     return false;
@@ -1166,7 +1170,7 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
   if (pathname.includes("/uploads/")) {
     const idx = pathname.indexOf("/uploads/");
     const relativeUploadPath = pathname.substring(idx + "/uploads/".length);
-    
+
     // Check multiple possible directories
     const dirsToCheck = [
       process.env.UPLOAD_DIR,
@@ -1184,7 +1188,7 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
           console.log(`[getAbsoluteLocalPath] Found upload file at: ${localPath}`);
           return localPath;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -1203,7 +1207,7 @@ function getAbsoluteLocalPath(urlOrPath: string | null | undefined): string | nu
         console.log(`[getAbsoluteLocalPath] Found public file at: ${publicPath}`);
         return publicPath;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return null;
@@ -1263,7 +1267,7 @@ async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
       console.error("[resolveSvgXml] Failed to decode data SVG URL:", e);
     }
   }
-  
+
   const localPath = getAbsoluteLocalPath(urlOrPath);
   if (localPath) {
     try {
@@ -1274,7 +1278,7 @@ async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
       console.error(`[resolveSvgXml] Error reading local SVG file ${localPath}:`, e);
     }
   }
-  
+
   if (urlOrPath.startsWith("http")) {
     const urlsToTry = [urlOrPath];
     if (isSameDomain(urlOrPath)) {
@@ -1283,9 +1287,9 @@ async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
         const port = process.env.PORT || "3000";
         urlsToTry.unshift(`http://127.0.0.1:${port}${parsed.pathname}`);
         urlsToTry.unshift(`http://localhost:${port}${parsed.pathname}`);
-      } catch (e) {}
+      } catch (e) { }
     }
-    
+
     for (const targetUrl of urlsToTry) {
       try {
         console.log(`[resolveSvgXml] Fetching SVG: ${targetUrl}`);
@@ -1302,7 +1306,7 @@ async function resolveSvgXml(urlOrPath: string): Promise<string | undefined> {
       }
     }
   }
-  
+
   console.warn(`[resolveSvgXml] Failed to resolve SVG content for: ${urlOrPath}`);
   return undefined;
 }
@@ -1417,7 +1421,7 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
           console.error("[resolveAndConvertImage] Failed to parse icon.horse URL domain:", e);
         }
       }
-      
+
       const urlsToTry = [urlToFetch];
       if (isSameDomain(urlToFetch)) {
         try {
@@ -1425,12 +1429,12 @@ async function resolveAndConvertImage(url: string): Promise<string | undefined> 
           const port = process.env.PORT || "3000";
           urlsToTry.unshift(`http://127.0.0.1:${port}${parsed.pathname}`);
           urlsToTry.unshift(`http://localhost:${port}${parsed.pathname}`);
-        } catch (e) {}
+        } catch (e) { }
       }
 
       let fetchSuccess = false;
       let finalResponse: any = null;
-      
+
       for (const targetUrl of urlsToTry) {
         try {
           console.log(`[resolveAndConvertImage] Fetching image from: ${targetUrl}`);

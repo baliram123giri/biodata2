@@ -1062,10 +1062,10 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
   const resolvePad = (override: number | undefined, tplSpecific: number | undefined, global: number | undefined, fallback: number) =>
     override ?? tplSpecific ?? global ?? fallback;
 
-  const paddingLeft   = resolvePad(theme.paddingLeft,   templateConfig.defaultPaddingLeft,   theme.padding, templateConfig.defaultPadding ?? 60);
-  const paddingRight  = resolvePad(theme.paddingRight,  templateConfig.defaultPaddingRight,  theme.padding, templateConfig.defaultPadding ?? 60);
-  const paddingTop    = resolvePad(theme.paddingTop,    templateConfig.defaultPaddingTop,    theme.paddingY ?? templateConfig.defaultYPadding, paddingLeft);
-  const paddingBottom = resolvePad(theme.paddingBottom, undefined,                           theme.paddingY ?? templateConfig.defaultYPadding, paddingLeft);
+  const paddingLeft = resolvePad(theme.paddingLeft, templateConfig.defaultPaddingLeft, theme.padding, templateConfig.defaultPadding ?? 60);
+  const paddingRight = resolvePad(theme.paddingRight, templateConfig.defaultPaddingRight, theme.padding, templateConfig.defaultPadding ?? 60);
+  const paddingTop = resolvePad(theme.paddingTop, templateConfig.defaultPaddingTop, theme.paddingY ?? templateConfig.defaultYPadding, paddingLeft);
+  const paddingBottom = resolvePad(theme.paddingBottom, undefined, theme.paddingY ?? templateConfig.defaultYPadding, paddingLeft);
   const padding = paddingLeft;
   const paddingY = paddingTop;
   const fontFamily = getKonvaFontFamily(theme.fontFamily);
@@ -1144,29 +1144,44 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
       // (scaleY 0.45 × 100px = 45px tall, positioned at y:-50 relative to the mantra group).
       // We must reserve that vertical space so sections start below the full header block.
       const MANTRA_STICKER_EXTRA = mantraSticker ? 50 : 0;
-      let cursorY = paddingY + 20 + MANTRA_STICKER_EXTRA; // Extra room for Mantra (+ sticker when present)
+      let cursorY = paddingY + 20 * (fSize / baseFontSize) + MANTRA_STICKER_EXTRA; // Extra room for Mantra (+ sticker when present)
 
       // 1. Calculate Mantra & Title Height
       if (formData.mantra) cursorY += fSize * 2;
       if (formData.title) cursorY += fSize * 2.8;
 
       const detailsFontSize = fSize + 1;
-      const LABEL_WIDTH = 130;
-      const COLON_WIDTH = 20;
       const LINE_SPACING = detailsFontSize * 0.5 + 2;
       const contentWidth = A4_W - paddingLeft - paddingRight - 10;
       const standardHalfW = (contentWidth - 12) / 2;
       const standardLabelW = Math.round(standardHalfW * 0.45);
       const sectionLayouts: any[] = [];
+      const getVisualLength = (str: string) => {
+        if (!str) return 0;
+        return str.replace(/[\u0901-\u0903\u093c\u093e-\u094d\u0951-\u0954\u0962\u0963]/g, "").length;
+      };
+
       const measure = (text: string, size: number) => {
         // Use a deterministic character-based multiplier to guarantee 100% identical line-wrap 
         // calculations and row coordinates between the client-side canvas and server-side PDF generator.
-        return text.length * size * 0.6;
+        return getVisualLength(text) * size * 0.6;
       };
+
+      let maxDocLabelLen = 0;
+      for (const sec of sections as any[]) {
+        for (const field of sec.fields as any[]) {
+          const lblLen = getVisualLength(String(field.displayLabel || ""));
+          if (lblLen > maxDocLabelLen) {
+            maxDocLabelLen = lblLen;
+          }
+        }
+      }
+      const LABEL_WIDTH = Math.max(80, Math.min(130, maxDocLabelLen * detailsFontSize * 0.70));
+      const COLON_WIDTH = 20;
 
       for (const sec of sections as any[]) {
         const titleY = cursorY;
-        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 16; // Extra padding for beautiful headings
+        cursorY += Math.round(fSize * 1.4) + LINE_SPACING + 12; // Constant extra padding for headings instead of scaling space
         const fieldLayouts: any[] = [];
 
         let i = 0;
@@ -1229,9 +1244,14 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
               valueW -= (detailsFontSize + 4);
             }
 
-            const valW = measure(valText, detailsFontSize);
-            const lines = Math.ceil(valW / valueW) || 1;
-            const rowHeight = Math.max(detailsFontSize, lines * detailsFontSize * 1.1);
+            const lblText = String(field.displayLabel || "");
+            const lblLines = Math.ceil((getVisualLength(lblText) * detailsFontSize * 0.65) / unpairedLabelW) || 1;
+            const valLines = valText.split(/\r\n|\r|\n/).reduce((acc, segment) => {
+              const segmentW = measure(segment, detailsFontSize);
+              return acc + (Math.ceil(segmentW / valueW) || 1);
+            }, 0) || 1;
+            const lines = Math.max(lblLines, valLines);
+            const rowHeight = Math.max(detailsFontSize, lines * detailsFontSize * 1.5);
             fieldLayouts.push({
               id: field.id,
               label: field.displayLabel,
@@ -1248,12 +1268,30 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
         }
 
         sectionLayouts.push({ key: sec.key, titleText: sec.title, titleY, fields: fieldLayouts });
-        cursorY += detailsFontSize * 1.5;
+        cursorY += detailsFontSize * 1.1;
       }
       return { sectionLayouts, totalHeight: cursorY };
     };
     let bestSize = baseFontSize;
     let finalLayout = calculateForSize(bestSize);
+    const maxAllowedHeight = A4_H - 25;
+
+    if (finalLayout.totalHeight > maxAllowedHeight) {
+      while (finalLayout.totalHeight > maxAllowedHeight && bestSize > 6.5) {
+        bestSize -= 0.25;
+        finalLayout = calculateForSize(bestSize);
+      }
+    } else {
+      while (finalLayout.totalHeight < maxAllowedHeight && bestSize < 12.5) {
+        bestSize += 0.25;
+        const nextLayout = calculateForSize(bestSize);
+        if (nextLayout.totalHeight > maxAllowedHeight) {
+          bestSize -= 0.25;
+          break;
+        }
+        finalLayout = nextLayout;
+      }
+    }
     return { ...finalLayout, fSize: bestSize };
   }, [sections, padding, paddingY, paddingLeft, paddingRight, paddingTop, paddingBottom, baseFontSize, fontFamily, fontTick, formData.mantra, formData.title, hasPhoto, photoConfig, detailsLayout, mantraSticker]);
 
@@ -1344,9 +1382,9 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             primaryColor={primaryColor}
           />
           {(() => {
-            const isJpgFrame = templateConfig.frame.type === "image" && 
-              (templateConfig.frame.urlTemplate.toLowerCase().includes(".jpg") || 
-               templateConfig.frame.urlTemplate.toLowerCase().includes(".jpeg"));
+            const isJpgFrame = templateConfig.frame.type === "image" &&
+              (templateConfig.frame.urlTemplate.toLowerCase().includes(".jpg") ||
+                templateConfig.frame.urlTemplate.toLowerCase().includes(".jpeg"));
 
             const isCustomBg = !!theme.bgImageUrl;
             const baseW = isCustomBg ? 300 : (templateConfig.bgConfig?.width ?? 595);
@@ -1468,7 +1506,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
             />
           </Group>
 
-          <Text x={0} y={A4_H - paddingBottom + 10} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill={isDarkBg ? "#ffffff" : "#cccccc"} opacity={isDarkBg ? 0.35 : 1} align="center" />
+          <Text x={0} y={A4_H - 18} width={A4_W} text="www.biodata99.com" fontSize={8} fontFamily="Inter" fill={isDarkBg ? "#ffffff" : "#cccccc"} opacity={isDarkBg ? 0.35 : 1} align="center" />
         </Layer>
         <Layer>
           <Group clipX={0} clipY={0} clipWidth={A4_W} clipHeight={A4_H}>
@@ -1490,7 +1528,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                     )}
                     {formData.mantra && (
                       <Text
-                        x={paddingLeft}
+                        x={30}
                         y={0}
                         text={formData.mantra}
                         fontSize={layout.fSize * 1.2}
@@ -1498,7 +1536,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                         fontStyle="bold"
                         fill={primaryColor}
                         align={sectionStyles["header"]?.textAlign || "center"}
-                        width={A4_W - paddingLeft - paddingRight}
+                        width={A4_W - 60}
                       />
                     )}
                   </Group>
@@ -1513,7 +1551,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                       const titleVal = formData.title || (currentLang === "हिंदी" ? "बायोडाटा" : "BIODATA");
                       const ribbonW = Math.min(
                         Math.max(titleVal.length * layout.fSize * 1.05 + 60, 180),
-                        A4_W - paddingLeft - paddingRight
+                        A4_W - 60
                       );
                       const ribbonH = layout.fSize * 2.8;
                       const ribbonX = (A4_W - ribbonW) / 2;
@@ -1595,7 +1633,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             lineCap="round"
                           />
                           <Text
-                            x={paddingLeft}
+                            x={30}
                             y={titleY}
                             text={formData.title}
                             fontSize={layout.fSize * 2}
@@ -1603,7 +1641,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             fontStyle="bold"
                             fill={primaryColor}
                             align="center"
-                            width={A4_W - paddingLeft - paddingRight}
+                            width={A4_W - 60}
                           />
                         </Group>
                       );
@@ -1627,7 +1665,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                           />
                           {/* Title Text */}
                           <Text
-                            x={paddingLeft}
+                            x={30}
                             y={titleY}
                             text={formData.title}
                             fontSize={layout.fSize * 2}
@@ -1635,7 +1673,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             fontStyle="bold"
                             fill={primaryColor}
                             align="center"
-                            width={A4_W - paddingLeft - paddingRight}
+                            width={A4_W - 60}
                           />
                           {/* Ornamental Underline */}
                           <Line
@@ -1654,7 +1692,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                       // Standard Simple Text
                       return (
                         <Text
-                          x={paddingLeft}
+                          x={30}
                           y={titleY}
                           text={formData.title}
                           fontSize={layout.fSize * 2}
@@ -1662,7 +1700,7 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                           fontStyle="bold"
                           fill={primaryColor}
                           align={align}
-                          width={A4_W - paddingLeft - paddingRight}
+                          width={A4_W - 60}
                         />
                       );
                     }
@@ -1769,8 +1807,9 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             fontFamily={fontFamily}
                             fontStyle={fontStyle}
                             fill={fieldColor}
+
                             align={align}
-                            lineHeight={1.1}
+                            lineHeight={1.5}
                           />
                         </Group>
                       );
@@ -1778,8 +1817,8 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
 
                     return (
                       <Group key={field.id}>
-                        <Text x={colX} y={field.y} width={lblW} text={applyTransform(field.label)} fontSize={detailsFontSize} fontFamily={fontFamily} fontStyle={fontStyle} fill={fieldColor} />
-                        <Text x={colonX} y={field.y} text=":" fontSize={detailsFontSize} fontFamily={fontFamily} fill={fieldColor} />
+                        <Text x={colX} y={field.y} width={lblW} text={applyTransform(field.label)} fontSize={detailsFontSize} fontFamily={fontFamily} fontStyle={fontStyle} fill={fieldColor} lineHeight={1.5} />
+                        <Text x={colonX} y={field.y} text=":" fontSize={detailsFontSize} fontFamily={fontFamily} fill={fieldColor} lineHeight={1.5} />
                         {field.logoUrl ? (
                           <>
                             <LogoImage src={field.logoUrl} x={valX} y={field.y + (detailsFontSize * 0.05)} size={detailsFontSize} />
@@ -1790,8 +1829,9 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                               text={applyTransform(field.value)}
                               fontSize={detailsFontSize}
                               fontFamily={fontFamily}
+                              fontStyle="bold"
                               fill={fieldColor}
-                              lineHeight={1.1}
+                              lineHeight={1.5}
                             />
                           </>
                         ) : (
@@ -1802,8 +1842,9 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
                             text={applyTransform(field.value)}
                             fontSize={detailsFontSize}
                             fontFamily={fontFamily}
+                            fontStyle="bold"
                             fill={fieldColor}
-                            lineHeight={1.1}
+                            lineHeight={1.5}
                           />
                         )}
 

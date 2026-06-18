@@ -36,8 +36,6 @@ import {
   Tag,
   BadgePercent,
   Crown,
-  Undo2,
-  Redo2,
   Move,
   Download
 } from "lucide-react";
@@ -260,48 +258,6 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
   const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = React.useState(false);
   const [formState, setFormState] = React.useState(initialFormState);
-  
-  // History for Undo/Redo
-  const [history, setHistory] = React.useState<typeof initialFormState[]>([]);
-  const [historyIndex, setHistoryIndex] = React.useState(-1);
-  const isUndoRedoing = React.useRef(false);
-
-  React.useEffect(() => {
-    if (isUndoRedoing.current) {
-      isUndoRedoing.current = false;
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setHistory(prev => {
-        const currentIndexState = prev[historyIndex];
-        if (currentIndexState && JSON.stringify(currentIndexState) === JSON.stringify(formState)) {
-          return prev;
-        }
-        const newHistory = historyIndex >= 0 ? prev.slice(0, historyIndex + 1) : [];
-        newHistory.push(formState);
-        if (newHistory.length > 30) newHistory.shift();
-        setHistoryIndex(newHistory.length - 1);
-        return newHistory;
-      });
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [formState, historyIndex]);
-
-  const handleUndo = () => {
-    if (historyIndex > 0) {
-      isUndoRedoing.current = true;
-      setHistoryIndex(prev => prev - 1);
-      setFormState(history[historyIndex - 1]);
-    }
-  };
-
-  const handleRedo = () => {
-    if (historyIndex < history.length - 1) {
-      isUndoRedoing.current = true;
-      setHistoryIndex(prev => prev + 1);
-      setFormState(history[historyIndex + 1]);
-    }
-  };
   const [isNameGenerating, setIsNameGenerating] = React.useState(false);
   const [isDescGenerating, setIsDescGenerating] = React.useState(false);
   const [isAiFilling, setIsAiFilling] = React.useState(false);
@@ -1255,34 +1211,7 @@ export function TemplateForm({ template, isEdit = false }: TemplateFormProps) {
             <span>Download HQ</span>
           </Button>
 
-          <div className="h-5 w-[1px] bg-border hidden md:block" />
-          
-          <div className="flex items-center gap-0.5 md:gap-1 bg-muted/50 p-0.5 md:p-1 rounded-full border border-border/50 shrink-0">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={historyIndex <= 0}
-              onClick={handleUndo}
-              className="h-7 w-7 md:h-8 md:w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={historyIndex >= history.length - 1}
-              onClick={handleRedo}
-              className="h-7 w-7 md:h-8 md:w-8 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-            </Button>
-          </div>
 
-          <div className="h-5 w-[1px] bg-border hidden md:block" />
 
           <Button
             type="submit"

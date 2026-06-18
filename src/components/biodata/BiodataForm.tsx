@@ -414,9 +414,14 @@ export function BiodataForm({
     customTemplates: s.customTemplates,
   })));
 
-  const personalDetails = useWatch({ control, name: "personalDetails" }) || [];
-  const religionField = personalDetails.find((f: any) => f.id === "religion");
-  const religionValue = religionField?.value || "";
+  const personalDetailsFields = getValues("personalDetails") || [];
+  const religionIndex = personalDetailsFields.findIndex((f: any) => f.id === "religion");
+  const watchedReligionValue = useWatch({
+    control,
+    name: (religionIndex !== -1 ? `personalDetails.${religionIndex}.value` : "community") as any
+  }) as string | undefined;
+  const religionValue = watchedReligionValue || (religionIndex !== -1 ? personalDetailsFields[religionIndex]?.value : "") || "";
+  const personalDetailsLength = personalDetailsFields.length;
 
   // Community: read from Zustand store (persisted, survives page navigation) as authoritative source.
   // useWatch catches live user changes inside the form before debounce saves back to store.
@@ -434,6 +439,7 @@ export function BiodataForm({
           ? religionValue
           : "General")
   );
+
 
   const handleCommunityChange = async (community: string) => {
     setValue("community", community);
@@ -516,8 +522,9 @@ export function BiodataForm({
   // (like sect, namaz) to populate automatically on load.
   useEffect(() => {
     if (selectedCommunity && selectedCommunity !== "General") {
+      const currentPersonal = getValues("personalDetails") || [];
       const specFields = COMMUNITY_FIELDS[selectedCommunity] || [];
-      const hasSpecificField = personalDetails.some((f: any) => {
+      const hasSpecificField = currentPersonal.some((f: any) => {
         return specFields.some(spec => spec.id !== "religion" && spec.id !== "caste" && f.id === spec.id);
       });
       
@@ -529,7 +536,7 @@ export function BiodataForm({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCommunity, personalDetails.length]);
+  }, [selectedCommunity, personalDetailsLength]);
 
   const [isMantraDialogOpen, setIsMantraDialogOpen] = useState(false);
   const currentMantraSticker = formData?.stickers?.find((s: any) => s.isMantra);

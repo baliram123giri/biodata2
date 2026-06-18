@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { temporal } from "zundo";
 import { type BiodataFormValues } from "@/types/biodata";
 import { defaultBiodataValues } from "@/lib/default-biodata";
 
@@ -66,9 +65,8 @@ interface BiodataState {
 
 export const useBiodataStore = create<BiodataState>()(
   persist(
-    temporal(
-      (set) => ({
-        formData: {
+    (set) => ({
+      formData: {
           ...defaultBiodataValues,
           layout: {
             header: { x: 0, y: 80 },
@@ -87,9 +85,9 @@ export const useBiodataStore = create<BiodataState>()(
         isFetchingMoreTemplates: false,
         langFilter: "all",
         priceFilter: "all",
-        setLangFilter: (lang) => set({ langFilter: lang }),
-        setPriceFilter: (price) => set({ priceFilter: price }),
-        setFormData: (data) => set((state) => ({
+        setLangFilter: (lang: string) => set({ langFilter: lang }),
+        setPriceFilter: (price: "all" | "free" | "premium") => set({ priceFilter: price }),
+        setFormData: (data: any) => set((state) => ({
           formData: {
             ...state.formData,
             ...data,
@@ -106,7 +104,7 @@ export const useBiodataStore = create<BiodataState>()(
             mantra: (data.mantra !== undefined) ? data.mantra : state.formData.mantra,
           }
         })),
-        updateField: (section, id, value) => set((state) => {
+        updateField: (section: keyof BiodataFormValues, id: string, value: string) => set((state) => {
           const sectionData = state.formData[section];
           if (Array.isArray(sectionData)) {
             return {
@@ -120,7 +118,7 @@ export const useBiodataStore = create<BiodataState>()(
           }
           return state;
         }),
-        updateLayout: (id, x, y) => set((state) => ({
+        updateLayout: (id: string, x: number, y: number) => set((state) => ({
           formData: {
             ...state.formData,
             layout: {
@@ -129,7 +127,7 @@ export const useBiodataStore = create<BiodataState>()(
             }
           }
         })),
-        addSticker: (sticker) => set((state) => ({
+        addSticker: (sticker: Omit<Sticker, 'id'>) => set((state) => ({
           formData: {
             ...state.formData,
             stickers: [
@@ -138,21 +136,21 @@ export const useBiodataStore = create<BiodataState>()(
             ]
           }
         })),
-        updateSticker: (id, updates) => set((state) => ({
+        updateSticker: (id: string, updates: Partial<Sticker>) => set((state) => ({
           formData: {
             ...state.formData,
             stickers: (state.formData.stickers || []).map(s => s.id === id ? { ...s, ...updates } : s)
           }
         })),
-        removeSticker: (id) => set((state) => ({
+        removeSticker: (id: string) => set((state) => ({
           formData: {
             ...state.formData,
             stickers: (state.formData.stickers || []).filter(s => s.id !== id)
           }
         })),
-        setSelectedTemplate: (templateId) => set({ selectedTemplate: templateId }),
-        setCustomTemplates: (templates) => set({ customTemplates: templates }),
-        fetchCustomTemplates: async (religion) => {
+        setSelectedTemplate: (templateId: string) => set({ selectedTemplate: templateId }),
+        setCustomTemplates: (templates: TemplateConfig[]) => set({ customTemplates: templates }),
+        fetchCustomTemplates: async (religion?: string) => {
           const state = useBiodataStore.getState();
           // If we already loaded the list of templates (not just a single template by ID), skip fetching page 1 again
           if (state.hasLoadedAllTemplates && state.customTemplates.length > 1) {
@@ -177,11 +175,8 @@ export const useBiodataStore = create<BiodataState>()(
                   }
                 });
               }
-              set((state) => {
+              set((state: BiodataState) => {
                 const currentSelected = state.selectedTemplate;
-                const needsSelection = !currentSelected;
-                const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
-                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
 
                 const existingTemplates = state.customTemplates || [];
                 const mergedTemplates = [...existingTemplates];
@@ -191,12 +186,17 @@ export const useBiodataStore = create<BiodataState>()(
                   }
                 });
 
+                const defaultTemplate = mergedTemplates.find((t: any) => t.isDefault === true);
+                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : mergedTemplates[0].id;
+                const isCurrentSelectedValid = currentSelected && mergedTemplates.some((t) => t.id === currentSelected);
+                const needsSelection = !currentSelected || !isCurrentSelectedValid;
+
                 return {
                   customTemplates: mergedTemplates,
                   hasLoadedAllTemplates: true,
                   hasMoreTemplates: data.hasMore ?? false,
                   templatePage: 1,
-                  ...(needsSelection ? { selectedTemplate: fallbackTemplateId } : {}),
+                  selectedTemplate: needsSelection ? fallbackTemplateId : currentSelected,
                 };
               });
             }
@@ -204,7 +204,7 @@ export const useBiodataStore = create<BiodataState>()(
             console.error("Store failed to fetch templates:", err);
           }
         },
-        fetchMoreTemplates: async (religion) => {
+        fetchMoreTemplates: async (religion?: string) => {
           const state = useBiodataStore.getState();
           if (state.isFetchingMoreTemplates || !state.hasMoreTemplates) return;
           set({ isFetchingMoreTemplates: true });
@@ -228,7 +228,7 @@ export const useBiodataStore = create<BiodataState>()(
                   }
                 });
               }
-              set((s) => ({
+              set((s: BiodataState) => ({
                 customTemplates: [...s.customTemplates, ...data.templates.filter((t: any) => !s.customTemplates.some(e => e.id === t.id))],
                 hasMoreTemplates: data.hasMore ?? false,
                 templatePage: nextPage,
@@ -242,26 +242,34 @@ export const useBiodataStore = create<BiodataState>()(
             set({ isFetchingMoreTemplates: false });
           }
         },
-        fetchInitialTemplate: async (templateId, religion) => {
+        fetchInitialTemplate: async (templateId?: string | null, religion?: string) => {
           try {
             const currentSelected = useBiodataStore.getState().selectedTemplate;
-            // If a specific template is requested via URL param, use that; otherwise keep existing selection
-            const targetId = templateId || currentSelected || null;
+            const loaded = useBiodataStore.getState().customTemplates;
 
             // Always make sure stored templates are registered in-memory on page load
-            const loaded = useBiodataStore.getState().customTemplates;
             if (loaded.length > 0) {
               registerDynamicTemplates(loaded);
             }
 
-            // If we already have templates and the target is loaded, just update selection if needed
-            const isTargetLoaded = targetId ? loaded.some((t) => t.id === targetId) : loaded.length > 0;
-            if (loaded.length > 0 && isTargetLoaded) {
-              if (templateId) {
-                set({ selectedTemplate: templateId });
-              }
+            // If we already have templates, check if we need to fetch a specific new templateId
+            const isSpecificTemplateRequested = !!templateId;
+            const isRequestedTemplateLoaded = isSpecificTemplateRequested && loaded.some((t) => t.id === templateId);
+
+            if (loaded.length > 0 && (!isSpecificTemplateRequested || isRequestedTemplateLoaded)) {
+              // Priority: URL param templateId > existing valid selectedTemplate > default template in loaded > first template in loaded
+              const defaultTemplate = loaded.find((t) => t.isDefault === true);
+              const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : loaded[0].id;
+              const isCurrentSelectedValid = currentSelected && loaded.some((t) => t.id === currentSelected);
+
+              const newSelected = templateId
+                ? templateId
+                : (isCurrentSelectedValid ? currentSelected : fallbackTemplateId);
+
+              set({ selectedTemplate: newSelected });
+
               // Preload target template's frame image to avoid blank flash on screen entry
-              const targetTpl = targetId ? loaded.find((t) => t.id === targetId) : loaded[0];
+              const targetTpl = loaded.find((t) => t.id === newSelected) || loaded[0];
               if (targetTpl && targetTpl.frame?.type === "image" && targetTpl.frame.urlTemplate) {
                 await preloadFrameImage(
                   targetTpl.frame.urlTemplate,
@@ -286,41 +294,8 @@ export const useBiodataStore = create<BiodataState>()(
             if (data.templates && data.templates.length > 0) {
               registerDynamicTemplates(data.templates);
               
-              // Find the template that will actually be selected
-              const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
-              const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
-              const newSelectedId = templateId ? templateId : (currentSelected || fallbackTemplateId);
-              
-              const targetTpl = data.templates.find((t: any) => t.id === newSelectedId);
-
-              // Preload target template's frame image first so it renders instantly
-              if (targetTpl && targetTpl.frame?.type === "image" && targetTpl.frame.urlTemplate) {
-                await preloadFrameImage(
-                  targetTpl.frame.urlTemplate,
-                  targetTpl.defaultPrimary,
-                  targetTpl.defaultPrimary,
-                  targetTpl.defaultAccent || "",
-                  targetTpl.defaultAccent || ""
-                );
-              }
-
-              // Also preload thumbnails asynchronously
-              if (typeof window !== "undefined") {
-                data.templates.forEach((tpl: any) => {
-                  if (tpl.thumbnailUrl) {
-                    const img = new window.Image();
-                    img.src = tpl.thumbnailUrl;
-                  }
-                  if (tpl.frame?.urlTemplate && tpl.id !== newSelectedId) {
-                    preloadSvg(tpl.frame.urlTemplate);
-                  }
-                });
-              }
-
-              set((state) => {
+              set((state: BiodataState) => {
                 const existingSelected = state.selectedTemplate;
-                const defaultTemplate = data.templates.find((t: any) => t.isDefault === true);
-                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : data.templates[0].id;
 
                 // Merge the new templates into customTemplates
                 const existingTemplates = state.customTemplates || [];
@@ -331,13 +306,42 @@ export const useBiodataStore = create<BiodataState>()(
                   }
                 });
 
-                // Priority: URL param > existing selection > default
+                // Find the template that will actually be selected
+                const defaultTemplate = mergedTemplates.find((t: any) => t.isDefault === true);
+                const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : mergedTemplates[0].id;
+                const isCurrentSelectedValid = existingSelected && mergedTemplates.some((t) => t.id === existingSelected);
                 const newSelected = templateId
                   ? templateId
-                  : (existingSelected || fallbackTemplateId);
+                  : (isCurrentSelectedValid ? existingSelected : fallbackTemplateId);
 
                 // If no templateId parameter was requested, we loaded the default first page
                 const loadedDefaultPage = !templateId;
+
+                const targetTpl = mergedTemplates.find((t: any) => t.id === newSelected) || mergedTemplates[0];
+
+                // Preload target template's frame image first so it renders instantly
+                if (targetTpl && targetTpl.frame?.type === "image" && targetTpl.frame.urlTemplate) {
+                  preloadFrameImage(
+                    targetTpl.frame.urlTemplate,
+                    targetTpl.defaultPrimary,
+                    targetTpl.defaultPrimary,
+                    targetTpl.defaultAccent || "",
+                    targetTpl.defaultAccent || ""
+                  ).catch(err => console.error("Failed to preload frame image:", err));
+                }
+
+                // Also preload thumbnails asynchronously
+                if (typeof window !== "undefined") {
+                  data.templates.forEach((tpl: any) => {
+                    if (tpl.thumbnailUrl) {
+                      const img = new window.Image();
+                      img.src = tpl.thumbnailUrl;
+                    }
+                    if (tpl.frame?.urlTemplate && tpl.id !== newSelected) {
+                      preloadSvg(tpl.frame.urlTemplate);
+                    }
+                  });
+                }
 
                 return {
                   customTemplates: mergedTemplates,
@@ -369,8 +373,9 @@ export const useBiodataStore = create<BiodataState>()(
             console.error("Store failed to fetch stickers:", err);
           }
         },
-        resetStore: () => set((state) => {
+        resetStore: () => set((state: BiodataState) => {
           const defaultTemplate = state.customTemplates.find((t) => t.isDefault === true);
+          const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : (state.customTemplates[0]?.id || "royal");
           return {
             formData: {
               ...defaultBiodataValues,
@@ -382,10 +387,10 @@ export const useBiodataStore = create<BiodataState>()(
               },
               stickers: []
             },
-            selectedTemplate: defaultTemplate ? defaultTemplate.id : "royal"
+            selectedTemplate: fallbackTemplateId
           };
         }),
-        resetFormDataOnly: () => set((state) => ({
+        resetFormDataOnly: () => set((state: BiodataState) => ({
           formData: {
             ...defaultBiodataValues,
             layout: {
@@ -397,9 +402,11 @@ export const useBiodataStore = create<BiodataState>()(
             stickers: []
           }
         })),
-        resetDesignOnly: () => set((state) => {
+        resetDesignOnly: () => set((state: BiodataState) => {
           const currentSelected = state.selectedTemplate;
           const defaultTemplate = state.customTemplates.find((t) => t.isDefault === true);
+          const fallbackTemplateId = defaultTemplate ? defaultTemplate.id : (state.customTemplates[0]?.id || "royal");
+          const isCurrentValid = currentSelected && state.customTemplates.some(t => t.id === currentSelected);
           return {
             formData: {
               ...state.formData,
@@ -411,28 +418,27 @@ export const useBiodataStore = create<BiodataState>()(
               },
               stickers: (state.formData.stickers || []).filter((s) => s.isMantra)
             },
-            selectedTemplate: currentSelected || (defaultTemplate ? defaultTemplate.id : "royal")
+            selectedTemplate: isCurrentValid ? currentSelected : fallbackTemplateId
           };
         }),
-      })
-    ),
-    {
-      name: "biodata-storage",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        formData: state.formData,
       }),
-      merge: (persistedState: any, currentState: any) => {
-        return {
-          ...currentState,
-          ...persistedState,
-          formData: {
-            ...currentState.formData,
-            ...persistedState?.formData,
-          }
-        };
-      },
-      version: 2,
-    }
-  )
-);
+      {
+        name: "biodata-storage",
+        storage: createJSONStorage(() => localStorage),
+        partialize: (state: BiodataState) => ({
+          formData: state.formData,
+        }),
+        merge: (persistedState: any, currentState: any) => {
+          return {
+            ...currentState,
+            ...persistedState,
+            formData: {
+              ...currentState.formData,
+              ...persistedState?.formData,
+            }
+          };
+        },
+        version: 2,
+      }
+    )
+  );

@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import {
-  Undo2,
-  Redo2,
   Share2,
   Download,
   LayoutDashboard,
@@ -60,7 +58,6 @@ import { TemplateFilter } from "@/components/editor/TemplateFilter";
 import { useBiodataStore } from "@/store/useBiodataStore";
 import { getTemplateConfig } from "@/lib/frame-config";
 import { useThemeStore, FontFamily, FontWeight, Alignment, PALETTES } from "@/store/useThemeStore";
-import { useStore } from "zustand";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { biodataSchema, type BiodataFormValues } from "@/types/biodata";
@@ -109,45 +106,12 @@ function EditPageContent() {
 
   const theme = useThemeStore();
   const prevTemplateRef = useRef<string | null>(null);
-  const biodataHistory = useStore(useBiodataStore.temporal, (state) => state);
-  const themeHistory = useStore(useThemeStore.temporal, (state) => state);
 
   const activeTemplate = customTemplates.find((t) => t.id === selectedTemplate) || getTemplateConfig(selectedTemplate);
   const defaultPaddingLeft = activeTemplate?.defaultPaddingLeft !== undefined ? activeTemplate.defaultPaddingLeft : (activeTemplate?.defaultPadding ?? 60);
   const defaultPaddingRight = activeTemplate?.defaultPaddingRight !== undefined ? activeTemplate.defaultPaddingRight : (activeTemplate?.defaultPadding ?? 60);
   const defaultPaddingTop = activeTemplate?.defaultPaddingTop !== undefined ? activeTemplate.defaultPaddingTop : (activeTemplate?.defaultYPadding !== undefined ? activeTemplate.defaultYPadding : defaultPaddingLeft);
-  const canUndo = biodataHistory.pastStates.length > 0 || themeHistory.pastStates.length > 0;
-  const canRedo = biodataHistory.futureStates.length > 0 || themeHistory.futureStates.length > 0;
   const currentLang = methods.watch("language") || formData.language || "English";
-
-
-
-
-  const handleUndo = () => {
-    if (biodataHistory.pastStates.length > 0) biodataHistory.undo();
-    if (themeHistory.pastStates.length > 0) themeHistory.undo();
-  };
-
-  const handleRedo = () => {
-    if (biodataHistory.futureStates.length > 0) biodataHistory.redo();
-    if (themeHistory.futureStates.length > 0) themeHistory.redo();
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        if (e.shiftKey) handleRedo();
-        else handleUndo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
-        e.preventDefault();
-        handleRedo();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [biodataHistory, themeHistory]);
   const [isMounted, setIsMounted] = useState(false);
   const [isStoreHydrated, setIsStoreHydrated] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
@@ -726,38 +690,12 @@ function EditPageContent() {
           </Button>
         </div>
 
-        {/* Center toolbar: Undo/Redo always visible, other items hidden on mobile */}
-        <div className="flex items-center gap-1 border-x border-stitch-outline/5 px-2 md:px-4 h-full">
-          <button
-            onClick={handleUndo}
-            disabled={!canUndo}
-            className={cn(
-              "p-2 rounded-lg transition-all active:scale-90",
-              canUndo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
-            )}
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo2 className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-          <button
-            onClick={handleRedo}
-            disabled={!canRedo}
-            className={cn(
-              "p-2 rounded-lg transition-all active:scale-90",
-              canRedo ? "text-stitch-on-surface hover:bg-stitch-surface-variant/30" : "text-stitch-on-surface-variant/30 cursor-not-allowed"
-            )}
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo2 className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-
-          {/* Reset button & divider: hidden on mobile */}
-          <div className="hidden md:flex items-center gap-1 h-full">
-            <Separator orientation="vertical" className="h-8 mx-1 bg-stitch-outline/10" />
-            <Dialog>
-              <DialogTrigger asChild>
-                <ToolbarItem icon={<RefreshCcw />} label={translateUI("reset", currentLang)} />
-              </DialogTrigger>
+        {/* Reset button: hidden on mobile */}
+        <div className="hidden md:flex items-center gap-1 h-full border-x border-stitch-outline/5 px-4">
+          <Dialog>
+            <DialogTrigger asChild>
+              <ToolbarItem icon={<RefreshCcw />} label={translateUI("reset", currentLang)} />
+            </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{translateUI("resetDesignTitle", currentLang)}</DialogTitle>
@@ -816,7 +754,6 @@ function EditPageContent() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">

@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       templateId: tId,
       theme: theme || {
         fontFamily: "noto",
+        fontWeight: "bold",
         primaryColor: "#800000",
         secondaryColor: "#333333",
         accentColor: "#D4AF37",

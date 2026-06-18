@@ -215,6 +215,7 @@ export async function prepareDataForGeneration(
 
   const preparedTheme = {
     fontFamily: theme.fontFamily,
+    fontWeight: theme.fontWeight,
     primaryColor: theme.primaryColor,
     secondaryColor: theme.secondaryColor,
     accentColor: theme.accentColor,

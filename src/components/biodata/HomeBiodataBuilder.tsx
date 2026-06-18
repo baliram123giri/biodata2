@@ -1167,7 +1167,8 @@ export function HomeBiodataBuilder({
 }
 
 function EmbeddedPreviewSection({ storedTemplate, control }: { storedTemplate: string; control: any }) {
-  const formData = useWatch({ control });
+  const rawFormData = useWatch({ control });
+  const [debouncedFormData, setDebouncedFormData] = useState(rawFormData);
   const [isClientMounted, setIsClientMounted] = useState(false);
   const customTemplates = useBiodataStore((state) => state.customTemplates);
 
@@ -1175,12 +1176,22 @@ function EmbeddedPreviewSection({ storedTemplate, control }: { storedTemplate: s
     setIsClientMounted(true);
   }, []);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFormData(rawFormData);
+    }, 400);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [rawFormData]);
+
   return (
     <div id="biodata-preview-home" className="bg-white overflow-hidden w-full aspect-[210/297] relative rounded-lg shadow-2xl ring-1 ring-black/5 pointer-events-none flex items-center justify-center">
       {!isClientMounted || customTemplates.length === 0 ? (
         <PreviewLoader />
       ) : (
-        <KonvaPreview liveFormData={formData as BiodataFormValues} templateId={storedTemplate} />
+        <KonvaPreview liveFormData={debouncedFormData as BiodataFormValues} templateId={storedTemplate} />
       )}
     </div>
   );
