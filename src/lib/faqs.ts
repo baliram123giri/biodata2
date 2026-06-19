@@ -17,7 +17,7 @@ export const faqs = [
   },
   {
     q: "Can I edit my biodata after downloading?",
-    a: "Since Biodata99 does not store your data, the downloaded PDF cannot be edited after leaving the site. To make changes, simply return to biodata99.com, re-enter your updated details, and download a fresh PDF. The process takes only a few minutes.",
+    a: "You can make changes to your biodata anytime before downloading. Your details stay saved in your browser, so you can return and continue editing on the same device. However, once you've downloaded the biodata, you can't re-upload or edit it on our website.",
   },
   {
     q: "Which languages are supported for biodata?",

@@ -38,11 +38,11 @@ const faqsList = [
   },
   {
     question: "Can I download as PDF and share on WhatsApp?",
-    answer: "Yes. PDF, JPEG, and PNG are all available. For WhatsApp sharing, JPEG works best - the file size stays small and the image quality holds up well on mobile. PDF is better if someone wants to print it or share over email.",
+    answer: "Yes, you can download your biodata in JPEG, PDF, or PNG format and easily share it on WhatsApp, email, or social media.",
   },
   {
     question: "Can I edit my biodata after downloading?",
-    answer: "Not after downloading, no. Since we don't store your data, the form clears once you close or refresh the tab. The practical workaround: keep the tab open while you share and wait for feedback, make any changes, then download the final version. Most people are done in one sitting anyway.",
+    answer: "You can make changes to your biodata anytime before downloading. Your details stay saved in your browser, so you can return and continue editing on the same device. However, once you've downloaded the biodata, you can't re-upload or edit it on our website.",
   },
 ];
 
@@ -52,7 +52,7 @@ export default function FAQsPage() {
       {/* JSON-LD Schema */}
       <JsonLd schema={generateFaqSchema(faqsList)} />
       <div className="container mx-auto max-w-4xl relative z-10 space-y-12">
-        
+
         {/* Header Title */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1 bg-[#FBF5E6] dark:bg-[#8A7233]/25 px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-xs font-black text-[#9B1B30] dark:text-[#E6C97A]">

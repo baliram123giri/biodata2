@@ -37,11 +37,11 @@ const homepageFaqs = [
   },
   {
     question: "Can I download as PDF and share on WhatsApp?",
-    answer: "Yes. PDF, JPEG, and PNG are all available. For WhatsApp sharing, JPEG works best - the file size stays small and the image quality holds up well on mobile. PDF is better if someone wants to print it or share over email."
+    answer: "Yes, you can download your biodata in JPEG, PDF, or PNG format and easily share it on WhatsApp, email, or social media."
   },
   {
     question: "Can I edit my biodata after downloading?",
-    answer: "Not after downloading, no. Since we don't store your data, the form clears once you close or refresh the tab. The practical workaround: keep the tab open while you share and wait for feedback, make any changes, then download the final version. Most people are done in one sitting anyway."
+    answer: "You can make changes to your biodata anytime before downloading. Your details stay saved in your browser, so you can return and continue editing on the same device. However, once you've downloaded the biodata, you can't re-upload or edit it on our website."
   }
 ];
 
@@ -235,18 +235,18 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             <FeatureCard
               icon={<FileText className="w-8 h-8 text-primary" />}
-              title="50+ Biodata Templates"
-              description="Traditional designs with religious symbols to modern clean layouts - for every Indian community."
-            />
-            <FeatureCard
-              icon={<Wand2 className="w-8 h-8 text-primary" />}
-              title="No Design Skills Needed"
-              description="Just open the form, fill your details, pick a template and your biodata is ready."
+              title="50+ Professionally Designed Biodata Templates"
+              description="Start with a ready-made template and make it your own with custom colours, graphics, and personalised details."
             />
             <FeatureCard
               icon={<Monitor className="w-8 h-8 text-primary" />}
-              title="Live Preview as You Type"
-              description="See your final biodata update in real time before you download."
+              title="Real-Time Preview"
+              description="Watch your biodata update in real time as you fill in your details. You can make changes. See how the final version will look before you download it. This way, you can check your biodata. Make sure it is correct."
+            />
+            <FeatureCard
+              icon={<Wand2 className="w-8 h-8 text-primary" />}
+              title="Advanced Editor Studio"
+              description="Enjoy complete control over your biodata with customizable themes, colours, backgrounds, frames, fonts, stickers, graphics, and layout settings."
             />
             <FeatureCard
               icon={<Download className="w-8 h-8 text-primary" />}
@@ -631,13 +631,12 @@ export default function Home() {
               and the kind of life you are building together.
             </p>
 
-            {/* Paragraph 5 — how it is shared */}
             <p>
-              Biodatas are shared over WhatsApp, sent to relatives, uploaded
-              to matrimonial sites, or handed over in person at family gatherings.
-              The format is understood across Hindu, Muslim, Christian, Sikh, and
-              Jain communities - and across regional languages from Hindi and
-              Marathi to Tamil, Telugu, and Gujarati.
+              Biodata is shared in ways like on WhatsApp Groups. It is also sent to relatives. Some people upload it to marriage websites. Others give it in person at family events.
+            </p>
+
+            <p>
+              The biodata format is easily understood by people, from religions. Hindu, Muslim, Christian, Sikh and Jain. It is also understood in regional languages. These include Hindi, Marathi, Tamil, Telugu and Gujarati.
             </p>
 
             {/* Radix UI Divider Line */}
@@ -645,11 +644,7 @@ export default function Home() {
 
             {/* Soft CTA — plain <p> with separate anchor link below */}
             <p className="text-stone-850 dark:text-stone-200 font-bold">
-              On biodata99.com you start with any template and personalise
-              it fully - change the layout, switch languages, add your photo,
-              update colours, and adjust every field to match your family&apos;s
-              preferences. The template is just a starting point. No account
-              needed, and it takes a few minutes.
+              On the biodata99 platform, you can start with any template and edit it fully
             </p>
             <div className="pt-2 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <a
