@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, withRetry } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 
 export async function GET() {
   try {
@@ -90,6 +91,14 @@ export async function POST(req: Request) {
         },
       })
     );
+
+    // Invalidate the cache to reflect changes immediately in FooterReviews
+    try {
+      revalidateTag("footer-reviews");
+    } catch (e) {
+      console.error("Failed to revalidate footer-reviews tag:", e);
+    }
+
     return NextResponse.json({ settings });
   } catch (error: any) {
     console.error("Failed to update review settings:", error);
