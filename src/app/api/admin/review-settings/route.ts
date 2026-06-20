@@ -94,7 +94,7 @@ export async function POST(req: Request) {
 
     // Invalidate the cache to reflect changes immediately in FooterReviews
     try {
-      revalidateTag("footer-reviews");
+      revalidateTag("footer-reviews", "max");
     } catch (e) {
       console.error("Failed to revalidate footer-reviews tag:", e);
     }

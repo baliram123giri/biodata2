@@ -206,10 +206,10 @@ const ExactBiodataPDF = ({ data, templateId, theme, photoWidth = 0, photoHeight 
     const standardLabelW = Math.round(standardHalfW * 0.45);
     const sectionLayouts: any[] = [];
     const sectionKeys = [
-      { key: 'personal', fields: data.personalDetails, label: t.personal || "Personal Details" },
-      { key: 'educationSec', fields: data.educationDetails, label: t.educationSec || "Education & Career" },
-      { key: 'family', fields: data.familyDetails, label: t.family || "Family Background" },
-      { key: 'contact', fields: data.contactDetails, label: t.contact || "Contact Details" }
+      { key: 'personal', fields: data.personalDetails, label: data.personalTitle || t.personal || "Personal Details" },
+      { key: 'educationSec', fields: data.educationDetails, label: data.educationTitle || t.educationSec || "Education & Career" },
+      { key: 'family', fields: data.familyDetails, label: data.familyTitle || t.family || "Family Background" },
+      { key: 'contact', fields: data.contactDetails, label: data.contactTitle || t.contact || "Contact Details" }
     ];
 
     const getVisualLength = (str: string) => {

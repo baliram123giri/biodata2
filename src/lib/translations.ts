@@ -53,11 +53,11 @@ export function translateDynamicOption(opt: string, t: Record<string, string>, f
   }
 
   // Determine if this is a contact field (where we want to preserve standard Latin digits)
-  const isContactField = fieldId === "mobileNumber" || 
-                         fieldId === "email" || 
-                         fieldId === "residentialAddress" || 
-                         fieldId === "address" ||
-                         fieldId === "companyLogo";
+  const isContactField = fieldId === "mobileNumber" ||
+    fieldId === "email" ||
+    fieldId === "residentialAddress" ||
+    fieldId === "address" ||
+    fieldId === "companyLogo";
 
   if (!isContactField) {
     const numeralMaps: Record<string, string[]> = {
@@ -555,10 +555,10 @@ export const translations: Record<string, Record<string, string>> = {
     "addMoreField": "अधिक फील्ड जोडा",
     "addProfession": "व्यवसाय जोडा",
     "addNew": "नवीन जोडा",
-    "personal": "वैयक्तिक तपशील",
-    "educationSec": "शिक्षण आणि करिअर",
-    "family": "कौटुंबिक पार्श्वभूमी",
-    "contact": "संपर्क तपशील",
+    "personal": "वैयक्तिक माहिती",
+    "educationSec": "शिक्षण आणि व्यवसाय",
+    "family": "कौटुंबिक माहिती",
+    "contact": "संपर्क",
     "photoCustom": "फोटो आणि कस्टमायझेशन",
     "enter": "प्रविष्ट करा",
     "select": "निवडा",

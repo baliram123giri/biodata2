@@ -1688,8 +1688,8 @@ export function KonvaTemplateDesigner({
                     {/* Header Mantra */}
                     <Group y={paddingTop + 10 + (mantraSignUrl ? 50 : 0)}>
                       {(() => {
-                        const textX = paddingLeft;
-                        const textWidth = A4_W - paddingLeft - paddingRight;
+                        const textX = 30;
+                        const textWidth = A4_W - 60;
                         return (
                           <Text
                             x={textX}
@@ -1725,12 +1725,12 @@ export function KonvaTemplateDesigner({
                         const titleVal = title;
                         const ribbonW = Math.min(
                           Math.max(titleVal.length * layout.fSize * 1.05 + 60, 180),
-                          A4_W - paddingLeft - paddingRight
+                          A4_W - 60
                         );
                         const ribbonH = layout.fSize * 2.8;
                         const ribbonX = (A4_W - ribbonW) / 2;
                         const ribbonY = titleY - 4;
- 
+
                         return (
                           <Group>
                             <Rect
@@ -1766,7 +1766,7 @@ export function KonvaTemplateDesigner({
                               lineCap="round"
                             />
                             <Text
-                              x={paddingLeft}
+                              x={30}
                               y={titleY}
                               text={title}
                               fontSize={layout.fSize * 2}
@@ -1774,7 +1774,7 @@ export function KonvaTemplateDesigner({
                               fontStyle="bold"
                               fill={primaryColor}
                               align="center"
-                              width={A4_W - paddingLeft - paddingRight}
+                              width={A4_W - 60}
                             />
                           </Group>
                         );
@@ -1782,7 +1782,7 @@ export function KonvaTemplateDesigner({
                         return (
                           <Group>
                             <Text
-                              x={paddingLeft}
+                              x={30}
                               y={titleY}
                               text={title}
                               fontSize={layout.fSize * 2}
@@ -1790,7 +1790,7 @@ export function KonvaTemplateDesigner({
                               fontStyle="bold"
                               fill={primaryColor}
                               align="center"
-                              width={A4_W - paddingLeft - paddingRight}
+                              width={A4_W - 60}
                             />
                             <Line
                               points={[A4_W / 2 - 90, titleY + titleHeight + 4, A4_W / 2 + 90, titleY + titleHeight + 4]}
@@ -1802,7 +1802,7 @@ export function KonvaTemplateDesigner({
                       } else {
                         return (
                           <Text
-                            x={paddingLeft}
+                            x={30}
                             y={titleY}
                             text={title}
                             fontSize={layout.fSize * 2.2}
@@ -1810,7 +1810,7 @@ export function KonvaTemplateDesigner({
                             fontStyle="bold"
                             fill={primaryColor}
                             align={align}
-                            width={A4_W - paddingLeft - paddingRight}
+                            width={A4_W - 60}
                           />
                         );
                       }
@@ -2015,6 +2015,7 @@ export function KonvaTemplateDesigner({
                           text={applyTransform(field.value)}
                           fontSize={fSize}
                           fontFamily={fontFamily}
+                          fontStyle="bold"
                           fill={fieldColor}
                           lineHeight={1.1}
                         />

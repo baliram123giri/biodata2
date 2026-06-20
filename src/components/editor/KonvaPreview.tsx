@@ -1100,10 +1100,10 @@ export const KonvaPreview = React.memo(function KonvaPreview({ liveFormData, tem
   }, [formData, t]);
 
   const sections = useMemo(() => [
-    renderSectionData("personal", t.personal || "Personal Details", formData.personalDetails),
-    renderSectionData("educationSec", t.educationSec || "Education & Career", formData.educationDetails),
-    renderSectionData("family", t.family || "Family Details", formData.familyDetails),
-    renderSectionData("contact", t.contact || "Contact Details", formData.contactDetails),
+    renderSectionData("personal", formData.personalTitle || t.personal || "Personal Details", formData.personalDetails),
+    renderSectionData("educationSec", formData.educationTitle || t.educationSec || "Education & Career", formData.educationDetails),
+    renderSectionData("family", formData.familyTitle || t.family || "Family Details", formData.familyDetails),
+    renderSectionData("contact", formData.contactTitle || t.contact || "Contact Details", formData.contactDetails),
   ].filter(Boolean) as any[], [renderSectionData, formData, t]);
 
   const hasPhoto = !!formData.photo;

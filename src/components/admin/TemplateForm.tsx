@@ -4082,9 +4082,9 @@ function TemplateSvgPreview({
         {(() => {
           const align = sectionStyles["header"]?.textAlign || "center";
           const textX = align === "left"
-            ? paddingLeft
+            ? 30
             : align === "right"
-              ? A4_W - paddingRight
+              ? A4_W - 30
               : A4_W / 2;
           const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
 
@@ -4119,12 +4119,12 @@ function TemplateSvgPreview({
           const titleHeight = layout.fSize * 2;
           const titleVal = title;
           const align = sectionStyles["header"]?.textAlign || "center";
-          const textX = align === "left" ? paddingLeft : align === "right" ? A4_W - paddingRight : A4_W / 2;
+          const textX = align === "left" ? 30 : align === "right" ? A4_W - 30 : A4_W / 2;
           const textAnchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
 
           if (formState.titleShape === "ribbon") {
             const titleLen = titleVal.length;
-            const ribbonW = Math.min(Math.max(titleLen * layout.fSize * 1.05 + 60, 180), A4_W - paddingLeft - paddingRight);
+            const ribbonW = Math.min(Math.max(titleLen * layout.fSize * 1.05 + 60, 180), A4_W - 60);
             const ribbonH = layout.fSize * 2.8;
             const ribbonX = (A4_W - ribbonW) / 2;
             const ribbonY = titleY - 4;
@@ -4470,6 +4470,7 @@ function TemplateSvgPreview({
                       width={field.availableWidth}
                       fill={fieldColor}
                       fontSize={fSize}
+                      fontWeight="bold"
                       fontFamily={svgFontFamily}
                     >
                       {applyTransform(field.value)}

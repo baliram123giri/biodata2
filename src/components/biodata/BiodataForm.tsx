@@ -659,11 +659,15 @@ export function BiodataForm({
   const handleLanguageChange = (newLang: string | null) => {
     if (!newLang) return;
     setValue("language", newLang);
-    // Immediately persist language to store — don't wait for the 400ms debounce.
-    setStoredFormData({ language: newLang });
     const baseT = translations[newLang];
     if (!baseT) return;
     const t = { ...baseT, ...(LOCAL_TRANSLATIONS[newLang] || LOCAL_TRANSLATIONS["English"]) };
+
+    // Update section titles with new language translations
+    setValue("personalTitle", t.personal || "Personal Details");
+    setValue("educationTitle", t.educationSec || "Education & Career");
+    setValue("familyTitle", t.family || "Family Details");
+    setValue("contactTitle", t.contact || "Contact Details");
 
     // Look up default mantra & title based on selectedCommunity and the new language
     const communityKey = (selectedCommunity && COMMUNITY_HEADER_DEFAULTS[selectedCommunity]) ? selectedCommunity : "General";
@@ -672,6 +676,15 @@ export function BiodataForm({
                               { mantra: "", title: "Biodata" };
     setValue("mantra", communityDefaults.mantra);
     setValue("title", communityDefaults.title);
+
+    // Immediately persist language & titles to store — don't wait for the 400ms debounce.
+    setStoredFormData({ 
+      language: newLang,
+      personalTitle: t.personal || "Personal Details",
+      educationTitle: t.educationSec || "Education & Career",
+      familyTitle: t.family || "Family Details",
+      contactTitle: t.contact || "Contact Details",
+    });
 
     // Translate default fields
     (["personalDetails", "educationDetails", "familyDetails", "contactDetails"] as const).forEach(section => {
@@ -878,10 +891,10 @@ export function BiodataForm({
           </AccordionContent>
         </AccordionItem>
 
-        <FieldSection name="personalDetails" title={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} hideCommunityAndReligion={hideCommunityAndReligion} />
-        <FieldSection name="educationDetails" title={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
-        <FieldSection name="familyDetails" title={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
-        <FieldSection name="contactDetails" title={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
+        <FieldSection name="personalDetails" titleKey="personalTitle" defaultTitle={t.personal || "Personal Details"} currentLang={currentLang} icon={<User className="w-5 h-5" />} hideCommunityAndReligion={hideCommunityAndReligion} />
+        <FieldSection name="educationDetails" titleKey="educationTitle" defaultTitle={t.educationSec || "Education & Career"} currentLang={currentLang} icon={<Briefcase className="w-5 h-5" />} />
+        <FieldSection name="familyDetails" titleKey="familyTitle" defaultTitle={t.family || "Family Background"} currentLang={currentLang} icon={<Users className="w-5 h-5" />} />
+        <FieldSection name="contactDetails" titleKey="contactTitle" defaultTitle={t.contact || "Contact Details"} currentLang={currentLang} icon={<Phone className="w-5 h-5" />} />
 
       </Accordion>
 
@@ -958,13 +971,15 @@ export function BiodataForm({
 
 const FieldSection = memo(function FieldSection({ 
   name, 
-  title, 
+  titleKey,
+  defaultTitle, 
   currentLang, 
   icon,
   hideCommunityAndReligion = false
 }: { 
   name: "personalDetails" | "educationDetails" | "familyDetails" | "contactDetails"; 
-  title: string; 
+  titleKey: "personalTitle" | "educationTitle" | "familyTitle" | "contactTitle";
+  defaultTitle: string; 
   currentLang: string; 
   icon: React.ReactNode;
   hideCommunityAndReligion?: boolean;
@@ -974,6 +989,10 @@ const FieldSection = memo(function FieldSection({
     control,
     name,
   });
+
+  // Watch section title
+  const watchSectionTitle = useWatch({ control, name: titleKey }) as string | undefined;
+  const liveSectionTitle = watchSectionTitle || defaultTitle;
 
   // Watch ONLY the labels of the fields to prevent typing in values from causing re-renders
   const labelNames = React.useMemo(() => fields.map((_, idx) => `${name}.${idx}.label` as const), [fields.length, name]);
@@ -995,11 +1014,16 @@ const FieldSection = memo(function FieldSection({
   return (
     <AccordionItem value={name.replace('Details', '')} className="bg-card px-4 rounded-lg border-0 mb-4 shadow-sm hover:shadow-md transition-shadow premium-gold-border">
       <AccordionTrigger className="text-lg font-bold text-primary hover:no-underline">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
             {icon}
           </div>
-          {title}
+          <EditableLabel 
+            name={titleKey} 
+            value={liveSectionTitle} 
+            className="text-lg font-bold text-primary" 
+            inputClassName="text-lg font-bold text-primary h-8 w-[200px]" 
+          />
         </div>
       </AccordionTrigger>
       <AccordionContent className="space-y-4 pt-2 overflow-hidden">
@@ -1254,7 +1278,17 @@ const FieldSection = memo(function FieldSection({
   );
 });
 
-const EditableLabel = memo(function EditableLabel({ name, value }: { name: string, value: string }) {
+const EditableLabel = memo(function EditableLabel({ 
+  name, 
+  value,
+  className,
+  inputClassName
+}: { 
+  name: string; 
+  value: string;
+  className?: string;
+  inputClassName?: string;
+}) {
   const { register } = useFormContext();
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -1285,7 +1319,11 @@ const EditableLabel = memo(function EditableLabel({ name, value }: { name: strin
             setIsEditing(false);
           }
         }}
-        className="h-7 px-1 py-0 text-sm font-semibold border-transparent focus-visible:ring-1 focus-visible:ring-ring bg-transparent shadow-none truncate w-[150px]"
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "h-7 px-1 py-0 text-sm font-semibold border-transparent focus-visible:ring-1 focus-visible:ring-ring bg-transparent shadow-none truncate w-[150px]",
+          inputClassName
+        )}
       />
     );
   }
@@ -1293,11 +1331,14 @@ const EditableLabel = memo(function EditableLabel({ name, value }: { name: strin
   return (
     <div
       className="flex items-center gap-1 cursor-pointer group/label"
-      onClick={() => setIsEditing(true)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
       title="Click to edit label"
     >
-      <span className="text-sm font-semibold truncate text-foreground">{value || "Label"}</span>
-      <Pencil className="w-3 h-3 text-muted-foreground/50 group-hover/label:text-primary transition-colors shrink-0" />
+      <span className={cn("text-sm font-semibold truncate text-foreground", className)}>{value || "Label"}</span>
+      <Pencil className="w-3.5 h-3.5 text-muted-foreground/50 group-hover/label:text-primary transition-colors shrink-0" />
     </div>
   );
 });

@@ -5,6 +5,10 @@ export const defaultBiodataValues: BiodataFormValues = {
   community: "General",
   mantra: "",
   title: "Biodata",
+  personalTitle: "",
+  educationTitle: "",
+  familyTitle: "",
+  contactTitle: "",
   personalDetails: [
     { id: "fullName", label: "Full Name", value: "", type: "text", isDefault: true },
     { id: "dateOfBirth", label: "Date of Birth", value: "", type: "date", isDefault: true },
