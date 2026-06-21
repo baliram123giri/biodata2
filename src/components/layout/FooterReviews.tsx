@@ -127,7 +127,7 @@ export async function FooterReviews() {
   return (
     <div className="flex flex-col gap-2 mt-2.5 w-fit">
       {/* Subtitle */}
-      <span className="text-[11px] font-semibold text-slate-300 tracking-wide">
+      <span className="text-[11px] font-semibold text-slate-300 group-[.footer-marathi]/footer:text-[#FEF3C7] group-[.footer-muslim]/footer:text-[#F5E6B8] tracking-wide">
         Trusted by Indian families
       </span>
 
@@ -140,8 +140,8 @@ export async function FooterReviews() {
                 <div className="flex items-center gap-0.5">
                   {googleStars}
                 </div>
-                <span className="text-xs font-bold text-slate-200">
-                  {googleAvg} <span className="text-slate-300 font-normal">· {googleCount}+ reviews</span>
+                <span className="text-xs font-bold text-slate-200 group-[.footer-marathi]/footer:text-[#FFFDF9] group-[.footer-muslim]/footer:text-[#FAF8F3]">
+                  {googleAvg} <span className="text-slate-300 group-[.footer-marathi]/footer:text-[#FEF3C7] group-[.footer-muslim]/footer:text-[#FAF8F3]/80 font-normal">· {googleCount}+ reviews</span>
                 </span>
               </div>
             </FooterReviewsTooltip>
@@ -151,7 +151,7 @@ export async function FooterReviews() {
               href={googleUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/12 text-slate-200 hover:text-white text-xs font-bold transition-all duration-200 w-fit cursor-pointer mt-1"
+              className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/12 text-slate-200 hover:text-white group-[.footer-marathi]/footer:border-white/20 group-[.footer-marathi]/footer:bg-white/10 group-[.footer-marathi]/footer:hover:bg-white/15 group-[.footer-marathi]/footer:text-white group-[.footer-muslim]/footer:border-white/20 group-[.footer-muslim]/footer:bg-white/10 group-[.footer-muslim]/footer:hover:bg-white/15 group-[.footer-muslim]/footer:text-white text-xs font-bold transition-all duration-200 w-fit cursor-pointer mt-1"
             >
               {/* Google 'G' Logo SVG */}
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
@@ -173,7 +173,7 @@ export async function FooterReviews() {
                 />
               </svg>
               <span>See Google reviews</span>
-              <ExternalLink className="w-3 h-3 text-slate-300" />
+              <ExternalLink className="w-3 h-3 text-slate-300 group-[.footer-marathi]/footer:text-[#FEF3C7] group-[.footer-muslim]/footer:text-[#F5E6B8]" />
             </a>
           </div>
         )}
@@ -186,8 +186,8 @@ export async function FooterReviews() {
                 <div className="flex items-center gap-0.5">
                   {trustpilotStars}
                 </div>
-                <span className="text-xs font-bold text-slate-200">
-                  {trustpilotAvg} <span className="text-slate-300 font-normal">· {trustpilotCount}+ reviews</span>
+                <span className="text-xs font-bold text-slate-200 group-[.footer-marathi]/footer:text-[#FFFDF9] group-[.footer-muslim]/footer:text-[#FAF8F3]">
+                  {trustpilotAvg} <span className="text-slate-300 group-[.footer-marathi]/footer:text-[#FEF3C7] group-[.footer-muslim]/footer:text-[#FAF8F3]/80 font-normal">· {trustpilotCount}+ reviews</span>
                 </span>
               </div>
             </FooterReviewsTooltip>
@@ -197,14 +197,14 @@ export async function FooterReviews() {
               href={trustpilotUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/12 text-slate-200 hover:text-white text-xs font-bold transition-all duration-200 w-fit cursor-pointer mt-1"
+              className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/12 text-slate-200 hover:text-white group-[.footer-marathi]/footer:border-white/20 group-[.footer-marathi]/footer:bg-white/10 group-[.footer-marathi]/footer:hover:bg-white/15 group-[.footer-marathi]/footer:text-white group-[.footer-muslim]/footer:border-white/20 group-[.footer-muslim]/footer:bg-white/10 group-[.footer-muslim]/footer:hover:bg-white/15 group-[.footer-muslim]/footer:text-white text-xs font-bold transition-all duration-200 w-fit cursor-pointer mt-1"
             >
               {/* Trustpilot Star SVG */}
               <svg className="w-3.5 h-3.5 shrink-0 fill-emerald-400" viewBox="0 0 24 24">
                 <path d="M24 9.624H14.83L12 1l-2.83 8.624H0l7.41 5.378L4.58 23L12 17.624L19.42 23l-2.83-8.998z" />
               </svg>
               <span>See Trustpilot reviews</span>
-              <ExternalLink className="w-3 h-3 text-slate-300" />
+              <ExternalLink className="w-3 h-3 text-slate-300 group-[.footer-marathi]/footer:text-[#FEF3C7] group-[.footer-muslim]/footer:text-[#F5E6B8]" />
             </a>
           </div>
         )}

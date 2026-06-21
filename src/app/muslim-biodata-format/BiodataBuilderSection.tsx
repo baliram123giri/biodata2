@@ -8,6 +8,11 @@ interface Props {
   defaultTitle: string;
   defaultTemplateId: string;
   hideCommunityAndReligion: boolean;
+  builderTitle?: string;
+  builderSubtitle?: React.ReactNode;
+  defaultLanguage?: string;
+  forceLanguage?: string;
+  hideHeader?: boolean;
 }
 
 export function BiodataBuilderSection(props: Props) {

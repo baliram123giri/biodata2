@@ -414,7 +414,7 @@ export default function MuslimBiodataFormatPage() {
       />
 
       {/* Dedicated Space for Body Content below Hero */}
-      <div className="container mx-auto max-w-6xl relative z-10 py-6 px-4">
+      <div className="container mx-auto max-w-7xl relative z-10 py-6 px-4">
         {/* Muslim Communities Section */}
         <div className="text-center space-y-8">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
@@ -451,7 +451,7 @@ export default function MuslimBiodataFormatPage() {
             <div className="w-12 h-1 bg-[#D4AF37] mx-auto rounded-full" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto text-left">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto text-left">
             {/* Feature 1 */}
             <div className="bg-white border border-[#D4AF37]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4">
               <h3 className="text-lg font-bold text-[#0F4C3A]">1. Islamic Biodata Header Designs</h3>
@@ -540,7 +540,7 @@ export default function MuslimBiodataFormatPage() {
           </div>
 
           {/* Download Cards Row */}
-          <div className="max-w-6xl mx-auto space-y-4">
+          <div className="max-w-7xl mx-auto space-y-4">
             <div className="text-xs font-bold uppercase tracking-wider text-stone-700 mb-1 flex items-center justify-center gap-2">
               <FileDown className="w-4 h-4 text-[#D4AF37]" aria-hidden="true" />
               Choose Your Language & Download
@@ -623,7 +623,7 @@ export default function MuslimBiodataFormatPage() {
           </div>
 
           {/* Template Details & Features Row */}
-          <div className="max-w-6xl mx-auto mt-10 md:mt-14 space-y-4">
+          <div className="max-w-7xl mx-auto mt-10 md:mt-14 space-y-4">
             <div className="text-xs  font-bold uppercase tracking-wider text-stone-700 mb-1 text-center">
               Template Details & Features
             </div>

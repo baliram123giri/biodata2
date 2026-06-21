@@ -74,7 +74,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
       </div>
 
       {/* Main Footer Body */}
-      <div className={`transition-colors duration-300 ${isMuslimPage ? "bg-[#0F4C3A] text-[#FAF8F3]" : isMarathiPage ? "bg-[#C2410C] text-[#FFFDF9]" : "bg-[#0f172a] text-white"}`}>
+      <div className={`group/footer transition-colors duration-300 ${isMuslimPage ? "bg-[#0F4C3A] text-[#FAF8F3] footer-muslim" : isMarathiPage ? "bg-[#C2410C] text-[#FFFDF9] footer-marathi" : "bg-[#0f172a] text-white footer-default"}`}>
         {/* Main Grid */}
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-6">
@@ -82,7 +82,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
             {/* Brand Column */}
             <div className="md:col-span-4 flex flex-col gap-3">
               <Logo iconClassName="h-8 md:h-10" disableShine />
-              <p className={`text-xs leading-relaxed max-w-xs ${isMuslimPage ? "text-[#F5E6B8]/80" : isMarathiPage ? "text-[#FEF3C7]/80" : "text-slate-400"}`}>
+              <p className={`text-xs leading-relaxed max-w-xs ${isMuslimPage ? "text-[#F5E6B8]" : isMarathiPage ? "text-[#FEF3C7]" : "text-slate-400"}`}>
                 Free marriage biodata maker for Indian families. Stylish formats, PDF &amp; Word download, 100% private.
               </p>
 
@@ -115,7 +115,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
               {/* Trust badge */}
               <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1 w-fit mt-1">
                 <Shield className={`w-3 h-3 ${isMuslimPage ? "text-[#D4AF37]" : isMarathiPage ? "text-[#EAB308]" : "text-green-400"}`} />
-                <span className={`text-[10px] font-bold tracking-wide ${isMuslimPage ? "text-[#FAF8F3]/90" : isMarathiPage ? "text-[#FFFDF9]/90" : "text-slate-300"}`}>100% Free &amp; Secure</span>
+                <span className={`text-[10px] font-bold tracking-wide ${isMuslimPage ? "text-[#FAF8F3]" : isMarathiPage ? "text-[#FFFDF9]" : "text-slate-300"}`}>100% Free &amp; Secure</span>
               </div>
             </div>
 
@@ -132,9 +132,9 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                       prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
-                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          ? "text-[#FAF8F3] hover:text-[#D4AF37]"
                           : isMarathiPage
-                            ? "text-[#FFFDF9]/85 hover:text-[#EAB308]"
+                            ? "text-[#FFFDF9] hover:text-[#EAB308]"
                             : "text-slate-400 hover:text-cyan-400"
                       }`}
                     >
@@ -161,9 +161,9 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                       prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
-                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          ? "text-[#FAF8F3] hover:text-[#D4AF37]"
                           : isMarathiPage
-                            ? "text-[#FFFDF9]/85 hover:text-[#EAB308]"
+                            ? "text-[#FFFDF9] hover:text-[#EAB308]"
                             : "text-slate-400 hover:text-cyan-400"
                       }`}
                     >
@@ -190,9 +190,9 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                       prefetch={false}
                       className={`group flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                         isMuslimPage
-                          ? "text-[#FAF8F3]/85 hover:text-[#D4AF37]"
+                          ? "text-[#FAF8F3] hover:text-[#D4AF37]"
                           : isMarathiPage
-                            ? "text-[#FFFDF9]/85 hover:text-[#EAB308]"
+                            ? "text-[#FFFDF9] hover:text-[#EAB308]"
                             : "text-slate-400 hover:text-cyan-400"
                       }`}
                     >
@@ -206,7 +206,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
               </ul>
 
               {/* Contact email */}
-              <div className={`mt-4 flex items-center gap-1.5 group ${isMuslimPage ? "text-[#FAF8F3]/85" : isMarathiPage ? "text-[#FFFDF9]/85" : "text-slate-400"}`}>
+              <div className={`mt-4 flex items-center gap-1.5 group ${isMuslimPage ? "text-[#FAF8F3]" : isMarathiPage ? "text-[#FFFDF9]" : "text-slate-400"}`}>
                 <Mail className={`w-3 h-3 shrink-0 ${isMuslimPage ? "text-[#D4AF37]" : isMarathiPage ? "text-[#EAB308]" : "text-cyan-400"}`} />
                 <a
                   href="mailto:support@biodata99.com"
@@ -219,7 +219,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
               </div>
 
               {/* Location */}
-              <div className={`mt-2 flex items-center gap-1.5 ${isMuslimPage ? "text-[#FAF8F3]/85" : isMarathiPage ? "text-[#FFFDF9]/85" : "text-slate-400"}`}>
+              <div className={`mt-2 flex items-center gap-1.5 ${isMuslimPage ? "text-[#FAF8F3]" : isMarathiPage ? "text-[#FFFDF9]" : "text-slate-400"}`}>
                 <MapPin className={`w-3 h-3 shrink-0 ${isMuslimPage ? "text-[#D4AF37]" : isMarathiPage ? "text-[#EAB308]" : "text-cyan-400"}`} />
                 <span className="text-[11px]">Maharashtra, India</span>
               </div>
@@ -230,10 +230,10 @@ export function Footer({ children }: { children?: React.ReactNode }) {
         {/* Bottom Bar */}
         <div className={`border-t ${isMuslimPage ? "border-white/10" : isMarathiPage ? "border-white/10" : "border-white/8"}`}>
           <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className={`text-[11px] text-center sm:text-left ${isMuslimPage ? "text-[#FAF8F3]/70" : isMarathiPage ? "text-[#FFFDF9]/70" : "text-slate-400"}`} suppressHydrationWarning>
+            <p className={`text-[11px] text-center sm:text-left ${isMuslimPage ? "text-[#F5E6B8]" : isMarathiPage ? "text-[#FEF3C7]" : "text-slate-400"}`} suppressHydrationWarning>
               © {new Date().getFullYear()} biodata99.com. All Rights Reserved.
             </p>
-            <p className={`text-[11px] flex items-center gap-1 ${isMuslimPage ? "text-[#FAF8F3]/70" : isMarathiPage ? "text-[#FFFDF9]/70" : "text-slate-400"}`}>
+            <p className={`text-[11px] flex items-center gap-1 ${isMuslimPage ? "text-[#F5E6B8]" : isMarathiPage ? "text-[#FEF3C7]" : "text-slate-400"}`}>
               Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for Happy Marriages
               <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400 ml-0.5" />
             </p>

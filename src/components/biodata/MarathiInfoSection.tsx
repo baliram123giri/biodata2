@@ -1,31 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { 
-  Heart, 
-  Sparkles, 
-  User, 
-  Briefcase, 
-  GraduationCap, 
-  MapPin, 
-  Phone, 
-  Calendar, 
-  Info, 
-  Check, 
-  ChevronRight, 
-  Star, 
-  Compass, 
-  Users, 
+import { useState } from "react";
+import {
+  Heart,
+  Sparkles,
+  User,
+  Check,
+  Star,
   ArrowRight,
   BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
 
 export default function MarathiInfoSection() {
   const [activeGenderTab, setActiveGenderTab] = useState<string>("bride");
@@ -44,34 +31,34 @@ export default function MarathiInfoSection() {
   return (
     <div className="space-y-10">
       {/* 1. Marathi Marriage Biodata Sample Intro Section */}
-      <section className="bg-gradient-to-br from-[#FFFDF9] to-[#FFFBEB] border border-[#EAB308]/20 rounded-3xl p-6 md:p-10 shadow-sm relative overflow-hidden">
+      <section className="bg-gradient-to-br from-[#FFFDF9] to-[#FFFBEB] border border-[#EAB308]/20 rounded-3xl p-4 md:p-10 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#C2410C]/5 rounded-bl-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#EAB308]/5 rounded-tr-full pointer-events-none" />
-        
-        <div className="max-w-6xl mx-auto text-center space-y-5 relative z-10">
+
+        <div className="max-w-7xl mx-auto text-center space-y-5 relative z-10">
           <Badge variant="outline" className="border-[#C2410C]/40 text-[#C2410C] bg-[#C2410C]/5 font-bold uppercase tracking-wider px-3.5 py-1 text-xs">
             Format Sample • नमुना फॉरमॅट
           </Badge>
-          
+
           <h2 className="text-2xl md:text-3.5xl font-black text-[#C2410C] leading-tight font-sans">
             मुलगा व मुलीसाठी नमुना विवाह बायोडाटा <br className="hidden sm:inline" />
             <span className="text-[#EAB308] text-xl md:text-2xl font-bold">(Marathi Marriage Biodata Sample Format for Boy & Girl)</span>
           </h2>
-          
+
           <p className="text-stone-750 text-sm md:text-base leading-relaxed font-semibold">
             खाली दिलेला <strong>Marathi Marriage Biodata Sample</strong> हा मुलगा आणि मुलगी दोघांसाठी अत्यंत उपयुक्त आहे. या उदाहरणामध्ये वैयक्तिक माहिती, शिक्षण, व्यवसाय, कौटुंबिक माहिती आणि संपर्क माहिती समाविष्ट आहे. तुम्ही हा नमुना पाहून स्वतःचा <strong>Professional Marathi Biodata</strong> सहज तयार करू शकता.
           </p>
 
           {/* Interactive Toggle for Sample Biodata Showcase */}
-          <div className="mt-8 flex flex-col items-center">
+          <div className="mt-8 flex flex-col items-center w-full">
             <Tabs defaultValue="bride" onValueChange={setActiveGenderTab} className="w-full max-w-5xl">
-              <div className="flex justify-center mb-6">
-                <TabsList className="bg-[#FEF3C7] p-1 rounded-full border border-[#EAB308]/30 shadow-xs">
-                  <TabsTrigger value="bride" className="rounded-full px-6 py-2 text-xs md:text-sm font-extrabold flex items-center gap-2 text-stone-700 hover:!text-[#C2410C] data-active:!bg-[#C2410C] data-active:!text-white cursor-pointer transition-all">
-                    <Heart className="w-4 h-4" /> वधू बायोडाटा (Bride Sample)
+              <div className="flex justify-center mb-6 w-full">
+                <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto bg-[#FEF3C7] p-1 rounded-full border border-[#EAB308]/30 shadow-xs h-auto">
+                  <TabsTrigger value="bride" className="rounded-full px-2 sm:px-6 py-1.5 sm:py-2 text-[10px] sm:text-xs md:text-sm font-extrabold flex items-center justify-center gap-1.5 sm:gap-2 text-stone-700 hover:!text-[#C2410C] data-active:!bg-[#C2410C] data-active:!text-white data-active:hover:!text-white cursor-pointer transition-all whitespace-normal sm:whitespace-nowrap text-center">
+                    <Heart className="w-3.5 h-3.5 shrink-0" /> <span className="leading-tight">वधू बायोडाटा (Bride)</span>
                   </TabsTrigger>
-                  <TabsTrigger value="groom" className="rounded-full px-6 py-2 text-xs md:text-sm font-extrabold flex items-center gap-2 text-stone-700 hover:!text-[#C2410C] data-active:!bg-[#C2410C] data-active:!text-white cursor-pointer transition-all">
-                    <User className="w-4 h-4" /> वर बायोडाटा (Groom Sample)
+                  <TabsTrigger value="groom" className="rounded-full px-2 sm:px-6 py-1.5 sm:py-2 text-[10px] sm:text-xs md:text-sm font-extrabold flex items-center justify-center gap-1.5 sm:gap-2 text-stone-700 hover:!text-[#C2410C] data-active:!bg-[#C2410C] data-active:!text-white data-active:hover:!text-white cursor-pointer transition-all whitespace-normal sm:whitespace-nowrap text-center">
+                    <User className="w-3.5 h-3.5 shrink-0" /> <span className="leading-tight">वर बायोडाटा (Groom)</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -81,7 +68,7 @@ export default function MarathiInfoSection() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                   <div className="lg:col-span-7 flex flex-col justify-center">
                     {/* CSS Styled Premium Biodata Card */}
-                    <div className="relative p-6 md:p-8 bg-[#FFFDF5] border-4 border-double border-[#C2410C]/60 rounded-2xl shadow-xl max-w-md mx-auto w-full font-serif overflow-hidden select-none">
+                    <div className="relative p-3.5 md:p-8 bg-[#FFFDF5] border-4 border-double border-[#C2410C]/60 rounded-2xl shadow-xl max-w-md mx-auto w-full font-serif overflow-hidden select-none">
                       {/* Corner Ornaments */}
                       <div className="absolute top-2 left-2 text-[#C2410C] text-lg font-bold">⚜</div>
                       <div className="absolute top-2 right-2 text-[#C2410C] text-lg font-bold">⚜</div>
@@ -171,7 +158,7 @@ export default function MarathiInfoSection() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 w-fit">
                       👰 Bride Profile Analysis
@@ -182,7 +169,7 @@ export default function MarathiInfoSection() {
                     <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
                       मुलींच्या बायोडाटामध्ये शैक्षणिक पात्रता (Education) आणि करिअरचे ध्येय (Career Goals) या घटकांवर विशेष लक्ष दिले जाते. आजकालच्या कुटुंबांमध्ये मुलगी स्वावलंबी आणि सुशिक्षित असावी अशी अपेक्षा असते, त्यामुळे <strong>MBA Marketing</strong> आणि <strong>Digital Marketing Manager</strong> सारखे जॉब प्रोफाईल बायोडाटा अधिक प्रभावी बनवतात.
                     </p>
-                    
+
                     <ul className="space-y-2.5 text-xs md:text-sm font-semibold text-stone-700">
                       <li className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -215,7 +202,7 @@ export default function MarathiInfoSection() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                   <div className="lg:col-span-7 flex flex-col justify-center">
                     {/* CSS Styled Premium Biodata Card */}
-                    <div className="relative p-6 md:p-8 bg-[#FFFDF5] border-4 border-double border-[#C2410C]/60 rounded-2xl shadow-xl max-w-md mx-auto w-full font-serif overflow-hidden select-none">
+                    <div className="relative p-3.5 md:p-8 bg-[#FFFDF5] border-4 border-double border-[#C2410C]/60 rounded-2xl shadow-xl max-w-md mx-auto w-full font-serif overflow-hidden select-none">
                       {/* Corner Ornaments */}
                       <div className="absolute top-2 left-2 text-[#C2410C] text-lg font-bold">⚜</div>
                       <div className="absolute top-2 right-2 text-[#C2410C] text-lg font-bold">⚜</div>
@@ -305,7 +292,7 @@ export default function MarathiInfoSection() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 w-fit">
                       🤵 Groom Profile Analysis
@@ -316,7 +303,7 @@ export default function MarathiInfoSection() {
                     <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
                       मुलांच्या लग्नाच्या बायोडाटामध्ये शिक्षण (Qualification), नोकरीचे स्वरूप (Job Role), कामाचा अनुभव (Experience), कंपनी (Company Details) आणि वार्षिक उत्पन्न (Income/Package) या गोष्टींना अधिक महत्त्व दिले जाते. यामुळे भविष्यातील स्थिरता आणि करिअरमधील प्रगती समजण्यास मदत होते.
                     </p>
-                    
+
                     <ul className="space-y-2.5 text-xs md:text-sm font-semibold text-stone-700">
                       <li className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -345,7 +332,7 @@ export default function MarathiInfoSection() {
               </TabsContent>
             </Tabs>
           </div>
-          
+
           <div className="pt-6">
             <Button size="lg" className="rounded-full text-sm px-10 py-6 bg-gradient-primary hover:opacity-95 !text-white font-bold tracking-wide shadow-xl shadow-[#C2410C]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer" asChild>
               <a href="#builder">
@@ -370,7 +357,7 @@ export default function MarathiInfoSection() {
           </p>
         </div>
 
-        <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-5 md:p-6 shadow-2xs text-left max-w-6xl mx-auto space-y-4">
+        <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-5 md:p-6 shadow-2xs text-left max-w-7xl mx-auto space-y-4">
           <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
             या <strong>Marathi Marriage Biodata Sample</strong> मध्ये प्रत्येक विभागाची मांडणी अशा प्रकारे करण्यात आली आहे की समोरच्या कुटुंबाला आवश्यक माहिती सहजपणे समजू शकेल.
             The format focuses on clarity, professional presentation, and easy readability. A well-structured biodata helps families quickly understand the candidate's background, education, career, and family values.
@@ -378,7 +365,7 @@ export default function MarathiInfoSection() {
           <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
             या नमुन्यात वापरलेले Sections हे आधुनिक Marathi Marriage Biodata साठी सर्वाधिक लोकप्रिय मानले जातात आणि विवाहासाठी स्थळ शोधताना आवश्यक असलेली सर्व महत्त्वाची माहिती समाविष्ट करतात.
           </p>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
             {[
               { title: "वैयक्तिक तपशील", desc: "नाव, जन्मतारीख, वेळ, जन्मस्थळ, उंची, गोत्र, रास व नक्षत्र" },
@@ -412,7 +399,7 @@ export default function MarathiInfoSection() {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-6 md:p-8 shadow-2xs space-y-6 text-left">
               <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
@@ -524,7 +511,7 @@ export default function MarathiInfoSection() {
                 <Star className="w-5 h-5 text-[#EAB308] shrink-0" />
                 कुंडली आणि गुण जुळवणी (Kundali Matching)
               </h3>
-              
+
               <p className="text-[11px] text-stone-700 font-semibold leading-relaxed">
                 पारंपरिक विवाह जुळवणीमध्ये वधू-वरांच्या कुंडल्या पाहून गुण जुळवणी (Gun Milan) केली जाते. यात वधू-वरांच्या जन्ममाहितीची ८ वेगवेगळ्या घटकांवर (Kootas) तुलना केली जाते. या सर्व घटकांचे एकूण ३६ गुण असतात.
               </p>
@@ -574,7 +561,7 @@ export default function MarathiInfoSection() {
       </section>
 
       {/* 4. Bride vs Groom Biodata Comparison Section */}
-      <section className="space-y-4">
+      <section className="space-y-4 pt-8 md:pt-14 border-t border-[#EAB308]/15">
         <div className="text-center space-y-2 max-w-4xl mx-auto">
           <Badge variant="outline" className="border-[#EAB308]/40 text-[#C2410C] bg-[#EAB308]/10 font-bold px-3 py-0.5 text-xs">
             Comparison Guide • प्राधान्यक्रम तुलना
@@ -587,7 +574,7 @@ export default function MarathiInfoSection() {
           </p>
         </div>
 
-        <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-5 md:p-6 shadow-2xs text-left max-w-6xl mx-auto space-y-4">
+        <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-5 md:p-6 shadow-2xs text-left max-w-7xl mx-auto space-y-4">
           <p className="text-stone-750 text-xs md:text-sm font-semibold leading-relaxed">
             Marathi Marriage Biodata तयार करताना Bride आणि Groom दोघांच्याही Biodata मध्ये Personal Details, Education, Family Information, Career Details आणि Partner Expectations यांसारखे विभाग असतात. मात्र विवाह जुळवणीच्या प्रक्रियेत काही माहितीला अधिक लक्ष दिले जाते.
           </p>
@@ -595,10 +582,46 @@ export default function MarathiInfoSection() {
             हे कोणतेही निश्चित नियम नसून अनेक Marathi families मध्ये सामान्यतः पाहिले जाणारे patterns आहेत. आजच्या काळात Education, Career, Family Values, Lifestyle आणि Personality या गोष्टी मुलगा आणि मुलगी दोघांसाठीही तितक्याच महत्त्वाच्या मानल्या जातात.
           </p>
 
-          {/* Comparison Table */}
-          <div className="border border-stone-200 rounded-2xl overflow-hidden shadow-3xs bg-white mt-4">
+          {/* Comparison Cards for Mobile (hidden on desktop) */}
+          <div className="block md:hidden space-y-4.5 mt-4">
+            {[
+              { section: "Education (शिक्षण)", bride: "Qualification आणि Career Goals वर लक्ष दिले जाते.", groom: "Qualification, Specialization आणि Career Growth वर लक्ष दिले जाते." },
+              { section: "Profession (करिअर / नोकरी)", bride: "Job Profile आणि Work Preferences.", groom: "Job Role, Experience आणि Career Stability." },
+              { section: "Height & Personal Details (उंची व वैयक्तिक माहिती)", bride: "Height आणि Basic Personal Information अनेकदा पाहिली जाते.", groom: "Height आणि Personal Information देखील पाहिली जाते." },
+              { section: "Company Details (कंपनीचे नाव)", bride: "Optional (पर्यायी).", groom: "अनेकदा आवर्जून नमूद केले जाते." },
+              { section: "Income (वार्षिक उत्पन्न)", bride: "Optional (पर्यायी).", groom: "काही कुटुंबे Income किंवा Package आवर्जून विचारतात." },
+              { section: "Hobbies (छंद व आवड)", bride: "Hobbies, Interests आणि Lifestyle.", groom: "Hobbies, Interests आणि Lifestyle." },
+              { section: "Family Background (कौटुंबिक पार्श्वभूमी)", bride: "Family Values आणि Background.", groom: "Family Values आणि Background." },
+              { section: "Future Plans (भविष्य नियोजन)", bride: "Career आणि Marriage Balance.", groom: "Career Growth आणि Future Planning." },
+              { section: "Partner Expectations (जोडीदाराकडून अपेक्षा)", bride: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती.", groom: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती." }
+            ].map((row, idx) => (
+              <div key={idx} className="border border-[#EAB308]/20 bg-[#FFFDF9] rounded-2xl p-4 space-y-3 shadow-3xs">
+                <h4 className="text-xs font-black text-[#C2410C] border-b border-[#EAB308]/15 pb-1.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#EAB308]" />
+                  {row.section}
+                </h4>
+                <div className="grid grid-cols-1 gap-2.5">
+                  <div className="bg-[#FFF5F7] border border-[#FCD3DE] rounded-xl p-3.5 space-y-1">
+                    <span className="text-[10px] font-black text-pink-700 tracking-wider uppercase flex items-center gap-1">
+                      <span>👰</span> Bride (मुलगी)
+                    </span>
+                    <p className="text-xs text-stone-750 font-semibold leading-relaxed">{row.bride}</p>
+                  </div>
+                  <div className="bg-[#F0F7FF] border border-[#BFDBFE] rounded-xl p-3.5 space-y-1">
+                    <span className="text-[10px] font-black text-blue-700 tracking-wider uppercase flex items-center gap-1">
+                      <span>🤵</span> Groom (मुलगा)
+                    </span>
+                    <p className="text-xs text-stone-750 font-semibold leading-relaxed">{row.groom}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Comparison Table for Desktop (hidden on mobile) */}
+          <div className="hidden md:block border border-stone-200 rounded-2xl overflow-hidden shadow-3xs bg-white mt-4">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[600px]">
+              <table className="w-full text-left border-collapse text-xs md:text-sm">
                 <thead>
                   <tr className="bg-stone-50 border-b border-stone-200 text-[#C2410C] font-extrabold font-sans">
                     <th className="py-4 px-5 w-1/4">Section</th>
@@ -608,15 +631,15 @@ export default function MarathiInfoSection() {
                 </thead>
                 <tbody className="divide-y divide-stone-150 text-stone-700 font-semibold">
                   {[
-                    { section: "Education", bride: "Qualification आणि Career Goals वर लक्ष दिले जाते", groom: "Qualification, Specialization आणि Career Growth वर लक्ष दिले जाते" },
-                    { section: "Profession", bride: "Job Profile आणि Work Preferences", groom: "Job Role, Experience आणि Career Stability" },
-                    { section: "Height & Personal Details", bride: "Height आणि Basic Personal Information अनेकदा पाहिली जाते", groom: "Height आणि Personal Information देखील पाहिली जाते" },
-                    { section: "Company Details", bride: "Optional (पर्यायी)", groom: "अनेकदा आवर्जून नमूद केले जाते" },
-                    { section: "Income", bride: "Optional (पर्यायी)", groom: "काही कुटुंबे Income किंवा Package आवर्जून विचारतात" },
-                    { section: "Hobbies", bride: "Hobbies, Interests आणि Lifestyle", groom: "Hobbies, Interests आणि Lifestyle" },
-                    { section: "Family Background", bride: "Family Values आणि Background", groom: "Family Values आणि Background" },
-                    { section: "Future Plans", bride: "Career आणि Marriage Balance", groom: "Career Growth आणि Future Planning" },
-                    { section: "Partner Expectations", bride: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती", groom: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती" }
+                    { section: "Education (शिक्षण)", bride: "Qualification आणि Career Goals वर लक्ष दिले जाते", groom: "Qualification, Specialization आणि Career Growth वर लक्ष दिले जाते" },
+                    { section: "Profession (करिअर / नोकरी)", bride: "Job Profile आणि Work Preferences", groom: "Job Role, Experience आणि Career Stability" },
+                    { section: "Height & Personal Details (उंची व वैयक्तिक माहिती)", bride: "Height आणि Basic Personal Information अनेकदा पाहिली जाते", groom: "Height आणि Personal Information देखील पाहिली जाते" },
+                    { section: "Company Details (कंपनीचे नाव)", bride: "Optional (पर्यायी)", groom: "अनेकदा आवर्जून नमूद केले जाते" },
+                    { section: "Income (वार्षिक उत्पन्न)", bride: "Optional (पर्यायी)", groom: "काही कुटुंबे Income किंवा Package आवर्जून विचारतात" },
+                    { section: "Hobbies (छंद व आवड)", bride: "Hobbies, Interests आणि Lifestyle", groom: "Hobbies, Interests आणि Lifestyle" },
+                    { section: "Family Background (कौटुंबिक पार्श्वभूमी)", bride: "Family Values आणि Background", groom: "Family Values आणि Background" },
+                    { section: "Future Plans (भविष्य नियोजन)", bride: "Career आणि Marriage Balance", groom: "Career Growth आणि Future Planning" },
+                    { section: "Partner Expectations (जोडीदाराकडून अपेक्षा)", bride: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती", groom: "अपेक्षित जोडीदाराबद्दल सविस्तर माहिती" }
                   ].map((row, idx) => (
                     <tr key={idx} className="hover:bg-stone-50/50 transition-colors">
                       <td className="py-3.5 px-5 font-extrabold text-[#C2410C]">{row.section}</td>
@@ -632,7 +655,7 @@ export default function MarathiInfoSection() {
       </section>
 
       {/* 5. Modern Trends & Final Thoughts */}
-      <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+      <section className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         {/* Modern Trends Card */}
         <div className="bg-white border border-[#EAB308]/20 rounded-3xl p-6 md:p-8 shadow-2xs text-left flex flex-col justify-between">
           <div className="space-y-4">
@@ -643,12 +666,12 @@ export default function MarathiInfoSection() {
             <p className="text-stone-700 text-xs md:text-sm font-semibold leading-relaxed">
               आजच्या Modern Marathi Marriage Biodata मध्ये फक्त Education किंवा Salary पुरेसे मानले जात नाही. अनेक आधुनिक कुटुंबे खालील गोष्टींनाही तितकेच महत्त्व देतात:
             </p>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs font-bold text-stone-750">
               {[
-                "Family Values", "Lifestyle Preferences", 
-                "Work-Life Balance", "Personality & Nature", 
-                "Career Ambitions", "Hobbies & Interests", 
+                "Family Values", "Lifestyle Preferences",
+                "Work-Life Balance", "Personality & Nature",
+                "Career Ambitions", "Hobbies & Interests",
                 "Future Goals", "Marriage Expectations"
               ].map((trend) => (
                 <div key={trend} className="flex items-center gap-2 bg-[#FFFDF9] border border-stone-150 rounded-xl p-2">
@@ -674,7 +697,7 @@ export default function MarathiInfoSection() {
               Education, Career, Family Background, Hobbies, Partner Expectations आणि Personal Values यांची व्यवस्थित आणि अचूक मांडणी केल्यास योग्य स्थळ शोधणे अधिक सोपे आणि जलद होते.
             </p>
           </div>
-          
+
           <div className="pt-6">
             <Button className="w-full rounded-full bg-[#C2410C] hover:bg-[#A2350A] text-white font-bold py-6 cursor-pointer shadow-md text-xs md:text-sm hover:scale-[1.02] active:scale-[0.98] transition-all" asChild>
               <a href="#builder">

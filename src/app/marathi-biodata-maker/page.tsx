@@ -252,7 +252,7 @@ export default function MarathiBiodataMakerPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-[#FFFDF9] to-[#FFFBEB] pt-4 pb-8 md:pt-6 md:pb-12 px-4 border-b border-[#EAB308]/15">
         <div className="absolute inset-0 bg-[radial-gradient(rgba(234,179,8,0.06)_1px,transparent_1px)] [background-size:36px_36px] pointer-events-none" />
 
-        <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative z-10 w-full min-w-0">
+        <div className="container mx-auto max-w-7xl flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative z-10 w-full min-w-0">
           
           {/* Left Text Column */}
           <div className="w-full lg:flex-1 text-center lg:text-left space-y-4 md:space-y-6 min-w-0">
@@ -365,35 +365,26 @@ export default function MarathiBiodataMakerPage() {
       </section>
 
       {/* Dynamic Biodata Builder Form Section */}
-      <section id="builder" className="scroll-mt-20 py-10 px-4 bg-gradient-to-b from-background via-accent/30 to-background">
-        <div className="container mx-auto max-w-[1400px] mb-10 text-center flex flex-col items-center gap-4">
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold bg-[#C2410C]/10 text-[#C2410C]">
-            <Wand2 className="w-4 h-4" />
-            आत्ताच बनवायला सुरुवात करा
-          </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#C2410C] font-sans">
-            मराठी विवाह बायोडाटा मेकर
-          </h2>
-          <div className="text-base md:text-lg font-semibold max-w-2xl text-stone-650">
+      <BiodataBuilderSection
+        defaultCommunity="Marathi"
+        defaultReligion="Hindu"
+        defaultTitle="॥ श्री गणेशाय नमः ॥"
+        defaultTemplateId="m1"
+        defaultLanguage="मराठी"
+        hideCommunityAndReligion={false}
+        hideHeader={false}
+        builderTitle="मराठी विवाह बायोडाटा मेकर"
+        builderSubtitle={
+          <>
             <span className="hidden md:inline">
               खाली तुमची माहिती भरा आणि तुमचा बायोडाटा रिअल-टाइममध्ये तयार होताना पहा. तुम्ही कोणताही टेम्पलेट निवडू शकता किंवा उजव्या बाजूला दिसणाऱ्या टेम्पलेट्सवर क्लिक करून कधीही डिझाइन बदलू शकता।
             </span>
             <span className="inline md:hidden">
               खाली तुमची माहिती भरा आणि तुमचा बायोडाटा रिअल-टाइममध्ये तयार होताना पहा. तुम्ही कोणताही टेम्पलेट निवडू शकता किंवा खाली दिलेल्या टूलबार मधून कधीही डिझाइन बदलू शकता।
             </span>
-          </div>
-        </div>
-
-        <BiodataBuilderSection
-          defaultCommunity="Marathi"
-          defaultReligion="Hindu"
-          defaultTitle="॥ श्री गणेशाय नमः ॥"
-          defaultTemplateId="m1"
-          defaultLanguage="मराठी"
-          hideCommunityAndReligion={false}
-          hideHeader={true}
-        />
-      </section>
+          </>
+        }
+      />
 
       {/* Samples Carousel */}
       <TemplateCarousel

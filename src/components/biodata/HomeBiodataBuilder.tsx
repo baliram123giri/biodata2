@@ -770,7 +770,7 @@ export function HomeBiodataBuilder({
         )}
 
         {/* Builder Content */}
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-7xl">
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-10 items-start w-full">
 
