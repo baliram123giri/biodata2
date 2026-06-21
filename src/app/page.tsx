@@ -12,6 +12,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { SampleCarousel } from "@/components/home/SampleCarousel";
 import { HomeBiodataBuilderSection } from "@/components/home/HomeBiodataBuilderSection";
+import { ComparisonTable } from "@/components/home/ComparisonTable";
 
 export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
@@ -519,6 +520,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ComparisonTable />
 
       {/* Homepage FAQ Section */}
       <section id="faq" aria-label="Frequently Asked Questions" className="py-8 md:py-12 px-4 border-t border-border/30 bg-background relative overflow-hidden">

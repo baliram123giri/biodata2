@@ -21,6 +21,7 @@ import { BiodataBuilderSection } from "./BiodataBuilderSection";
 import { generateFaqSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { TemplateCarousel } from "@/components/home/TemplateCarousel";
+import MarathiInfoSection from "@/components/biodata/MarathiInfoSection";
 
 const MARATHI_SAMPLES = [
   {
@@ -405,9 +406,9 @@ export default function MarathiBiodataMakerPage() {
       />
 
       {/* Detailed Informative Content */}
-      <div className="container mx-auto max-w-6xl relative z-10 py-6 px-4">
+      <div className="container mx-auto max-w-7xl relative z-10 py-2 px-4">
         {/* Step-by-Step Guide */}
-        <div className="space-y-8 pt-2">
+        <div className="space-y-6 pt-0">
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[#EAB308]/30 bg-[#C2410C]/5 px-3.5 py-1.5 text-xs font-bold text-[#C2410C]">
               <Languages className="w-3.5 h-3.5" />
@@ -421,7 +422,7 @@ export default function MarathiBiodataMakerPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
             {marathiHowToSchema.step.map((step) => (
               <div key={step.position} className="bg-white border border-[#EAB308]/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#C2410C]/5 rounded-bl-full flex items-center justify-center font-black text-lg text-[#C2410C] z-10">
@@ -435,7 +436,7 @@ export default function MarathiBiodataMakerPage() {
         </div>
 
         {/* Why Choose Section */}
-        <div className="mt-14 border-t border-[#EAB308]/15 pt-10 space-y-8">
+        <div className="mt-8 border-t border-[#EAB308]/15 pt-6 space-y-6">
           <div className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#C2410C] font-sans">
               लग्नाचा बायोडाटा बनवण्यासाठी आमचीच निवड का करावी?
@@ -443,7 +444,7 @@ export default function MarathiBiodataMakerPage() {
             <div className="w-12 h-1 bg-[#EAB308] mx-auto rounded-full" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto text-left">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto text-left">
             <div className="bg-white border border-[#EAB308]/25 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-3">
               <h3 className="text-base font-bold text-[#C2410C]">१. आकर्षक मराठी फॉन्ट्स आणि शुभ चिन्हे</h3>
               <p className="text-xs text-stone-700 font-semibold leading-relaxed">
@@ -473,8 +474,13 @@ export default function MarathiBiodataMakerPage() {
           </div>
         </div>
 
+        {/* Beautiful Marathi Marriage Biodata Info Section */}
+        <div className="mt-8 border-t border-[#EAB308]/15 pt-6">
+          <MarathiInfoSection />
+        </div>
+
         {/* Multi-Expandable FAQ Accordion using existing pattern */}
-        <section className="mt-14 border-t border-[#EAB308]/15 pt-10 max-w-4xl mx-auto space-y-8">
+        <section className="mt-8 border-t border-[#EAB308]/15 pt-6 max-w-7xl mx-auto space-y-6">
           <div className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#C2410C] font-sans">
               नेहमी विचारले जाणारे प्रश्न (FAQ)
