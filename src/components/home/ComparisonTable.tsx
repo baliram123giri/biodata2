@@ -142,8 +142,8 @@ export function ComparisonTable() {
             </p>
           </div>
 
-          {/* Table Container Card */}
-          <div className="premium-gold-border md:premium-gold-border overflow-hidden bg-white dark:bg-stone-900/40 border border-stone-200/60 dark:border-stone-850 shadow-md rounded-2xl">
+          {/* Desktop Table View (hidden on mobile) */}
+          <div className="hidden md:block premium-gold-border overflow-hidden bg-white dark:bg-stone-900/40 border border-stone-200/60 dark:border-stone-850 shadow-md rounded-2xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[640px]">
                 <thead>
@@ -226,6 +226,84 @@ export function ComparisonTable() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile Card List View (hidden on desktop) */}
+          <div className="md:hidden space-y-3">
+            {comparisonData.map((row, index) => (
+              <div
+                key={index}
+                className="p-3.5 bg-white dark:bg-stone-900/40 border border-stone-200/60 dark:border-stone-800/60 shadow-sm rounded-2xl flex flex-col gap-2.5"
+              >
+                {/* Feature Info Row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs font-bold text-stone-850 dark:text-stone-100 font-sans truncate">
+                      {row.feature}
+                    </span>
+                    {row.tooltip && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-stone-400 hover:text-[#9B1B30] dark:hover:text-[#E6C97A] transition-colors cursor-help p-0.5"
+                            aria-label={`About ${row.feature}`}
+                          >
+                            <HelpCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[220px] text-center">
+                          <p className="text-xs font-medium leading-normal">{row.tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </div>
+
+                {/* Grid Comparison */}
+                <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-sans">
+                  {/* Biodata99 Column */}
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAEAED]/20 dark:bg-[#9B1B30]/5 border border-[#FAEAED]/40 dark:border-[#9B1B30]/10">
+                    <span className="font-extrabold text-[#9B1B30] dark:text-[#E6C97A]">Biodata99</span>
+                    <div className="flex items-center gap-1">
+                      {row.biodata99.label === "✓" ? (
+                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-650 dark:text-emerald-455 border border-emerald-200/20">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <span className="font-black text-stone-850 dark:text-stone-200">
+                          {row.biodata99.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Others Column */}
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-900/40 border border-stone-150 dark:border-stone-800/60">
+                    <span className="font-bold text-stone-500 dark:text-stone-400">Others</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      {row.others.label === "✓" ? (
+                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-450 border border-stone-200 dark:border-stone-750">
+                          <Check className="w-3 h-3 stroke-[2.5]" />
+                        </div>
+                      ) : row.others.label === "✗" ? (
+                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-505 dark:text-rose-455 border border-rose-200/20 dark:border-rose-900/30">
+                          <X className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      ) : row.others.status === "warning" ? (
+                        <span className="px-1.5 py-0.5 rounded-md font-black bg-amber-50 dark:bg-amber-950/30 text-amber-705 dark:text-amber-405 border border-amber-200/20 dark:border-amber-900/20 truncate max-w-[70px]">
+                          {row.others.label}
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded-md font-black bg-stone-100 dark:bg-stone-800/80 text-stone-605 dark:text-stone-405 border border-stone-200 dark:border-stone-700 truncate max-w-[70px]">
+                          {row.others.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Footnote */}

@@ -106,7 +106,7 @@ export function CustomDrawerHeader({
   return (
     <div
       className={cn(
-        "flex flex-col space-y-2 text-center sm:text-left",
+        "flex flex-col space-y-2 text-center sm:text-left overflow-visible",
         className
       )}
       {...props}

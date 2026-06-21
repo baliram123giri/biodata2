@@ -288,7 +288,7 @@ export default function MuslimBiodataFormatPage() {
 
             {/* Headline */}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-[#0F4C3A] leading-[1.12] font-sans">
-              Muslim marriage <span className="text-[#D4AF37]">biodata format</span>
+              Muslim marriage <span className="text-[#8A7233]">biodata format</span>
             </h1>
 
             {/* Description Paragraph */}
@@ -532,7 +532,7 @@ export default function MuslimBiodataFormatPage() {
             </div>
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0F4C3A] font-sans">
               Muslim Girl Marriage Biodata Format in Word
-              <span className="block text-lg md:text-xl font-semibold text-[#D4AF37] mt-1"> (Free Word DOCX Editable Template)</span>
+              <span className="block text-lg md:text-xl font-semibold text-[#8A7233] mt-1"> (Free Word DOCX Editable Template)</span>
             </h2>
             <p className="text-stone-700 text-xs md:text-sm font-semibold leading-relaxed">
               Get free Muslim Girl Marriage Biodata Word (DOCX) templates in English, Urdu, and Hindi. Download, edit, and easily customise the format to create a professional marriage biodata in your preferred language.
@@ -748,7 +748,7 @@ export default function MuslimBiodataFormatPage() {
                     {i + 1}
                   </div>
                   <div className="space-y-1 min-w-0">
-                    <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest">{item.step}</p>
+                    <p className="text-[10px] font-black text-[#8A7233] uppercase tracking-widest">{item.step}</p>
                     <h3 className="text-sm font-bold text-stone-900 leading-snug">{item.title}</h3>
                     <p className="text-xs text-stone-700 font-semibold leading-relaxed">{item.desc}</p>
                   </div>

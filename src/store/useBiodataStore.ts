@@ -158,8 +158,8 @@ export const useBiodataStore = create<BiodataState>()(
           }
           try {
             const url = religion
-              ? `/api/templates?page=1&limit=10&religion=${encodeURIComponent(religion)}`
-              : "/api/templates?page=1&limit=10";
+              ? `/api/templates?page=1&limit=100&religion=${encodeURIComponent(religion)}`
+              : "/api/templates?page=1&limit=100";
             const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
@@ -211,8 +211,8 @@ export const useBiodataStore = create<BiodataState>()(
           try {
             const nextPage = state.templatePage + 1;
             const url = religion
-              ? `/api/templates?page=${nextPage}&limit=10&religion=${encodeURIComponent(religion)}`
-              : `/api/templates?page=${nextPage}&limit=10`;
+              ? `/api/templates?page=${nextPage}&limit=100&religion=${encodeURIComponent(religion)}`
+              : `/api/templates?page=${nextPage}&limit=100`;
             const res = await fetch(url);
             const data = await res.json();
             if (data.templates && data.templates.length > 0) {
@@ -282,12 +282,12 @@ export const useBiodataStore = create<BiodataState>()(
               return;
             }
 
-            // Fetch 10 templates on initial load: default first + 9 more
-            let url = "/api/templates?default=true&limit=10";
+            // Fetch 100 templates on initial load: default first + others
+            let url = "/api/templates?default=true&limit=100";
             if (templateId) {
               url = `/api/templates?id=${templateId}`;
             } else if (religion) {
-              url = `/api/templates?default=true&limit=10&religion=${encodeURIComponent(religion)}`;
+              url = `/api/templates?default=true&limit=100&religion=${encodeURIComponent(religion)}`;
             }
             const res = await fetch(url);
             const data = await res.json();

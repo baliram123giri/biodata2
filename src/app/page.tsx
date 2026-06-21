@@ -414,7 +414,7 @@ export default function Home() {
                     🕌
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#D4AF37] block">COMMUNITY EDITION</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#8A7233] dark:text-[#E6C97A] block">COMMUNITY EDITION</span>
                     <h3 className="text-lg font-black text-stone-950 dark:text-white tracking-tight">Muslim Marriage Biodata</h3>
                   </div>
                 </div>

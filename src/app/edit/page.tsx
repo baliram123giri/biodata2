@@ -899,7 +899,7 @@ function EditPageContent() {
               : undefined
           }}
           className={cn(
-            "flex flex-col z-40 shadow-2xl overflow-hidden",
+            "flex flex-col z-40 shadow-2xl overflow-visible",
             isDraggingDrawer ? "" : "transition-all duration-300",
             // Desktop: right sidebar
             "lg:relative lg:top-0 lg:bottom-0 lg:right-0 lg:h-full lg:w-96 lg:translate-y-0 lg:opacity-100 lg:border-l lg:border-t-0 lg:rounded-none lg:bg-stitch-surface/60 lg:border-stitch-outline/10",
@@ -914,7 +914,7 @@ function EditPageContent() {
           )}
         >
           {/* Header Panel */}
-          <div className="select-none shrink-0 border-b border-stitch-outline/5">
+          <div className="select-none shrink-0 border-b border-stitch-outline/5 overflow-visible">
             <div className="p-6 pb-4 relative flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-black tracking-tight text-stitch-on-surface capitalize">
