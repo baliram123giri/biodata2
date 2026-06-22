@@ -6,17 +6,35 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
-import { howToSchema, generateFaqSchema } from "@/lib/seo-schemas";
+import { howToSchema, generateFaqSchema, videoTutorialSchema } from "@/lib/seo-schemas";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 import { HeroCardDeck } from "@/components/home/HeroCardDeck";
 import { SampleCarousel } from "@/components/home/SampleCarousel";
 import { HomeBiodataBuilderSection } from "@/components/home/HomeBiodataBuilderSection";
 import { ComparisonTable } from "@/components/home/ComparisonTable";
+import { VideoSection } from "@/components/home/VideoSection";
 
 export const metadata: Metadata = {
   title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
   description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
+  alternates: {
+    canonical: "https://biodata99.com",
+  },
+  openGraph: {
+    title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
+    description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
+    url: "https://biodata99.com",
+    type: "website",
+    videos: [
+      {
+        url: "https://www.youtube.com/embed/tSXLftIk8Fg",
+        width: 1280,
+        height: 720,
+        type: "text/html",
+      }
+    ],
+  },
 };
 
 const homepageFaqs = [
@@ -521,6 +539,8 @@ export default function Home() {
         </div>
       </section>
 
+      <VideoSection />
+
       <ComparisonTable />
 
       {/* Homepage FAQ Section */}
@@ -670,6 +690,7 @@ export default function Home() {
       {/* Structured Data (HowTo & FAQ Schema) for Search Crawlers */}
       <JsonLd schema={howToSchema} />
       <JsonLd schema={generateFaqSchema(homepageFaqs)} />
+      <JsonLd schema={videoTutorialSchema} />
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Palette, Camera, Download, Layout, RotateCcw, Smartphone, Sparkles, CheckCircle2, Lock as LucideLock } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { howToSchema } from "@/lib/seo-schemas";
+import { howToSchema, videoTutorialSchema } from "@/lib/seo-schemas";
+import { VideoSection } from "@/components/home/VideoSection";
 
 export const metadata: Metadata = {
   title: "Marriage Biodata Maker – How It Works",
@@ -16,14 +17,24 @@ export const metadata: Metadata = {
     title: "Marriage Biodata Maker – How It Works",
     description: "See how Biodata99 works - fill in your details, pick a template, add a photo, and download your marriage biodata as a PDF. Free and ready in minutes.",
     url: "https://biodata99.com/how-it-works",
+    type: "video.other",
+    videos: [
+      {
+        url: "https://www.youtube.com/embed/tSXLftIk8Fg",
+        width: 1280,
+        height: 720,
+        type: "text/html",
+      }
+    ],
   },
 };
 
 export default function HowItWorksPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#FFFBF8] dark:bg-[#1A0A0E] pt-10 pb-10 px-4 overflow-hidden relative">
-      {/* Dynamic HowTo Schema */}
+      {/* Dynamic HowTo and Video Schema */}
       <JsonLd schema={howToSchema} />
+      <JsonLd schema={videoTutorialSchema} />
 
       {/* Decorative background gradients */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#9B1B30]/5 dark:bg-[#C9A84C]/5 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
@@ -47,6 +58,9 @@ export default function HowItWorksPage() {
             Four simple steps to create a marriage biodata you are proud to share. No design skills needed.
           </p>
         </div>
+
+        {/* Video Tutorial */}
+        <VideoSection inline={true} />
 
         {/* Steps Walkthrough */}
         <div className="space-y-12">

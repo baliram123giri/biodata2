@@ -1282,16 +1282,27 @@ function EditPageContent() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("topPadding", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">
-                            {theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : defaultPaddingTop)}px
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={200}
+                              value={theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : defaultPaddingTop)}
+                              onChange={(e) => {
+                                const v = Math.min(200, Math.max(1, Number(e.target.value)));
+                                theme.setPaddingTop(v);
+                              }}
+                              className="w-14 h-6 text-[11px] font-bold text-stitch-primary text-center bg-stitch-surface border border-stitch-outline/20 rounded-md focus:outline-none focus:border-stitch-primary focus:ring-1 focus:ring-stitch-primary/20"
+                            />
+                            <span className="text-[9px] text-stitch-on-surface-variant/50 font-semibold">px</span>
+                          </div>
                         </div>
                         <Slider
                           value={[theme.paddingTop !== undefined ? theme.paddingTop : (theme.paddingY !== undefined ? theme.paddingY : defaultPaddingTop)]}
                           onValueChange={([v]) => theme.setPaddingTop(v)}
-                          min={20}
+                          min={1}
                           max={200}
-                          step={2}
+                          step={1}
                         />
                       </div>
 
@@ -1299,28 +1310,54 @@ function EditPageContent() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("leftPadding", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : defaultPaddingLeft)}px</span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={150}
+                              value={theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : defaultPaddingLeft)}
+                              onChange={(e) => {
+                                const v = Math.min(150, Math.max(1, Number(e.target.value)));
+                                theme.setPaddingLeft(v);
+                              }}
+                              className="w-14 h-6 text-[11px] font-bold text-stitch-primary text-center bg-stitch-surface border border-stitch-outline/20 rounded-md focus:outline-none focus:border-stitch-primary focus:ring-1 focus:ring-stitch-primary/20"
+                            />
+                            <span className="text-[9px] text-stitch-on-surface-variant/50 font-semibold">px</span>
+                          </div>
                         </div>
                         <Slider
                           value={[theme.paddingLeft !== undefined ? theme.paddingLeft : (theme.padding !== undefined ? theme.padding : defaultPaddingLeft)]}
                           onValueChange={([v]) => theme.setPaddingLeft(v)}
-                          min={20}
+                          min={1}
                           max={150}
-                          step={2}
+                          step={1}
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("rightPadding", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : defaultPaddingRight)}px</span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={150}
+                              value={theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : defaultPaddingRight)}
+                              onChange={(e) => {
+                                const v = Math.min(150, Math.max(1, Number(e.target.value)));
+                                theme.setPaddingRight(v);
+                              }}
+                              className="w-14 h-6 text-[11px] font-bold text-stitch-primary text-center bg-stitch-surface border border-stitch-outline/20 rounded-md focus:outline-none focus:border-stitch-primary focus:ring-1 focus:ring-stitch-primary/20"
+                            />
+                            <span className="text-[9px] text-stitch-on-surface-variant/50 font-semibold">px</span>
+                          </div>
                         </div>
                         <Slider
                           value={[theme.paddingRight !== undefined ? theme.paddingRight : (theme.padding !== undefined ? theme.padding : defaultPaddingRight)]}
                           onValueChange={([v]) => theme.setPaddingRight(v)}
-                          min={20}
+                          min={1}
                           max={150}
-                          step={2}
+                          step={1}
                         />
                       </div>
                     </div>
@@ -1330,13 +1367,27 @@ function EditPageContent() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <Label className="text-[10px] text-stitch-on-surface-variant font-bold uppercase">{translateUI("fontSize", currentLang)}</Label>
-                          <span className="text-[10px] font-bold text-stitch-primary">{theme.fontSize ?? 9}px</span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={36}
+                              step={0.5}
+                              value={theme.fontSize ?? 9}
+                              onChange={(e) => {
+                                const v = Math.min(36, Math.max(1, Number(e.target.value)));
+                                theme.setFontSize(v);
+                              }}
+                              className="w-14 h-6 text-[11px] font-bold text-stitch-primary text-center bg-stitch-surface border border-stitch-outline/20 rounded-md focus:outline-none focus:border-stitch-primary focus:ring-1 focus:ring-stitch-primary/20"
+                            />
+                            <span className="text-[9px] text-stitch-on-surface-variant/50 font-semibold">px</span>
+                          </div>
                         </div>
                         <Slider
                           value={[theme.fontSize ?? 9]}
                           onValueChange={([v]) => theme.setFontSize(v)}
-                          min={9}
-                          max={24}
+                          min={1}
+                          max={36}
                           step={0.5}
                         />
                       </div>

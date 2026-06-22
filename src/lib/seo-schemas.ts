@@ -415,3 +415,30 @@ export function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
     }))
   };
 }
+
+// 11. Video Tutorial Schema
+export const videoTutorialSchema = {
+  "@context": "https://schema.org" as const,
+  "@type": "VideoObject" as const,
+  "name": "How to Create a Marriage Biodata Online - Step by Step Tutorial",
+  "description": "Watch this quick guide to learn how to fill in your details, customize a template, and download your biodata with ease.",
+  "thumbnailUrl": [
+    "https://img.youtube.com/vi/tSXLftIk8Fg/maxresdefault.jpg",
+    "https://img.youtube.com/vi/tSXLftIk8Fg/sddefault.jpg",
+    "https://img.youtube.com/vi/tSXLftIk8Fg/hqdefault.jpg"
+  ],
+  "uploadDate": "2025-10-15T08:00:00+05:30",
+  "duration": "PT2M15S",
+  "contentUrl": "https://youtu.be/tSXLftIk8Fg",
+  "embedUrl": "https://www.youtube.com/embed/tSXLftIk8Fg",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Biodata99",
+    "url": "https://biodata99.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://biodata99.com/logo.svg"
+    }
+  },
+  "regionsAllowed": ["IN", "US", "CA", "GB", "AU"]
+};

@@ -308,12 +308,21 @@ export function HomeBiodataBuilder({
       // Run store/theme resets SYNCHRONOUSLY so the template-color sync effect (which
       // depends on isHydrated) runs AFTER the reset, not before — preventing a flash
       // where template colors are applied then immediately overridden by resetTheme().
-      // 1. Reset template, layout and stickers in biodata store while preserving form values
+
+      // Snapshot the user's persisted template BEFORE resetDesignOnly potentially changes it.
+      // This ensures navigating homepage → edit → homepage keeps the chosen template.
+      const persistedTemplate = useBiodataStore.getState().selectedTemplate;
+
+      // 1. Reset ONLY layout and stickers in biodata store while preserving form values.
       useBiodataStore.getState().resetDesignOnly();
-      if (defaultTemplateId) {
-        useBiodataStore.getState().setSelectedTemplate(defaultTemplateId);
+
+      // 2. Restore the persisted template. A prop-level defaultTemplateId always wins.
+      const templateToApply = defaultTemplateId || persistedTemplate;
+      if (templateToApply) {
+        useBiodataStore.getState().setSelectedTemplate(templateToApply);
       }
-      // 2. Reset custom theme settings (colors, background, fonts, padding, etc.)
+
+      // 3. Reset custom theme settings (colors, background, fonts, padding, etc.)
       useThemeStore.getState().resetTheme();
 
       // Defer ONLY the form reset by one event loop tick. This ensures any unmount cleanup

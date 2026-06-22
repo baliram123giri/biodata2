@@ -427,6 +427,7 @@ export const useBiodataStore = create<BiodataState>()(
         storage: createJSONStorage(() => localStorage),
         partialize: (state: BiodataState) => ({
           formData: state.formData,
+          selectedTemplate: state.selectedTemplate,
         }),
         merge: (persistedState: any, currentState: any) => {
           return {
