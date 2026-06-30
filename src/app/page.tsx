@@ -16,14 +16,14 @@ import { ComparisonTable } from "@/components/home/ComparisonTable";
 import { VideoSection } from "@/components/home/VideoSection";
 
 export const metadata: Metadata = {
-  title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
-  description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
+  title: "Free Biodata Maker for Marriage | PDF Download – Biodata99",
+  description: "Free marriage biodata maker online. Create biodata in Hindi, Marathi, English. Download as PDF or image. 100% free, no watermark.",
   alternates: {
     canonical: "https://biodata99.com",
   },
   openGraph: {
-    title: "Free Marriage Biodata Format with Photo - PDF, JPEG & PNG",
-    description: "Download a free marriage biodata format with photo for boy or girl. Simple one-page design, download as PDF, JPEG or PNG. Ready to share on WhatsApp instantly.",
+    title: "Free Biodata Maker for Marriage | PDF Download – Biodata99",
+    description: "Free marriage biodata maker online. Create biodata in Hindi, Marathi, English. Download as PDF or image. 100% free, no watermark.",
     url: "https://biodata99.com",
     type: "website",
     videos: [
@@ -87,7 +87,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-stone-900 dark:text-white leading-[1.12] font-sans">
-              Create Your <span className="text-gradient-primary">Marriage Biodata</span> with Photo in Minutes – Free PDF Download
+              Free <span className="text-gradient-primary">Marriage Biodata Maker</span> — PDF, JPEG &amp; PNG Download
             </h1>
 
             <p className="text-stone-600 dark:text-stone-300 text-xs md:text-sm lg:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed font-semibold">
